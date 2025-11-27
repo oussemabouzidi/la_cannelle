@@ -1,0 +1,581 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { Menu, X, ChevronRight, Phone, Mail, MapPin, Briefcase, Users, Heart, Building2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+
+export default function ServicesPage() {
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [language, setLanguage] = useState('EN');
+  const [isVisible, setIsVisible] = useState(false);
+
+  const router = useRouter();
+
+  const handleOrderClick = () => {
+  router.push('/order');
+};
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'EN' ? 'DE' : 'EN');
+  };
+
+  const content = {
+    EN: {
+      nav: {
+        about: 'About',
+        services: 'Services',
+        menus: 'Menus',
+        contact: 'Contact',
+        connect: 'Connect',
+        order: 'Order Now'
+      },
+      hero: {
+        title: 'Our Services',
+        subtitle: 'Tailored catering solutions for every occasion'
+      },
+      officeCatering: {
+        title: 'Office Catering',
+        subtitle: 'Fuel Your Team with Excellence',
+        description: 'Keep your team energized and productive with our professional office catering services. From daily lunch deliveries to breakfast meetings and afternoon refreshments, we provide fresh, delicious meals that fit seamlessly into your workday.',
+        features: [
+          'Daily meal delivery programs',
+          'Breakfast meetings and coffee service',
+          'Healthy lunch options',
+          'Custom dietary accommodations',
+          'Flexible scheduling and ordering',
+          'Professional presentation'
+        ]
+      },
+      eventCatering: {
+        title: 'Event Catering',
+        subtitle: 'Memorable Moments, Exceptional Food',
+        description: 'Make your special event unforgettable with our comprehensive event catering services. Whether it\'s a birthday celebration, anniversary, or any milestone, we create culinary experiences that leave lasting impressions.',
+        features: [
+          'Customized menus for any occasion',
+          'Full-service event coordination',
+          'Professional staff and service',
+          'Elegant presentation and setup',
+          'Accommodates all group sizes',
+          'Themed catering options'
+        ]
+      },
+      weddings: {
+        title: 'Weddings',
+        subtitle: 'Your Perfect Day, Perfectly Catered',
+        description: 'Your wedding day deserves nothing but perfection. Our dedicated wedding catering team works closely with you to create a bespoke dining experience that reflects your style and taste, ensuring every guest is delighted.',
+        features: [
+          'Personalized menu consultations',
+          'Tasting sessions for the couple',
+          'Full bar service available',
+          'Elegant plating and presentation',
+          'Experienced wedding staff',
+          'Coordination with venue and vendors'
+        ]
+      },
+      corporateEvents: {
+        title: 'Corporate Events',
+        subtitle: 'Impress Your Clients and Team',
+        description: 'Elevate your corporate gatherings with our professional catering services. From intimate board meetings to large-scale conferences, we deliver sophisticated dining experiences that reflect your company\'s excellence.',
+        features: [
+          'Executive lunch and dinner service',
+          'Conference and seminar catering',
+          'Product launches and celebrations',
+          'Networking events and receptions',
+          'Professional presentation',
+          'Dietary restrictions accommodated'
+        ]
+      },
+      cta: {
+        title: 'Ready to Get Started?',
+        subtitle: 'Let us bring your vision to life with exceptional catering',
+        button: 'Order Now'
+      }
+    },
+    DE: {
+      nav: {
+        about: 'Über uns',
+        services: 'Dienstleistungen',
+        menus: 'Menüs',
+        contact: 'Kontakt',
+        connect: 'Verbinden',
+        order: 'Jetzt bestellen'
+      },
+      hero: {
+        title: 'Unsere Dienstleistungen',
+        subtitle: 'Maßgeschneiderte Catering-Lösungen für jeden Anlass'
+      },
+      officeCatering: {
+        title: 'Büro-Catering',
+        subtitle: 'Energie für Ihr Team durch Exzellenz',
+        description: 'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Büro-Catering-Dienstleistungen. Von täglichen Mittagslieferungen bis hin zu Frühstücksmeetings und Nachmittagserfrischungen bieten wir frische, köstliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
+        features: [
+          'Tägliche Essenslieferprogramme',
+          'Frühstücksmeetings und Kaffeeservice',
+          'Gesunde Mittagsoptionen',
+          'Individuelle Ernährungsanpassungen',
+          'Flexible Planung und Bestellung',
+          'Professionelle Präsentation'
+        ]
+      },
+      eventCatering: {
+        title: 'Event-Catering',
+        subtitle: 'Unvergessliche Momente, Außergewöhnliches Essen',
+        description: 'Machen Sie Ihre besondere Veranstaltung unvergesslich mit unseren umfassenden Event-Catering-Dienstleistungen. Ob Geburtstagsfeier, Jubiläum oder ein anderer Meilenstein, wir schaffen kulinarische Erlebnisse, die bleibende Eindrücke hinterlassen.',
+        features: [
+          'Individuelle Menüs für jeden Anlass',
+          'Full-Service-Event-Koordination',
+          'Professionelles Personal und Service',
+          'Elegante Präsentation und Aufbau',
+          'Für alle Gruppengrößen geeignet',
+          'Thematische Catering-Optionen'
+        ]
+      },
+      weddings: {
+        title: 'Hochzeiten',
+        subtitle: 'Ihr perfekter Tag, perfekt bewirtet',
+        description: 'Ihr Hochzeitstag verdient nichts als Perfektion. Unser engagiertes Hochzeits-Catering-Team arbeitet eng mit Ihnen zusammen, um ein maßgeschneidertes kulinarisches Erlebnis zu schaffen, das Ihren Stil und Geschmack widerspiegelt und jeden Gast begeistert.',
+        features: [
+          'Personalisierte Menüberatungen',
+          'Verkostungen für das Paar',
+          'Full-Bar-Service verfügbar',
+          'Elegante Anrichtung und Präsentation',
+          'Erfahrenes Hochzeitspersonal',
+          'Koordination mit Location und Anbietern'
+        ]
+      },
+      corporateEvents: {
+        title: 'Firmenveranstaltungen',
+        subtitle: 'Beeindrucken Sie Ihre Kunden und Ihr Team',
+        description: 'Werten Sie Ihre Firmenveranstaltungen mit unseren professionellen Catering-Dienstleistungen auf. Von intimen Vorstandssitzungen bis hin zu großen Konferenzen bieten wir anspruchsvolle kulinarische Erlebnisse, die die Exzellenz Ihres Unternehmens widerspiegeln.',
+        features: [
+          'Executive-Lunch- und Dinner-Service',
+          'Konferenz- und Seminar-Catering',
+          'Produkteinführungen und Feiern',
+          'Networking-Events und Empfänge',
+          'Professionelle Präsentation',
+          'Ernährungseinschränkungen berücksichtigt'
+        ]
+      },
+      cta: {
+        title: 'Bereit anzufangen?',
+        subtitle: 'Lassen Sie uns Ihre Vision mit außergewöhnlichem Catering zum Leben erwecken',
+        button: 'Jetzt bestellen'
+      }
+    }
+  };
+
+  const t = content[language];
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Add animations and fonts */}
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fadeInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        @keyframes fadeInRight {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .animate-fade-in-left {
+          animation: fadeInLeft 0.8s ease-out;
+        }
+        
+        .animate-fade-in-right {
+          animation: fadeInRight 0.8s ease-out;
+        }
+        
+        .animate-delay-100 {
+          animation-delay: 0.1s;
+        }
+        
+        .animate-delay-200 {
+          animation-delay: 0.2s;
+        }
+        
+        .animate-delay-300 {
+          animation-delay: 0.3s;
+        }
+        
+        body {
+          font-family: 'Inter', sans-serif;
+        }
+        
+        .font-elegant {
+          font-family: 'Playfair Display', serif;
+        }
+      `}</style>
+
+      {/* Navbar */}
+      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 animate-fade-in-down">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <div className="text-2xl font-bold text-gray-900 font-elegant italic">
+              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+            </div>
+            
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-8">
+              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">Home</a>
+              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">About</a>
+              <a href="/services" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
+              <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
+              <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
+              <button 
+  onClick={toggleLanguage}
+  className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
+>
+  {language === 'EN' ? (
+    <>
+      <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
+      English
+    </>
+  ) : (
+    <>
+      <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} /></span>
+      Deutsch
+    </>
+  )}
+</button>
+              <button onClick={() => {router.push('/connect')}}  className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 font-medium">
+                {t.nav.connect}
+              </button>
+
+
+<button 
+  onClick={handleOrderClick}
+  className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
+>
+  {t.nav.order}
+</button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden transition-transform duration-300 hover:scale-110"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+
+          {/* Mobile Navigation */}
+          {isMenuOpen && (
+            <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
+              <div className="flex flex-col gap-4">
+                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Home</a>
+                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">About</a>
+                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Services</a>
+                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Menus</a>
+                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">Contact</a>
+                <button 
+                  onClick={toggleLanguage}
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
+                >
+                  {language}
+                </button>
+                <button className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 font-medium transition-all duration-300">
+                  {t.nav.connect}
+                </button>
+                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
+                  {t.nav.order}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+            {/* Hero Section */}
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-stone-100 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/5"></div>
+        <div className="max-w-7xl mx-auto text-center relative z-10">
+          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-4 font-elegant italic">
+              {t.hero.title}
+            </h1>
+          </div>
+          <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <p className="text-xl text-gray-600 font-light italic max-w-2xl mx-auto">
+              {t.hero.subtitle}
+            </p>
+          </div>
+        </div>
+      </section>
+
+
+
+      {/* Office Catering */}
+      <section id="office-catering" className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
+          style={{
+            backgroundImage: "url('/images/services/office.jpg')",
+          }}
+        ></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-6">
+                <Briefcase className="text-amber-700" size={32} />
+              </div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4 font-elegant italic">{t.officeCatering.title}</h2>
+              <p className="text-lg text-amber-700 font-semibold mb-4 italic">{t.officeCatering.subtitle}</p>
+              <p className="text-gray-600 leading-relaxed mb-6 font-light">{t.officeCatering.description}</p>
+              
+              {/* Image Placeholder */}
+              <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
+                <div className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center">
+                  <img src="/images/services/office.jpg"/>
+                </div>
+              </div>
+            </div>
+            
+            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <ul className="space-y-3">
+                  {t.officeCatering.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3 group">
+                      <ChevronRight className="text-amber-700 flex-shrink-0 mt-1 group-hover:translate-x-1 transition-transform" size={20} />
+                      <span className="text-gray-700 group-hover:text-gray-900 transition-colors">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Event Catering */}
+      <section id="event-catering" className="py-20 px-4 sm:px-6 lg:px-8 bg-stone-50 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
+          style={{
+            backgroundImage: "url('/images/services/event.jpg')",
+          }}
+        ></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className={`order-2 md:order-1 transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <ul className="space-y-3">
+                  {t.eventCatering.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3 group">
+                      <ChevronRight className="text-amber-700 flex-shrink-0 mt-1 group-hover:translate-x-1 transition-transform" size={20} />
+                      <span className="text-gray-700 group-hover:text-gray-900 transition-colors">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            
+            <div className={`order-1 md:order-2 transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-6">
+                <Users className="text-amber-700" size={32} />
+              </div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4 font-elegant italic">{t.eventCatering.title}</h2>
+              <p className="text-lg text-amber-700 font-semibold mb-4 italic">{t.eventCatering.subtitle}</p>
+              <p className="text-gray-600 leading-relaxed mb-6 font-light">{t.eventCatering.description}</p>
+              
+              {/* Image Placeholder */}
+              <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
+                <div className="bg-gradient-to-br from-amber-200 to-amber-300 h-48 flex items-center justify-center">
+                  <img src="/images/services/event.jpg" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Weddings */}
+      <section id="weddings" className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
+          style={{
+            backgroundImage: "url('/images/services/weddings.jpg')",
+          }}
+        ></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-6">
+                <Heart className="text-amber-700" size={32} />
+              </div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4 font-elegant italic">{t.weddings.title}</h2>
+              <p className="text-lg text-amber-700 font-semibold mb-4 italic">{t.weddings.subtitle}</p>
+              <p className="text-gray-600 leading-relaxed mb-6 font-light">{t.weddings.description}</p>
+              
+              {/* Image Placeholder */}
+              <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
+                <div className="bg-gradient-to-br from-pink-100 to-amber-100 h-48 flex items-center justify-center">
+<img src="/images/services/weddings.jpg" />                
+</div>
+              </div>
+            </div>
+            
+            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <ul className="space-y-3">
+                  {t.weddings.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3 group">
+                      <ChevronRight className="text-amber-700 flex-shrink-0 mt-1 group-hover:translate-x-1 transition-transform" size={20} />
+                      <span className="text-gray-700 group-hover:text-gray-900 transition-colors">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Corporate Events */}
+      <section id="corporate-events" className="py-20 px-4 sm:px-6 lg:px-8 bg-stone-50 relative overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-10"
+          style={{
+            backgroundImage: "url('/images/services/corporate.jpg')",
+          }}
+        ></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className={`order-2 md:order-1 transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <ul className="space-y-3">
+                  {t.corporateEvents.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-3 group">
+                      <ChevronRight className="text-amber-700 flex-shrink-0 mt-1 group-hover:translate-x-1 transition-transform" size={20} />
+                      <span className="text-gray-700 group-hover:text-gray-900 transition-colors">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            
+            <div className={`order-1 md:order-2 transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-6">
+                <Building2 className="text-amber-700" size={32} />
+              </div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4 font-elegant italic">{t.corporateEvents.title}</h2>
+              <p className="text-lg text-amber-700 font-semibold mb-4 italic">{t.corporateEvents.subtitle}</p>
+              <p className="text-gray-600 leading-relaxed mb-6 font-light">{t.corporateEvents.description}</p>
+              
+              {/* Image Placeholder */}
+              <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
+                <div className="bg-gradient-to-br from-blue-100 to-amber-100 h-48 flex items-center justify-center">
+<img src="/images/services/corporate.jpg" alt=""/>                
+</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-700 to-amber-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <h2 className="text-4xl font-bold text-white mb-4 font-elegant italic">{t.cta.title}</h2>
+            <p className="text-xl text-amber-100 mb-8 font-light italic">{t.cta.subtitle}</p>
+            <button onClick={()=> handleOrderClick()} className="px-10 py-4 bg-white text-amber-700 rounded-lg text-lg font-semibold hover:bg-amber-50 transition-all transform hover:scale-105 inline-flex items-center gap-2 shadow-xl hover:shadow-2xl duration-300">
+              {t.cta.button}
+              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer id="contact" className="bg-gray-900 text-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-12 mb-12">
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <h3 className="text-2xl font-bold mb-4 font-elegant italic">Gourmet Catering</h3>
+              <p className="text-gray-400 italic">Creating unforgettable culinary experiences</p>
+            </div>
+            <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+              <h4 className="font-semibold mb-4 font-elegant">Quick Links</h4>
+              <div className="flex flex-col gap-2">
+                <a href="#about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">About</a>
+                <a href="#services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Services</a>
+                <a href="#menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Menus</a>
+                <a href="#contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Contact</a>
+              </div>
+            </div>
+            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+              <h4 className="font-semibold mb-4 font-elegant">Contact</h4>
+              <div className="flex flex-col gap-3 text-gray-400">
+                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
+                  <Phone size={18} />
+                  <span>+123 456 7890</span>
+                </div>
+                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
+                  <Mail size={18} />
+                  <span>info@catering.com</span>
+                </div>
+                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
+                  <MapPin size={18} />
+                  <span>Your Location</span>
+                </div>
+              </div>
+            </div>
+            <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <h4 className="font-semibold mb-4 font-elegant">Hours</h4>
+              <p className="text-gray-400">Monday - Friday: 9am - 6pm</p>
+              <p className="text-gray-400">Saturday: 10am - 4pm</p>
+              <p className="text-gray-400">Sunday: Closed</p>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 Gourmet Catering. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
