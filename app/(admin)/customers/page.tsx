@@ -175,7 +175,7 @@ export default function Customers() {
     { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
   ];
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: string) => {
     router.push(path);
   };
 
@@ -193,11 +193,11 @@ export default function Customers() {
     return matchesSearch && matchesStatus;
   });
 
-  const getCustomerOrders = (customerId) => {
+  const getCustomerOrders = (customerId: number) => {
     return orders.filter(order => order.orderId === customerId || order.customerId === customerId);
   };
 
-  const getTierIcon = (tier) => {
+  const getTierIcon = (tier: string) => {
     switch (tier) {
       case 'vip': return <Crown size={16} />;
       case 'premium': return <Star size={16} />;
