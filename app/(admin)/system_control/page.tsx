@@ -37,6 +37,7 @@ export default function SystemControl() {
 
   // Get current active section from pathname (optional, for styling)
   const getActiveSection = () => {
+    if (typeof window === 'undefined') return activeSection;
     // This would depend on your current route structure
     // You might need to use usePathname() from 'next/navigation'
     const pathname = window.location.pathname;
