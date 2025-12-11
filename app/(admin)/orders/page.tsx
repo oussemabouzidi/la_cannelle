@@ -205,12 +205,12 @@ export default function AdminOrders() {
   };
 
   const OrderDetailsModal = ({ order, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="p-6 border-b border-gray-300 bg-gray-50">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900 font-elegant">Order Details - {order.id}</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg text-gray-700">
               <X size={24} />
             </button>
           </div>
@@ -220,47 +220,47 @@ export default function AdminOrders() {
           {/* Client Information */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Client Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Client Information</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <User size={18} className="text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <User size={18} className="text-gray-600" />
                   <div>
-                    <p className="font-medium">{order.client}</p>
-                    <p className="text-sm text-gray-600">Client</p>
+                    <p className="font-medium text-gray-900">{order.client}</p>
+                    <p className="text-sm text-gray-700">Client</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Mail size={18} className="text-gray-400" />
-                  <p className="text-sm">{order.contact}</p>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Mail size={18} className="text-gray-600" />
+                  <p className="text-sm text-gray-900">{order.contact}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Phone size={18} className="text-gray-400" />
-                  <p className="text-sm">{order.phone}</p>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Phone size={18} className="text-gray-600" />
+                  <p className="text-sm text-gray-900">{order.phone}</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Event Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Event Details</h3>
               <div className="space-y-3">
-                <div>
-                  <p className="font-medium">{order.eventType}</p>
-                  <p className="text-sm text-gray-600">Event Type</p>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="font-medium text-gray-900">{order.eventType}</p>
+                  <p className="text-sm text-gray-700">Event Type</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Calendar size={18} className="text-gray-400" />
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Calendar size={18} className="text-gray-600" />
                   <div>
-                    <p className="font-medium">{order.eventDate}</p>
-                    <p className="text-sm text-gray-600">{order.eventTime}</p>
+                    <p className="font-medium text-gray-900">{order.eventDate}</p>
+                    <p className="text-sm text-gray-700">{order.eventTime}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Users size={18} className="text-gray-400" />
-                  <p>{order.guests} guests</p>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Users size={18} className="text-gray-600" />
+                  <p className="text-gray-900">{order.guests} guests</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <MapPin size={18} className="text-gray-400 mt-1" />
-                  <p className="text-sm">{order.location}</p>
+                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <MapPin size={18} className="text-gray-600 mt-1" />
+                  <p className="text-sm text-gray-900">{order.location}</p>
                 </div>
               </div>
             </div>
@@ -268,53 +268,53 @@ export default function AdminOrders() {
 
           {/* Order Items */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Order Items</h3>
             <div className="space-y-3">
               {order.dishes.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border border-gray-200">
                   <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    <p className="font-medium text-gray-900">{item.name}</p>
+                    <p className="text-sm text-gray-700">Qty: {item.quantity}</p>
                   </div>
-                  <p className="font-semibold">€{item.price * item.quantity}</p>
+                  <p className="font-semibold text-gray-900">€{item.price * item.quantity}</p>
                 </div>
               ))}
               {order.beverages.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border border-gray-200">
                   <div>
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    <p className="font-medium text-gray-900">{item.name}</p>
+                    <p className="text-sm text-gray-700">Qty: {item.quantity}</p>
                   </div>
-                  <p className="font-semibold">€{item.price * item.quantity}</p>
+                  <p className="font-semibold text-gray-900">€{item.price * item.quantity}</p>
                 </div>
               ))}
             </div>
-            <div className="flex justify-between items-center p-4 border-t border-gray-200 mt-4">
-              <p className="text-lg font-bold">Total</p>
-              <p className="text-lg font-bold">€{order.total}</p>
+            <div className="flex justify-between items-center p-4 border-t border-gray-300 mt-4 bg-gray-50 rounded-lg">
+              <p className="text-lg font-bold text-gray-900">Total</p>
+              <p className="text-lg font-bold text-gray-900">€{order.total}</p>
             </div>
           </div>
 
           {/* Special Requests */}
           {order.specialRequests && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Special Requests</h3>
-              <p className="text-gray-700 bg-amber-50 p-4 rounded-lg">{order.specialRequests}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 border-b pb-2">Special Requests</h3>
+              <p className="text-gray-900 bg-amber-50 p-4 rounded-lg border border-amber-200">{order.specialRequests}</p>
             </div>
           )}
 
           {/* Status Management */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Status Management</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Status Management</h3>
             <div className="flex flex-wrap gap-2">
               {statusOptions.map(status => (
                 <button
                   key={status.value}
                   onClick={() => updateOrderStatus(order.id, status.value)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors border ${
                     order.status === status.value 
-                      ? status.color 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? `${status.color} border-gray-300` 
+                      : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
                   }`}
                 >
                   {status.label}
@@ -325,17 +325,17 @@ export default function AdminOrders() {
 
           {/* Cancellation Section */}
           {order.status !== 'cancelled' && (
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-red-900 mb-4">Cancel Order</h3>
+            <div className="border-t border-gray-300 pt-6">
+              <h3 className="text-lg font-semibold text-red-800 mb-4 border-b pb-2">Cancel Order</h3>
               <div className="space-y-3">
                 <textarea
                   placeholder="Reason for cancellation..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 bg-white"
                   rows="3"
                 />
                 <button
                   onClick={() => cancelOrder(order.id, 'Client request')}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium border border-red-700"
                 >
                   Cancel Order & Process Refund
                 </button>
@@ -362,14 +362,14 @@ export default function AdminOrders() {
       `}</style>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-lg border-r border-gray-100 transition-transform duration-300 ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-300 transition-transform duration-300 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between p-6 border-b border-gray-300">
 <div className="text-2xl font-bold text-gray-900 font-elegant italic">
               <img src="/images/logo.png" alt="" />
-            </div>            <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
+            </div>            <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-200 text-gray-700">
               <X size={20} />
             </button>
           </div>
@@ -380,10 +380,10 @@ export default function AdminOrders() {
       <button
         key={item.id}
         onClick={() => handleNavigation(item.path)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border ${
           getActiveSection() === item.id
-            ? 'bg-amber-100 text-amber-700 border border-amber-200'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            ? 'bg-amber-100 text-amber-800 border-amber-300'
+            : 'text-gray-800 hover:bg-gray-100 border-transparent hover:border-gray-300'
         }`}
       >
         <item.icon size={20} />
@@ -393,14 +393,14 @@ export default function AdminOrders() {
   </div>
 </nav>
 
-          <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <Users className="text-amber-700" size={20} />
+          <div className="p-4 border-t border-gray-300">
+            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
+              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center border border-amber-300">
+                <Users className="text-amber-800" size={20} />
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-600">Administrator</p>
+                <p className="text-sm text-gray-700">Administrator</p>
               </div>
             </div>
           </div>
@@ -409,10 +409,10 @@ export default function AdminOrders() {
 
       {/* Main Content */}
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
-        <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
+        <header className="bg-white border-b border-gray-300">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
-              <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
+              <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-200 text-gray-700">
                 <Menu size={20} />
               </button>
               <h1 className="text-2xl font-bold text-gray-900 font-elegant">Orders Management</h1>
@@ -422,25 +422,25 @@ export default function AdminOrders() {
 
         <main className="p-6">
           {/* Filters and Search */}
-          <div className={`bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm mb-6 ${
+          <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6 ${
             isVisible ? 'animate-fade-in-up' : 'opacity-0'
           }`}>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
                 <input
                   type="text"
                   placeholder="Search orders..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
                 />
               </div>
               
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black  "
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
               >
                 <option value="all">All Status</option>
                 {statusOptions.map(status => (
@@ -451,14 +451,14 @@ export default function AdminOrders() {
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black"
+                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
               >
                 <option value="all">All Dates</option>
                 <option value="today">Today</option>
                 <option value="upcoming">Upcoming</option>
               </select>
 
-              <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2">
+              <button className="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2 border border-amber-700">
                 <RefreshCw size={16} />
                 Refresh
               </button>
@@ -466,61 +466,61 @@ export default function AdminOrders() {
           </div>
 
           {/* Orders List */}
-          <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm ${
+          <div className={`bg-white rounded-2xl shadow-sm border border-gray-300 ${
             isVisible ? 'animate-fade-in-up' : 'opacity-0'
           }`} style={{ animationDelay: '200ms' }}>
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-300">
               <h2 className="text-xl font-bold text-gray-900 font-elegant">All Orders ({filteredOrders.length})</h2>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Order ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Client</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Event</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Date & Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Guests</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Total</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-300">
                   {filteredOrders.map((order) => {
                     const statusConfig = statusOptions.find(s => s.value === order.status);
                     return (
                       <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
                           <div className="text-sm font-medium text-gray-900">{order.id}</div>
-                          <div className="text-sm text-gray-500">{order.createdAt}</div>
+                          <div className="text-sm text-gray-700">{order.createdAt}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
                           <div className="text-sm font-medium text-gray-900">{order.client}</div>
-                          <div className="text-sm text-gray-500">{order.contact}</div>
+                          <div className="text-sm text-gray-700">{order.contact}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
                           <div className="text-sm text-gray-900">{order.eventType}</div>
-                          <div className="text-sm text-gray-500">{order.menuTier}</div>
+                          <div className="text-sm text-gray-700">{order.menuTier}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
                           <div className="text-sm text-gray-900">{order.eventDate}</div>
-                          <div className="text-sm text-gray-500">{order.eventTime}</div>
+                          <div className="text-sm text-gray-700">{order.eventTime}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
                           {order.guests}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
                           <div className="text-sm font-semibold text-gray-900">€{order.total}</div>
                           <div className={`text-xs ${
-                            order.payment === 'paid' ? 'text-green-600' : 'text-amber-600'
+                            order.payment === 'paid' ? 'text-green-700' : 'text-amber-700'
                           }`}>
                             {order.payment === 'paid' ? 'Paid' : 'Pending'}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusConfig?.color}`}>
+                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusConfig?.color} border-gray-300`}>
                             {statusConfig?.label}
                           </span>
                         </td>
@@ -528,21 +528,21 @@ export default function AdminOrders() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setSelectedOrder(order)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="p-2 text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
                               title="View Details"
                             >
                               <Eye size={16} />
                             </button>
                             <button
                               onClick={() => updateOrderStatus(order.id, 'completed')}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-2 text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-200"
                               title="Mark Complete"
                             >
                               <CheckCircle size={16} />
                             </button>
                             <button
                               onClick={() => cancelOrder(order.id, 'Admin action')}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
                               title="Cancel Order"
                             >
                               <XCircle size={16} />
@@ -557,9 +557,9 @@ export default function AdminOrders() {
             </div>
 
             {filteredOrders.length === 0 && (
-              <div className="text-center py-12">
-                <Package size={48} className="mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500 text-lg">No orders found matching your criteria</p>
+              <div className="text-center py-12 border-t border-gray-300">
+                <Package size={48} className="mx-auto text-gray-500 mb-4" />
+                <p className="text-gray-700 text-lg">No orders found matching your criteria</p>
               </div>
             )}
           </div>

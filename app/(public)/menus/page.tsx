@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Clock, Users, Leaf, Plus, Minus, Heart, Calendar, Users as UsersIcon, Utensils, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -14,10 +14,39 @@ export default function MenusPage() {
   const [favorites, setFavorites] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMenuPlanModal, setShowMenuPlanModal] = useState(false);
+  const [isModalClosing, setIsModalClosing] = useState(false);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  // Handle click outside modal
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        closeModal();
+      }
+    };
+
+    if (showMenuPlanModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showMenuPlanModal]);
+
+  const closeModal = () => {
+    setIsModalClosing(true);
+    setTimeout(() => {
+      setShowMenuPlanModal(false);
+      setIsModalClosing(false);
+    }, 300);
+  };
 
   const toggleLanguage = () => {
     setLanguage(language === 'EN' ? 'DE' : 'EN');
@@ -308,7 +337,12 @@ export default function MenusPage() {
       );
 
   const addToMenuPlan = (item) => {
-    setSelectedItems(prev => [...prev, { ...item, quantity: 1 }]);
+    const existingItem = selectedItems.find(i => i.id === item.id);
+    if (existingItem) {
+      updateItemQuantity(item.id, existingItem.quantity + 1);
+    } else {
+      setSelectedItems(prev => [...prev, { ...item, quantity: 1 }]);
+    }
   };
 
   const removeFromMenuPlan = (itemId) => {
@@ -316,7 +350,10 @@ export default function MenusPage() {
   };
 
   const updateItemQuantity = (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
+    if (newQuantity < 1) {
+      removeFromMenuPlan(itemId);
+      return;
+    }
     setSelectedItems(prev => 
       prev.map(item => 
         item.id === itemId ? { ...item, quantity: newQuantity } : item
@@ -521,8 +558,18 @@ export default function MenusPage() {
   );
 
   const MenuPlanModal = () => (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-scale-in pt-24">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${showMenuPlanModal ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {/* Backdrop */}
+      <div 
+        className={`absolute inset-0 bg-black transition-opacity duration-300 ${showMenuPlanModal && !isModalClosing ? 'opacity-50' : 'opacity-0'}`}
+        onClick={closeModal}
+      />
+      
+      {/* Modal Content */}
+      <div 
+        ref={modalRef}
+        className={`relative bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto transition-all duration-300 transform ${showMenuPlanModal && !isModalClosing ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
+      >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-2xl font-bold text-gray-900 font-elegant">
@@ -533,7 +580,7 @@ export default function MenusPage() {
                 {t.menuBuilder.totalPrice}: ${getTotalPrice()}
               </span>
               <button
-                onClick={() => setShowMenuPlanModal(false)}
+                onClick={closeModal}
                 className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
               >
                 <X size={20} />
@@ -558,7 +605,7 @@ export default function MenusPage() {
           {/* Menu Items */}
           <div className="space-y-4 mb-6">
             {selectedItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div key={item.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                 <div className="flex items-center gap-4 flex-1">
                   <img 
                     src={item.image} 
@@ -581,8 +628,11 @@ export default function MenusPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <button 
-                      onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
-                      className="p-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateItemQuantity(item.id, item.quantity - 1);
+                      }}
+                      className="p-1 border border-gray-300 rounded hover:bg-gray-100 transition-colors duration-200 active:scale-95"
                       disabled={item.quantity <= 1}
                     >
                       <Minus size={14} />
@@ -591,8 +641,11 @@ export default function MenusPage() {
                       {item.quantity}
                     </span>
                     <button 
-                      onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
-                      className="p-1 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateItemQuantity(item.id, item.quantity + 1);
+                      }}
+                      className="p-1 border border-gray-300 rounded hover:bg-gray-100 transition-colors duration-200 active:scale-95"
                     >
                       <Plus size={14} />
                     </button>
@@ -603,8 +656,11 @@ export default function MenusPage() {
                   </span>
                   
                   <button 
-                    onClick={() => removeFromMenuPlan(item.id)}
-                    className="text-red-600 hover:text-red-800 transition-colors p-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromMenuPlan(item.id);
+                    }}
+                    className="text-red-600 hover:text-red-800 transition-colors duration-200 p-2 active:scale-95"
                   >
                     <X size={16} />
                   </button>
@@ -622,22 +678,28 @@ export default function MenusPage() {
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t border-gray-200">
             <button
-              onClick={clearAllItems}
+              onClick={(e) => {
+                e.stopPropagation();
+                clearAllItems();
+              }}
               disabled={selectedItems.length === 0}
-              className="flex-1 px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t.menuBuilder.clearAll}
             </button>
             <button
-              onClick={() => setShowMenuPlanModal(false)}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              onClick={closeModal}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 active:scale-95"
             >
               {t.menuBuilder.close}
             </button>
             <button 
-              onClick={handleOrderClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOrderClick();
+              }}
               disabled={selectedItems.length === 0}
-              className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t.nav.order}
             </button>
@@ -686,15 +748,6 @@ export default function MenusPage() {
           }
         }
         
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
-        }
-        
         .animate-fade-in-up {
           animation: fadeInUp 0.8s ease-out;
         }
@@ -705,10 +758,6 @@ export default function MenusPage() {
         
         .animate-scale-in {
           animation: scaleIn 0.6s ease-out;
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
         }
         
         body {
@@ -724,8 +773,8 @@ export default function MenusPage() {
         }
       `}</style>
 
-      {/* Menu Plan Modal */}
-      {showMenuPlanModal && <MenuPlanModal />}
+      {/* Menu Plan Modal - Always rendered, controlled by opacity */}
+      <MenuPlanModal />
 
       {/* Navbar */}
       <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 animate-fade-in-down">

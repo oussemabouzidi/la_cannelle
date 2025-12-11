@@ -6,7 +6,8 @@ import {
   Users, TrendingUp, Clock, Plus, Edit, Archive, Trash2,
   Search, Filter, Save, XCircle, CheckCircle, AlertCircle,
   Utensils, Wine, Coffee, Dessert, Mail, Phone, MapPin,
-  Star, Crown, Gift, Send, MoreVertical, Eye, MessageCircle
+  Star, Crown, Gift, Send, MoreVertical, Eye, MessageCircle,
+  User // Added User icon
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -35,7 +36,7 @@ export default function Customers() {
     return navigation.find(item => pathname.includes(item.id))?.id || 'dashboard';
   };
 
-  // Mock customer data
+  // Mock customer data with avatar URLs
   const [customers, setCustomers] = useState([
     {
       id: 1,
@@ -51,7 +52,8 @@ export default function Customers() {
       location: 'New York, NY',
       preferences: ['Italian', 'Vegetarian', 'Desserts'],
       allergies: ['Shellfish'],
-      notes: 'Prefers window seating'
+      notes: 'Prefers window seating',
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
     },
     {
       id: 2,
@@ -67,7 +69,8 @@ export default function Customers() {
       location: 'Brooklyn, NY',
       preferences: ['Asian Fusion', 'Spicy'],
       allergies: ['Peanuts'],
-      notes: 'Loyal customer - birthday in December'
+      notes: 'Loyal customer - birthday in December',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
     },
     {
       id: 3,
@@ -83,7 +86,8 @@ export default function Customers() {
       location: 'Queens, NY',
       preferences: ['Mexican', 'Gluten-Free'],
       allergies: ['Dairy', 'Gluten'],
-      notes: ''
+      notes: '',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
     },
     {
       id: 4,
@@ -99,7 +103,8 @@ export default function Customers() {
       location: 'Manhattan, NY',
       preferences: ['French', 'Steak', 'Wine Pairings'],
       allergies: [],
-      notes: 'VIP - corporate client'
+      notes: 'VIP - corporate client',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
     },
     {
       id: 5,
@@ -115,7 +120,8 @@ export default function Customers() {
       location: 'New Jersey',
       preferences: ['Seafood', 'Healthy'],
       allergies: ['Shellfish'],
-      notes: 'Prefers early reservations'
+      notes: 'Prefers early reservations',
+      avatar: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
     }
   ]);
 
@@ -218,9 +224,46 @@ export default function Customers() {
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 font-elegant">{customer.name}</h2>
-              <p className="text-gray-600">{customer.email}</p>
+            <div className="flex items-center gap-4">
+              {/* Avatar Image */}
+              <div className="relative">
+                <img 
+                  src={customer.avatar} 
+                  alt={customer.name}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-amber-200"
+                  onError={(e) => {
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                  }}
+                />
+                {/* Tier Badge */}
+                <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white ${
+                  customer.tier === 'vip' ? 'bg-purple-500' :
+                  customer.tier === 'premium' ? 'bg-amber-500' :
+                  'bg-gray-500'
+                }`}>
+                  {customer.tier === 'vip' ? (
+                    <Crown size={10} className="text-white" />
+                  ) : customer.tier === 'premium' ? (
+                    <Star size={10} className="text-white" />
+                  ) : null}
+                </div>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 font-elegant">{customer.name}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${tiers[customer.tier].color} flex items-center gap-1`}>
+                    {getTierIcon(customer.tier)}
+                    {tiers[customer.tier].label}
+                  </span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    customer.status === 'active' 
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {customer.status}
+                  </span>
+                </div>
+              </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
               <X size={24} />
@@ -235,17 +278,24 @@ export default function Customers() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Mail size={16} className="text-gray-400" />
-                    <span className="text-gray-700">{customer.email}</span>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Mail size={16} className="text-gray-600" />
+                    <span className="text-gray-900">{customer.email}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Phone size={16} className="text-gray-400" />
-                    <span className="text-gray-700">{customer.phone}</span>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Phone size={16} className="text-gray-600" />
+                    <span className="text-gray-900">{customer.phone}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin size={16} className="text-gray-400" />
-                    <span className="text-gray-700">{customer.location}</span>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <MapPin size={16} className="text-gray-600" />
+                    <span className="text-gray-900">{customer.location}</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Calendar size={16} className="text-gray-600" />
+                    <div>
+                      <span className="text-gray-900">Member since {new Date(customer.joinDate).toLocaleDateString()}</span>
+                      <p className="text-xs text-gray-600 mt-1">{customer.totalOrders} orders · €{customer.totalSpent} total spent</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -278,7 +328,7 @@ export default function Customers() {
                   {customer.notes && (
                     <div>
                       <p className="text-sm font-medium text-gray-700 mb-2">Additional Notes</p>
-                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{customer.notes}</p>
+                      <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200">{customer.notes}</p>
                     </div>
                   )}
                 </div>
@@ -290,7 +340,7 @@ export default function Customers() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
               <div className="space-y-3">
                 {getCustomerOrders(customer.id).map((order) => (
-                  <div key={order.id} className="p-4 border border-gray-200 rounded-lg">
+                  <div key={order.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-medium text-gray-900">Order #{order.id}</p>
@@ -312,8 +362,30 @@ export default function Customers() {
                   </div>
                 ))}
                 {getCustomerOrders(customer.id).length === 0 && (
-                  <p className="text-gray-500 text-center py-4">No orders found</p>
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <Package size={32} className="mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-500">No orders found</p>
+                  </div>
                 )}
+              </div>
+
+              {/* Quick Actions */}
+              <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
+                <div className="flex flex-wrap gap-2">
+                  <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium flex items-center gap-2">
+                    <MessageCircle size={14} />
+                    Send Message
+                  </button>
+                  <button className="px-4 py-2 bg-white text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium flex items-center gap-2">
+                    <Gift size={14} />
+                    Send Offer
+                  </button>
+                  <button className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium flex items-center gap-2">
+                    <Edit size={14} />
+                    Edit Profile
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -582,8 +654,21 @@ export default function Customers() {
                           {/* Customer Header */}
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-                                <Users className="text-amber-600" size={20} />
+                              <div className="relative">
+                                <img 
+                                  src={customer.avatar} 
+                                  alt={customer.name}
+                                  className="w-12 h-12 rounded-full object-cover border-2 border-amber-200"
+                                  onError={(e) => {
+                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                                  }}
+                                />
+                                {/* Tier Badge */}
+                                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border border-white ${
+                                  customer.tier === 'vip' ? 'bg-purple-500' :
+                                  customer.tier === 'premium' ? 'bg-amber-500' :
+                                  'bg-gray-500'
+                                }`} />
                               </div>
                               <div>
                                 <h3 className="font-semibold text-gray-900">{customer.name}</h3>
@@ -680,7 +765,14 @@ export default function Customers() {
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                                <Users className="text-amber-600" size={16} />
+                                <img 
+                                  src={customer?.avatar} 
+                                  alt={customer?.name}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                  onError={(e) => {
+                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                                  }}
+                                />
                               </div>
                               <div>
                                 <p className="font-semibold text-gray-900">{customer?.name}</p>

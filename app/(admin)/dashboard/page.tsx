@@ -362,46 +362,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className={`mt-8 bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm ${
-            isVisible ? 'animate-fade-in-up' : 'opacity-0'
-          }`} style={{ animationDelay: '600ms' }}>
-            <h2 className="text-xl font-bold text-gray-900 font-elegant mb-6">Quick Actions</h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button className="p-4 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors text-center group">
-                <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-amber-200 transition-colors">
-                  <Plus className="text-amber-700" size={24} />
-                </div>
-                <p className="font-semibold text-gray-900">New Menu Item</p>
-                <p className="text-sm text-gray-600">Add dish</p>
-              </button>
-              
-              <button className="p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors text-center group">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-200 transition-colors">
-                  <Calendar className="text-blue-700" size={24} />
-                </div>
-                <p className="font-semibold text-gray-900">Manage Calendar</p>
-                <p className="text-sm text-gray-600">Set dates</p>
-              </button>
-              
-              <button className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors text-center group">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200 transition-colors">
-                  <Users className="text-green-700" size={24} />
-                </div>
-                <p className="font-semibold text-gray-900">Customer List</p>
-                <p className="text-sm text-gray-600">View all</p>
-              </button>
-              
-              <button className="p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-colors text-center group">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-200 transition-colors">
-                  <DollarSign className="text-purple-700" size={24} />
-                </div>
-                <p className="font-semibold text-gray-900">Generate Report</p>
-                <p className="text-sm text-gray-600">Export data</p>
-              </button>
-            </div>
-          </div>
         </main>
       </div>
     </div>
