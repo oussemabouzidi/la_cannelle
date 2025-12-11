@@ -194,7 +194,7 @@ export default function Customers() {
   });
 
   const getCustomerOrders = (customerId: number) => {
-    return orders.filter(order => order.orderId === customerId || order.customerId === customerId);
+    return orders.filter(order => order.customerId === customerId);
   };
 
   const getTierIcon = (tier: string) => {
