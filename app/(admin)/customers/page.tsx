@@ -12,6 +12,24 @@ import {
 
 import { useRouter } from 'next/navigation';
 
+interface Customer {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  joinDate: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrder: string;
+  status: 'active' | 'inactive';
+  tier: 'regular' | 'premium' | 'vip';
+  location: string;
+  preferences: string[];
+  allergies: string[];
+  notes: string;
+  avatar: string;
+}
+
 export default function Customers() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
@@ -19,7 +37,7 @@ export default function Customers() {
   const [activeTab, setActiveTab] = useState('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showPromotionModal, setShowPromotionModal] = useState(false);
 
   const router = useRouter();
@@ -37,7 +55,7 @@ export default function Customers() {
   };
 
   // Mock customer data with avatar URLs
-  const [customers, setCustomers] = useState([
+  const [customers, setCustomers] = useState<Customer[]>([
     {
       id: 1,
       name: 'Sarah Johnson',
@@ -179,7 +197,7 @@ export default function Customers() {
     router.push(path);
   };
 
-  const tiers = {
+  const tiers: Record<'regular' | 'premium' | 'vip', { label: string; color: string }> = {
     regular: { label: 'Regular', color: 'text-gray-600 bg-gray-100' },
     premium: { label: 'Premium', color: 'text-amber-700 bg-amber-100' },
     vip: { label: 'VIP', color: 'text-purple-700 bg-purple-100' }
@@ -219,7 +237,7 @@ export default function Customers() {
     });
   };
 
-  const CustomerDetailModal = ({ customer, onClose }) => (
+  const CustomerDetailModal = ({ customer, onClose }: { customer: Customer; onClose: () => void }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
@@ -232,7 +250,7 @@ export default function Customers() {
                   alt={customer.name}
                   className="w-16 h-16 rounded-full object-cover border-2 border-amber-200"
                   onError={(e) => {
-                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
                   }}
                 />
                 {/* Tier Badge */}
@@ -444,7 +462,7 @@ export default function Customers() {
             <textarea
               value={promotion.message}
               onChange={(e) => setPromotion(prev => ({ ...prev, message: e.target.value }))}
-              rows="4"
+              rows={4}
               placeholder="Write your promotion message here..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
             />
@@ -660,7 +678,7 @@ export default function Customers() {
                                   alt={customer.name}
                                   className="w-12 h-12 rounded-full object-cover border-2 border-amber-200"
                                   onError={(e) => {
-                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
                                   }}
                                 />
                                 {/* Tier Badge */}
@@ -770,7 +788,7 @@ export default function Customers() {
                                   alt={customer?.name}
                                   className="w-10 h-10 rounded-full object-cover"
                                   onError={(e) => {
-                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
                                   }}
                                 />
                               </div>
@@ -800,7 +818,7 @@ export default function Customers() {
                               </div>
                             </div>
                             <button
-                              onClick={() => setSelectedCustomer(customer)}
+                              onClick={() => customer && setSelectedCustomer(customer)}
                               className="px-3 py-1 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors text-sm font-medium"
                             >
                               View Profile
