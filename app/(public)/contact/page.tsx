@@ -485,7 +485,7 @@ const handleOrderClick = () => {
                       value={formData.message}
                       onChange={handleInputChange}
                       required
-                      rows="6"
+                      rows={6}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 resize-none text-gray-900 bg-white placeholder-gray-500"
                       placeholder="Tell us about your event and any special requirements..."
                     ></textarea>
@@ -627,7 +627,7 @@ const handleOrderClick = () => {
     className="absolute inset-0 z-20"
     onLoad={() => {
       // Hide fallback when iframe loads
-      const fallback = document.querySelector('.iframe-fallback');
+      const fallback = document.querySelector('.iframe-fallback') as HTMLElement | null;
       if (fallback) {
         fallback.style.display = 'none';
       }

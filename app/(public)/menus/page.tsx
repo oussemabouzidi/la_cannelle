@@ -9,13 +9,13 @@ export default function MenusPage() {
   const [language, setLanguage] = useState('EN');
   const [activeCategory, setActiveCategory] = useState('all');
   const [isVisible, setIsVisible] = useState(false);
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [quantity, setQuantity] = useState(20);
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showMenuPlanModal, setShowMenuPlanModal] = useState(false);
   const [isModalClosing, setIsModalClosing] = useState(false);
-  const modalRef = useRef(null);
+  const modalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -23,8 +23,8 @@ export default function MenusPage() {
 
   // Handle click outside modal
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         closeModal();
       }
     };
@@ -52,7 +52,7 @@ export default function MenusPage() {
     setLanguage(language === 'EN' ? 'DE' : 'EN');
   };
 
-  const content = {
+  const content: Record<string, any> = {
     EN: {
       nav: {
         about: 'About',

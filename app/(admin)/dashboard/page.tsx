@@ -78,7 +78,7 @@ export default function AdminDashboard() {
     { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
   ];
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: string) => {
     router.push(path);
   };
 

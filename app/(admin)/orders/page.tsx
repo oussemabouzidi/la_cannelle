@@ -16,12 +16,12 @@ export default function AdminOrders() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('orders');
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: string) => {
     router.push(path);
   };
 
@@ -331,7 +331,7 @@ export default function AdminOrders() {
                 <textarea
                   placeholder="Reason for cancellation..."
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 bg-white"
-                  rows="3"
+                  rows={3}
                 />
                 <button
                   onClick={() => cancelOrder(order.id, 'Client request')}

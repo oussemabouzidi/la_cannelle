@@ -11,6 +11,49 @@ import {
 
 import { useRouter } from 'next/navigation';
 
+type MenuType = {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  type: string;
+  isActive: boolean;
+  startDate?: string;
+  endDate?: string;
+  price?: number;
+  products: number[];
+  image: string;
+};
+
+type MenuItem = {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  menuCategory: string;
+  price: number;
+  cost: number;
+  available: boolean;
+  tier: string[];
+  preparationTime: number;
+  ingredients: string[];
+  allergens: string[];
+  productCategories: string[];
+  menus: number[];
+  image: string;
+  popularity: number;
+};
+
+type NewItemState = Omit<MenuItem, 'id' | 'popularity'> & {
+  id?: number;
+  popularity?: number;
+};
+
+type NewMenuState = Omit<MenuType, 'id' | 'products'> & {
+  id?: number;
+  products: number[];
+};
+
 export default function AdminMenuManagement() {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -20,14 +63,14 @@ export default function AdminMenuManagement() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [menuFilter, setMenuFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [editingItem, setEditingItem] = useState(null);
+  const [editingItem, setEditingItem] = useState<MenuItem | MenuType | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAddMenuForm, setShowAddMenuForm] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
-  const [selectedMenu, setSelectedMenu] = useState(null);
+  const [selectedMenu, setSelectedMenu] = useState<MenuType | null>(null);
   const [viewMode, setViewMode] = useState('split'); // 'split', 'menus', 'products'
-  const [expandedMenu, setExpandedMenu] = useState(null);
-  const [selectedMenuForDetail, setSelectedMenuForDetail] = useState(null);
+  const [expandedMenu, setExpandedMenu] = useState<number | null>(null);
+  const [selectedMenuForDetail, setSelectedMenuForDetail] = useState<MenuType | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -46,7 +89,7 @@ export default function AdminMenuManagement() {
   ];
 
   // Mock menus data
-  const [menus, setMenus] = useState([
+  const [menus, setMenus] = useState<MenuType[]>([
     {
       id: 1,
       name: 'Spring Menu',
@@ -83,7 +126,7 @@ export default function AdminMenuManagement() {
   ]);
 
   // Mock menu items data with categories and menu associations
-  const [menuItems, setMenuItems] = useState([
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([
     {
       id: 1,
       name: 'Truffle Mushroom Risotto',
@@ -286,12 +329,12 @@ export default function AdminMenuManagement() {
     { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
   ];
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: string) => {
     router.push(path);
   };
 
   // New item form state
-  const [newItem, setNewItem] = useState({
+  const [newItem, setNewItem] = useState<NewItemState>({
     name: '',
     description: '',
     category: 'starter',
@@ -309,7 +352,7 @@ export default function AdminMenuManagement() {
   });
 
   // New menu form state
-  const [newMenu, setNewMenu] = useState({
+  const [newMenu, setNewMenu] = useState<NewMenuState>({
     name: '',
     description: '',
     category: 'seasonal',
@@ -338,13 +381,13 @@ export default function AdminMenuManagement() {
   });
 
   // Get products for selected menu
-  const getProductsForSelectedMenu = () => {
+  const getProductsForSelectedMenu = (): MenuItem[] => {
     if (!selectedMenu) return menuItems;
     return menuItems.filter(item => selectedMenu.products.includes(item.id));
   };
 
   // Get products in a specific menu
-  const getProductsInMenu = (menuId) => {
+  const getProductsInMenu = (menuId: number): MenuItem[] => {
     const menu = menus.find(m => m.id === menuId);
     if (!menu) return [];
     return menuItems.filter(item => menu.products.includes(item.id));
@@ -352,11 +395,11 @@ export default function AdminMenuManagement() {
 
   // CRUD Operations for Menu Items
   const addMenuItem = () => {
-    const item = {
+    const item: MenuItem = {
       ...newItem,
       id: Math.max(...menuItems.map(i => i.id)) + 1,
       popularity: Math.floor(Math.random() * 30) + 70
-    };
+    } as MenuItem;
     setMenuItems([...menuItems, item]);
     
     // Update menus that include this product
@@ -377,8 +420,9 @@ export default function AdminMenuManagement() {
     setShowAddForm(false);
   };
 
-  const updateMenuItem = (updatedItem) => {
+  const updateMenuItem = (updatedItem: MenuItem) => {
     const oldItem = menuItems.find(item => item.id === updatedItem.id);
+    if (!oldItem) return;
     
     setMenuItems(menuItems.map(item => 
       item.id === updatedItem.id ? updatedItem : item
@@ -408,7 +452,7 @@ export default function AdminMenuManagement() {
 
   // CRUD Operations for Menus
   const addMenu = () => {
-    const menu = {
+    const menu: MenuType = {
       ...newMenu,
       id: Math.max(...menus.map(m => m.id)) + 1,
       products: [] // Will be populated when products are added
@@ -418,19 +462,19 @@ export default function AdminMenuManagement() {
     setShowAddMenuForm(false);
   };
 
-  const updateMenu = (updatedMenu) => {
+  const updateMenu = (updatedMenu: MenuType) => {
     setMenus(menus.map(menu => 
       menu.id === updatedMenu.id ? updatedMenu : menu
     ));
   };
 
-  const toggleMenuActive = (menuId) => {
+  const toggleMenuActive = (menuId: number) => {
     setMenus(menus.map(menu => 
       menu.id === menuId ? { ...menu, isActive: !menu.isActive } : menu
     ));
   };
 
-  const deleteMenu = (menuId) => {
+  const deleteMenu = (menuId: number) => {
     // Remove menu from all products first
     const updatedItems = menuItems.map(item => ({
       ...item,
@@ -448,13 +492,13 @@ export default function AdminMenuManagement() {
     }
   };
 
-  const archiveMenuItem = (id) => {
+  const archiveMenuItem = (id: number) => {
     setMenuItems(menuItems.map(item => 
       item.id === id ? { ...item, available: false } : item
     ));
   };
 
-  const deleteMenuItem = (id) => {
+  const deleteMenuItem = (id: number) => {
     // Remove item from all menus first
     const updatedMenus = menus.map(menu => ({
       ...menu,
@@ -466,14 +510,14 @@ export default function AdminMenuManagement() {
     setMenuItems(menuItems.filter(item => item.id !== id));
   };
 
-  const restoreMenuItem = (id) => {
+  const restoreMenuItem = (id: number) => {
     setMenuItems(menuItems.map(item => 
       item.id === id ? { ...item, available: true } : item
     ));
   };
 
   // Helper functions
-  const toggleTier = (tier) => {
+  const toggleTier = (tier: string) => {
     setNewItem(prev => ({
       ...prev,
       tier: prev.tier.includes(tier) 
@@ -482,7 +526,7 @@ export default function AdminMenuManagement() {
     }));
   };
 
-  const toggleProductCategory = (category) => {
+  const toggleProductCategory = (category: string) => {
     setNewItem(prev => ({
       ...prev,
       productCategories: prev.productCategories.includes(category)
@@ -491,7 +535,7 @@ export default function AdminMenuManagement() {
     }));
   };
 
-  const toggleMenuAssociation = (menuId) => {
+  const toggleMenuAssociation = (menuId: number) => {
     setNewItem(prev => ({
       ...prev,
       menus: prev.menus.includes(menuId)
@@ -507,25 +551,25 @@ export default function AdminMenuManagement() {
     }));
   };
 
-  const updateIngredient = (index, value) => {
+  const updateIngredient = (index: number, value: string) => {
     const newIngredients = [...newItem.ingredients];
     newIngredients[index] = value;
     setNewItem(prev => ({ ...prev, ingredients: newIngredients }));
   };
 
-  const removeIngredient = (index) => {
+  const removeIngredient = (index: number) => {
     setNewItem(prev => ({
       ...prev,
       ingredients: prev.ingredients.filter((_, i) => i !== index)
     }));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result;
+        const base64String = typeof reader.result === 'string' ? reader.result : '';
         setImagePreview(base64String);
         if (editingItem) {
           setEditingItem({ ...editingItem, image: base64String });
@@ -572,12 +616,12 @@ export default function AdminMenuManagement() {
     });
   };
 
-  const getMenuName = (menuId) => {
+  const getMenuName = (menuId: number) => {
     const menu = menus.find(m => m.id === menuId);
     return menu ? menu.name : 'Unknown Menu';
   };
 
-  const viewMenuDetails = (menu) => {
+  const viewMenuDetails = (menu: MenuType) => {
     setSelectedMenuForDetail(menu);
     // If in split view, also select the menu
     if (viewMode === 'split') {
@@ -585,7 +629,7 @@ export default function AdminMenuManagement() {
     }
   };
 
-  const ImageWithFallback = ({ src, alt, className }) => {
+  const ImageWithFallback = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
     const [imgSrc, setImgSrc] = useState(src);
     const [hasError, setHasError] = useState(false);
 
@@ -615,20 +659,20 @@ export default function AdminMenuManagement() {
     );
   };
 
-  const EditFormModal = ({ item, onSave, onClose }) => {
-    const [localItem, setLocalItem] = useState(item);
+  const EditFormModal = ({ item, onSave, onClose }: { item: MenuItem; onSave: (updatedItem: MenuItem) => void; onClose: () => void }) => {
+    const [localItem, setLocalItem] = useState<MenuItem>(item);
     const [localImagePreview, setLocalImagePreview] = useState(item.image);
 
-    const handleLocalSave = (updatedItem) => {
+    const handleLocalSave = (updatedItem: MenuItem) => {
       setLocalItem(updatedItem);
     };
 
-    const handleImageUploadLocal = (e) => {
-      const file = e.target.files[0];
+    const handleImageUploadLocal = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
       if (file) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          const base64String = reader.result;
+          const base64String = typeof reader.result === 'string' ? reader.result : '';
           setLocalImagePreview(base64String);
           handleLocalSave({ ...localItem, image: base64String });
         };
@@ -636,7 +680,7 @@ export default function AdminMenuManagement() {
       }
     };
 
-    const toggleLocalProductCategory = (category) => {
+    const toggleLocalProductCategory = (category: string) => {
       handleLocalSave({
         ...localItem,
         productCategories: localItem.productCategories.includes(category)
@@ -645,7 +689,7 @@ export default function AdminMenuManagement() {
       });
     };
 
-    const toggleLocalMenuAssociation = (menuId) => {
+    const toggleLocalMenuAssociation = (menuId: number) => {
       handleLocalSave({
         ...localItem,
         menus: localItem.menus.includes(menuId)
@@ -758,7 +802,7 @@ export default function AdminMenuManagement() {
                   <textarea
                     value={localItem.description}
                     onChange={(e) => handleLocalSave({ ...localItem, description: e.target.value })}
-                    rows="3"
+                    rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder="Describe the dish, ingredients, and special features"
                   />
@@ -1009,7 +1053,7 @@ export default function AdminMenuManagement() {
                 <textarea
                   value={newItem.description}
                   onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                  rows="3"
+                  rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                   placeholder="Describe the dish, ingredients, preparation style, and special features..."
                 />
@@ -1230,7 +1274,7 @@ export default function AdminMenuManagement() {
             <textarea
               value={newMenu.description}
               onChange={(e) => setNewMenu({ ...newMenu, description: e.target.value })}
-              rows="3"
+              rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
               placeholder="Describe this menu, its theme, and target audience..."
             />
@@ -1331,7 +1375,7 @@ export default function AdminMenuManagement() {
     </div>
   );
 
-  const MenuDetailModal = ({ menu, onClose }) => {
+  const MenuDetailModal = ({ menu, onClose }: { menu: MenuType; onClose: () => void }) => {
     const productsInMenu = getProductsInMenu(menu.id);
     
     return (
@@ -1380,7 +1424,7 @@ export default function AdminMenuManagement() {
                   <div>
                     <p className="text-sm text-gray-500">Price</p>
                     <p className="font-bold text-gray-900">
-                      {menu.price > 0 ? `€${menu.price}` : 'Variable Pricing'}
+                      {(menu.price ?? 0) > 0 ? `€${menu.price}` : 'Variable Pricing'}
                     </p>
                   </div>
                 </div>
@@ -1501,7 +1545,7 @@ export default function AdminMenuManagement() {
     );
   };
 
-  const MenuCard = ({ menu, showActions = true, isSelected = false }) => {
+  const MenuCard = ({ menu, showActions = true, isSelected = false }: { menu: MenuType; showActions?: boolean; isSelected?: boolean }) => {
     const productsInMenu = getProductsInMenu(menu.id);
     
     return (
@@ -1533,7 +1577,7 @@ export default function AdminMenuManagement() {
                 }`}>
                   {menu.isActive ? 'Active' : 'Inactive'}
                 </span>
-                {menu.price > 0 && (
+                {(menu.price ?? 0) > 0 && (
                   <span className="text-sm font-bold text-gray-900">€{menu.price}</span>
                 )}
               </div>
@@ -1597,7 +1641,7 @@ export default function AdminMenuManagement() {
     );
   };
 
-  const ProductCard = ({ item }) => (
+  const ProductCard = ({ item }: { item: MenuItem }) => (
     <div
       className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-md ${
         isVisible ? 'animate-fade-in-up' : 'opacity-0'
@@ -1651,7 +1695,7 @@ export default function AdminMenuManagement() {
         {/* Product Categories */}
         <div className="mb-3">
           <div className="flex flex-wrap gap-1">
-            {item.productCategories.slice(0, 3).map(category => (
+            {item.productCategories.slice(0, 3).map((category: string) => (
               <span key={category} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs capitalize">
                 {category.replace('-', ' ')}
               </span>
@@ -1668,7 +1712,7 @@ export default function AdminMenuManagement() {
         <div className="mb-3">
           <p className="text-xs text-gray-500 mb-1">Included in menus:</p>
           <div className="flex flex-wrap gap-1">
-            {item.menus.slice(0, 2).map(menuId => {
+            {item.menus.slice(0, 2).map((menuId: number) => {
               const menu = menus.find(m => m.id === menuId);
               return menu ? (
                 <span key={menuId} className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs">
@@ -2088,7 +2132,7 @@ export default function AdminMenuManagement() {
       {/* Modals */}
       {editingItem && (
         <EditFormModal 
-          item={editingItem}
+          item={editingItem as MenuItem}
           onSave={updateMenuItem}
           onClose={() => setEditingItem(null)}
         />

@@ -988,7 +988,7 @@ export default function AboutPage() {
                 className="w-full h-100"
                 onLoad={() => {
                   // Hide fallback when iframe loads
-                  const fallback = document.querySelector('.iframe-fallback');
+                  const fallback = document.querySelector('.iframe-fallback') as HTMLElement | null;
                   if (fallback) {
                     fallback.style.display = 'none';
                   }

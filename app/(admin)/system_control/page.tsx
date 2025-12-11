@@ -111,8 +111,8 @@ export default function SystemControl() {
     setCapacitySettings(prev => ({ ...prev, ...updates }));
   };
 
-  const isDateInPast = (dateString) => {
-    return new Date(dateString) < new Date().setHours(0, 0, 0, 0);
+  const isDateInPast = (dateString: string) => {
+    return new Date(dateString).getTime() < new Date().setHours(0, 0, 0, 0);
   };
 
   const upcomingClosedDates = closedDates.filter(date => !isDateInPast(date.date));
