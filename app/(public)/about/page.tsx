@@ -218,7 +218,8 @@ export default function AboutPage() {
     }
   } as const;
 
-  const t = translations[language];
+  type AboutTranslation = typeof translations.EN;
+  const t: AboutTranslation = translations[language as keyof typeof translations];
 
   return (
     <div className="min-h-screen bg-white">
