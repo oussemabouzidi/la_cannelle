@@ -23,17 +23,17 @@ export default function CateringHomepage() {
     router.push('/order');
   };
   const brandLogos = [
-    { name: 'Montblanc', src: '/images/logos/montblanc.png' },
-    { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
-    { name: 'OMG', src: '/images/logos/omg.png' },
-    { name: 'DoiT International', src: '/images/logos/doit.png' },
-    { name: 'BBDO', src: '/images/logos/bbdo.png' },
-    { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
-    { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
-    { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
-    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.png' },
-    { name: 'Samsonite', src: '/images/logos/samsonite.png' },
-    { name: 'SABIC', src: '/images/logos/sabic.png' },
+    { name: 'Montblanc', src: '/public/images/logos/montblanc.png' },
+    { name: 'Omnicom Media Group', src: '/public/images/logos/omnicom-media-group.png' },
+    { name: 'OMG', src: '/public/images/logos/omg.png' },
+    { name: 'DoiT International', src: '/public/images/logos/doit.png' },
+    { name: 'BBDO', src: '/public/images/logos/bbdo.png' },
+    { name: 'IWC Schaffhausen', src: '/public/images/logos/iwc.png' },
+    { name: 'Ruby Hotels', src: '/public/images/logos/ruby-hotels.svg' },
+    { name: 'RIMOWA', src: '/public/images/logos/rimowa.png' },
+    { name: 'Ralph Lauren', src: '/public/images/logos/ralph-lauren.png' },
+    { name: 'Samsonite', src: '/public/images/logos/samsonite.png' },
+    { name: 'SABIC', src: '/public/images/logos/sabic.png' },
   ];
 
   return (
@@ -849,7 +849,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Brand Banner */}
-      <section className="bg-white py-16 border-t border-b border-gray-100">
+      <section className="bg-stone-50 py-16 border-t border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-4">
             <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
@@ -858,12 +858,15 @@ export default function CateringHomepage() {
           <div className="relative overflow-hidden py-10">
             <div className="flex items-center gap-24 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '220%' }}>
               {[...brandLogos, ...brandLogos].map((logo, idx) => (
-              <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-36 px-10 opacity-95 hover:opacity-100 transition-opacity duration-200">
+                <div
+                  key={`${logo.name}-${idx}`}
+                  className="flex items-center justify-center h-36 px-10 opacity-95 hover:opacity-100 transition-all duration-200"
+                >
                   <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    className="h-32 w-auto object-contain transition-all duration-200 drop-shadow-lg"
-                    style={{ filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))' }}
+                    className="h-32 w-auto object-contain transition-all duration-200 drop-shadow-md bg-white rounded-lg p-3 border border-gray-200"
+                    style={{ filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.15))' }}
                     loading="lazy"
                   />
                 </div>
@@ -922,8 +925,3 @@ export default function CateringHomepage() {
     </div>
   );
 }
-
-
-
-
-
