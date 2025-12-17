@@ -22,6 +22,7 @@ export default function CateringHomepage() {
   const handleOrderClick = () => {
     router.push('/order');
   };
+
   const brandLogos = [
     { name: 'Montblanc', src: '/images/logos/montblanc.png' },
     { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
@@ -31,7 +32,7 @@ export default function CateringHomepage() {
     { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
     { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
     { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
-    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.png' },
+    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.jpg' },
     { name: 'Samsonite', src: '/images/logos/samsonite.png' },
     { name: 'SABIC', src: '/images/logos/sabic.png' },
   ];
@@ -141,7 +142,7 @@ export default function CateringHomepage() {
         }
 
         .animate-logo-marquee {
-          animation: marquee 30s linear infinite;
+          animation: marquee 50s linear infinite;
         }
         
         .animate-float {
