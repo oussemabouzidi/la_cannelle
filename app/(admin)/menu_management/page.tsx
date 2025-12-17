@@ -118,6 +118,53 @@ export default function AdminMenuManagement() {
     image: menu.image || ''
   });
 
+  const MenuDetailModal = ({ menu, onClose }: { menu: MenuType; onClose: () => void }) => (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full overflow-hidden">
+        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+          <div>
+            <p className="text-xs uppercase text-amber-600 font-semibold">{menu.category}</p>
+            <h2 className="text-2xl font-bold text-gray-900">{menu.name}</h2>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="grid md:grid-cols-2 gap-0">
+          <div className="p-6 space-y-3">
+            <p className="text-gray-700 leading-relaxed">{menu.description || 'No description provided.'}</p>
+            <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+              <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full font-semibold">
+                {menu.type || 'Unspecified'}
+              </span>
+              <span className={`px-3 py-1 rounded-full font-semibold ${menu.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                {menu.isActive ? 'Active' : 'Inactive'}
+              </span>
+              {menu.price !== undefined && (
+                <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full font-semibold">
+                  ƒ'ª{menu.price}
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-gray-600 space-y-1">
+              {menu.startDate && <p>Starts: {new Date(menu.startDate).toLocaleDateString()}</p>}
+              {menu.endDate && <p>Ends: {new Date(menu.endDate).toLocaleDateString()}</p>}
+            </div>
+          </div>
+          <div className="p-6 bg-gray-50">
+            <div className="aspect-video w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
+              {menu.image ? (
+                <img src={menu.image} alt={menu.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const normalizeProduct = (product: any): MenuItem => ({
     id: product.id,
     name: product.name,
