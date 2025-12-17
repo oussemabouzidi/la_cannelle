@@ -95,6 +95,10 @@ export default function Customers() {
     router.push(path);
   };
 
+  const fallbackAvatar =
+    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+  const getAvatarSrc = (avatar?: string | null) => avatar || fallbackAvatar;
+
   const tiers: Record<'regular' | 'premium' | 'vip', { label: string; color: string }> = {
     regular: { label: 'Regular', color: 'text-gray-600 bg-gray-100' },
     premium: { label: 'Premium', color: 'text-amber-700 bg-amber-100' },
@@ -153,11 +157,11 @@ export default function Customers() {
               {/* Avatar Image */}
               <div className="relative">
                 <img 
-                  src={customer.avatar} 
-                  alt={customer.name}
+                  src={getAvatarSrc(customer.avatar)} 
+                  alt={customer.name || 'Customer avatar'}
                   className="w-16 h-16 rounded-full object-cover border-2 border-amber-200"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                    (e.target as HTMLImageElement).src = fallbackAvatar;
                   }}
                 />
                 {/* Tier Badge */}
@@ -589,11 +593,11 @@ export default function Customers() {
                             <div className="flex items-center gap-3">
                               <div className="relative">
                                 <img 
-                                  src={customer.avatar} 
-                                  alt={customer.name}
+                                  src={getAvatarSrc(customer.avatar)} 
+                                  alt={customer.name || 'Customer avatar'}
                                   className="w-12 h-12 rounded-full object-cover border-2 border-amber-200"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                                    (e.target as HTMLImageElement).src = fallbackAvatar;
                                   }}
                                 />
                                 {/* Tier Badge */}
@@ -699,11 +703,11 @@ export default function Customers() {
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
                                 <img 
-                                  src={customer?.avatar} 
-                                  alt={customer?.name}
+                                  src={getAvatarSrc(customer?.avatar)} 
+                                  alt={customer?.name || 'Customer avatar'}
                                   className="w-10 h-10 rounded-full object-cover"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                                    (e.target as HTMLImageElement).src = fallbackAvatar;
                                   }}
                                 />
                               </div>
