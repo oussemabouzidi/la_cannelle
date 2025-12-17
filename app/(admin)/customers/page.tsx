@@ -97,7 +97,7 @@ export default function Customers() {
 
   const fallbackAvatar =
     'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
-  const getAvatarSrc = (avatar?: string | null) => avatar || fallbackAvatar;
+  const getAvatarSrc = (avatar?: string | null): string => avatar ?? fallbackAvatar;
 
   const tiers: Record<'regular' | 'premium' | 'vip', { label: string; color: string }> = {
     regular: { label: 'Regular', color: 'text-gray-600 bg-gray-100' },
