@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
 
@@ -67,8 +67,8 @@ export const authService = {
     // Generate token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      JWT_SECRET as Secret,
+      { expiresIn: JWT_EXPIRES_IN } as SignOptions
     );
 
     return { user, token };
@@ -96,8 +96,8 @@ export const authService = {
     // Generate token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      JWT_SECRET as Secret,
+      { expiresIn: JWT_EXPIRES_IN } as SignOptions
     );
 
     return {

@@ -55,7 +55,7 @@ export const customerService = {
     const customersWithStats = await Promise.all(
       customers.map(async (customer) => {
         const orderStats = await prisma.order.aggregate({
-          where: { userId: customer.id, paymentStatus: 'PAID' },
+          where: { userId: customer.id },
           _sum: { total: true },
           _count: true
         });
@@ -112,15 +112,22 @@ export const customerService = {
     }
 
     const orderStats = await prisma.order.aggregate({
-      where: { userId: id, paymentStatus: 'PAID' },
+      where: { userId: id },
       _sum: { total: true },
       _count: true
+    });
+
+    const lastOrder = await prisma.order.findFirst({
+      where: { userId: id },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true }
     });
 
     return {
       ...customer,
       totalOrders: orderStats._count,
-      totalSpent: orderStats._sum.total || 0
+      totalSpent: orderStats._sum.total || 0,
+      lastOrder: lastOrder?.createdAt.toISOString().split('T')[0] || null
     };
   }
 };

@@ -4,9 +4,7 @@ const prisma = new PrismaClient();
 
 export const reportsService = {
   async getRevenueReport(dateFrom?: Date, dateTo?: Date) {
-    const where: any = {
-      paymentStatus: 'PAID'
-    };
+    const where: any = {};
 
     if (dateFrom || dateTo) {
       where.createdAt = {};
@@ -58,7 +56,7 @@ export const reportsService = {
       .map(([category, revenue]) => ({
         category,
         revenue,
-        percentage: (revenue / totalRevenue) * 100
+        percentage: totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0
       }))
       .sort((a, b) => b.revenue - a.revenue);
 
@@ -94,15 +92,10 @@ export const reportsService = {
     const where: any = {};
     if (dateFrom || dateTo) {
       where.order = {
-        createdAt: {},
-        paymentStatus: 'PAID'
+        createdAt: {}
       };
       if (dateFrom) where.order.createdAt.gte = dateFrom;
       if (dateTo) where.order.createdAt.lte = dateTo;
-    } else {
-      where.order = {
-        paymentStatus: 'PAID'
-      };
     }
 
     const orderItems = await prisma.orderItem.findMany({
@@ -156,11 +149,7 @@ export const reportsService = {
         }
       },
       include: {
-        orders: {
-          where: {
-            paymentStatus: 'PAID'
-          }
-        }
+        orders: true
       }
     });
 
@@ -172,7 +161,6 @@ export const reportsService = {
       : 0;
 
     const totalRevenue = await prisma.order.aggregate({
-      where: { paymentStatus: 'PAID' },
       _sum: { total: true }
     });
 

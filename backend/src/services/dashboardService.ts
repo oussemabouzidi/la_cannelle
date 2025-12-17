@@ -1,4 +1,4 @@
-import { PrismaClient, OrderStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -27,22 +27,19 @@ export const dashboardService = {
     const [todayRevenue, weekRevenue, monthRevenue] = await Promise.all([
       prisma.order.aggregate({
         where: {
-          createdAt: { gte: today },
-          paymentStatus: 'PAID'
+          createdAt: { gte: today }
         },
         _sum: { total: true }
       }),
       prisma.order.aggregate({
         where: {
-          createdAt: { gte: weekAgo },
-          paymentStatus: 'PAID'
+          createdAt: { gte: weekAgo }
         },
         _sum: { total: true }
       }),
       prisma.order.aggregate({
         where: {
-          createdAt: { gte: monthAgo },
-          paymentStatus: 'PAID'
+          createdAt: { gte: monthAgo }
         },
         _sum: { total: true }
       })
@@ -90,8 +87,7 @@ export const dashboardService = {
         createdAt: {
           gte: new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000),
           lt: weekAgo
-        },
-        paymentStatus: 'PAID'
+        }
       },
       _sum: { total: true }
     });

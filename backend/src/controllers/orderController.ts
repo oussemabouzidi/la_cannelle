@@ -58,12 +58,19 @@ export const orderController = {
   },
 
   async getOrders(req: AuthRequest, res: Response) {
-    const { status, dateFrom, dateTo, search } = req.query;
+    const { status, dateFrom, dateTo, search, customerId, userId } = req.query;
 
     const filters: any = {};
 
-    // If client, only show their orders
-    if (req.user && req.user.role === 'CLIENT') {
+    // Allow explicit customer/user filter (admin dashboards)
+    const requestedUserId = customerId || userId;
+    if (requestedUserId) {
+      const parsedId = parseInt(requestedUserId as string, 10);
+      if (!Number.isNaN(parsedId)) {
+        filters.userId = parsedId;
+      }
+    } else if (req.user && req.user.role === 'CLIENT') {
+      // If authenticated client, limit to their orders
       filters.userId = req.user.id;
     }
 

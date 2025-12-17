@@ -16,14 +16,10 @@ export const authenticate = (
   next: NextFunction
 ) => {
   try {
-    // Temporarily allow all requests without requiring a token.
+    // Soft authentication: only attach user context when a valid token is provided.
+    // If no token (or an invalid one) is present, continue without blocking.
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) {
-      req.user = {
-        id: 0,
-        email: 'guest@local',
-        role: 'CLIENT'
-      };
       return next();
     }
 
@@ -41,7 +37,7 @@ export const authenticate = (
     req.user = decoded;
     next();
   } catch (error) {
-    // Temporarily allow requests even if token verification fails
+    // Allow the request to continue even if verification fails
     next();
   }
 };

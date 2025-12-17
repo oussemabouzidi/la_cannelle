@@ -3,12 +3,13 @@
 export const commonTranslations = {
   EN: {
     nav: {
+      home: 'Home',
       about: 'About',
       services: 'Services',
       menus: 'Menus',
       contact: 'Contact',
       connect: 'Connect',
-      order: 'Order Now'
+      order: 'Order Now',
     },
     common: {
       loading: 'Loading...',
@@ -29,17 +30,18 @@ export const commonTranslations = {
       previous: 'Previous',
       confirm: 'Confirm',
       yes: 'Yes',
-      no: 'No'
-    }
+      no: 'No',
+    },
   },
   DE: {
     nav: {
+      home: 'Startseite',
       about: 'Über uns',
       services: 'Dienstleistungen',
       menus: 'Menüs',
       contact: 'Kontakt',
       connect: 'Verbinden',
-      order: 'Jetzt bestellen'
+      order: 'Jetzt bestellen',
     },
     common: {
       loading: 'Lädt...',
@@ -60,7 +62,7 @@ export const commonTranslations = {
       previous: 'Zurück',
       confirm: 'Bestätigen',
       yes: 'Ja',
-      no: 'Nein'
-    }
-  }
+      no: 'Nein',
+    },
+  },
 };

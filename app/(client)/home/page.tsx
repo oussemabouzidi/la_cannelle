@@ -1,17 +1,19 @@
 ﻿"use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Clock, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
+import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Star, Crown, Shield, Heart, Quote } from 'lucide-react';
+import { Star, Crown, Shield, Heart } from 'lucide-react';
 import { useTranslation } from '@/lib/hooks/useTranslation';
-import type { homeTranslations } from '@/lib/translations/home';
+import type { Language } from '@/lib/hooks/useTranslation';
+
+type HomeTranslation = (typeof import('@/lib/translations/home').homeTranslations)[Language];
 
 export default function CateringHomepage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t: rawT, language, toggleLanguage } = useTranslation('home');
   const [isVisible, setIsVisible] = useState(false);
-  const t = rawT as (typeof homeTranslations)['EN'];
+  const t = rawT as HomeTranslation;
 
   useEffect(() => {
     setIsVisible(true);
@@ -36,6 +38,21 @@ export default function CateringHomepage() {
     { name: 'Samsonite', src: '/images/logos/samsonite.png' },
     { name: 'SABIC', src: '/images/logos/sabic.png' },
   ];
+
+  const quickMenuIcons = [Star, Heart, Shield, Crown];
+
+  const companyValues = [
+    { icon: Target, ...t.company.values.mission },
+    { icon: Eye, ...t.company.values.vision },
+    { icon: Award, ...t.company.values.excellence },
+    { icon: Users, ...t.company.values.community },
+  ];
+
+  const journeyIcons = [Flag, Award, Globe, Zap];
+  const journeyMilestones = t.journey.milestones.map((milestone, index) => ({
+    ...milestone,
+    icon: journeyIcons[index] ?? Flag,
+  }));
 
   return (
     <div className="min-h-screen bg-white">
@@ -205,8 +222,8 @@ export default function CateringHomepage() {
             </div>
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">Home</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">About</a>
+              <a href="/home" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.home}</a>
+              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.about}</a>
               <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
               <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
               <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
@@ -252,11 +269,11 @@ export default function CateringHomepage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Home</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">About</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Services</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Menus</a>
-                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">Contact</a>
+                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.home}</a>
+                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.about}</a>
+                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
+                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
+                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
@@ -332,42 +349,15 @@ export default function CateringHomepage() {
         <div className="max-w-7xl mx-auto relative">
           <div className="text-center mb-10">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">Our Specialties</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">Discover our carefully crafted menu categories for every occasion</p>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">{t.quickMenu.title}</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">{t.quickMenu.description}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                name: "Finger Food",
-                icon: "🍔",
-                count: "25+ Items",
-                gradient: "from-amber-500 to-orange-500",
-                description: "Elegant bite-sized delights"
-              },
-              {
-                name: "Desserts",
-                icon: "🍰",
-                count: "15+ Varieties",
-                gradient: "from-pink-500 to-rose-500",
-                description: "Sweet endings to perfection"
-              },
-              {
-                name: "Buffet",
-                icon: "🥘",
-                count: "8+ Themes",
-                gradient: "from-emerald-500 to-teal-500",
-                description: "Grand culinary experiences"
-              },
-              {
-                name: "Special Occasions",
-                icon: "🎉",
-                count: "Custom",
-                gradient: "from-purple-500 to-indigo-500",
-                description: "Tailored for your events"
-              }
-            ].map((category, index) => (
+            {t.quickMenu.categories.map((category, index) => {
+              const Icon = quickMenuIcons[index];
+              return (
               <div
                 key={index}
                 className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 ${
@@ -380,7 +370,7 @@ export default function CateringHomepage() {
                 
                 {/* Icon */}
                 <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
-                  {category.icon}
+                  {Icon ? <Icon className="text-amber-600" size={28} /> : null}
                 </div>
                 
                 {/* Content */}
@@ -393,7 +383,8 @@ export default function CateringHomepage() {
                   <ChevronRight size={16} className="text-amber-600" />
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -423,11 +414,7 @@ export default function CateringHomepage() {
                 
                 {/* Interactive Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-6">
-                  {[
-                    { number: "500+", label: "Events" },
-                    { number: "98%", label: "Satisfaction" },
-                    { number: "24/7", label: "Support" }
-                  ].map((stat, index) => (
+                  {t.exclusivity.stats.map((stat, index) => (
                     <div key={index} className="text-center group">
                       <div className="bg-white rounded-lg p-3 shadow-lg border border-amber-100 group-hover:shadow-xl transition-all duration-300">
                         <p className="text-lg font-bold text-amber-600 mb-1">{stat.number}</p>
@@ -457,8 +444,8 @@ export default function CateringHomepage() {
                   <div className="flex items-center gap-2">
                     <Star className="text-amber-600" size={16} />
                     <div>
-                      <p className="font-bold text-gray-900 text-xs">Premium</p>
-                      <p className="text-xs text-amber-600">Service</p>
+                      <p className="font-bold text-gray-900 text-xs">{t.exclusivity.badge.title}</p>
+                      <p className="text-xs text-amber-600">{t.exclusivity.badge.subtitle}</p>
                     </div>
                   </div>
                 </div>
@@ -473,37 +460,13 @@ export default function CateringHomepage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-10">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">Signature Creations</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">Experience our most sought-after culinary masterpieces</p>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">{t.menuShowcase.title}</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">{t.menuShowcase.description}</p>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                name: "Truffle Arancini",
-                category: "Finger Food",
-                price: "€24",
-                image: "/images/truffle-arancini.jpg",
-                description: "Crispy risotto balls with black truffle",
-                popular: true
-              },
-              {
-                name: "Chocolate Sphere",
-                category: "Desserts",
-                price: "€18",
-                image: "/images/chocolate-sphere.jpg",
-                description: "Molten chocolate with gold leaf",
-                featured: true
-              },
-              {
-                name: "Mediterranean Buffet",
-                category: "Buffet",
-                price: "€45",
-                image: "/images/mediterranean-buffet.jpg",
-                description: "Fresh flavors from the Mediterranean coast"
-              }
-            ].map((item, index) => (
+            {t.menuShowcase.items.map((item, index) => (
               <div
                 key={index}
                 className={`group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden ${
@@ -523,12 +486,12 @@ export default function CateringHomepage() {
                   {/* Badges */}
                   {item.popular && (
                     <div className="absolute top-3 left-3 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      Popular
+                      {t.menuShowcase.badges.popular}
                     </div>
                   )}
                   {item.featured && (
                     <div className="absolute top-3 left-3 bg-rose-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      Featured
+                      {t.menuShowcase.badges.featured}
                     </div>
                   )}
                   
@@ -547,7 +510,7 @@ export default function CateringHomepage() {
                   
                   {/* Interactive Button */}
                   <button className="w-full bg-amber-50 text-amber-700 py-2 rounded-lg font-semibold hover:bg-amber-100 transition-all duration-300 transform group-hover:scale-105 flex items-center justify-center gap-2 text-sm">
-                    View Details
+                    {t.menuShowcase.viewDetails}
                     <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
@@ -558,7 +521,7 @@ export default function CateringHomepage() {
           {/* View All Button */}
           <div className="text-center mt-8">
             <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm">
-              Explore Full Menu
+              {t.menuShowcase.exploreFull}
               <ChevronRight size={16} />
             </button>
           </div>
@@ -590,11 +553,7 @@ export default function CateringHomepage() {
 
           {/* Interactive Progress Bars */}
           <div className="space-y-3 mb-6">
-            {[
-              { skill: "Culinary Innovation", percentage: 95 },
-              { skill: "Ingredient Quality", percentage: 98 },
-              { skill: "Customer Satisfaction", percentage: 96 }
-            ].map((item, index) => (
+            {t.passion.skills.map((item, index) => (
               <div key={index} className="group">
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-amber-200">{item.skill}</span>
@@ -611,7 +570,7 @@ export default function CateringHomepage() {
           </div>
 
           <button className="px-6 py-3 bg-white text-stone-900 rounded-xl font-semibold hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 text-sm">
-            Our Story
+            {t.passion.cta}
             <ChevronRight size={16} />
           </button>
         </div>
@@ -675,28 +634,7 @@ export default function CateringHomepage() {
 
           {/* Values Grid - Compact like Exclusivity stats */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            {[
-              {
-                icon: Target,
-                title: "Our Mission",
-                description: "Exceptional culinary experiences"
-              },
-              {
-                icon: Eye,
-                title: "Our Vision",
-                description: "Trusted luxury dining worldwide"
-              },
-              {
-                icon: Award,
-                title: "Excellence",
-                description: "Highest standards in every dish"
-              },
-              {
-                icon: Users,
-                title: "Community",
-                description: "Building lasting relationships"
-              }
-            ].map((value, index) => (
+            {companyValues.map((value, index) => (
               <div key={index} className="bg-white rounded-lg p-3 shadow-lg border border-amber-100 hover:shadow-xl transition-all duration-300 group text-center">
                 <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
                   <value.icon className="text-amber-600" size={16} />
@@ -726,8 +664,8 @@ export default function CateringHomepage() {
           <div className="absolute -top-3 -right-3 bg-amber-600 text-white rounded-xl p-3 shadow-xl transform group-hover:scale-110 transition-transform duration-500">
             <div className="text-center">
               <Award className="mx-auto mb-1" size={16} />
-              <p className="text-xs font-bold">Since 2008</p>
-              <p className="text-xs opacity-90">Established</p>
+              <p className="text-xs font-bold">{t.company.badge.title}</p>
+              <p className="text-xs opacity-90">{t.company.badge.subtitle}</p>
             </div>
           </div>
 
@@ -739,11 +677,11 @@ export default function CateringHomepage() {
               </div>
               <div>
                 <p className="font-bold text-gray-900 text-xs">4.9/5</p>
-                <p className="text-xs text-amber-600">Rating</p>
+                <p className="text-xs text-amber-600">{t.company.review.ratingLabel}</p>
               </div>
             </div>
             <p className="text-xs text-gray-600 italic">
-              "Unforgettable dining experience."
+              {t.company.review.quote}
             </p>
           </div>
         </div>
@@ -752,14 +690,9 @@ export default function CateringHomepage() {
 
     {/* Timeline / Milestones - Keep but make more compact */}
     <div className={`bg-white rounded-xl p-6 shadow-lg border border-amber-100 transition-all duration-1000 delay-600 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} mt-8`}>
-      <h3 className="text-lg font-bold text-gray-900 text-center mb-4 font-elegant">Our Journey</h3>
+      <h3 className="text-lg font-bold text-gray-900 text-center mb-4 font-elegant">{t.journey.title}</h3>
       <div className="grid md:grid-cols-4 gap-4 text-center">
-        {[
-          { year: "2008", event: "Founded", icon: Flag },
-          { year: "2012", event: "Michelin Star", icon: Award },
-          { year: "2018", event: "Expansion", icon: Globe },
-          { year: "2024", event: "Innovation", icon: Zap }
-        ].map((milestone, index) => (
+        {journeyMilestones.map((milestone, index) => (
           <div key={index} className="relative">
             {index < 3 && (
               <div className="hidden md:block absolute top-4 left-1/2 w-full h-0.5 bg-amber-200 -z-10"></div>
@@ -817,7 +750,7 @@ export default function CateringHomepage() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-3 font-elegant">{menu.name}</h3>
                 <p className="text-gray-600 mb-4 text-sm font-light italic">{menu.desc}</p>
                 <button className="text-amber-700 font-semibold inline-flex items-center gap-2 hover:gap-3 transition-all duration-300 group text-sm">
-                  Learn More <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  {t.menus.cta} <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             ))}
@@ -852,7 +785,7 @@ export default function CateringHomepage() {
       <section className="bg-white py-14 border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6">
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">{t.brandBanner.title}</p>
           </div>
 
           <div className="relative overflow-hidden py-6">
@@ -881,46 +814,50 @@ export default function CateringHomepage() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
               <h3 className="text-xl font-bold mb-3 font-elegant italic">Gourmet Catering</h3>
-              <p className="text-gray-400 italic text-sm">Creating unforgettable culinary experiences</p>
+              <p className="text-gray-400 italic text-sm">{t.footer.tagline}</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-3 font-elegant text-sm">Quick Links</h4>
+              <h4 className="font-semibold mb-3 font-elegant text-sm">{t.footer.quickLinksTitle}</h4>
               <div className="flex flex-col gap-1">
-                <a href="#about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">About</a>
-                <a href="#services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">Services</a>
-                <a href="#menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">Menus</a>
-                <a href="#contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">Contact</a>
+                <a href="#about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.about}</a>
+                <a href="#services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.services}</a>
+                <a href="#menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.menus}</a>
+                <a href="#contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.contact}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-3 font-elegant text-sm">Contact</h4>
+              <h4 className="font-semibold mb-3 font-elegant text-sm">{t.footer.contactTitle}</h4>
               <div className="flex flex-col gap-2 text-gray-400 text-sm">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Phone size={16} />
-                  <span>+123 456 7890</span>
+                  <span>{t.footer.contact.phone}</span>
                 </div>
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Mail size={16} />
-                  <span>info@catering.com</span>
+                  <span>{t.footer.contact.email}</span>
                 </div>
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <MapPin size={16} />
-                  <span>Your Location</span>
+                  <span>{t.footer.contact.location}</span>
                 </div>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-3 font-elegant text-sm">Hours</h4>
-              <p className="text-gray-400 text-sm">Monday - Friday: 9am - 6pm</p>
-              <p className="text-gray-400 text-sm">Saturday: 10am - 4pm</p>
-              <p className="text-gray-400 text-sm">Sunday: Closed</p>
+              <h4 className="font-semibold mb-3 font-elegant text-sm">{t.footer.hoursTitle}</h4>
+              <p className="text-gray-400 text-sm">{t.footer.hours.weekdays}</p>
+              <p className="text-gray-400 text-sm">{t.footer.hours.saturday}</p>
+              <p className="text-gray-400 text-sm">{t.footer.hours.sunday}</p>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-6 text-center text-gray-400 text-sm">
-            <p>&copy; 2025 Gourmet Catering. All rights reserved.</p>
+            <p>{t.footer.copyright}</p>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
+
+
+
