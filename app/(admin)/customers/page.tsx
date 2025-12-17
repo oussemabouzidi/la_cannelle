@@ -15,7 +15,7 @@ import { customersApi, CustomerSummary } from '@/lib/api/customers';
 import { ordersApi, Order } from '@/lib/api/orders';
 
 type Customer = CustomerSummary & {
-  avatar?: string | null;
+  avatar?: string;
   preferences?: string[] | null;
   allergies?: string[] | null;
   notes?: string | null;
@@ -49,7 +49,7 @@ export default function Customers() {
     return navigation.find(item => pathname.includes(item.id))?.id || 'dashboard';
   };
 
-  const [customers, setCustomers] = useState<CustomerSummary[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
 
@@ -61,7 +61,12 @@ export default function Customers() {
           customersApi.getCustomers(),
           ordersApi.getOrders()
         ]);
-        setCustomers(customerData);
+        setCustomers(
+          customerData.map((c) => ({
+            ...c,
+            avatar: (c as any).avatar ?? undefined
+          }))
+        );
         setOrders(orderData);
       } catch (err) {
         console.error('Failed to load customers or orders', err);
@@ -97,7 +102,7 @@ export default function Customers() {
 
   const fallbackAvatar =
     'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
-  const getAvatarSrc = (avatar?: string | null): string => avatar ?? fallbackAvatar;
+  const getAvatarSrc = (avatar?: string): string => avatar ?? fallbackAvatar;
 
   const tiers: Record<'regular' | 'premium' | 'vip', { label: string; color: string }> = {
     regular: { label: 'Regular', color: 'text-gray-600 bg-gray-100' },
