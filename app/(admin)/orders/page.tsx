@@ -66,7 +66,7 @@ export default function AdminOrders() {
             price: it.price
           })) || [],
           beverages: [],
-          cancellationReason: order.cancellationReason
+          cancellationReason: (order as any).cancellationReason ?? null
         }));
         setOrders(normalized);
       } catch (err) {
