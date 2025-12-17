@@ -376,7 +376,7 @@ export default function CateringHomepage() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/images/community-feast.jpg')",
+            backgroundImage: "url('/images/home_image.jpeg')",
           }}
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
@@ -538,7 +538,7 @@ export default function CateringHomepage() {
                 {/* Main Image with 3D Rotation */}
                 <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
                   <img 
-                    src="/images/community-feast.jpg" 
+                    src="/images/home_image.jpeg" 
                     alt="Friends enjoying a lively catering spread"
                     className="w-full h-64 object-cover"
                   />
