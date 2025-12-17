@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Clock, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
@@ -8,138 +8,18 @@ import { useTranslation } from '@/lib/hooks/useTranslation';
 
 export default function CateringHomepage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('DE');
+  const { t, language, toggleLanguage } = useTranslation('home');
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-
-  const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'DE' : 'EN');
-  };
-
-  const content = {
-    EN: {
-      nav: {
-        about: 'About',
-        services: 'Services',
-        menus: 'Menus',
-        contact: 'Contact',
-        connect: 'Connect',
-        order: 'Order Now'
-      },
-      hero: {
-        title: 'Culinary Excellence for Your Special Moments',
-        subtitle: 'Creating unforgettable experiences through exceptional catering',
-        cta: 'Order Now'
-      },
-      exclusivity: {
-        title: 'EXCLUSIVITY',
-        subtitle: 'YOUR SPECIFICATIONS | OUR EXPERTISE | THE IMPLEMENTATION',
-        text: 'Every event demands full concentration, respect and dedication. Preferences are colorful and already different today than yesterday. Benefit from our experience, let yourself be convinced and trust in our abilities. Together we realize your event.'
-      },
-      passion: {
-        title: 'PASSION',
-        subtitle: 'ELEMENTAL | AUTHENTIC | DELICATE',
-        text: 'We constantly reinvent ourselves, exceed all standards and create unforgettable moments. Our dishes are created from natural ingredients, with love for detail and full dedication. The selection of the best products, experience, pulse of the time, craftsmanship and passion are elemental for success.'
-      },
-      company: {
-        title: 'COMPANY',
-        subtitle: 'INVITATION | IMPLEMENTATION | IMAGE',
-        text: "You invite and from there our participation begins until perfection. Whether standing reception, gala dinner, company party, product unveiling or company celebration. It's all about you and your company, the reputation you represent and the lasting impression you leave."
-      },
-      services: {
-        title: 'Our Services',
-        items: [
-          { name: 'Corporate Events', desc: 'Professional catering for business occasions' },
-          { name: 'Private Celebrations', desc: 'Personalized menus for special moments' },
-          { name: 'Gala Dinners', desc: 'Elegant dining experiences' },
-          { name: 'Standing Receptions', desc: 'Sophisticated cocktail events' }
-        ]
-      },
-      menus: {
-        title: 'Featured Menus',
-        items: [
-          { name: 'Seasonal Selection', desc: 'Fresh ingredients from local sources' },
-          { name: 'Gourmet Collection', desc: 'Refined dishes for discerning palates' },
-          { name: 'Traditional Favorites', desc: 'Classic recipes with modern touches' }
-        ]
-      },
-      testimonials: {
-        title: 'What Our Clients Say',
-        items: [
-          { text: 'Exceptional quality and service. Every detail was perfect for our corporate event.', author: 'Sarah M.' },
-          { text: 'The attention to detail and flavors exceeded all our expectations.', author: 'Michael K.' },
-          { text: 'Professional, creative, and absolutely delicious. Highly recommended!', author: 'Anna L.' }
-        ]
-      }
-    },
-    DE: {
-      nav: {
-        about: 'Über uns',
-        services: 'Dienstleistungen',
-        menus: 'Menüs',
-        contact: 'Kontakt',
-        connect: 'Verbinden',
-        order: 'Jetzt bestellen'
-      },
-      hero: {
-        title: 'Kulinarische Exzellenz für Ihre besonderen Momente',
-        subtitle: 'Unvergessliche Erlebnisse durch außergewöhnliches Catering',
-        cta: 'Jetzt bestellen'
-      },
-      exclusivity: {
-        title: 'EXKLUSIVITÄT',
-        subtitle: 'IHRE VORGABEN | UNSERE EXPERTISE | DIE UMSETZUNG',
-        text: 'Jede Veranstaltung verlangt volle Konzentration, Respekt und Hingabe. Vorlieben sind bunt und heute schon anders als gestern. Profitieren Sie von unserer Erfahrung, lassen Sie sich überzeugen und vertrauen Sie auf unser Können. Gemeinsam realisieren wir Ihre Veranstaltung.'
-      },
-      passion: {
-        title: 'LEIDENSCHAFT',
-        subtitle: 'ELEMENTAR | AUTHENTISCH | DELIKAT',
-        text: 'Wir erfinden uns ständig neu, übertreffen alle Standards und schaffen unvergessliche Momente. Unsere Gerichte entstehen aus natürlichen Zutaten, mit Liebe zum Detail und voller Hingabe. Die Auswahl bester Produkte, Erfahrung, Puls der Zeit, Handwerk und Leidenschaft sind elementar für den Erfolg.'
-      },
-      company: {
-        title: 'UNTERNEHMEN',
-        subtitle: 'EINLADUNG | UMSETZUNG | IMAGE',
-        text: 'Sie laden ein und ab dort beginnt unsere Teilnahme bis zur Perfektion. Ob Stehempfang, Galadinner, Firmenfest, Produktenthüllung oder Firmenfeier. Es geht um Sie und Ihr Unternehmen, den Ruf den Sie vertreten und den bleibenden Eindruck den Sie hinterlassen.'
-      },
-      services: {
-        title: 'Unsere Dienstleistungen',
-        items: [
-          { name: 'Firmenveranstaltungen', desc: 'Professionelles Catering für geschäftliche Anlässe' },
-          { name: 'Private Feiern', desc: 'Personalisierte Menüs für besondere Momente' },
-          { name: 'Galadinner', desc: 'Elegante Dining-Erlebnisse' },
-          { name: 'Stehempfänge', desc: 'Anspruchsvolle Cocktail-Events' }
-        ]
-      },
-      menus: {
-        title: 'Ausgewählte Menüs',
-        items: [
-          { name: 'Saisonale Auswahl', desc: 'Frische Zutaten aus lokalen Quellen' },
-          { name: 'Gourmet-Kollektion', desc: 'Raffinierte Gerichte für anspruchsvolle Gaumen' },
-          { name: 'Traditionelle Favoriten', desc: 'Klassische Rezepte mit modernen Akzenten' }
-        ]
-      },
-      testimonials: {
-        title: 'Was unsere Kunden sagen',
-        items: [
-          { text: 'Außergewöhnliche Qualität und Service. Jedes Detail war perfekt für unsere Firmenveranstaltung.', author: 'Sarah M.' },
-          { text: 'Die Liebe zum Detail und die Aromen übertrafen alle unsere Erwartungen.', author: 'Michael K.' },
-          { text: 'Professionell, kreativ und absolut köstlich. Sehr empfehlenswert!', author: 'Anna L.' }
-        ]
-      }
-    }
-  };
-
   const router = useRouter();
 
   const handleOrderClick = () => {
     router.push('/order');
   };
-
-  const t = content[language];
   const brandLogos = [
     { name: 'Montblanc', src: '/images/logos/montblanc.png' },
     { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
@@ -438,26 +318,21 @@ export default function CateringHomepage() {
       </section>
 
       {/* Brand Banner */}
-      <section className="bg-white py-8 border-b border-gray-100">
+            <section className="bg-white py-14 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-semibold text-sm">
-              ★
-            </div>
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
-              <p className="text-lg font-bold text-gray-900">World-class brands and partners</p>
-            </div>
+          <div className="text-center mb-6">
+            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">World-class brands and partners</p>
           </div>
 
-          <div className="relative overflow-hidden py-2">
-            <div className="flex items-center gap-10 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
+          <div className="relative overflow-hidden py-4">
+            <div className="flex items-center gap-12 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
               {[...brandLogos, ...brandLogos].map((logo, idx) => (
-                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-14 px-2 opacity-80 hover:opacity-100 transition-opacity duration-200">
+                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-20 px-4 opacity-80 hover:opacity-100 transition-opacity duration-200">
                   <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    className="h-10 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200 drop-shadow-sm"
+                    className="h-14 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200 drop-shadow-sm"
                     loading="lazy"
                   />
                 </div>
@@ -486,28 +361,28 @@ export default function CateringHomepage() {
             {[
               {
                 name: "Finger Food",
-                icon: "🍤",
+                icon: "ðŸ¤",
                 count: "25+ Items",
                 gradient: "from-amber-500 to-orange-500",
                 description: "Elegant bite-sized delights"
               },
               {
                 name: "Desserts",
-                icon: "🍰",
+                icon: "ðŸ°",
                 count: "15+ Varieties",
                 gradient: "from-pink-500 to-rose-500",
                 description: "Sweet endings to perfection"
               },
               {
                 name: "Buffet",
-                icon: "🥘",
+                icon: "ðŸ¥˜",
                 count: "8+ Themes",
                 gradient: "from-emerald-500 to-teal-500",
                 description: "Grand culinary experiences"
               },
               {
                 name: "Special Occasions",
-                icon: "🎉",
+                icon: "ðŸŽ‰",
                 count: "Custom",
                 gradient: "from-purple-500 to-indigo-500",
                 description: "Tailored for your events"
@@ -628,7 +503,7 @@ export default function CateringHomepage() {
               {
                 name: "Truffle Arancini",
                 category: "Finger Food",
-                price: "€24",
+                price: "â‚¬24",
                 image: "/images/truffle-arancini.jpg",
                 description: "Crispy risotto balls with black truffle",
                 popular: true
@@ -636,7 +511,7 @@ export default function CateringHomepage() {
               {
                 name: "Chocolate Sphere",
                 category: "Desserts",
-                price: "€18",
+                price: "â‚¬18",
                 image: "/images/chocolate-sphere.jpg",
                 description: "Molten chocolate with gold leaf",
                 featured: true
@@ -644,7 +519,7 @@ export default function CateringHomepage() {
               {
                 name: "Mediterranean Buffet",
                 category: "Buffet",
-                price: "€45",
+                price: "â‚¬45",
                 image: "/images/mediterranean-buffet.jpg",
                 description: "Fresh flavors from the Mediterranean coast"
               }
@@ -987,7 +862,7 @@ export default function CateringHomepage() {
                 style={{ animationDelay: `${index * 100 + 300}ms` }}
               >
                 <p className="text-gray-600 mb-4 italic text-sm">"{testimonial.text}"</p>
-                <p className="text-gray-900 font-semibold font-elegant text-sm">— {testimonial.author}</p>
+                <p className="text-gray-900 font-semibold font-elegant text-sm">â€” {testimonial.author}</p>
               </div>
             ))}
           </div>
@@ -1043,3 +918,7 @@ export default function CateringHomepage() {
     </div>
   );
 }
+
+
+
+
