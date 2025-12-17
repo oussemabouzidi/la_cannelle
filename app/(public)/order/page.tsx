@@ -71,10 +71,6 @@ export default function OrderPage() {
     loadData();
   }, []);
 
-  useEffect(() => {
-    setAppLanguage('DE');
-  }, [setAppLanguage]);
-
   const [orderData, setOrderData] = useState({
     businessType: '',
     serviceType: '',
