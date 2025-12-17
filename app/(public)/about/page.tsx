@@ -248,130 +248,7 @@ export default function AboutPage() {
     }
   };
 
-  const t: AboutContent = translations[language];const translations = {
-    EN: {
-      nav: { services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order' },
-      hero: { title: 'About Us', subtitle: 'Crafting culinary excellence since our inception' },
-      story: {
-        title: 'Our Story',
-        content: [
-          'We partner closely with clients to understand their vision and deliver bespoke experiences.',
-          'Chefs craft seasonal menus that balance flavor, presentation, and dietary needs.',
-          'From intimate gatherings to large events, every detail is handled with care.'
-        ]
-      },
-      values: {
-        passion: { title: 'Passion', subtitle: 'Heart in every dish', description: 'Love for food and service drives everything we do.' },
-        exclusivity: { title: 'Exclusivity', subtitle: 'Private experiences', description: 'Private, bespoke experiences crafted for your occasion.' },
-        company: { title: 'Trusted Partner', subtitle: 'Your reliable ally', description: 'A dedicated team focused on your success.' }
-      },
-      team: {
-        title: 'Our Team',
-        items: [
-          { name: 'Head Chef', role: 'Culinary Direction' },
-          { name: 'Event Manager', role: 'Planning & Coordination' },
-          { name: 'Pastry Lead', role: 'Desserts & Baking' }
-        ]
-      },
-      services: {
-        title: 'What we offer',
-        items: [
-          { title: 'Personalized Service', description: 'Tailored menus and attentive coordination.' },
-          { title: 'Creative Menus', description: 'Innovative dishes inspired by seasonal ingredients.' },
-          { title: 'Reliable Delivery', description: 'Professional team ensuring timely service.' }
-        ]
-      },
-      contact: {
-        title: 'Get in touch',
-        address: '123 Culinary Street, Food City, FC 12345',
-        phone: '+1 (555) 123-4567',
-        mobile: '+1 (555) 987-6543',
-        email: 'info@catering.com'
-      },
-      cta: {
-        title: 'Ready to plan your event?',
-        subtitle: 'LetÔÇÖs create an unforgettable experience together.',
-        button: 'Start Now'
-      },
-      quoteModal: {
-        title: 'Tell us about your event',
-        subtitle: 'Share a few details so we can craft the perfect experience',
-        name: 'Full Name',
-        email: 'Email Address',
-        phone: 'Phone Number',
-        eventType: 'Event Type',
-        eventDate: 'Event Date',
-        guests: 'Number of Guests',
-        message: 'Tell us about your event...',
-        submit: 'Submit Request',
-        cancel: 'Cancel',
-        eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other']
-      },
-      body: { style: 'classic' }
-    },
-    DE: {
-      nav: { services: 'Dienstleistungen', menus: 'Men├╝s', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
-      hero: { title: '├£ber uns', subtitle: 'Kulinarische Exzellenz seit unserer Gr├╝ndung' },
-      story: {
-        title: 'Unsere Geschichte',
-        content: [
-          'Wir arbeiten eng mit Kunden zusammen, um ihre Vision zu verstehen und ma├ƒgeschneiderte Erlebnisse zu liefern.',
-          'Unsere K├╝che erstellt saisonale Men├╝s, die Geschmack, Pr├ñsentation und Ern├ñhrungsbed├╝rfnisse ausbalancieren.',
-          'Von intimen Feiern bis zu gro├ƒen Events k├╝mmern wir uns um jedes Detail.'
-        ]
-      },
-      values: {
-        passion: { title: 'Leidenschaft', subtitle: 'Herz in jedem Gericht', description: 'Unsere Liebe zu Essen und Service treibt alles an.' },
-        exclusivity: { title: 'Exklusivit├ñt', subtitle: 'Private Erlebnisse', description: 'Private, ma├ƒgeschneiderte Erlebnisse f├╝r Ihren Anlass.' },
-        company: { title: 'Vertrauenspartner', subtitle: 'Ihr verl├ñsslicher Partner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
-      },
-      team: {
-        title: 'Unser Team',
-        items: [
-          { name: 'Chefkoch', role: 'Kulinarische Leitung' },
-          { name: 'Event Manager', role: 'Planung & Koordination' },
-          { name: 'P├ótisserie Lead', role: 'Desserts & Backwaren' }
-        ]
-      },
-      services: {
-        title: 'Was wir bieten',
-        items: [
-          { title: 'Personalisierter Service', description: 'Individuelle Men├╝s und sorgf├ñltige Koordination.' },
-          { title: 'Kreative Men├╝s', description: 'Innovative Gerichte mit saisonalen Zutaten.' },
-          { title: 'Zuverl├ñssige Lieferung', description: 'Professionelles Team f├╝r p├╝nktlichen Service.' }
-        ]
-      },
-      contact: {
-        title: 'Nehmen Sie Kontakt auf',
-        address: 'Kulinarische Stra├ƒe 123, Essen Stadt, 12345',
-        phone: '+49 123 456 789',
-        mobile: '+49 987 654 321',
-        email: 'info@catering.com'
-      },
-      cta: {
-        title: 'Bereit, Ihr Event zu planen?',
-        subtitle: 'Lassen Sie uns gemeinsam ein unvergessliches Erlebnis schaffen.',
-        button: 'Jetzt starten'
-      },
-      quoteModal: {
-        title: 'Erz├ñhlen Sie uns von Ihrer Veranstaltung',
-        subtitle: 'Teilen Sie einige Details, damit wir das perfekte Erlebnis planen k├Ânnen',
-        name: 'Vollst├ñndiger Name',
-        email: 'E-Mail-Adresse',
-        phone: 'Telefonnummer',
-        eventType: 'Veranstaltungstyp',
-        eventDate: 'Veranstaltungsdatum',
-        guests: 'Anzahl der G├ñste',
-        message: 'Erz├ñhlen Sie uns von Ihrer Veranstaltung...',
-        submit: 'Anfrage senden',
-        cancel: 'Abbrechen',
-        eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere']
-      },
-      body: { style: 'klassisch' }
-    }
-  } as const;
-
-  const t = translations[language as keyof typeof translations] as typeof translations.EN;
+  const t: AboutContent = translations[language];
 
   return (
     <div className="min-h-screen bg-white">
@@ -1134,4 +1011,5 @@ export default function AboutPage() {
     </div>
   );
 }
+
 
