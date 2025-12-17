@@ -1,23 +1,11 @@
 ﻿"use client";
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Clock, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Star, Crown, Shield, Heart, Quote } from 'lucide-react';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import type { homeTranslations } from '@/lib/translations/home';
-import montblancLogo from '@/../public/images/logos/montblanc.png';
-import omnicomMediaGroupLogo from '@/../public/images/logos/omnicom-media-group.png';
-import omgLogo from '@/../public/images/logos/omg.png';
-import doitLogo from '@/../public/images/logos/doit.png';
-import bbdoLogo from '@/../public/images/logos/bbdo.png';
-import iwcLogo from '@/../public/images/logos/iwc.png';
-import rubyHotelsLogo from '@/../public/images/logos/ruby-hotels.svg';
-import rimowaLogo from '@/../public/images/logos/rimowa.png';
-import ralphLaurenLogo from '@/../public/images/logos/ralph-lauren.png';
-import samsoniteLogo from '@/../public/images/logos/samsonite.png';
-import sabicLogo from '@/../public/images/logos/sabic.png';
 
 export default function CateringHomepage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,17 +23,17 @@ export default function CateringHomepage() {
     router.push('/order');
   };
   const brandLogos = [
-    { name: 'Montblanc', src: montblancLogo },
-    { name: 'Omnicom Media Group', src: omnicomMediaGroupLogo },
-    { name: 'OMG', src: omgLogo },
-    { name: 'DoiT International', src: doitLogo },
-    { name: 'BBDO', src: bbdoLogo },
-    { name: 'IWC Schaffhausen', src: iwcLogo },
-    { name: 'Ruby Hotels', src: rubyHotelsLogo },
-    { name: 'RIMOWA', src: rimowaLogo },
-    { name: 'Ralph Lauren', src: ralphLaurenLogo },
-    { name: 'Samsonite', src: samsoniteLogo },
-    { name: 'SABIC', src: sabicLogo },
+    { name: 'Montblanc', src: '/images/logos/montblanc.png' },
+    { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
+    { name: 'OMG', src: '/images/logos/omg.png' },
+    { name: 'DoiT International', src: '/images/logos/doit.png' },
+    { name: 'BBDO', src: '/images/logos/bbdo.png' },
+    { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
+    { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
+    { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
+    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.png' },
+    { name: 'Samsonite', src: '/images/logos/samsonite.png' },
+    { name: 'SABIC', src: '/images/logos/sabic.png' },
   ];
 
   return (
@@ -870,15 +858,13 @@ export default function CateringHomepage() {
           <div className="relative overflow-hidden py-10">
             <div className="flex items-center gap-24 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '220%' }}>
               {[...brandLogos, ...brandLogos].map((logo, idx) => (
-                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-36 px-10 opacity-95 hover:opacity-100 transition-opacity duration-200">
-                  <Image
+              <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-36 px-10 opacity-95 hover:opacity-100 transition-opacity duration-200">
+                  <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    height={140}
-                    width={260}
                     className="h-32 w-auto object-contain transition-all duration-200 drop-shadow-lg"
                     style={{ filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))' }}
-                    priority={idx < brandLogos.length}
+                    loading="lazy"
                   />
                 </div>
               ))}
