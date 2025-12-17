@@ -320,21 +320,20 @@ export default function CateringHomepage() {
       </section>
 
       {/* Brand Banner */}
-            <section className="bg-white py-14 border-b border-gray-100">
+      <section className="bg-white py-14 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
-            <p className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">World-class brands and partners</p>
           </div>
 
-          <div className="relative overflow-hidden py-4">
-            <div className="flex items-center gap-12 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
+          <div className="relative overflow-hidden py-6">
+            <div className="flex items-center gap-16 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
               {[...brandLogos, ...brandLogos].map((logo, idx) => (
-                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-20 px-4 opacity-80 hover:opacity-100 transition-opacity duration-200">
+                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-28 px-6 opacity-80 hover:opacity-100 transition-opacity duration-200">
                   <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    className="h-14 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200 drop-shadow-sm"
+                    className="h-20 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200 drop-shadow-sm"
                     loading="lazy"
                   />
                 </div>
