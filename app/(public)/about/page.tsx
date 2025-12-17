@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Users, Heart, Target, Award, Clock } from 'lucide-react';
@@ -69,7 +69,7 @@ export default function AboutPage() {
     // For now, we'll just show an alert and close the modal
     alert(language === 'EN' 
       ? 'Thank you for your quote request! We will contact you soon.' 
-      : 'Vielen Dank für Ihre Angebotsanfrage! Wir werden Sie bald kontaktieren.'
+      : 'Vielen Dank f├╝r Ihre Angebotsanfrage! Wir werden Sie bald kontaktieren.'
     );
     setShowQuoteModal(false);
     setQuoteForm({
@@ -137,7 +137,7 @@ export default function AboutPage() {
       },
       cta: {
         title: 'Ready to plan your event?',
-        subtitle: 'Let’s create an unforgettable experience together.',
+        subtitle: 'LetÔÇÖs create an unforgettable experience together.',
         button: 'Start Now'
       },
       quoteModal: {
@@ -157,40 +157,40 @@ export default function AboutPage() {
       body: { style: 'classic' }
     },
     DE: {
-      nav: { services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
-      hero: { title: 'Über uns', subtitle: 'Kulinarische Exzellenz seit unserer Gründung' },
+      nav: { services: 'Dienstleistungen', menus: 'Men├╝s', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
+      hero: { title: '├£ber uns', subtitle: 'Kulinarische Exzellenz seit unserer Gr├╝ndung' },
       story: {
         title: 'Unsere Geschichte',
         content: [
-          'Wir arbeiten eng mit Kunden zusammen, um ihre Vision zu verstehen und maßgeschneiderte Erlebnisse zu liefern.',
-          'Unsere Küche erstellt saisonale Menüs, die Geschmack, Präsentation und Ernährungsbedürfnisse ausbalancieren.',
-          'Von intimen Feiern bis zu großen Events kümmern wir uns um jedes Detail.'
+          'Wir arbeiten eng mit Kunden zusammen, um ihre Vision zu verstehen und ma├ƒgeschneiderte Erlebnisse zu liefern.',
+          'Unsere K├╝che erstellt saisonale Men├╝s, die Geschmack, Pr├ñsentation und Ern├ñhrungsbed├╝rfnisse ausbalancieren.',
+          'Von intimen Feiern bis zu gro├ƒen Events k├╝mmern wir uns um jedes Detail.'
         ]
       },
       values: {
         passion: { title: 'Leidenschaft', subtitle: 'Herz in jedem Gericht', description: 'Unsere Liebe zu Essen und Service treibt alles an.' },
-        exclusivity: { title: 'Exklusivität', subtitle: 'Private Erlebnisse', description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.' },
-        company: { title: 'Vertrauenspartner', subtitle: 'Ihr verlässlicher Partner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
+        exclusivity: { title: 'Exklusivit├ñt', subtitle: 'Private Erlebnisse', description: 'Private, ma├ƒgeschneiderte Erlebnisse f├╝r Ihren Anlass.' },
+        company: { title: 'Vertrauenspartner', subtitle: 'Ihr verl├ñsslicher Partner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
       },
       team: {
         title: 'Unser Team',
         items: [
           { name: 'Chefkoch', role: 'Kulinarische Leitung' },
           { name: 'Event Manager', role: 'Planung & Koordination' },
-          { name: 'Pâtisserie Lead', role: 'Desserts & Backwaren' }
+          { name: 'P├ótisserie Lead', role: 'Desserts & Backwaren' }
         ]
       },
       services: {
         title: 'Was wir bieten',
         items: [
-          { title: 'Personalisierter Service', description: 'Individuelle Menüs und sorgfältige Koordination.' },
-          { title: 'Kreative Menüs', description: 'Innovative Gerichte mit saisonalen Zutaten.' },
-          { title: 'Zuverlässige Lieferung', description: 'Professionelles Team für pünktlichen Service.' }
+          { title: 'Personalisierter Service', description: 'Individuelle Men├╝s und sorgf├ñltige Koordination.' },
+          { title: 'Kreative Men├╝s', description: 'Innovative Gerichte mit saisonalen Zutaten.' },
+          { title: 'Zuverl├ñssige Lieferung', description: 'Professionelles Team f├╝r p├╝nktlichen Service.' }
         ]
       },
       contact: {
         title: 'Nehmen Sie Kontakt auf',
-        address: 'Kulinarische Straße 123, Essen Stadt, 12345',
+        address: 'Kulinarische Stra├ƒe 123, Essen Stadt, 12345',
         phone: '+49 123 456 789',
         mobile: '+49 987 654 321',
         email: 'info@catering.com'
@@ -201,15 +201,15 @@ export default function AboutPage() {
         button: 'Jetzt starten'
       },
       quoteModal: {
-        title: 'Erzählen Sie uns von Ihrer Veranstaltung',
-        subtitle: 'Teilen Sie einige Details, damit wir das perfekte Erlebnis planen können',
-        name: 'Vollständiger Name',
+        title: 'Erz├ñhlen Sie uns von Ihrer Veranstaltung',
+        subtitle: 'Teilen Sie einige Details, damit wir das perfekte Erlebnis planen k├Ânnen',
+        name: 'Vollst├ñndiger Name',
         email: 'E-Mail-Adresse',
         phone: 'Telefonnummer',
         eventType: 'Veranstaltungstyp',
         eventDate: 'Veranstaltungsdatum',
-        guests: 'Anzahl der Gäste',
-        message: 'Erzählen Sie uns von Ihrer Veranstaltung...',
+        guests: 'Anzahl der G├ñste',
+        message: 'Erz├ñhlen Sie uns von Ihrer Veranstaltung...',
         submit: 'Anfrage senden',
         cancel: 'Abbrechen',
         eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere']
@@ -218,7 +218,7 @@ export default function AboutPage() {
     }
   } as const;
 
-  const t = translations[language];
+  const t = translations[language as keyof typeof translations] as typeof translations.EN;
 
   return (
     <div className="min-h-screen bg-white">
@@ -801,10 +801,10 @@ export default function AboutPage() {
                   <Star className="text-amber-700" size={32} />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3 font-elegant">
-                  {item.name || item.title}
+                  {item.name}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  {item.role || item.description}
+                  {item.role}
                 </p>
               </div>
             ))}
