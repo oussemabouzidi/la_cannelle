@@ -95,7 +95,160 @@ export default function AboutPage() {
     setIsVisible(true);
   }, []);
 
-  const translations = {
+    type AboutContent = {
+    nav: { services: string; menus: string; contact: string; connect: string; order: string };
+    hero: { title: string; subtitle: string };
+    story: { title: string; content: string[] };
+    values: {
+      passion: { title: string; subtitle: string; description: string };
+      exclusivity: { title: string; subtitle: string; description: string };
+      company: { title: string; subtitle: string; description: string };
+    };
+    team: { title: string; items: { name: string; role: string }[] };
+    services: { title: string; items: { title: string; description: string }[] };
+    contact: { title: string; address: string; phone: string; mobile: string; email: string };
+    cta: { title: string; subtitle: string; button: string };
+    quoteModal: {
+      title: string;
+      subtitle: string;
+      name: string;
+      email: string;
+      phone: string;
+      eventType: string;
+      eventDate: string;
+      guests: string;
+      message: string;
+      submit: string;
+      cancel: string;
+      eventTypes: string[];
+    };
+    body: { style: string };
+  };
+
+  const translations: Record<'EN' | 'DE', AboutContent> = {
+    EN: {
+      nav: { services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order' },
+      hero: { title: 'About Us', subtitle: 'Crafting culinary excellence since our inception' },
+      story: {
+        title: 'Our Story',
+        content: [
+          'We partner closely with clients to understand their vision and deliver bespoke experiences.',
+          'Chefs craft seasonal menus that balance flavor, presentation, and dietary needs.',
+          'From intimate gatherings to large events, every detail is handled with care.'
+        ]
+      },
+      values: {
+        passion: { title: 'Passion', subtitle: 'Heart in every dish', description: 'Love for food and service drives everything we do.' },
+        exclusivity: { title: 'Exclusivity', subtitle: 'Private experiences', description: 'Private, bespoke experiences crafted for your occasion.' },
+        company: { title: 'Trusted Partner', subtitle: 'Your reliable ally', description: 'A dedicated team focused on your success.' }
+      },
+      team: {
+        title: 'Our Team',
+        items: [
+          { name: 'Head Chef', role: 'Culinary Direction' },
+          { name: 'Event Manager', role: 'Planning & Coordination' },
+          { name: 'Pastry Lead', role: 'Desserts & Baking' }
+        ]
+      },
+      services: {
+        title: 'What we offer',
+        items: [
+          { title: 'Personalized Service', description: 'Tailored menus and attentive coordination.' },
+          { title: 'Creative Menus', description: 'Innovative dishes inspired by seasonal ingredients.' },
+          { title: 'Reliable Delivery', description: 'Professional team ensuring timely service.' }
+        ]
+      },
+      contact: {
+        title: 'Get in touch',
+        address: '123 Culinary Street, Food City, FC 12345',
+        phone: '+1 (555) 123-4567',
+        mobile: '+1 (555) 987-6543',
+        email: 'info@catering.com'
+      },
+      cta: {
+        title: 'Ready to plan your event?',
+        subtitle: 'Let’s create an unforgettable experience together.',
+        button: 'Start Now'
+      },
+      quoteModal: {
+        title: 'Tell us about your event',
+        subtitle: 'Share a few details so we can craft the perfect experience',
+        name: 'Full Name',
+        email: 'Email Address',
+        phone: 'Phone Number',
+        eventType: 'Event Type',
+        eventDate: 'Event Date',
+        guests: 'Number of Guests',
+        message: 'Tell us about your event...',
+        submit: 'Submit Request',
+        cancel: 'Cancel',
+        eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other']
+      },
+      body: { style: 'classic' }
+    },
+    DE: {
+      nav: { services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
+      hero: { title: 'Über uns', subtitle: 'Kulinarische Exzellenz seit unserer Gründung' },
+      story: {
+        title: 'Unsere Geschichte',
+        content: [
+          'Wir arbeiten eng mit Kunden zusammen, um ihre Vision zu verstehen und maßgeschneiderte Erlebnisse zu liefern.',
+          'Unsere Küche erstellt saisonale Menüs, die Geschmack, Präsentation und Ernährungsbedürfnisse ausbalancieren.',
+          'Von intimen Feiern bis zu großen Events kümmern wir uns um jedes Detail.'
+        ]
+      },
+      values: {
+        passion: { title: 'Leidenschaft', subtitle: 'Herz in jedem Gericht', description: 'Unsere Liebe zu Essen und Service treibt alles an.' },
+        exclusivity: { title: 'Exklusivität', subtitle: 'Private Erlebnisse', description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.' },
+        company: { title: 'Vertrauenspartner', subtitle: 'Ihr verlässlicher Partner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
+      },
+      team: {
+        title: 'Unser Team',
+        items: [
+          { name: 'Chefkoch', role: 'Kulinarische Leitung' },
+          { name: 'Event Manager', role: 'Planung & Koordination' },
+          { name: 'Pâtisserie Lead', role: 'Desserts & Backwaren' }
+        ]
+      },
+      services: {
+        title: 'Was wir bieten',
+        items: [
+          { title: 'Personalisierter Service', description: 'Individuelle Menüs und sorgfältige Koordination.' },
+          { title: 'Kreative Menüs', description: 'Innovative Gerichte mit saisonalen Zutaten.' },
+          { title: 'Zuverlässige Lieferung', description: 'Professionelles Team für pünktlichen Service.' }
+        ]
+      },
+      contact: {
+        title: 'Nehmen Sie Kontakt auf',
+        address: 'Kulinarische Straße 123, Essen Stadt, 12345',
+        phone: '+49 123 456 789',
+        mobile: '+49 987 654 321',
+        email: 'info@catering.com'
+      },
+      cta: {
+        title: 'Bereit, Ihr Event zu planen?',
+        subtitle: 'Lassen Sie uns gemeinsam ein unvergessliches Erlebnis schaffen.',
+        button: 'Jetzt starten'
+      },
+      quoteModal: {
+        title: 'Erzählen Sie uns von Ihrer Veranstaltung',
+        subtitle: 'Teilen Sie Details, damit wir das perfekte Erlebnis planen können',
+        name: 'Vollständiger Name',
+        email: 'E-Mail-Adresse',
+        phone: 'Telefonnummer',
+        eventType: 'Veranstaltungstyp',
+        eventDate: 'Veranstaltungsdatum',
+        guests: 'Anzahl der Gäste',
+        message: 'Erzählen Sie uns von Ihrer Veranstaltung...',
+        submit: 'Anfrage senden',
+        cancel: 'Abbrechen',
+        eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere']
+      },
+      body: { style: 'klassisch' }
+    }
+  };
+
+  const t: AboutContent = translations[language];const translations = {
     EN: {
       nav: { services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order' },
       hero: { title: 'About Us', subtitle: 'Crafting culinary excellence since our inception' },
@@ -981,3 +1134,4 @@ export default function AboutPage() {
     </div>
   );
 }
+
