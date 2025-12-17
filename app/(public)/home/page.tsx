@@ -865,8 +865,7 @@ export default function CateringHomepage() {
                   <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    className="h-32 w-auto object-contain transition-all duration-200 drop-shadow-md bg-white rounded-lg p-3 border border-gray-200"
-                    style={{ filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.15))' }}
+                    className="h-32 w-auto object-contain transition-all duration-200"
                     loading="lazy"
                   />
                 </div>
