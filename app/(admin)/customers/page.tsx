@@ -664,7 +664,9 @@ export default function Customers() {
                               </div>
                               <div className="text-center">
                                 <p className="text-sm font-bold text-gray-900">
-                                  {new Date(customer.lastOrder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  {customer.lastOrder
+                                    ? new Date(customer.lastOrder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                    : '—'}
                                 </p>
                                 <p className="text-xs text-gray-600">Last Order</p>
                               </div>
