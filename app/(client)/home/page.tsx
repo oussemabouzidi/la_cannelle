@@ -99,7 +99,7 @@ export default function CateringHomepage() {
 
         @keyframes marquee {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          100% { transform: translateX(-100%); }
         }
         
         @keyframes float {
@@ -855,7 +855,7 @@ export default function CateringHomepage() {
           </div>
 
           <div className="relative overflow-hidden py-6">
-            <div className="flex items-center gap-16 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '220%' }}>
+            <div className="flex w-max items-center gap-16 animate-logo-marquee whitespace-nowrap">
               {[...brandLogos, ...brandLogos].map((logo, idx) => (
                 <div
                   key={`${logo.name}-${idx}`}
@@ -864,7 +864,7 @@ export default function CateringHomepage() {
                   <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    className="h-16 sm:h-20 md:h-24 w-auto object-contain transition-all duration-200"
+                    className={`h-16 sm:h-20 md:h-24 w-auto object-contain transition-all duration-200 ${logo.src.endsWith('.svg') ? 'invert' : ''}`}
                     loading="lazy"
                   />
                 </div>
