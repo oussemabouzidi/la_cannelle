@@ -109,8 +109,8 @@ export default function AboutPage() {
       },
       values: {
         passion: { title: 'Passion', description: 'Love for food and service drives everything we do.' },
-        exclusivity: { title: 'Exclusivity', description: 'Private, bespoke experiences crafted for your occasion.' },
-        company: { title: 'Trusted Partner', description: 'A dedicated team focused on your success.' }
+        exclusivity: { title: 'Exclusivity', subtitle: 'Private experiences', description: 'Private, bespoke experiences crafted for your occasion.' },
+        company: { title: 'Trusted Partner', subtitle: 'Your reliable ally', description: 'A dedicated team focused on your success.' }
       },
       team: {
         title: 'Our Team',
@@ -169,8 +169,8 @@ export default function AboutPage() {
       },
       values: {
         passion: { title: 'Leidenschaft', description: 'Unsere Liebe zu Essen und Service treibt alles an.' },
-        exclusivity: { title: 'Exklusivität', description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.' },
-        company: { title: 'Vertrauenspartner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
+        exclusivity: { title: 'Exklusivität', subtitle: 'Private Erlebnisse', description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.' },
+        company: { title: 'Vertrauenspartner', subtitle: 'Ihr verlässlicher Partner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
       },
       team: {
         title: 'Unser Team',
