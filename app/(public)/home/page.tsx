@@ -5,11 +5,13 @@ import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Clock, Award, Eye, T
 import { useRouter } from 'next/navigation';
 import { Star, Crown, Shield, Heart, Quote } from 'lucide-react';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import type { homeTranslations } from '@/lib/translations/home';
 
 export default function CateringHomepage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { t, language, toggleLanguage } = useTranslation('home');
+  const { t: rawT, language, toggleLanguage } = useTranslation('home');
   const [isVisible, setIsVisible] = useState(false);
+  const t = rawT as (typeof homeTranslations)['EN'];
 
   useEffect(() => {
     setIsVisible(true);
