@@ -140,6 +140,19 @@ export default function CateringHomepage() {
   };
 
   const t = content[language];
+  const brandLogos = [
+    { name: 'Montblanc', src: '/images/logos/montblanc.png' },
+    { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
+    { name: 'OMG', src: '/images/logos/omg.png' },
+    { name: 'DoiT International', src: '/images/logos/doit.png' },
+    { name: 'BBDO', src: '/images/logos/bbdo.png' },
+    { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
+    { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
+    { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
+    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.png' },
+    { name: 'Samsonite', src: '/images/logos/samsonite.png' },
+    { name: 'SABIC', src: '/images/logos/sabic.png' },
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -201,6 +214,11 @@ export default function CateringHomepage() {
             transform: scale(1);
           }
         }
+
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
         
         @keyframes float {
           0%, 100% {
@@ -238,6 +256,10 @@ export default function CateringHomepage() {
         
         .animate-scale-in {
           animation: scaleIn 0.6s ease-out;
+        }
+
+        .animate-logo-marquee {
+          animation: marquee 30s linear infinite;
         }
         
         .animate-float {
@@ -411,6 +433,36 @@ export default function CateringHomepage() {
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
             <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* Brand Banner */}
+      <section className="bg-white py-8 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-semibold text-sm">
+              ★
+            </div>
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
+              <p className="text-lg font-bold text-gray-900">World-class brands and partners</p>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden py-2">
+            <div className="flex items-center gap-10 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
+              {[...brandLogos, ...brandLogos].map((logo, idx) => (
+                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-14 px-2 opacity-80 hover:opacity-100 transition-opacity duration-200">
+                  <img
+                    src={logo.src}
+                    alt={`${logo.name} logo`}
+                    className="h-10 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200 drop-shadow-sm"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
