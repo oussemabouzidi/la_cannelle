@@ -131,11 +131,14 @@ export default function Customers() {
     });
   };
 
-  const getTierIcon = (tier: string) => {
+  const getTierIcon = (tier?: string | null) => {
     switch (tier) {
-      case 'vip': return <Crown size={16} />;
-      case 'premium': return <Star size={16} />;
-      default: return null;
+      case 'vip':
+        return <Crown size={16} />;
+      case 'premium':
+        return <Star size={16} />;
+      default:
+        return null;
     }
   };
 
