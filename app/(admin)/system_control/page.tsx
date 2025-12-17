@@ -108,7 +108,7 @@ export default function SystemControl() {
     const nextStatus = {
       orderingPaused: !status.orderingPaused,
       pauseReason: status.orderingPaused ? '' : status.pauseReason,
-      pauseUntil: status.orderingPaused ? null : status.pauseUntil
+      pauseUntil: status.orderingPaused ? '' : status.pauseUntil || ''
     };
     try {
       const updated = await systemApi.updateSystemStatus(nextStatus);
