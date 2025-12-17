@@ -23,17 +23,17 @@ export default function CateringHomepage() {
     router.push('/order');
   };
   const brandLogos = [
-    { name: 'Montblanc', src: '/logos/montblanc.png' },
-    { name: 'Omnicom Media Group', src: '/logos/omnicom-media-group.png' },
-    { name: 'OMG', src: '/logos/omg.png' },
-    { name: 'DoiT International', src: '/logos/doit.png' },
-    { name: 'BBDO', src: '/logos/bbdo.png' },
-    { name: 'IWC Schaffhausen', src: '/logos/iwc.png' },
-    { name: 'Ruby Hotels', src: '/logos/ruby-hotels.svg' },
-    { name: 'RIMOWA', src: '/logos/rimowa.png' },
-    { name: 'Ralph Lauren', src: '/logos/ralph-lauren.png' },
-    { name: 'Samsonite', src: '/logos/samsonite.png' },
-    { name: 'SABIC', src: '/logos/sabic.png' },
+    { name: 'Montblanc', src: '/images/logos/montblanc.png' },
+    { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
+    { name: 'OMG', src: '/images/logos/omg.png' },
+    { name: 'DoiT International', src: '/images/logos/doit.png' },
+    { name: 'BBDO', src: '/images/logos/bbdo.png' },
+    { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
+    { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
+    { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
+    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.png' },
+    { name: 'Samsonite', src: '/images/logos/samsonite.png' },
+    { name: 'SABIC', src: '/images/logos/sabic.png' },
   ];
 
   return (
