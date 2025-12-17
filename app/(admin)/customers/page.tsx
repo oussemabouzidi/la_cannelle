@@ -131,8 +131,9 @@ export default function Customers() {
     });
   };
 
-  const getTierIcon = (tier?: string | null) => {
-    switch (tier) {
+  const getTierIcon = (tier: string = '') => {
+    const normalized = tier.toLowerCase();
+    switch (normalized) {
       case 'vip':
         return <Crown size={16} />;
       case 'premium':
