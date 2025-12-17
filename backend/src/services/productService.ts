@@ -3,6 +3,31 @@ import { AppError } from '../middleware/errorHandler';
 
 const prisma = new PrismaClient();
 
+const normalizeCategory = (category?: string | ProductCategory): ProductCategory | undefined => {
+  if (!category) return undefined;
+  const normalized = category.toString().toUpperCase();
+  if (!(normalized in ProductCategory)) {
+    throw new AppError('Invalid product category', 400);
+  }
+  return normalized as ProductCategory;
+};
+
+const normalizeTier = (tier?: string[] | MenuTier[]): MenuTier[] | undefined => {
+  if (!tier) return undefined;
+  return tier.map(t => t.toString().toUpperCase() as MenuTier);
+};
+
+const normalizeProductInput = <T extends {
+  category?: string | ProductCategory;
+  tier?: string[] | MenuTier[];
+}>(data: T) => {
+  return {
+    ...data,
+    ...(data.category && { category: normalizeCategory(data.category) }),
+    ...(data.tier && { tier: normalizeTier(data.tier) })
+  };
+};
+
 export const productService = {
   async getProducts(filters?: {
     category?: ProductCategory;
@@ -14,7 +39,7 @@ export const productService = {
     const where: any = {};
 
     if (filters?.category) {
-      where.category = filters.category;
+      where.category = normalizeCategory(filters.category);
     }
 
     if (filters?.available !== undefined) {
@@ -22,7 +47,7 @@ export const productService = {
     }
 
     if (filters?.tier) {
-      where.tier = { has: filters.tier };
+      where.tier = { has: filters.tier.toString().toUpperCase() as MenuTier };
     }
 
     if (filters?.search) {
@@ -85,23 +110,25 @@ export const productService = {
     image?: string;
     menuIds?: number[];
   }) {
+    const normalizedData = normalizeProductInput(data);
+
     const product = await prisma.product.create({
       data: {
-        name: data.name,
-        description: data.description,
-        category: data.category,
-        menuCategory: data.menuCategory,
-        price: data.price,
-        cost: data.cost,
-        available: data.available ?? true,
-        tier: data.tier,
-        preparationTime: data.preparationTime,
-        ingredients: data.ingredients,
-        allergens: data.allergens,
-        productCategories: data.productCategories,
-        image: data.image,
-        menuProducts: data.menuIds ? {
-          create: data.menuIds.map(menuId => ({ menuId }))
+        name: normalizedData.name,
+        description: normalizedData.description,
+        category: normalizedData.category as ProductCategory,
+        menuCategory: normalizedData.menuCategory,
+        price: normalizedData.price,
+        cost: normalizedData.cost,
+        available: normalizedData.available ?? true,
+        tier: normalizedData.tier as MenuTier[],
+        preparationTime: normalizedData.preparationTime,
+        ingredients: normalizedData.ingredients,
+        allergens: normalizedData.allergens,
+        productCategories: normalizedData.productCategories,
+        image: normalizedData.image,
+        menuProducts: normalizedData.menuIds ? {
+          create: normalizedData.menuIds.map(menuId => ({ menuId }))
         } : undefined
       },
       include: {
@@ -132,7 +159,7 @@ export const productService = {
     image: string;
     menuIds: number[];
   }>) {
-    const updateData: any = { ...data };
+    const updateData: any = { ...normalizeProductInput(data) };
     delete updateData.menuIds;
 
     const product = await prisma.product.update({
