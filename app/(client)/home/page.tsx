@@ -200,7 +200,7 @@ export default function CateringHomepage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+              <img src="/images/logo.png" alt="Logo" className="w-50 h-auto" />
             </div>
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
@@ -215,12 +215,12 @@ export default function CateringHomepage() {
               >
                 {language === 'EN' ? (
                   <>
-                    <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
+                    <span className="text-lg"><img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} alt="English flag" /></span>
                     English
                   </>
                 ) : (
                   <>
-                    <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} /></span>
+                    <span className="text-lg"><img src="/images/language/Flag_of_Germany-4096x2453.png" width={25} alt="German flag" /></span>
                     Deutsch
                   </>
                 )}
@@ -340,28 +340,28 @@ export default function CateringHomepage() {
             {[
               {
                 name: "Finger Food",
-                icon: "ðŸ¤",
+                icon: "🍔",
                 count: "25+ Items",
                 gradient: "from-amber-500 to-orange-500",
                 description: "Elegant bite-sized delights"
               },
               {
                 name: "Desserts",
-                icon: "ðŸ°",
+                icon: "🍰",
                 count: "15+ Varieties",
                 gradient: "from-pink-500 to-rose-500",
                 description: "Sweet endings to perfection"
               },
               {
                 name: "Buffet",
-                icon: "ðŸ¥˜",
+                icon: "🥘",
                 count: "8+ Themes",
                 gradient: "from-emerald-500 to-teal-500",
                 description: "Grand culinary experiences"
               },
               {
                 name: "Special Occasions",
-                icon: "ðŸŽ‰",
+                icon: "🎉",
                 count: "Custom",
                 gradient: "from-purple-500 to-indigo-500",
                 description: "Tailored for your events"
@@ -482,7 +482,7 @@ export default function CateringHomepage() {
               {
                 name: "Truffle Arancini",
                 category: "Finger Food",
-                price: "â‚¬24",
+                price: "€24",
                 image: "/images/truffle-arancini.jpg",
                 description: "Crispy risotto balls with black truffle",
                 popular: true
@@ -490,7 +490,7 @@ export default function CateringHomepage() {
               {
                 name: "Chocolate Sphere",
                 category: "Desserts",
-                price: "â‚¬18",
+                price: "€18",
                 image: "/images/chocolate-sphere.jpg",
                 description: "Molten chocolate with gold leaf",
                 featured: true
@@ -498,7 +498,7 @@ export default function CateringHomepage() {
               {
                 name: "Mediterranean Buffet",
                 category: "Buffet",
-                price: "â‚¬45",
+                price: "€45",
                 image: "/images/mediterranean-buffet.jpg",
                 description: "Fresh flavors from the Mediterranean coast"
               }
@@ -565,7 +565,6 @@ export default function CateringHomepage() {
       </section>
 
       {/* Passion Section - Smaller */}
-{/* Passion Section - Matched to Exclusivity */}
 <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-900 to-amber-900 relative overflow-hidden">
   {/* Animated Background */}
   <div className="absolute inset-0">
@@ -841,7 +840,7 @@ export default function CateringHomepage() {
                 style={{ animationDelay: `${index * 100 + 300}ms` }}
               >
                 <p className="text-gray-600 mb-4 italic text-sm">"{testimonial.text}"</p>
-                <p className="text-gray-900 font-semibold font-elegant text-sm">â€” {testimonial.author}</p>
+                <p className="text-gray-900 font-semibold font-elegant text-sm">— {testimonial.author}</p>
               </div>
             ))}
           </div>
