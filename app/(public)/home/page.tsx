@@ -848,6 +848,33 @@ export default function CateringHomepage() {
         </div>
       </section>
 
+      {/* Brand Banner */}
+      <section className="bg-white py-14 border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-6">
+            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
+          </div>
+
+          <div className="relative overflow-hidden py-6">
+            <div className="flex items-center gap-16 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '220%' }}>
+              {[...brandLogos, ...brandLogos].map((logo, idx) => (
+                <div
+                  key={`${logo.name}-${idx}`}
+                  className="flex items-center justify-center h-28 md:h-32 px-8 opacity-95 hover:opacity-100 transition-all duration-200"
+                >
+                  <img
+                    src={logo.src}
+                    alt={`${logo.name} logo`}
+                    className="h-16 sm:h-20 md:h-24 w-auto object-contain transition-all duration-200"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
