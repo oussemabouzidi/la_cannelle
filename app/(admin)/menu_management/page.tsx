@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { menusApi } from '@/lib/api/menus';
+import { productsApi } from '@/lib/api/products';
 
 type MenuType = {
   id: number;
@@ -71,12 +73,20 @@ export default function AdminMenuManagement() {
   const [viewMode, setViewMode] = useState('split'); // 'split', 'menus', 'products'
   const [expandedMenu, setExpandedMenu] = useState<number | null>(null);
   const [selectedMenuForDetail, setSelectedMenuForDetail] = useState<MenuType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigation = [
+    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
+    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
+    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
+    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
+    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
+    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
+  ];
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  // Menu categories
   const menuCategories = [
     'starters', 'mains', 'sides', 'desserts', 'drinks', 'accessories'
   ];
@@ -87,254 +97,74 @@ export default function AdminMenuManagement() {
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'spicy',
     'signature', 'seasonal', 'kid-friendly', 'chef-special'
   ];
+  const tiers = ['ESSENTIAL', 'PREMIUM', 'LUXURY'];
 
-  // Mock menus data
-  const [menus, setMenus] = useState<MenuType[]>([
-    {
-      id: 1,
-      name: 'Spring Menu',
-      description: 'Seasonal spring dishes with fresh ingredients',
-      category: 'seasonal',
-      type: 'fixed',
-      isActive: true,
-      startDate: '2024-03-01',
-      endDate: '2024-05-31',
-      products: [1, 2, 4, 7], // Product IDs
-      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-    },
-    {
-      id: 2,
-      name: 'Premium Tasting',
-      description: 'Gourmet tasting experience with wine pairing',
-      category: 'luxury',
-      type: 'tasting',
-      isActive: true,
-      price: 120,
-      products: [1, 3, 5, 7, 8],
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-    },
-    {
-      id: 3,
-      name: 'Vegetarian Delight',
-      description: 'Exclusively plant-based menu options',
-      category: 'vegetarian',
-      type: 'themed',
-      isActive: false,
-      products: [4, 6],
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-    }
-  ]);
+  const [menus, setMenus] = useState<MenuType[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
-  // Mock menu items data with categories and menu associations
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([
-    {
-      id: 1,
-      name: 'Truffle Mushroom Risotto',
-      description: 'Arborio rice with seasonal wild mushrooms, white truffle oil, and Parmigiano-Reggiano',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 24,
-      cost: 8,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 25,
-      ingredients: ['Arborio rice', 'Wild mushrooms', 'White truffle oil', 'Parmigiano-Reggiano', 'Vegetable stock'],
-      allergens: ['Dairy'],
-      productCategories: ['vegetarian', 'signature'],
-      menus: [1, 2], // Menu IDs
-      image: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 95
-    },
-    {
-      id: 2,
-      name: 'Herb-crusted Rack of Lamb',
-      description: 'New Zealand lamb with rosemary crust, mint jus, and roasted root vegetables',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 38,
-      cost: 15,
-      available: true,
-      tier: ['luxury'],
-      preparationTime: 35,
-      ingredients: ['New Zealand lamb', 'Fresh rosemary', 'Mint', 'Root vegetables', 'Red wine jus'],
-      allergens: [],
-      productCategories: ['meat', 'chef-special'],
-      menus: [1],
-      image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 88
-    },
-    {
-      id: 3,
-      name: 'Seared Scallops',
-      description: 'Day boat scallops with orange reduction, micro greens, and crispy prosciutto',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 28,
-      cost: 12,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 20,
-      ingredients: ['Fresh scallops', 'Orange', 'Micro greens', 'Prosciutto', 'Butter'],
-      allergens: ['Shellfish', 'Dairy'],
-      productCategories: ['seafood', 'spicy'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 92
-    },
-    {
-      id: 4,
-      name: 'Heirloom Tomato Burrata Salad',
-      description: 'Colorful heirloom tomatoes with fresh burrata, basil oil, and balsamic reduction',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 18,
-      cost: 6,
-      available: true,
-      tier: ['essential', 'premium', 'luxury'],
-      preparationTime: 15,
-      ingredients: ['Heirloom tomatoes', 'Burrata cheese', 'Fresh basil', 'Balsamic vinegar', 'Olive oil'],
-      allergens: ['Dairy'],
-      productCategories: ['vegetarian', 'salad', 'seasonal'],
-      menus: [1, 3],
-      image: 'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 85
-    },
-    {
-      id: 5,
-      name: 'Chocolate Fondant',
-      description: 'Warm chocolate cake with liquid center and fresh raspberry sauce',
-      category: 'dessert',
-      menuCategory: 'desserts',
-      price: 16,
-      cost: 4,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 18,
-      ingredients: ['Dark chocolate', 'Butter', 'Eggs', 'Sugar', 'Raspberries'],
-      allergens: ['Dairy', 'Eggs'],
-      productCategories: ['dessert', 'signature'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 90
-    },
-    {
-      id: 6,
-      name: 'Classic Caesar Salad',
-      description: 'Traditional Caesar salad with romaine lettuce, parmesan, and homemade croutons',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 14,
-      cost: 3,
-      available: false,
-      tier: ['essential'],
-      preparationTime: 12,
-      ingredients: ['Romaine lettuce', 'Parmesan cheese', 'Croutons', 'Caesar dressing', 'Anchovies'],
-      allergens: ['Dairy', 'Fish', 'Gluten'],
-      productCategories: ['salad', 'kid-friendly'],
-      menus: [3],
-      image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 78
-    },
-    {
-      id: 7,
-      name: 'Grilled Salmon',
-      description: 'Atlantic salmon with lemon butter sauce and seasonal vegetables',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 32,
-      cost: 12,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 22,
-      ingredients: ['Atlantic salmon', 'Lemon', 'Butter', 'Asparagus', 'Baby potatoes'],
-      allergens: ['Fish', 'Dairy'],
-      productCategories: ['seafood', 'gluten-free'],
-      menus: [1, 2],
-      image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 91
-    },
-    {
-      id: 8,
-      name: 'Tiramisu',
-      description: 'Classic Italian dessert with layers of coffee-soaked ladyfingers and mascarpone cream',
-      category: 'dessert',
-      menuCategory: 'desserts',
-      price: 15,
-      cost: 4,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 30,
-      ingredients: ['Mascarpone cheese', 'Ladyfingers', 'Espresso', 'Cocoa powder', 'Eggs'],
-      allergens: ['Dairy', 'Eggs'],
-      productCategories: ['dessert', 'italian'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 89
-    },
-    {
-      id: 9,
-      name: 'Sparkling Water',
-      description: 'Premium Italian sparkling water',
-      category: 'beverage',
-      menuCategory: 'drinks',
-      price: 6,
-      cost: 1,
-      available: true,
-      tier: ['essential', 'premium', 'luxury'],
-      preparationTime: 2,
-      ingredients: ['Natural spring water'],
-      allergens: [],
-      productCategories: ['drink', 'non-alcoholic'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 65
-    },
-    {
-      id: 10,
-      name: 'Olive Oil Bread Dip',
-      description: 'Artisanal bread with herb-infused olive oil',
-      category: 'side',
-      menuCategory: 'sides',
-      price: 8,
-      cost: 2,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 10,
-      ingredients: ['Sourdough bread', 'Extra virgin olive oil', 'Herbs', 'Balsamic vinegar'],
-      allergens: ['Gluten'],
-      productCategories: ['appetizer', 'vegetarian'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 75
-    }
-  ]);
+  const normalizeMenu = (menu: any): MenuType => ({
+    id: menu.id,
+    name: menu.name,
+    description: menu.description || '',
+    category: (menu.category || '').toLowerCase(),
+    type: menu.type || '',
+    isActive: !!menu.isActive,
+    startDate: menu.startDate || undefined,
+    endDate: menu.endDate || undefined,
+    price: menu.price ?? undefined,
+    products: menu.menuProducts
+      ? menu.menuProducts.map((mp: any) => mp.productId)
+      : menu.products || [],
+    image: menu.image || ''
+  });
 
-  const categories = [
-    { value: 'all', label: 'All Categories', icon: Utensils },
-    { value: 'starter', label: 'Starters', icon: null },
-    { value: 'main', label: 'Main Courses', icon: null },
-    { value: 'dessert', label: 'Desserts', icon: Dessert },
-    { value: 'beverage', label: 'Beverages', icon: Wine },
-    { value: 'side', label: 'Sides', icon: null }
-  ];
+  const normalizeProduct = (product: any): MenuItem => ({
+    id: product.id,
+    name: product.name,
+    description: product.description || '',
+    category: (product.category || '').toLowerCase(),
+    menuCategory: product.menuCategory || '',
+    price: product.price ?? 0,
+    cost: product.cost ?? 0,
+    available: !!product.available,
+    tier: Array.isArray(product.tier) ? product.tier : product.tier ? [product.tier] : [],
+    preparationTime: product.preparationTime ?? 0,
+    ingredients: Array.isArray(product.ingredients) ? product.ingredients : [],
+    allergens: Array.isArray(product.allergens) ? product.allergens : [],
+    productCategories: Array.isArray(product.productCategories) ? product.productCategories : [],
+    menus: product.menus
+      ? product.menus
+      : product.menuProducts
+      ? product.menuProducts.map((mp: any) => mp.menuId)
+      : [],
+    image: product.image || '',
+    popularity: product.popularity ?? 0
+  });
 
-  const tiers = ['essential', 'premium', 'luxury'];
+  // Load data from backend
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
 
-  const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
-    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
-    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
-    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
-    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
-  ];
+        const [menuResponse, productResponse] = await Promise.all([
+          menusApi.getMenus(),
+          productsApi.getProducts()
+        ]);
 
-  const handleNavigation = (path: string) => {
-    router.push(path);
-  };
+        setMenus(menuResponse.map(normalizeMenu));
+        setMenuItems(productResponse.map(normalizeProduct));
+      } catch (err) {
+        console.error('Failed to load menus/products', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // New item form state
-  const [newItem, setNewItem] = useState<NewItemState>({
+    loadData();
+  }, []);
+
+const [newItem, setNewItem] = useState<NewItemState>({
     name: '',
     description: '',
     category: 'starter',
@@ -394,84 +224,95 @@ export default function AdminMenuManagement() {
   };
 
   // CRUD Operations for Menu Items
-  const addMenuItem = () => {
-    const item: MenuItem = {
-      ...newItem,
-      id: Math.max(...menuItems.map(i => i.id)) + 1,
-      popularity: Math.floor(Math.random() * 30) + 70
-    } as MenuItem;
-    setMenuItems([...menuItems, item]);
-    
-    // Update menus that include this product
-    if (newItem.menus.length > 0) {
-      const updatedMenus = menus.map(menu => {
-        if (newItem.menus.includes(menu.id)) {
-          return {
-            ...menu,
-            products: [...menu.products, item.id]
-          };
-        }
-        return menu;
-      });
-      setMenus(updatedMenus);
+  const addMenuItem = async (itemData?: NewItemState | MenuItem) => {
+    const base = itemData || newItem;
+    try {
+      const created = await productsApi.createProduct(base as any);
+      const normalized = normalizeProduct(created);
+      setMenuItems([...menuItems, normalized]);
+
+      if (base.menus && (base.menus as number[]).length > 0) {
+        const updatedMenus = menus.map(menu => {
+          if ((base.menus as number[]).includes(menu.id)) {
+            return { ...menu, products: [...menu.products, normalized.id] };
+          }
+          return menu;
+        });
+        setMenus(updatedMenus);
+      }
+
+      resetNewItemForm();
+      setShowAddForm(false);
+    } catch (err) {
+      console.error('Failed to create product', err);
     }
-    
-    resetNewItemForm();
-    setShowAddForm(false);
   };
 
-  const updateMenuItem = (updatedItem: MenuItem) => {
+  const updateMenuItem = async (updatedItem: MenuItem) => {
     const oldItem = menuItems.find(item => item.id === updatedItem.id);
     if (!oldItem) return;
-    
-    setMenuItems(menuItems.map(item => 
-      item.id === updatedItem.id ? updatedItem : item
-    ));
-    
-    // Update menu product associations if menus changed
-    if (JSON.stringify(oldItem.menus) !== JSON.stringify(updatedItem.menus)) {
-      const updatedMenus = menus.map(menu => {
-        let products = [...menu.products];
-        
-        // Remove from menus that no longer include this product
-        if (oldItem.menus.includes(menu.id) && !updatedItem.menus.includes(menu.id)) {
-          products = products.filter(productId => productId !== updatedItem.id);
-        }
-        // Add to new menus
-        else if (!oldItem.menus.includes(menu.id) && updatedItem.menus.includes(menu.id)) {
-          products.push(updatedItem.id);
-        }
-        
-        return { ...menu, products };
-      });
-      setMenus(updatedMenus);
+    try {
+      const saved = await productsApi.updateProduct(updatedItem.id, updatedItem as any);
+      const normalized = normalizeProduct(saved);
+
+      setMenuItems(menuItems.map(item =>
+        item.id === normalized.id ? normalized : item
+      ));
+
+      if (JSON.stringify(oldItem.menus) !== JSON.stringify(normalized.menus)) {
+        const updatedMenus = menus.map(menu => {
+          let products = [...menu.products];
+          if (oldItem.menus.includes(menu.id) && !normalized.menus.includes(menu.id)) {
+            products = products.filter(productId => productId !== normalized.id);
+          } else if (!oldItem.menus.includes(menu.id) && normalized.menus.includes(menu.id)) {
+            products.push(normalized.id);
+          }
+          return { ...menu, products };
+        });
+        setMenus(updatedMenus);
+      }
+
+      setEditingItem(null);
+    } catch (err) {
+      console.error('Failed to update product', err);
     }
-    
-    setEditingItem(null);
   };
 
-  // CRUD Operations for Menus
-  const addMenu = () => {
-    const menu: MenuType = {
-      ...newMenu,
-      id: Math.max(...menus.map(m => m.id)) + 1,
-      products: [] // Will be populated when products are added
-    };
-    setMenus([...menus, menu]);
-    resetNewMenuForm();
-    setShowAddMenuForm(false);
+// CRUD Operations for Menus
+  const addMenu = async () => {
+    try {
+      const created = await menusApi.createMenu(newMenu as any);
+      const normalized = normalizeMenu(created);
+      setMenus([...menus, normalized]);
+      resetNewMenuForm();
+      setShowAddMenuForm(false);
+    } catch (err) {
+      console.error('Failed to create menu', err);
+    }
   };
 
-  const updateMenu = (updatedMenu: MenuType) => {
-    setMenus(menus.map(menu => 
-      menu.id === updatedMenu.id ? updatedMenu : menu
-    ));
+  const updateMenu = async (updatedMenu: MenuType) => {
+    try {
+      const saved = await menusApi.updateMenu(updatedMenu.id, updatedMenu as any);
+      const normalized = normalizeMenu(saved);
+      setMenus(menus.map(menu =>
+        menu.id === normalized.id ? normalized : menu
+      ));
+    } catch (err) {
+      console.error('Failed to update menu', err);
+    }
   };
 
-  const toggleMenuActive = (menuId: number) => {
-    setMenus(menus.map(menu => 
-      menu.id === menuId ? { ...menu, isActive: !menu.isActive } : menu
-    ));
+const toggleMenuActive = async (menuId: number) => {
+    const target = menus.find(m => m.id === menuId);
+    if (!target) return;
+    try {
+      const saved = await menusApi.updateMenu(menuId, { ...target, isActive: !target.isActive } as any);
+      const normalized = normalizeMenu(saved);
+      setMenus(menus.map(menu => menu.id === menuId ? normalized : menu));
+    } catch (err) {
+      console.error('Failed to toggle menu', err);
+    }
   };
 
   const deleteMenu = (menuId: number) => {
@@ -524,6 +365,11 @@ export default function AdminMenuManagement() {
         ? prev.tier.filter(t => t !== tier)
         : [...prev.tier, tier]
     }));
+  };
+
+  const handleNavigation = (path: string) => {
+    setActiveSection(path.replace('/', '') || 'menu');
+    router.push(path);
   };
 
   const toggleProductCategory = (category: string) => {
@@ -630,11 +476,13 @@ export default function AdminMenuManagement() {
   };
 
   const ImageWithFallback = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
-    const [imgSrc, setImgSrc] = useState(src);
+    const placeholder = '/images/placeholder.png';
+    const safeSrc = src && src.trim() ? src : placeholder;
+    const [imgSrc, setImgSrc] = useState(safeSrc);
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-      setImgSrc(src);
+      setImgSrc(src && src.trim() ? src : placeholder);
       setHasError(false);
     }, [src]);
 
@@ -810,7 +658,7 @@ export default function AdminMenuManagement() {
 
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price (€)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price ($)</label>
                     <input
                       type="number"
                       value={localItem.price}
@@ -822,7 +670,7 @@ export default function AdminMenuManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Cost (€)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cost ($)</label>
                     <input
                       type="number"
                       value={localItem.cost}
@@ -949,9 +797,23 @@ export default function AdminMenuManagement() {
     );
   };
 
-  const AddFormModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+  
+const AddFormModal = () => {
+  const [localItem, setLocalItem] = useState<NewItemState>(newItem);
+
+  useEffect(() => {
+    setLocalItem(newItem);
+  }, [newItem]);
+
+  const updateLocalIngredient = (index: number, value: string) => {
+    const next = [...localItem.ingredients];
+    next[index] = value;
+    setLocalItem({ ...localItem, ingredients: next });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddForm(false)}>
+      <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900 font-elegant">Add New Menu Item</h2>
@@ -969,11 +831,7 @@ export default function AdminMenuManagement() {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   <div className="aspect-square w-full overflow-hidden rounded-lg mb-4">
                     {imagePreview ? (
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-lg">
                         <Camera className="w-12 h-12 text-gray-400" />
@@ -992,13 +850,12 @@ export default function AdminMenuManagement() {
                     </label>
                   </div>
                 </div>
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Or Enter Image URL</label>
                   <input
                     type="text"
-                    value={newItem.image}
-                    onChange={(e) => setNewItem({ ...newItem, image: e.target.value })}
+                    value={localItem.image}
+                    onChange={(e) => setLocalItem({ ...localItem, image: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder="https://example.com/image.jpg"
                   />
@@ -1012,17 +869,17 @@ export default function AdminMenuManagement() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                   <input
                     type="text"
-                    value={newItem.name}
-                    onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                    value={localItem.name}
+                    onChange={(e) => setLocalItem({ ...localItem, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder="Enter dish name (e.g., Grilled Salmon)"
+                    placeholder="Enter dish name"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                   <select
-                    value={newItem.category}
-                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                    value={localItem.category}
+                    onChange={(e) => setLocalItem({ ...localItem, category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                   >
                     <option value="starter">Starter</option>
@@ -1035,8 +892,8 @@ export default function AdminMenuManagement() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Menu Section</label>
                   <select
-                    value={newItem.menuCategory}
-                    onChange={(e) => setNewItem({ ...newItem, menuCategory: e.target.value })}
+                    value={localItem.menuCategory}
+                    onChange={(e) => setLocalItem({ ...localItem, menuCategory: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                   >
                     {menuCategories.map(category => (
@@ -1051,21 +908,21 @@ export default function AdminMenuManagement() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
-                  value={newItem.description}
-                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                  value={localItem.description}
+                  onChange={(e) => setLocalItem({ ...localItem, description: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                  placeholder="Describe the dish, ingredients, preparation style, and special features..."
+                  placeholder="Describe the dish..."
                 />
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price (€)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price ($)</label>
                   <input
                     type="number"
-                    value={newItem.price}
-                    onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) })}
+                    value={localItem.price}
+                    onChange={(e) => setLocalItem({ ...localItem, price: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder="0.00"
                     min="0"
@@ -1073,11 +930,11 @@ export default function AdminMenuManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cost (€)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Cost ($)</label>
                   <input
                     type="number"
-                    value={newItem.cost}
-                    onChange={(e) => setNewItem({ ...newItem, cost: parseFloat(e.target.value) })}
+                    value={localItem.cost}
+                    onChange={(e) => setLocalItem({ ...localItem, cost: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder="0.00"
                     min="0"
@@ -1088,8 +945,8 @@ export default function AdminMenuManagement() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Prep Time (min)</label>
                   <input
                     type="number"
-                    value={newItem.preparationTime}
-                    onChange={(e) => setNewItem({ ...newItem, preparationTime: parseInt(e.target.value) })}
+                    value={localItem.preparationTime}
+                    onChange={(e) => setLocalItem({ ...localItem, preparationTime: parseInt(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder="15"
                     min="1"
@@ -1106,15 +963,17 @@ export default function AdminMenuManagement() {
                         <input
                           type="checkbox"
                           id={`new-category-${category}`}
-                          checked={newItem.productCategories.includes(category)}
-                          onChange={() => toggleProductCategory(category)}
+                          checked={localItem.productCategories.includes(category)}
+                          onChange={(e) => {
+                            const updatedCategories = e.target.checked
+                              ? [...localItem.productCategories, category]
+                              : localItem.productCategories.filter(c => c !== category);
+                            setLocalItem({ ...localItem, productCategories: updatedCategories });
+                          }}
                           className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                         />
-                        <label 
-                          htmlFor={`new-category-${category}`}
-                          className="text-sm text-gray-700 capitalize cursor-pointer"
-                        >
-                          {category.replace('-', ' ')}
+                        <label htmlFor={`new-category-${category}`} className="text-sm text-gray-700 capitalize cursor-pointer">
+                          {category}
                         </label>
                       </div>
                     ))}
@@ -1122,33 +981,27 @@ export default function AdminMenuManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Include in Menus</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Assign to Menus</label>
                   <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                     {menus.map(menu => (
                       <div key={menu.id} className="flex items-center gap-2">
                         <input
                           type="checkbox"
                           id={`new-menu-${menu.id}`}
-                          checked={newItem.menus.includes(menu.id)}
-                          onChange={() => toggleMenuAssociation(menu.id)}
+                          checked={localItem.menus.includes(menu.id)}
+                          onChange={(e) => {
+                            const updatedMenus = e.target.checked
+                              ? [...localItem.menus, menu.id]
+                              : localItem.menus.filter(id => id !== menu.id);
+                            setLocalItem({ ...localItem, menus: updatedMenus });
+                          }}
                           className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                         />
-                        <label 
-                          htmlFor={`new-menu-${menu.id}`}
-                          className="text-sm text-gray-700 cursor-pointer"
-                        >
+                        <label htmlFor={`new-menu-${menu.id}`} className="text-sm text-gray-700 cursor-pointer">
                           {menu.name}
                         </label>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {menu.isActive ? 'Active' : 'Inactive'}
-                        </span>
                       </div>
                     ))}
-                    {menus.length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-2">No menus created yet</p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1159,12 +1012,19 @@ export default function AdminMenuManagement() {
                   {tiers.map(tier => (
                     <button
                       key={tier}
-                      onClick={() => toggleTier(tier)}
                       className={`px-4 py-2 rounded-lg font-medium capitalize ${
-                        newItem.tier.includes(tier)
+                        localItem.tier.includes(tier)
                           ? 'bg-amber-600 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
+                      onClick={() =>
+                        setLocalItem(prev => ({
+                          ...prev,
+                          tier: prev.tier.includes(tier)
+                            ? prev.tier.filter(t => t !== tier)
+                            : [...prev.tier, tier]
+                        }))
+                      }
                     >
                       {tier}
                     </button>
@@ -1174,43 +1034,54 @@ export default function AdminMenuManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Ingredients</label>
-                <div className="space-y-2">
-                  {newItem.ingredients.map((ingredient, index) => (
-                    <div key={index} className="flex gap-2">
+                <div className="space-y-3">
+                  {localItem.ingredients.map((ingredient, index) => (
+                    <div key={index} className="flex items-center gap-3">
                       <input
                         type="text"
                         value={ingredient}
-                        onChange={(e) => updateIngredient(index, e.target.value)}
+                        onChange={(e) => updateLocalIngredient(index, e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                        placeholder="Enter ingredient (e.g., Fresh basil leaves)"
+                        placeholder="e.g., Atlantic salmon, lemon, butter"
                       />
-                      {newItem.ingredients.length > 1 && (
+                      {localItem.ingredients.length > 1 && (
                         <button
-                          onClick={() => removeIngredient(index)}
-                          className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          onClick={() =>
+                            setLocalItem(prev => ({
+                              ...prev,
+                              ingredients: prev.ingredients.filter((_, i) => i !== index)
+                            }))
+                          }
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove ingredient"
                         >
-                          <XCircle size={20} />
+                          <X size={16} />
                         </button>
                       )}
                     </div>
                   ))}
-                  <button
-                    onClick={addIngredient}
-                    className="px-4 py-2 border border-dashed border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-600 flex items-center gap-2"
-                  >
-                    <Plus size={16} />
-                    Add Ingredient
-                  </button>
                 </div>
+                <button
+                  onClick={() => setLocalItem(prev => ({ ...prev, ingredients: [...prev.ingredients, ''] }))}
+                  className="mt-2 px-4 py-2 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium flex items-center gap-2"
+                >
+                  <Plus size={16} />
+                  Add Ingredient
+                </button>
               </div>
 
               <div className="flex gap-4">
                 <button
-                  onClick={addMenuItem}
+                  onClick={() => {
+                    setNewItem(localItem);
+                    addMenuItem(localItem);
+                    setShowAddForm(false);
+                    resetNewItemForm();
+                  }}
                   className="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <Save size={20} />
-                  Add Menu Item
+                  Save Changes
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
@@ -1225,143 +1096,110 @@ export default function AdminMenuManagement() {
       </div>
     </div>
   );
+};
 
-  const AddMenuFormModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 font-elegant">Add New Menu</h2>
-            <button onClick={() => setShowAddMenuForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-              <X size={24} />
-            </button>
-          </div>
+const AddMenuFormModal = () => {
+  const [localMenuState, setLocalMenuState] = useState<NewMenuState>(newMenu);
+
+  useEffect(() => {
+    setLocalMenuState(newMenu);
+  }, [newMenu]);
+
+  const handleSaveMenu = () => {
+    setNewMenu(localMenuState);
+    addMenu();
+    setShowAddMenuForm(false);
+    resetNewMenuForm();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddMenuForm(false)}>
+      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900 font-elegant">Create Menu</h2>
+          <button onClick={() => setShowAddMenuForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X size={24} />
+          </button>
         </div>
 
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Menu Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
               <input
                 type="text"
-                value={newMenu.name}
-                onChange={(e) => setNewMenu({ ...newMenu, name: e.target.value })}
+                value={localMenuState.name}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="e.g., Spring Special Menu"
+                placeholder="Menu name"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Menu Category</label>
-              <select
-                value={newMenu.category}
-                onChange={(e) => setNewMenu({ ...newMenu, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-              >
-                <option value="seasonal">Seasonal</option>
-                <option value="luxury">Luxury</option>
-                <option value="vegetarian">Vegetarian</option>
-                <option value="vegan">Vegan</option>
-                <option value="family">Family</option>
-                <option value="business">Business</option>
-                <option value="holiday">Holiday</option>
-                <option value="tasting">Tasting</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <input
+                type="text"
+                value={localMenuState.category}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                placeholder="e.g., seasonal, luxury"
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <input
+                type="text"
+                value={localMenuState.type}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                placeholder="fixed, tasting, themed"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price (optional)</label>
+              <input
+                type="number"
+                value={localMenuState.price ?? 0}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+              />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
             <textarea
-              value={newMenu.description}
-              onChange={(e) => setNewMenu({ ...newMenu, description: e.target.value })}
+              value={localMenuState.description}
+              onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-              placeholder="Describe this menu, its theme, and target audience..."
+              placeholder="Describe this menu"
             />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Menu Type</label>
-              <select
-                value={newMenu.type}
-                onChange={(e) => setNewMenu({ ...newMenu, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-              >
-                <option value="fixed">Fixed Menu</option>
-                <option value="tasting">Tasting Menu</option>
-                <option value="buffet">Buffet</option>
-                <option value="themed">Themed Menu</option>
-                <option value="custom">Custom Menu</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Menu Price (€)</label>
-              <input
-                type="number"
-                value={newMenu.price}
-                onChange={(e) => setNewMenu({ ...newMenu, price: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="0.00 (optional)"
-                min="0"
-                step="0.01"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setNewMenu({ ...newMenu, isActive: true })}
-                  className={`px-4 py-2 rounded-lg font-medium ${
-                    newMenu.isActive
-                      ? 'bg-green-100 text-green-800 border border-green-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Active
-                </button>
-                <button
-                  onClick={() => setNewMenu({ ...newMenu, isActive: false })}
-                  className={`px-4 py-2 rounded-lg font-medium ${
-                    !newMenu.isActive
-                      ? 'bg-red-100 text-red-800 border border-red-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Inactive
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-              <input
-                type="date"
-                value={newMenu.startDate}
-                onChange={(e) => setNewMenu({ ...newMenu, startDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-              <input
-                type="date"
-                value={newMenu.endDate}
-                onChange={(e) => setNewMenu({ ...newMenu, endDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-              />
-            </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="menu-active"
+              checked={localMenuState.isActive}
+              onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
+              className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+            />
+            <label htmlFor="menu-active" className="text-sm text-gray-700">Menu is active</label>
           </div>
 
           <div className="flex gap-4">
             <button
-              onClick={addMenu}
-              className="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
+              onClick={handleSaveMenu}
+              className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
             >
               <Save size={20} />
-              Create Menu
+              Save Menu
             </button>
             <button
               onClick={() => setShowAddMenuForm(false)}
@@ -1374,274 +1212,32 @@ export default function AdminMenuManagement() {
       </div>
     </div>
   );
+};
 
-  const MenuDetailModal = ({ menu, onClose }: { menu: MenuType; onClose: () => void }) => {
-    const productsInMenu = getProductsInMenu(menu.id);
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900 font-elegant">{menu.name}</h2>
-              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={24} />
-              </button>
-            </div>
-            <p className="text-gray-600 mt-1">{menu.description}</p>
-          </div>
+const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean }) => (
+  <button
+    onClick={() => setSelectedMenu(menu)}
+    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 ${
+      isSelected ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50'
+    }`}
+  >
+    <div className="flex items-center justify-between mb-2">
+      <h4 className="text-lg font-semibold text-gray-900">{menu.name}</h4>
+      <span className={`px-2 py-1 text-xs rounded-full ${
+        menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      }`}>
+        {menu.isActive ? 'Active' : 'Inactive'}
+      </span>
+    </div>
+    <p className="text-sm text-gray-600 line-clamp-2">{menu.description}</p>
+    <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+      <span className="capitalize">{menu.category}</span>
+      {menu.price !== undefined ? <span>${menu.price}</span> : <span>Custom</span>}
+    </div>
+  </button>
+);
 
-          <div className="p-6 space-y-6">
-            {/* Menu Header */}
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="md:w-1/3">
-                <div className="aspect-video rounded-xl overflow-hidden">
-                  <ImageWithFallback 
-                    src={menu.image}
-                    alt={menu.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-              <div className="md:w-2/3 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Category</p>
-                    <p className="font-medium text-gray-900 capitalize">{menu.category}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Type</p>
-                    <p className="font-medium text-gray-900 capitalize">{menu.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {menu.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Price</p>
-                    <p className="font-bold text-gray-900">
-                      {(menu.price ?? 0) > 0 ? `€${menu.price}` : 'Variable Pricing'}
-                    </p>
-                  </div>
-                </div>
-                
-                {menu.startDate && menu.endDate && (
-                  <div>
-                    <p className="text-sm text-gray-500">Availability</p>
-                    <p className="font-medium text-gray-900">
-                      {new Date(menu.startDate).toLocaleDateString()} - {new Date(menu.endDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Products Section */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Products in this Menu</h3>
-              {productsInMenu.length > 0 ? (
-                <div className="space-y-3">
-                  {productsInMenu.map(product => (
-                    <div key={product.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
-                        <ImageWithFallback 
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{product.name}</h4>
-                            <p className="text-sm text-gray-600 line-clamp-1">{product.description}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-gray-900">€{product.price}</p>
-                            <p className="text-xs text-gray-500">{product.category}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="px-2 py-1 bg-white rounded text-xs text-gray-600">
-                            {product.preparationTime} min
-                          </span>
-                          {product.productCategories.slice(0, 2).map(cat => (
-                            <span key={cat} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs capitalize">
-                              {cat.replace('-', ' ')}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setEditingItem(product);
-                          onClose();
-                        }}
-                        className="px-3 py-1 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No products in this menu</p>
-                  <button
-                    onClick={() => {
-                      setShowAddForm(true);
-                      onClose();
-                    }}
-                    className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
-                  >
-                    Add Products
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-6 border-t border-gray-200">
-              <button
-                onClick={() => {
-                  setEditingItem(menu);
-                  onClose();
-                }}
-                className="flex-1 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
-              >
-                Edit Menu
-              </button>
-              <button
-                onClick={() => {
-                  toggleMenuActive(menu.id);
-                  onClose();
-                }}
-                className={`flex-1 px-4 py-3 rounded-lg font-medium ${
-                  menu.isActive
-                    ? 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                    : 'border border-green-300 text-green-700 hover:bg-green-50'
-                }`}
-              >
-                {menu.isActive ? 'Deactivate' : 'Activate'}
-              </button>
-              <button
-                onClick={() => {
-                  deleteMenu(menu.id);
-                  onClose();
-                }}
-                className="flex-1 px-4 py-3 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors font-medium"
-              >
-                Delete Menu
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const MenuCard = ({ menu, showActions = true, isSelected = false }: { menu: MenuType; showActions?: boolean; isSelected?: boolean }) => {
-    const productsInMenu = getProductsInMenu(menu.id);
-    
-    return (
-      <div className={`bg-white rounded-xl shadow-sm border transition-all duration-300 hover:shadow-md cursor-pointer ${
-        isSelected ? 'border-amber-500 shadow-md' : 'border-gray-200'
-      }`} onClick={() => viewMenuDetails(menu)}>
-        <div className="flex">
-          {/* Image on the left */}
-          <div className="w-1/3">
-            <div className="h-full">
-              <ImageWithFallback 
-                src={menu.image}
-                alt={menu.name}
-                className="w-full h-full object-cover rounded-l-xl"
-              />
-            </div>
-          </div>
-          
-          {/* Content on the right */}
-          <div className="w-2/3 p-4">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 truncate">{menu.name}</h3>
-                <p className="text-xs text-gray-600 line-clamp-2 mt-1">{menu.description}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {menu.isActive ? 'Active' : 'Inactive'}
-                </span>
-                {(menu.price ?? 0) > 0 && (
-                  <span className="text-sm font-bold text-gray-900">€{menu.price}</span>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Info Row */}
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded capitalize">
-                  {menu.category}
-                </span>
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded capitalize">
-                  {menu.type}
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Package size={12} />
-                <span>{productsInMenu.length} items</span>
-              </div>
-            </div>
-
-            {/* Menu Sections Preview */}
-            <div className="mb-3">
-              <div className="flex flex-wrap gap-1">
-                {Array.from(new Set(productsInMenu.map(p => p.menuCategory))).slice(0, 3).map(category => (
-                  <span key={category} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs capitalize">
-                    {category}
-                  </span>
-                ))}
-                {Array.from(new Set(productsInMenu.map(p => p.menuCategory))).length > 3 && (
-                  <span className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded text-xs">
-                    +{Array.from(new Set(productsInMenu.map(p => p.menuCategory))).length - 3}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Date Range if available */}
-            {menu.startDate && menu.endDate && (
-              <div className="text-xs text-gray-500 mb-3">
-                {new Date(menu.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(menu.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </div>
-            )}
-
-            {/* Action Button */}
-            <div className="pt-2 border-t border-gray-100">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  viewMenuDetails(menu);
-                }}
-                className="w-full px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
-              >
-                <Eye size={12} />
-                View Details
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const ProductCard = ({ item }: { item: MenuItem }) => (
+const ProductCard = ({ item }: { item: MenuItem }) => (
     <div
       className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-md ${
         isVisible ? 'animate-fade-in-up' : 'opacity-0'
@@ -1680,13 +1276,13 @@ export default function AdminMenuManagement() {
             <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm text-gray-600 capitalize">{item.category}</span>
-              <span className="text-sm text-gray-400">•</span>
+              <span className="text-sm text-gray-400">|</span>
               <span className="text-sm text-gray-600">{item.preparationTime} min</span>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">€{item.price}</p>
-            <p className="text-sm text-gray-600">Cost: €{item.cost}</p>
+            <p className="text-2xl font-bold text-gray-900">${item.price}</p>
+            <p className="text-sm text-gray-600">Cost: ${item.cost}</p>
           </div>
         </div>
         
@@ -2113,7 +1709,10 @@ export default function AdminMenuManagement() {
                           }
                         </p>
                         <button
-                          onClick={() => setShowAddForm(true)}
+                          onClick={() => {
+                            resetNewItemForm();
+                            setShowAddForm(true);
+                          }}
                           className="mt-4 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 mx-auto"
                         >
                           <Plus size={20} />

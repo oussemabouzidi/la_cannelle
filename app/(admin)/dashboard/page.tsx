@@ -22,11 +22,14 @@ import {
   LogOut,
   BarChart3
 } from 'lucide-react';
+import { dashboardApi, DashboardStats } from '@/lib/api/dashboard';
 
 export default function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   // Get current active section from pathname (optional, for styling)
@@ -43,32 +46,20 @@ export default function AdminDashboard() {
     setIsVisible(true);
   }, []);
 
-  // Mock data for dashboard
-  const dashboardData = {
-    orders: {
-      total: 47,
-      pending: 12,
-      confirmed: 28,
-      completed: 7
-    },
-    revenue: {
-      today: 2840,
-      week: 15200,
-      month: 64800,
-      growth: 12.5
-    },
-    todaysEvents: [
-      { id: 1, client: 'TechCorp Inc.', time: '10:00 AM', guests: 50, status: 'confirmed' },
-      { id: 2, client: 'Smith Wedding', time: '2:00 PM', guests: 120, status: 'confirmed' },
-      { id: 3, client: 'Marketing Summit', time: '6:00 PM', guests: 200, status: 'preparation' }
-    ],
-    recentOrders: [
-      { id: 'ORD-001', client: 'ABC Company', amount: 1250, status: 'pending', date: '2024-01-15' },
-      { id: 'ORD-002', client: 'Johnson Family', amount: 850, status: 'confirmed', date: '2024-01-15' },
-      { id: 'ORD-003', client: 'Startup XYZ', amount: 3200, status: 'completed', date: '2024-01-14' },
-      { id: 'ORD-004', client: 'City Bank', amount: 1800, status: 'confirmed', date: '2024-01-14' }
-    ]
-  };
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setIsLoading(true);
+        const data = await dashboardApi.getDashboard();
+        setDashboardData(data);
+      } catch (err) {
+        console.error('Failed to load dashboard', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadDashboard();
+  }, []);
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
@@ -78,6 +69,12 @@ export default function AdminDashboard() {
     { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
     { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
   ];
+  const data: DashboardStats = dashboardData ?? {
+    orders: { total: 0, pending: 0, confirmed: 0, completed: 0 },
+    revenue: { today: 0, week: 0, month: 0, growth: 0 },
+    todaysEvents: [],
+    recentOrders: []
+  };
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -222,16 +219,16 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{dashboardData.orders.total}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{data.orders.total}</p>
                 </div>
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                   <Package className="text-amber-700" size={24} />
                 </div>
               </div>
               <div className="flex gap-4 mt-4 text-xs">
-                <span className="text-blue-600">Pending: {dashboardData.orders.pending}</span>
-                <span className="text-green-600">Confirmed: {dashboardData.orders.confirmed}</span>
-                <span className="text-gray-600">Completed: {dashboardData.orders.completed}</span>
+                <span className="text-blue-600">Pending: {data.orders.pending}</span>
+                <span className="text-green-600">Confirmed: {data.orders.confirmed}</span>
+                <span className="text-gray-600">Completed: {data.orders.completed}</span>
               </div>
             </div>
 
@@ -242,7 +239,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">€{dashboardData.revenue.today.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.today.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                   <DollarSign className="text-green-700" size={24} />
@@ -250,7 +247,7 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center gap-2 mt-4 text-sm text-green-600">
                 <TrendingUp size={16} />
-                <span>+{dashboardData.revenue.growth}% from yesterday</span>
+                <span>+{data.revenue.growth}% from yesterday</span>
               </div>
             </div>
 
@@ -261,7 +258,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Weekly Revenue</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">€{dashboardData.revenue.week.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.week.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="text-blue-700" size={24} />
@@ -276,7 +273,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">€{dashboardData.revenue.month.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.month.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <DollarSign className="text-purple-700" size={24} />
@@ -296,7 +293,7 @@ export default function AdminDashboard() {
               </div>
               
               <div className="space-y-4">
-                {dashboardData.todaysEvents.map((event, index) => (
+                {data.todaysEvents.map((event, index) => (
                   <div key={event.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={`w-3 h-3 rounded-full ${
@@ -329,7 +326,7 @@ export default function AdminDashboard() {
               </div>
               
               <div className="space-y-4">
-                {dashboardData.recentOrders.map((order) => (
+                {data.recentOrders.map((order) => (
                   <div key={order.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">
                     <div>
                       <p className="font-semibold text-gray-900">{order.id}</p>

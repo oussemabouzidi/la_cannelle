@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { ordersApi, Order } from '@/lib/api/orders';
 
 
 export default function AdminOrders() {
@@ -38,130 +39,69 @@ export default function AdminOrders() {
     return navigation.find(item => pathname.includes(item.id))?.id || 'dashboard';
   };
 
-  // Mock orders data
-  const ordersData = [
-    {
-      id: 'ORD-001',
-      client: 'TechCorp Inc.',
-      contact: 'john@techcorp.com',
-      phone: '+49 123 456 789',
-      eventType: 'Corporate Lunch',
-      eventDate: '2024-01-20',
-      eventTime: '12:30 PM',
-      guests: 45,
-      location: 'TechCorp HQ, Düsseldorf',
-      menuTier: 'premium',
-      total: 3375,
-      status: 'confirmed',
-      payment: 'paid',
-      specialRequests: 'Vegetarian options needed for 8 guests',
-      createdAt: '2024-01-15',
-      dishes: [
-        { name: 'Truffle Mushroom Risotto', quantity: 45, price: 24 },
-        { name: 'Seared Scallops', quantity: 45, price: 28 }
-      ],
-      beverages: [
-        { name: 'House Wine Selection', quantity: 1, price: 25 }
-      ]
-    },
-    {
-      id: 'ORD-002',
-      client: 'Smith Wedding',
-      contact: 'emily.smith@email.com',
-      phone: '+49 987 654 321',
-      eventType: 'Wedding Reception',
-      eventDate: '2024-01-22',
-      eventTime: '4:00 PM',
-      guests: 120,
-      location: 'Schloss Benrath, Düsseldorf',
-      menuTier: 'luxury',
-      total: 14400,
-      status: 'preparation',
-      payment: 'paid',
-      specialRequests: 'Gluten-free cake, vegan options',
-      createdAt: '2024-01-10',
-      dishes: [
-        { name: 'Herb-crusted Rack of Lamb', quantity: 120, price: 38 },
-        { name: 'Heirloom Tomato Salad', quantity: 120, price: 18 }
-      ],
-      beverages: [
-        { name: 'Premium Cocktails', quantity: 3, price: 12 },
-        { name: 'House Wine Selection', quantity: 2, price: 25 }
-      ]
-    },
-    {
-      id: 'ORD-003',
-      client: 'Startup XYZ',
-      contact: 'mike@startupxyz.com',
-      phone: '+49 555 123 456',
-      eventType: 'Product Launch',
-      eventDate: '2024-01-18',
-      eventTime: '6:00 PM',
-      guests: 80,
-      location: 'Innovation Center, Cologne',
-      menuTier: 'premium',
-      total: 6000,
-      status: 'pending',
-      payment: 'pending',
-      specialRequests: 'Standing reception setup',
-      createdAt: '2024-01-12',
-      dishes: [
-        { name: 'Seared Scallops', quantity: 80, price: 28 },
-        { name: 'Chocolate Fondant', quantity: 80, price: 16 }
-      ],
-      beverages: [
-        { name: 'Fresh Juices', quantity: 2, price: 8 }
-      ]
-    },
-    {
-      id: 'ORD-004',
-      client: 'City Bank',
-      contact: 'finance@citybank.de',
-      phone: '+49 211 555 789',
-      eventType: 'Board Meeting',
-      eventDate: '2024-01-25',
-      eventTime: '1:00 PM',
-      guests: 15,
-      location: 'City Bank Tower, Düsseldorf',
-      menuTier: 'essential',
-      total: 675,
-      status: 'completed',
-      payment: 'paid',
-      specialRequests: 'Executive lunch service',
-      createdAt: '2024-01-14',
-      dishes: [
-        { name: 'Heirloom Tomato Salad', quantity: 15, price: 18 }
-      ],
-      beverages: [
-        { name: 'Sparkling Water', quantity: 1, price: 5 }
-      ]
-    },
-    {
-      id: 'ORD-005',
-      client: 'Johnson Family',
-      contact: 'david.johnson@email.com',
-      phone: '+49 176 888 999',
-      eventType: 'Anniversary Party',
-      eventDate: '2024-01-28',
-      eventTime: '7:00 PM',
-      guests: 60,
-      location: 'Private Residence, Neuss',
-      menuTier: 'premium',
-      total: 4500,
-      status: 'cancelled',
-      payment: 'refunded',
-      specialRequests: 'Golden anniversary theme',
-      createdAt: '2024-01-08',
-      cancellationReason: 'Client illness',
-      dishes: [
-        { name: 'Truffle Mushroom Risotto', quantity: 60, price: 24 }
-      ],
-      beverages: [
-        { name: 'House Wine Selection', quantity: 2, price: 25 }
-      ]
-    }
-  ];
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        setIsLoading(true);
+        const apiOrders = await ordersApi.getOrders();
+        const normalized: LocalOrder[] = apiOrders.map((order: Order) => ({
+          id: order.id,
+          client: order.clientName,
+          contact: order.contactEmail,
+          phone: order.phone,
+          eventType: order.eventType,
+          eventDate: order.eventDate,
+          eventTime: order.eventTime,
+          guests: order.guests,
+          location: order.location,
+          menuTier: order.menuTier?.toLowerCase(),
+          total: order.total,
+          status: order.status.toLowerCase(),
+          payment: order.paymentStatus.toLowerCase(),
+          specialRequests: order.specialRequests,
+          createdAt: order.createdAt,
+          dishes: order.items?.map((it) => ({
+            name: it.name,
+            quantity: it.quantity,
+            price: it.price
+          })) || [],
+          beverages: [],
+          cancellationReason: order.cancellationReason
+        }));
+        setOrders(normalized);
+      } catch (err) {
+        console.error('Failed to load orders', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    loadOrders();
+  }, []);
+
+  type LocalOrder = {
+    id: string;
+    client: string;
+    contact: string;
+    phone: string;
+    eventType: string;
+    eventDate: string;
+    eventTime: string;
+    guests: number;
+    location: string;
+    menuTier?: string;
+    total: number;
+    status: string;
+    payment: string;
+    specialRequests?: string;
+    createdAt?: string;
+    dishes?: { name: string; quantity: number; price: number }[];
+    beverages?: { name: string; quantity: number; price: number }[];
+    cancellationReason?: string | null;
+  };
+
+  const [orders, setOrders] = useState<LocalOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const statusOptions = [
     { value: 'pending', label: 'Pending', color: 'bg-amber-100 text-amber-800' },
     { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-100 text-blue-800' },
@@ -182,7 +122,7 @@ export default function AdminOrders() {
 
 
   // Filter orders based on search and filters
-  const filteredOrders = ordersData.filter(order => {
+  const filteredOrders = orders.filter(order => {
     const matchesSearch = order.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -193,10 +133,15 @@ export default function AdminOrders() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    // In a real app, this would make an API call
-    console.log(`Updating order ${orderId} to ${newStatus}`);
-    // Update local state or refetch data
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await ordersApi.updateOrderStatus(orderId, newStatus);
+      setOrders(prev =>
+        prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
+      );
+    } catch (err) {
+      console.error('Failed to update status', err);
+    }
   };
 
   const cancelOrder = (orderId, reason) => {

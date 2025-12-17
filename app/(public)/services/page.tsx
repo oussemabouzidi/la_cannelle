@@ -3,29 +3,26 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Briefcase, Users, Heart, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
 
 
 export default function ServicesPage() {
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const { t, language, toggleLanguage } = useTranslation('services');
   const [isVisible, setIsVisible] = useState(false);
 
   const router = useRouter();
 
   const handleOrderClick = () => {
-  router.push('/order');
-};
+    router.push('/order');
+  };
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'DE' : 'EN');
-  };
-
-  const content = {
+  // Translations moved to lib/translations/services.ts
+  const _removedContent = {
     EN: {
       nav: {
         about: 'About',
@@ -169,8 +166,6 @@ export default function ServicesPage() {
       }
     }
   };
-
-  const t = content[language];
 
   return (
     <div className="min-h-screen bg-white">

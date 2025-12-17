@@ -1,0 +1,201 @@
+import { PrismaClient, OrderStatus, PaymentStatus } from '@prisma/client';
+import { AppError } from '../middleware/errorHandler';
+
+const prisma = new PrismaClient();
+
+export const orderService = {
+  async createOrder(data: {
+    userId?: number;
+    clientName: string;
+    contactEmail: string;
+    phone: string;
+    eventType: string;
+    eventDate: Date;
+    eventTime: string;
+    guests: number;
+    location: string;
+    menuTier?: string;
+    specialRequests?: string;
+    businessType?: string;
+    serviceType?: string;
+    postalCode?: string;
+    items: Array<{ productId: number; quantity: number; price: number; name: string }>;
+    subtotal: number;
+    serviceFee: number;
+    total: number;
+  }) {
+    const order = await prisma.order.create({
+      data: {
+        userId: data.userId,
+        clientName: data.clientName,
+        contactEmail: data.contactEmail,
+        phone: data.phone,
+        eventType: data.eventType,
+        eventDate: data.eventDate,
+        eventTime: data.eventTime,
+        guests: data.guests,
+        location: data.location,
+        menuTier: data.menuTier as any,
+        specialRequests: data.specialRequests,
+        businessType: data.businessType,
+        serviceType: data.serviceType,
+        postalCode: data.postalCode,
+        subtotal: data.subtotal,
+        serviceFee: data.serviceFee,
+        total: data.total,
+        status: 'PENDING',
+        paymentStatus: 'PENDING',
+        items: {
+          create: data.items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            name: item.name
+          }))
+        }
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    });
+
+    return order;
+  },
+
+  async getOrders(filters?: {
+    userId?: number;
+    status?: OrderStatus;
+    dateFrom?: Date;
+    dateTo?: Date;
+    search?: string;
+  }) {
+    const where: any = {};
+
+    if (filters?.userId) {
+      where.userId = filters.userId;
+    }
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.dateFrom || filters?.dateTo) {
+      where.eventDate = {};
+      if (filters.dateFrom) where.eventDate.gte = filters.dateFrom;
+      if (filters.dateTo) where.eventDate.lte = filters.dateTo;
+    }
+
+    if (filters?.search) {
+      where.OR = [
+        { clientName: { contains: filters.search } },
+        { contactEmail: { contains: filters.search } },
+        { id: { contains: filters.search } }
+      ];
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return orders;
+  },
+
+  async getOrderById(id: string, userId?: number) {
+    const where: any = { id };
+    if (userId) {
+      where.userId = userId;
+    }
+
+    const order = await prisma.order.findFirst({
+      where,
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true
+          }
+        }
+      }
+    });
+
+    if (!order) {
+      throw new AppError('Order not found', 404);
+    }
+
+    return order;
+  },
+
+  async updateOrderStatus(id: string, status: OrderStatus, cancellationReason?: string) {
+    const order = await prisma.order.update({
+      where: { id },
+      data: {
+        status,
+        ...(cancellationReason && { cancellationReason }),
+        ...(status === 'CANCELLED' && { paymentStatus: 'REFUNDED' as PaymentStatus })
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    return order;
+  },
+
+  async updatePaymentStatus(id: string, paymentStatus: PaymentStatus) {
+    const order = await prisma.order.update({
+      where: { id },
+      data: { paymentStatus },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    return order;
+  }
+};

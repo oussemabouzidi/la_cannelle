@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, User, Lock, Eye, EyeOff, Calendar, Heart, CreditCard, Settings, LogOut, Bell, Shield, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { authApi } from '@/lib/api/auth';
+import { useTranslation } from '@/lib/hooks/useTranslation';
 
 export default function AccountPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const { t, language, toggleLanguage } = useTranslation('connect');
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,263 +28,51 @@ export default function AccountPage() {
     confirmPassword: ''
   });
   const [profile, setProfile] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    company: 'Acme Corporation',
-    position: 'Event Manager',
-    preferences: {
-      newsletter: true,
-      smsNotifications: false,
-      eventReminders: true
-    },
-    dietaryRestrictions: ['Vegetarian'],
-    allergies: ['Shellfish']
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    position: '',
+    location: '',
+    preferences: [] as string[],
+    allergies: [] as string[]
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
+    // Load user profile if authenticated
+    const loadProfile = async () => {
+      if (authApi.isAuthenticated()) {
+        try {
+          const userProfile = await authApi.getProfile();
+          if (userProfile) {
+            setProfile({
+              firstName: userProfile.firstName || '',
+              lastName: userProfile.lastName || '',
+              email: userProfile.email || '',
+              phone: userProfile.phone || '',
+              company: userProfile.company || '',
+              position: userProfile.position || '',
+              location: userProfile.location || '',
+              preferences: userProfile.preferences || [],
+              allergies: userProfile.allergies || []
+            });
+          }
+        } catch (error) {
+          console.error('Failed to load profile:', error);
+        }
+      }
+    };
+    loadProfile();
   }, []);
-
-  const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'DE' : 'EN');
-  };
-
-  const content = {
-    EN: {
-      nav: {
-        about: 'About',
-        services: 'Services',
-        menus: 'Menus',
-        contact: 'Contact',
-        connect: 'Connect',
-        order: 'Order Now'
-      },
-      hero: {
-        title: 'Your Account',
-        subtitle: 'Manage your profile, preferences, and event history'
-      },
-      tabs: {
-        profile: 'Profile',
-        orders: 'My Orders',
-        favorites: 'Favorites',
-        payments: 'Payments',
-        settings: 'Settings'
-      },
-      auth: {
-        login: {
-          title: 'Welcome Back',
-          subtitle: 'Sign in to your account',
-          email: 'Email Address',
-          password: 'Password',
-          remember: 'Remember me',
-          forgot: 'Forgot password?',
-          button: 'Sign In',
-          noAccount: 'Don\'t have an account?',
-          signUp: 'Sign Up'
-        },
-        register: {
-          title: 'Create Account',
-          subtitle: 'Join us for exclusive benefits',
-          firstName: 'First Name',
-          lastName: 'Last Name',
-          email: 'Email Address',
-          phone: 'Phone Number',
-          password: 'Password',
-          confirmPassword: 'Confirm Password',
-          company: 'Company (Optional)',
-          position: 'Position (Optional)',
-          terms: 'I agree to the Terms of Service and Privacy Policy',
-          button: 'Create Account',
-          haveAccount: 'Already have an account?',
-          signIn: 'Sign In'
-        }
-      },
-      profile: {
-        personal: {
-          title: 'Personal Information',
-          subtitle: 'Update your personal details',
-          firstName: 'First Name',
-          lastName: 'Last Name',
-          email: 'Email Address',
-          phone: 'Phone Number',
-          company: 'Company',
-          position: 'Position'
-        },
-        preferences: {
-          title: 'Preferences',
-          subtitle: 'Manage your communication preferences',
-          newsletter: 'Email Newsletter',
-          sms: 'SMS Notifications',
-          reminders: 'Event Reminders',
-          dietary: 'Dietary Restrictions',
-          allergies: 'Allergies'
-        },
-        save: 'Save Changes',
-        edit: 'Edit Profile'
-      },
-      orders: {
-        title: 'Order History',
-        subtitle: 'View your past and upcoming events',
-        upcoming: 'Upcoming Events',
-        past: 'Past Events',
-        noEvents: 'No events scheduled',
-        viewDetails: 'View Details',
-        status: {
-          confirmed: 'Confirmed',
-          pending: 'Pending',
-          completed: 'Completed',
-          cancelled: 'Cancelled'
-        }
-      },
-      favorites: {
-        title: 'Favorite Items',
-        subtitle: 'Your saved menu selections',
-        noFavorites: 'No favorite items yet',
-        addFromMenu: 'Add from menu',
-        remove: 'Remove'
-      },
-      payments: {
-        title: 'Payment Methods',
-        subtitle: 'Manage your payment information',
-        addCard: 'Add New Card',
-        noCards: 'No payment methods saved',
-        default: 'Default',
-        setDefault: 'Set as Default',
-        remove: 'Remove'
-      },
-      settings: {
-        title: 'Account Settings',
-        subtitle: 'Manage your account preferences',
-        security: 'Security',
-        notifications: 'Notifications',
-        privacy: 'Privacy',
-        language: 'Language',
-        delete: 'Delete Account'
-      }
-    },
-    DE: {
-      nav: {
-        about: 'Über uns',
-        services: 'Dienstleistungen',
-        menus: 'Menüs',
-        contact: 'Kontakt',
-        connect: 'Verbinden',
-        order: 'Jetzt bestellen'
-      },
-      hero: {
-        title: 'Ihr Konto',
-        subtitle: 'Verwalten Sie Ihr Profil, Präferenzen und Veranstaltungshistorie'
-      },
-      tabs: {
-        profile: 'Profil',
-        orders: 'Meine Bestellungen',
-        favorites: 'Favoriten',
-        payments: 'Zahlungen',
-        settings: 'Einstellungen'
-      },
-      auth: {
-        login: {
-          title: 'Willkommen zurück',
-          subtitle: 'Melden Sie sich bei Ihrem Konto an',
-          email: 'E-Mail-Adresse',
-          password: 'Passwort',
-          remember: 'Angemeldet bleiben',
-          forgot: 'Passwort vergessen?',
-          button: 'Anmelden',
-          noAccount: 'Noch kein Konto?',
-          signUp: 'Registrieren'
-        },
-        register: {
-          title: 'Konto erstellen',
-          subtitle: 'Werden Sie Mitglied für exklusive Vorteile',
-          firstName: 'Vorname',
-          lastName: 'Nachname',
-          email: 'E-Mail-Adresse',
-          phone: 'Telefonnummer',
-          password: 'Passwort',
-          confirmPassword: 'Passwort bestätigen',
-          company: 'Firma (Optional)',
-          position: 'Position (Optional)',
-          terms: 'Ich stimme den AGB und Datenschutzbestimmungen zu',
-          button: 'Konto erstellen',
-          haveAccount: 'Bereits ein Konto?',
-          signIn: 'Anmelden'
-        }
-      },
-      profile: {
-        personal: {
-          title: 'Persönliche Informationen',
-          subtitle: 'Aktualisieren Sie Ihre persönlichen Daten',
-          firstName: 'Vorname',
-          lastName: 'Nachname',
-          email: 'E-Mail-Adresse',
-          phone: 'Telefonnummer',
-          company: 'Firma',
-          position: 'Position'
-        },
-        preferences: {
-          title: 'Präferenzen',
-          subtitle: 'Verwalten Sie Ihre Kommunikationseinstellungen',
-          newsletter: 'E-Mail-Newsletter',
-          sms: 'SMS-Benachrichtigungen',
-          reminders: 'Veranstaltungserinnerungen',
-          dietary: 'Diätetische Einschränkungen',
-          allergies: 'Allergien'
-        },
-        save: 'Änderungen speichern',
-        edit: 'Profil bearbeiten'
-      },
-      orders: {
-        title: 'Bestellverlauf',
-        subtitle: 'Zeigen Sie Ihre vergangenen und bevorstehenden Veranstaltungen an',
-        upcoming: 'Bevorstehende Veranstaltungen',
-        past: 'Vergangene Veranstaltungen',
-        noEvents: 'Keine Veranstaltungen geplant',
-        viewDetails: 'Details anzeigen',
-        status: {
-          confirmed: 'Bestätigt',
-          pending: 'Ausstehend',
-          completed: 'Abgeschlossen',
-          cancelled: 'Storniert'
-        }
-      },
-      favorites: {
-        title: 'Favorisierte Artikel',
-        subtitle: 'Ihre gespeicherten Menüauswahlen',
-        noFavorites: 'Noch keine Favoriten',
-        addFromMenu: 'Vom Menü hinzufügen',
-        remove: 'Entfernen'
-      },
-      payments: {
-        title: 'Zahlungsmethoden',
-        subtitle: 'Verwalten Sie Ihre Zahlungsinformationen',
-        addCard: 'Neue Karte hinzufügen',
-        noCards: 'Keine Zahlungsmethoden gespeichert',
-        default: 'Standard',
-        setDefault: 'Als Standard festlegen',
-        remove: 'Entfernen'
-      },
-      settings: {
-        title: 'Kontoeinstellungen',
-        subtitle: 'Verwalten Sie Ihre Kontoeinstellungen',
-        security: 'Sicherheit',
-        notifications: 'Benachrichtigungen',
-        privacy: 'Datenschutz',
-        language: 'Sprache',
-        delete: 'Konto löschen'
-      }
-    }
-  };
 
   const router = useRouter();
 
   const handleOrderClick = () => {
     router.push('/order');
   };
-
-  const t = content[language];
 
   // Mock data
   const orders = [
@@ -350,23 +140,65 @@ export default function AccountPage() {
     }
   ];
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic
-    console.log('Login:', loginForm);
+    try {
+      const result = await authApi.login({
+        email: loginForm.email,
+        password: loginForm.password
+      });
+      if (result) {
+        alert('Login successful!');
+        // Reload to update UI
+        window.location.reload();
+      }
+    } catch (error: any) {
+      alert(error.message || 'Login failed');
+    }
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration logic
-    console.log('Register:', registerForm);
+    if (registerForm.password !== registerForm.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    try {
+      const result = await authApi.register({
+        email: registerForm.email,
+        password: registerForm.password,
+        firstName: registerForm.firstName,
+        lastName: registerForm.lastName,
+        phone: registerForm.phone
+      });
+      if (result) {
+        alert('Registration successful!');
+        // Switch to login or reload
+        window.location.reload();
+      }
+    } catch (error: any) {
+      alert(error.message || 'Registration failed');
+    }
   };
 
-  const handleProfileUpdate = (e) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsEditing(false);
-    // Handle profile update logic
-    console.log('Profile updated:', profile);
+    try {
+      await authApi.updateProfile({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phone: profile.phone,
+        company: profile.company,
+        position: profile.position,
+        location: profile.location,
+        preferences: profile.preferences,
+        allergies: profile.allergies
+      });
+      setIsEditing(false);
+      alert('Profile updated successfully!');
+    } catch (error: any) {
+      alert(error.message || 'Failed to update profile');
+    }
   };
 
   const TabContent = () => {

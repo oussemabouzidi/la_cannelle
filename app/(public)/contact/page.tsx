@@ -6,7 +6,93 @@ import { useRouter } from 'next/navigation';
 
 export default function ContactPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const [language, setLanguage] = useState<'EN' | 'DE'>('EN');
+  const toggleLanguage = () => setLanguage((prev) => (prev === 'EN' ? 'DE' : 'EN'));
+  const translations = {
+    EN: {
+      nav: { about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order Now' },
+      hero: { title: 'Get in Touch', subtitle: "Let's create something extraordinary together" },
+      quickOrder: {
+        title: 'Quick Order',
+        subtitle: 'Need immediate assistance? Place a quick order',
+        button: 'Quick Order Now',
+      },
+      social: {
+        title: 'Follow Us',
+        instagram: 'Instagram',
+        tiktok: 'TikTok',
+      },
+      contactForm: {
+        title: 'Send Us a Message',
+        name: 'Full Name',
+        email: 'Email Address',
+        phone: 'Phone Number',
+        eventType: 'Event Type',
+        eventDate: 'Event Date',
+        guests: 'Number of Guests',
+        message: 'Your Message',
+        eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other'],
+        button: 'Send Message',
+        submit: 'Send Message',
+      },
+      contactInfo: {
+        title: 'Contact Information',
+        phone: '02133 978 2992',
+        mobile: '0163 599 7062',
+        email: 'booking@la-cannelle.com',
+        address: 'Borsigstraße 2, 41541 Dormagen',
+        hours: {
+          title: 'Business Hours',
+          weekdays: 'Monday - Friday: 9:00 AM - 6:00 PM',
+          saturday: 'Saturday: 10:00 AM - 4:00 PM',
+          sunday: 'Sunday: Closed',
+        },
+      },
+      success: { message: 'Thank you for reaching out!' },
+    },
+    DE: {
+      nav: { about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Jetzt bestellen' },
+      hero: { title: 'Kontaktieren Sie uns', subtitle: 'Lassen Sie uns gemeinsam etwas Besonderes schaffen' },
+      quickOrder: {
+        title: 'Schnellbestellung',
+        subtitle: 'Brauchen Sie sofort Hilfe? Geben Sie eine Schnellbestellung auf',
+        button: 'Jetzt Schnellbestellen',
+      },
+      social: {
+        title: 'Folgen Sie uns',
+        instagram: 'Instagram',
+        tiktok: 'TikTok',
+      },
+      contactForm: {
+        title: 'Senden Sie uns eine Nachricht',
+        name: 'Vollständiger Name',
+        email: 'E-Mail-Adresse',
+        phone: 'Telefonnummer',
+        eventType: 'Veranstaltungstyp',
+        eventDate: 'Veranstaltungsdatum',
+        guests: 'Anzahl der Gäste',
+        message: 'Ihre Nachricht',
+        eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere'],
+        button: 'Nachricht senden',
+        submit: 'Nachricht senden',
+      },
+      contactInfo: {
+        title: 'Kontaktinformationen',
+        phone: '+49 2133 978 2992',
+        mobile: '+49 163 599 7062',
+        email: 'booking@la-cannelle.com',
+        address: 'Borsigstraße 2, 41541 Dormagen',
+        hours: {
+          title: 'Geschäftszeiten',
+          weekdays: 'Montag - Freitag: 9:00 - 18:00',
+          saturday: 'Samstag: 10:00 - 16:00',
+          sunday: 'Sonntag: Geschlossen',
+        },
+      },
+      success: { message: 'Danke für Ihre Nachricht!' },
+    },
+  } as const;
+  const t = translations[language] || translations.EN;
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -22,25 +108,22 @@ export default function ContactPage() {
     setIsVisible(true);
   }, []);
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'DE' : 'EN');
-  };
-
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission here
     console.log('Form submitted:', formData);
-    alert('Thank you for your message! We will get back to you soon.');
+    alert(t.success.message);
   };
 
-  const content = {
+  // Translations moved to lib/translations/contact.ts
+  const _removedContent = {
     EN: {
       nav: {
         about: 'About',
@@ -154,8 +237,6 @@ export default function ContactPage() {
       }
     }
   };
-
-  const t = content[language];
 
   const router = useRouter();
 

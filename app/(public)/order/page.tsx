@@ -1,7 +1,12 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ordersApi } from '@/lib/api/orders';
+import { menusApi } from '@/lib/api/menus';
+import { productsApi } from '@/lib/api/products';
+import { systemApi } from '@/lib/api/system';
+import { useTranslation } from '@/lib/hooks/useTranslation';
 import { 
   Menu, X, ChevronRight, ChevronLeft, Phone, Mail, MapPin, 
   Clock, Users, Calendar, CreditCard, CheckCircle, 
@@ -16,639 +21,59 @@ import {
 } from 'lucide-react';
 
 export default function OrderPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const { t, language, toggleLanguage, setLanguage: setAppLanguage } = useTranslation('order');
   const [currentStep, setCurrentStep] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
   const [quantities, setQuantities] = useState({});
   const [expandedInfo, setExpandedInfo] = useState({});
   const [selectedAccessories, setSelectedAccessories] = useState([]);
   const [orderSummaryVisible, setOrderSummaryVisible] = useState(true);
+  const [menusData, setMenusData] = useState<any[]>([]);
+  const [menuItemsData, setMenuItemsData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [systemStatus, setSystemStatus] = useState<any>(null);
 
-  // Menu data
-  const menusData = [
-    {
-      id: 1,
-      name: 'Spring Menu',
-      description: 'Seasonal spring dishes with fresh ingredients',
-      category: 'seasonal',
-      type: 'fixed',
-      isActive: true,
-      startDate: '2024-03-01',
-      endDate: '2024-05-31',
-      products: [1, 2, 4, 7, 11, 12, 15, 17, 19, 20],
-      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      price: 85
-    },
-    {
-      id: 2,
-      name: 'Premium Tasting',
-      description: 'Gourmet tasting experience with wine pairing',
-      category: 'luxury',
-      type: 'tasting',
-      isActive: true,
-      price: 120,
-      products: [1, 3, 5, 7, 8, 11, 13, 16, 18, 19, 21, 22],
-      image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-    },
-    {
-      id: 3,
-      name: 'Vegetarian Delight',
-      description: 'Exclusively plant-based menu options',
-      category: 'vegetarian',
-      type: 'themed',
-      isActive: false,
-      price: 65,
-      products: [4, 6, 14, 23, 24, 25],
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-    }
-  ];
+  // Load data from API
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [menus, products, status] = await Promise.all([
+          menusApi.getMenus({ isActive: true }),
+          productsApi.getProducts({ available: true }),
+          systemApi.getSystemStatus()
+        ]);
 
-  const menuItemsData = [
-    // Starters (1-6)
-    {
-      id: 1,
-      name: 'Truffle Mushroom Risotto',
-      description: 'Arborio rice with seasonal wild mushrooms, white truffle oil, and Parmigiano-Reggiano',
-      category: 'main',
-      menuCategory: 'starters',
-      price: 24,
-      cost: 8,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 25,
-      ingredients: ['Arborio rice', 'Wild mushrooms', 'White truffle oil', 'Parmigiano-Reggiano', 'Vegetable stock'],
-      allergens: ['Dairy'],
-      productCategories: ['vegetarian', 'signature'],
-      menus: [1, 2],
-      image: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 95
-    },
-    {
-      id: 2,
-      name: 'Herb-crusted Rack of Lamb',
-      description: 'New Zealand lamb with rosemary crust, mint jus, and roasted root vegetables',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 38,
-      cost: 15,
-      available: true,
-      tier: ['luxury'],
-      preparationTime: 35,
-      ingredients: ['New Zealand lamb', 'Fresh rosemary', 'Mint', 'Root vegetables', 'Red wine jus'],
-      allergens: [],
-      productCategories: ['meat', 'chef-special'],
-      menus: [1],
-      image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 88
-    },
-    {
-      id: 3,
-      name: 'Seared Scallops',
-      description: 'Day boat scallops with orange reduction, micro greens, and crispy prosciutto',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 28,
-      cost: 12,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 20,
-      ingredients: ['Fresh scallops', 'Orange', 'Micro greens', 'Prosciutto', 'Butter'],
-      allergens: ['Shellfish', 'Dairy'],
-      productCategories: ['seafood', 'spicy'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 92
-    },
-    {
-      id: 4,
-      name: 'Heirloom Tomato Burrata Salad',
-      description: 'Colorful heirloom tomatoes with fresh burrata, basil oil, and balsamic reduction',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 18,
-      cost: 6,
-      available: true,
-      tier: ['essential', 'premium', 'luxury'],
-      preparationTime: 15,
-      ingredients: ['Heirloom tomatoes', 'Burrata cheese', 'Fresh basil', 'Balsamic vinegar', 'Olive oil'],
-      allergens: ['Dairy'],
-      productCategories: ['vegetarian', 'salad', 'seasonal'],
-      menus: [1, 3],
-      image: 'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 85
-    },
-    {
-      id: 5,
-      name: 'Chocolate Fondant',
-      description: 'Warm chocolate cake with liquid center and fresh raspberry sauce',
-      category: 'dessert',
-      menuCategory: 'desserts',
-      price: 16,
-      cost: 4,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 18,
-      ingredients: ['Dark chocolate', 'Butter', 'Eggs', 'Sugar', 'Raspberries'],
-      allergens: ['Dairy', 'Eggs'],
-      productCategories: ['dessert', 'signature'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 90
-    },
-    {
-      id: 6,
-      name: 'Classic Caesar Salad',
-      description: 'Traditional Caesar salad with romaine lettuce, parmesan, and homemade croutons',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 14,
-      cost: 3,
-      available: false,
-      tier: ['essential'],
-      preparationTime: 12,
-      ingredients: ['Romaine lettuce', 'Parmesan cheese', 'Croutons', 'Caesar dressing', 'Anchovies'],
-      allergens: ['Dairy', 'Fish', 'Gluten'],
-      productCategories: ['salad', 'kid-friendly'],
-      menus: [3],
-      image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 78
-    },
-    // Mains (7-12)
-    {
-      id: 7,
-      name: 'Grilled Salmon',
-      description: 'Atlantic salmon with lemon butter sauce and seasonal vegetables',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 32,
-      cost: 12,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 22,
-      ingredients: ['Atlantic salmon', 'Lemon', 'Butter', 'Asparagus', 'Baby potatoes'],
-      allergens: ['Fish', 'Dairy'],
-      productCategories: ['seafood', 'gluten-free'],
-      menus: [1, 2],
-      image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 91
-    },
-    {
-      id: 8,
-      name: 'Tiramisu',
-      description: 'Classic Italian dessert with layers of coffee-soaked ladyfingers and mascarpone cream',
-      category: 'dessert',
-      menuCategory: 'desserts',
-      price: 15,
-      cost: 4,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 30,
-      ingredients: ['Mascarpone cheese', 'Ladyfingers', 'Espresso', 'Cocoa powder', 'Eggs'],
-      allergens: ['Dairy', 'Eggs'],
-      productCategories: ['dessert', 'italian'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 89
-    },
-    {
-      id: 9,
-      name: 'Sparkling Water',
-      description: 'Premium Italian sparkling water',
-      category: 'beverage',
-      menuCategory: 'drinks',
-      price: 6,
-      cost: 1,
-      available: true,
-      tier: ['essential', 'premium', 'luxury'],
-      preparationTime: 2,
-      ingredients: ['Natural spring water'],
-      allergens: [],
-      productCategories: ['drink', 'non-alcoholic'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 65
-    },
-    {
-      id: 10,
-      name: 'Olive Oil Bread Dip',
-      description: 'Artisanal bread with herb-infused olive oil',
-      category: 'side',
-      menuCategory: 'sides',
-      price: 8,
-      cost: 2,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 10,
-      ingredients: ['Sourdough bread', 'Extra virgin olive oil', 'Herbs', 'Balsamic vinegar'],
-      allergens: ['Gluten'],
-      productCategories: ['appetizer', 'vegetarian'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 75
-    },
-    // Additional Starters (11-15)
-    {
-      id: 11,
-      name: 'Lobster Bisque',
-      description: 'Creamy lobster soup with cognac and fresh herbs',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 22,
-      cost: 9,
-      available: true,
-      tier: ['luxury'],
-      preparationTime: 30,
-      ingredients: ['Lobster', 'Cream', 'Cognac', 'Fresh herbs', 'Butter'],
-      allergens: ['Shellfish', 'Dairy'],
-      productCategories: ['seafood', 'soup'],
-      menus: [1, 2],
-      image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 82
-    },
-    {
-      id: 12,
-      name: 'Carpaccio di Manzo',
-      description: 'Thinly sliced raw beef with arugula, parmesan, and lemon dressing',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 20,
-      cost: 7,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 15,
-      ingredients: ['Beef tenderloin', 'Arugula', 'Parmesan', 'Lemon', 'Olive oil'],
-      allergens: ['Dairy'],
-      productCategories: ['meat', 'italian'],
-      menus: [1],
-      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 87
-    },
-    {
-      id: 13,
-      name: 'Foie Gras Terrine',
-      description: 'Rich duck liver terrine with fig compote and brioche toast',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 26,
-      cost: 10,
-      available: true,
-      tier: ['luxury'],
-      preparationTime: 40,
-      ingredients: ['Duck liver', 'Fig compote', 'Brioche', 'Port wine', 'Truffle'],
-      allergens: ['Gluten'],
-      productCategories: ['luxury', 'gourmet'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1563379091339-03246963d9d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 79
-    },
-    {
-      id: 14,
-      name: 'Wild Mushroom Tart',
-      description: 'Flaky pastry with wild mushrooms, goat cheese, and thyme',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 16,
-      cost: 5,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 25,
-      ingredients: ['Wild mushrooms', 'Goat cheese', 'Puff pastry', 'Thyme', 'Garlic'],
-      allergens: ['Dairy', 'Gluten'],
-      productCategories: ['vegetarian', 'pastry'],
-      menus: [3],
-      image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 84
-    },
-    {
-      id: 15,
-      name: 'Tuna Tartare',
-      description: 'Fresh tuna with avocado, soy-lime dressing, and sesame seeds',
-      category: 'starter',
-      menuCategory: 'starters',
-      price: 24,
-      cost: 8,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 20,
-      ingredients: ['Fresh tuna', 'Avocado', 'Soy sauce', 'Lime', 'Sesame seeds'],
-      allergens: ['Fish', 'Soy'],
-      productCategories: ['seafood', 'asian'],
-      menus: [1],
-      image: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 88
-    },
-    // Additional Mains (16-20)
-    {
-      id: 16,
-      name: 'Beef Wellington',
-      description: 'Beef tenderloin wrapped in puff pastry with mushroom duxelles',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 42,
-      cost: 16,
-      available: true,
-      tier: ['luxury'],
-      preparationTime: 50,
-      ingredients: ['Beef tenderloin', 'Puff pastry', 'Mushrooms', 'Prosciutto', 'Mustard'],
-      allergens: ['Gluten'],
-      productCategories: ['meat', 'british', 'signature'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 91
-    },
-    {
-      id: 17,
-      name: 'Duck Confit',
-      description: 'Slow-cooked duck leg with cherry sauce and roasted potatoes',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 34,
-      cost: 11,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 45,
-      ingredients: ['Duck leg', 'Cherries', 'Potatoes', 'Thyme', 'Garlic'],
-      allergens: [],
-      productCategories: ['meat', 'french'],
-      menus: [1],
-      image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 86
-    },
-    {
-      id: 18,
-      name: 'Sea Bass en Papillote',
-      description: 'Sea bass cooked in parchment with lemon, herbs, and vegetables',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 36,
-      cost: 13,
-      available: true,
-      tier: ['luxury'],
-      preparationTime: 30,
-      ingredients: ['Sea bass', 'Lemon', 'Fresh herbs', 'Zucchini', 'Bell peppers'],
-      allergens: ['Fish'],
-      productCategories: ['seafood', 'healthy'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1473116763249-2faaef81ccda?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 89
-    },
-    {
-      id: 19,
-      name: 'Vegetable Lasagna',
-      description: 'Layers of pasta with seasonal vegetables, ricotta, and tomato sauce',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 22,
-      cost: 7,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 40,
-      ingredients: ['Lasagna sheets', 'Ricotta', 'Seasonal vegetables', 'Tomato sauce', 'Mozzarella'],
-      allergens: ['Dairy', 'Gluten'],
-      productCategories: ['vegetarian', 'italian'],
-      menus: [1, 2, 3],
-      image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 83
-    },
-    {
-      id: 20,
-      name: 'Chicken Supreme',
-      description: 'Pan-seared chicken breast with morel sauce and asparagus',
-      category: 'main',
-      menuCategory: 'mains',
-      price: 28,
-      cost: 9,
-      available: true,
-      tier: ['premium'],
-      preparationTime: 30,
-      ingredients: ['Chicken breast', 'Morel mushrooms', 'Cream', 'Asparagus', 'White wine'],
-      allergens: ['Dairy'],
-      productCategories: ['poultry', 'french'],
-      menus: [1],
-      image: 'https://images.unsplash.com/photo-1604503468505-eb8c8c07bf9c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 85
-    },
-    // Sides (21-24)
-    {
-      id: 21,
-      name: 'Truffle Mashed Potatoes',
-      description: 'Creamy mashed potatoes with black truffle and butter',
-      category: 'side',
-      menuCategory: 'sides',
-      price: 12,
-      cost: 3,
-      available: true,
-      tier: ['premium', 'luxury'],
-      preparationTime: 25,
-      ingredients: ['Potatoes', 'Black truffle', 'Butter', 'Cream', 'Garlic'],
-      allergens: ['Dairy'],
-      productCategories: ['side', 'luxury'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1516684669134-de6f1c5c8c40?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 82
-    },
-    {
-      id: 22,
-      name: 'Grilled Vegetables',
-      description: 'Seasonal vegetables grilled with herbs and olive oil',
-      category: 'side',
-      menuCategory: 'sides',
-      price: 10,
-      cost: 3,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 20,
-      ingredients: ['Seasonal vegetables', 'Olive oil', 'Herbs', 'Garlic', 'Lemon'],
-      allergens: [],
-      productCategories: ['vegetarian', 'healthy'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1592417817098-8fd3d9eb14a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 78
-    },
-    {
-      id: 23,
-      name: 'Creamed Spinach',
-      description: 'Fresh spinach cooked with cream, nutmeg, and parmesan',
-      category: 'side',
-      menuCategory: 'sides',
-      price: 9,
-      cost: 2,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 15,
-      ingredients: ['Spinach', 'Cream', 'Nutmeg', 'Parmesan', 'Garlic'],
-      allergens: ['Dairy'],
-      productCategories: ['vegetarian', 'side'],
-      menus: [3],
-      image: 'https://images.unsplash.com/photo-1576808216216-9d3e6c0b7f2a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 75
-    },
-    {
-      id: 24,
-      name: 'Herb-Roasted Potatoes',
-      description: 'Baby potatoes roasted with rosemary, garlic, and olive oil',
-      category: 'side',
-      menuCategory: 'sides',
-      price: 8,
-      cost: 2,
-      available: true,
-      tier: ['essential'],
-      preparationTime: 30,
-      ingredients: ['Baby potatoes', 'Rosemary', 'Garlic', 'Olive oil', 'Sea salt'],
-      allergens: [],
-      productCategories: ['vegetarian', 'side'],
-      menus: [3],
-      image: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 80
-    },
-    // Desserts (25-30)
-    {
-      id: 25,
-      name: 'Crème Brûlée',
-      description: 'Vanilla custard with caramelized sugar crust',
-      category: 'dessert',
-      menuCategory: 'desserts',
-      price: 14,
-      cost: 3,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 35,
-      ingredients: ['Cream', 'Egg yolks', 'Vanilla', 'Sugar'],
-      allergens: ['Dairy', 'Eggs'],
-      productCategories: ['dessert', 'french'],
-      menus: [3],
-      image: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 88
-    },
-    {
-      id: 26,
-      name: 'Apple Tarte Tatin',
-      description: 'Upside-down caramelized apple tart with vanilla ice cream',
-      category: 'dessert',
-      menuCategory: 'desserts',
-      price: 16,
-      cost: 4,
-      available: true,
-      tier: ['premium'],
-      preparationTime: 40,
-      ingredients: ['Apples', 'Butter', 'Sugar', 'Puff pastry', 'Vanilla ice cream'],
-      allergens: ['Dairy', 'Gluten'],
-      productCategories: ['dessert', 'french'],
-      menus: [1],
-      image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 84
-    },
-    {
-      id: 27,
-      name: 'Panna Cotta',
-      description: 'Italian cooked cream dessert with berry compote',
-      category: 'dessert',
-      menuCategory: 'desserts',
-      price: 13,
-      cost: 3,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 25,
-      ingredients: ['Cream', 'Gelatin', 'Sugar', 'Mixed berries', 'Vanilla'],
-      allergens: ['Dairy'],
-      productCategories: ['dessert', 'italian'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 86
-    },
-    // Drinks (28-32)
-    {
-      id: 28,
-      name: 'House Red Wine',
-      description: 'Selected house red wine by the glass',
-      category: 'beverage',
-      menuCategory: 'drinks',
-      price: 9,
-      cost: 2,
-      available: true,
-      tier: ['essential', 'premium', 'luxury'],
-      preparationTime: 2,
-      ingredients: ['Red wine'],
-      allergens: [],
-      productCategories: ['drink', 'alcoholic'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 72
-    },
-    {
-      id: 29,
-      name: 'House White Wine',
-      description: 'Selected house white wine by the glass',
-      category: 'beverage',
-      menuCategory: 'drinks',
-      price: 9,
-      cost: 2,
-      available: true,
-      tier: ['essential', 'premium', 'luxury'],
-      preparationTime: 2,
-      ingredients: ['White wine'],
-      allergens: [],
-      productCategories: ['drink', 'alcoholic'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 70
-    },
-    {
-      id: 30,
-      name: 'Fresh Orange Juice',
-      description: 'Freshly squeezed orange juice',
-      category: 'beverage',
-      menuCategory: 'drinks',
-      price: 7,
-      cost: 1,
-      available: true,
-      tier: ['essential', 'premium'],
-      preparationTime: 5,
-      ingredients: ['Fresh oranges'],
-      allergens: [],
-      productCategories: ['drink', 'non-alcoholic', 'juice'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 68
-    },
-    {
-      id: 31,
-      name: 'Espresso',
-      description: 'Italian espresso coffee',
-      category: 'beverage',
-      menuCategory: 'drinks',
-      price: 4,
-      cost: 0.5,
-      available: true,
-      tier: ['essential', 'premium', 'luxury'],
-      preparationTime: 3,
-      ingredients: ['Coffee beans', 'Water'],
-      allergens: [],
-      productCategories: ['drink', 'coffee'],
-      menus: [],
-      image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 90
-    },
-    {
-      id: 32,
-      name: 'Craft Cocktails',
-      description: 'Selection of signature cocktails',
-      category: 'beverage',
-      menuCategory: 'drinks',
-      price: 14,
-      cost: 4,
-      available: true,
-      tier: ['luxury'],
-      preparationTime: 10,
-      ingredients: ['Various spirits', 'Fresh fruits', 'Herbs'],
-      allergens: [],
-      productCategories: ['drink', 'alcoholic', 'cocktail'],
-      menus: [2],
-      image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80',
-      popularity: 81
-    }
-  ];
+        // Normalize shape so the client has product ids and menu ids available
+        const normalizedMenus = (menus || []).map((menu: any) => ({
+          ...menu,
+          products: menu?.menuProducts
+            ? menu.menuProducts.map((mp: any) => mp.productId)
+            : menu?.products || []
+        }));
+
+        const normalizedProducts = (products || []).map((product: any) => ({
+          ...product,
+          menus: product?.menuProducts
+            ? product.menuProducts.map((mp: any) => mp.menuId)
+            : product?.menus || []
+        }));
+
+        setMenusData(normalizedMenus);
+        setMenuItemsData(normalizedProducts);
+        setSystemStatus(status);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    setAppLanguage('DE');
+  }, [setAppLanguage]);
 
   const [orderData, setOrderData] = useState({
     businessType: '',
@@ -684,23 +109,44 @@ export default function OrderPage() {
     }
   });
 
-  // Step 1: Business Type
+  const stepsConfig = useMemo(() => [
+    { key: 'eventType', label: language === 'DE' ? 'Anlass' : 'Event Type' },
+    { key: 'service', label: language === 'DE' ? 'Leistung' : 'Service' },
+    { key: 'event', label: language === 'DE' ? 'Eventdaten' : 'Event Info' },
+    { key: 'menu', label: language === 'DE' ? 'Menü' : 'Menu Selection' },
+    { key: 'starters', label: t.productSelection?.starters || 'Starters', icon: Utensils, color: 'text-green-600' },
+    { key: 'mains', label: t.productSelection?.mains || 'Mains', icon: Coffee, color: 'text-red-600' },
+    { key: 'sides', label: t.productSelection?.sides || 'Sides', icon: Utensils, color: 'text-amber-600' },
+    { key: 'desserts', label: t.productSelection?.desserts || 'Desserts', icon: Cookie, color: 'text-pink-600' },
+    { key: 'drinks', label: t.productSelection?.drinks || 'Drinks', icon: Wine, color: 'text-blue-600' },
+    { key: 'accessories', label: language === 'DE' ? 'Zubehör' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
+    { key: 'details', label: language === 'DE' ? 'Lieferdetails' : 'Delivery Details' },
+    { key: 'payment', label: language === 'DE' ? 'Zahlung' : 'Payment' }
+  ], [language, t]);
+
+  // Step 1: Event Type
   const Step1 = () => (
     <div className="space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          {t.businessType.title}
+          {t.eventType?.title}
         </h2>
         <p className="text-gray-600 text-lg">
-          {t.businessType.subtitle}
+          {t.eventType?.subtitle}
         </p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {['b2b', 'b2c'].map((type) => (
+        {['business', 'private'].map((type) => {
+          const option = t.eventType?.options?.[type] || {};
+          return (
           <button
             key={type}
-            onClick={() => updateOrderData('businessType', type)}
+            onClick={() => {
+              updateOrderData('businessType', type);
+              updateOrderData('serviceType', '');
+              setCurrentStep(2);
+            }}
             className={`p-8 rounded-xl border-2 transition-all duration-300 text-left hover:shadow-lg ${
               orderData.businessType === type
                 ? 'border-amber-500 bg-amber-50 shadow-md'
@@ -708,21 +154,13 @@ export default function OrderPage() {
             }`}
           >
             <h3 className="text-xl font-bold text-gray-900 mb-3">
-              {t.businessType[type].title}
+              {option.title}
             </h3>
             <p className="text-amber-600 font-semibold text-lg mb-6">
-              {t.businessType[type].subtitle}
+              {option.subtitle}
             </p>
-            <ul className="space-y-3">
-              {t.businessType[type].features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-3 text-gray-700">
-                  <CheckCircle size={18} className="text-green-600 flex-shrink-0" />
-                  <span className="text-base">{feature}</span>
-                </li>
-              ))}
-            </ul>
           </button>
-        ))}
+        )})}
       </div>
     </div>
   );
@@ -732,36 +170,47 @@ export default function OrderPage() {
     <div className="space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          {t.serviceType.title}
+          {t.serviceType?.title}
         </h2>
         <p className="text-gray-600 text-lg">
-          {t.serviceType.subtitle}
+          {t.serviceType?.subtitle}
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Object.entries(t.serviceType).filter(([key]) => !['title', 'subtitle'].includes(key)).map(([key, service]) => (
-          <button
-            key={key}
-            onClick={() => updateOrderData('serviceType', key)}
-            className={`p-6 rounded-xl border-2 transition-all duration-300 text-center hover:shadow-lg ${
-              orderData.serviceType === key
-                ? 'border-amber-500 bg-amber-50 shadow-md'
-                : 'border-gray-300 hover:border-amber-400 bg-white'
-            }`}
-          >
-            <div className="p-4 bg-amber-100 rounded-lg mb-4 inline-flex">
-              <service.icon size={32} className="text-amber-600" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-3">
-              {service.title}
-            </h3>
-            <p className="text-gray-700 text-sm leading-relaxed">
-              {service.description}
-            </p>
-          </button>
-        ))}
-      </div>
+      {orderData.businessType ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {(t.serviceType?.options?.[orderData.businessType] || []).map((service) => (
+            <button
+              key={service.key}
+              onClick={() => {
+                updateOrderData('serviceType', service.key);
+                setCurrentStep(3);
+              }}
+              className={`p-6 rounded-xl border-2 transition-all duration-300 text-center hover:shadow-lg ${
+                orderData.serviceType === service.key
+                  ? 'border-amber-500 bg-amber-50 shadow-md'
+                  : 'border-gray-300 hover:border-amber-400 bg-white'
+              }`}
+            >
+              <div className="p-4 bg-amber-100 rounded-lg mb-4 inline-flex">
+                <Briefcase size={32} className="text-amber-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-3">
+                {service.title}
+              </h3>
+              <p className="text-gray-700 text-sm leading-relaxed">
+                {service.description}
+              </p>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center text-gray-600">
+          {language === 'DE'
+            ? 'Bitte wählen Sie zuerst einen Anlass.'
+            : 'Please choose an occasion first.'}
+        </div>
+      )}
     </div>
   );
 
@@ -799,6 +248,7 @@ export default function OrderPage() {
               type="time"
               value={orderData.eventTime}
               onChange={(e) => updateOrderData('eventTime', e.target.value)}
+              step="900"
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500"
               required
             />
@@ -812,8 +262,10 @@ export default function OrderPage() {
           <input
             type="number"
             min="10"
-            value={orderData.guestCount}
+            value={orderData.guestCount || ''}
             onChange={(e) => updateOrderData('guestCount', e.target.value)}
+            inputMode="numeric"
+            step="1"
             className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500"
             placeholder="10"
             required
@@ -829,6 +281,8 @@ export default function OrderPage() {
             type="text"
             value={orderData.postalCode}
             onChange={(e) => updateOrderData('postalCode', e.target.value)}
+            inputMode="numeric"
+            autoComplete="postal-code"
             className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500"
             placeholder="Enter postal code"
             required
@@ -911,10 +365,16 @@ export default function OrderPage() {
     
     const currentCategory = menuStepMap[currentStep];
     
-    const selectedMenu = menusData.find(m => m.id === orderData.selectedMenu);
+    const selectedMenu = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
     const products = menuItemsData
       .filter(item => item.menuCategory === currentCategory)
-      .filter(item => !selectedMenu || selectedMenu.products.includes(item.id));
+      .filter(item => {
+        if (!selectedMenu) return true;
+        const productIds = selectedMenu.products || [];
+        return productIds.includes(item.id);
+      });
     
     // Calculate totals for order overview
     const calculateSubtotal = () => {
@@ -945,7 +405,9 @@ export default function OrderPage() {
     const flatServiceFee = 48.90;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
     
-    const selectedMenuObj = menusData.find(m => m.id === orderData.selectedMenu);
+    const selectedMenuObj = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
     
     return (
       <div className="grid lg:grid-cols-3 gap-8">
@@ -966,15 +428,15 @@ export default function OrderPage() {
               {/* Event Info Summary */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">Event Date:</span>
+                  <span className="font-medium text-gray-700">{t.eventInfo.date}:</span>
                   <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">Guests:</span>
-                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0} guests</span>
+                  <span className="font-medium text-gray-700">{t.eventInfo.guests}:</span>
+                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">Location:</span>
+                  <span className="font-medium text-gray-700">{t.eventInfo.location}:</span>
                   <span className="font-semibold text-gray-900">{orderData.postalCode || 'Not set'}</span>
                 </div>
               </div>
@@ -1107,7 +569,7 @@ export default function OrderPage() {
         <div className="lg:col-span-2 lg:order-1">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">
-              Select Your Items
+              {t.productSelection?.title || 'Select Your Items'}
             </h2>
             <p className="text-gray-600 text-lg">
               {t.productSelection.subtitle}
@@ -1240,7 +702,9 @@ export default function OrderPage() {
       return sum + (item.price * item.quantity * guestCount);
     }, 0);
     
-    const selectedMenuObj = menusData.find(m => m.id === orderData.selectedMenu);
+    const selectedMenuObj = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
     
     const foodItems = [
@@ -1267,15 +731,15 @@ export default function OrderPage() {
               {/* Event Info Summary */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">Event Date:</span>
+                  <span className="font-medium text-gray-700">{t.eventInfo.date}:</span>
                   <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">Guests:</span>
-                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0} guests</span>
+                  <span className="font-medium text-gray-700">{t.eventInfo.guests}:</span>
+                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">Location:</span>
+                  <span className="font-medium text-gray-700">{t.eventInfo.location}:</span>
                   <span className="font-semibold text-gray-900">{orderData.postalCode || 'Not set'}</span>
                 </div>
               </div>
@@ -1491,6 +955,8 @@ export default function OrderPage() {
                         type="text"
                         value={orderData.postalCode}
                         onChange={(e) => updateOrderData('postalCode', e.target.value)}
+                        inputMode="numeric"
+                        autoComplete="postal-code"
                         className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
                         placeholder="Enter postal code"
                       />
@@ -1507,8 +973,10 @@ export default function OrderPage() {
                     <input
                       type="number"
                       min="10"
-                      value={orderData.guestCount}
+                      value={orderData.guestCount || ''}
                       onChange={(e) => updateOrderData('guestCount', e.target.value)}
+                      inputMode="numeric"
+                      step="1"
                       className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
                       placeholder="10"
                     />
@@ -1654,7 +1122,9 @@ export default function OrderPage() {
       return sum + (item.price * item.quantity * guestCount);
     }, 0);
     
-    const selectedMenuObj = menusData.find(m => m.id === orderData.selectedMenu);
+    const selectedMenuObj = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
     
     const foodItems = [
@@ -1668,7 +1138,7 @@ export default function OrderPage() {
     const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
-    const vatRate = orderData.businessType === 'b2b' ? 0.19 : 0.07;
+    const vatRate = orderData.businessType === 'business' ? 0.19 : 0.07;
     const vatAmount = total * vatRate;
     const grandTotal = total + vatAmount;
 
@@ -1704,7 +1174,9 @@ export default function OrderPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-black">
                       <Users size={16} className="text-gray-500" />
-                      <span className="font-medium">{orderData.guestCount || 0} guests</span>
+                      <span className="font-medium">
+                        {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-black">
                       <MapPinIcon size={16} className="text-gray-500" />
@@ -1931,294 +1403,6 @@ export default function OrderPage() {
     );
   };
 
-  const stepsConfig = [
-    { key: 'business', label: 'Business Type' },
-    { key: 'service', label: 'Service Type' },
-    { key: 'event', label: 'Event Info' },
-    { key: 'menu', label: 'Menu Selection' },
-    { key: 'items', label: 'Select Items', icon: Utensils, color: 'text-green-600' },
-    { key: 'items', label: 'Select Items', icon: Coffee, color: 'text-red-600' },
-    { key: 'items', label: 'Select Items', icon: Utensils, color: 'text-amber-600' },
-    { key: 'items', label: 'Select Items', icon: Cookie, color: 'text-pink-600' },
-    { key: 'items', label: 'Select Items', icon: Wine, color: 'text-blue-600' },
-    { key: 'accessories', label: 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
-    { key: 'details', label: 'Delivery Details' },
-    { key: 'payment', label: 'Payment' }
-  ];
-
-  const content = {
-    EN: {
-      nav: {
-        about: 'About',
-        services: 'Services',
-        menus: 'Menus',
-        contact: 'Contact',
-        connect: 'Connect',
-        order: 'Order Now'
-      },
-      steps: stepsConfig.reduce((acc, step) => {
-        acc[step.key] = step.label;
-        return acc;
-      }, {}),
-      businessType: {
-        title: 'Select Business Type',
-        subtitle: 'Choose your customer type for accurate pricing',
-        b2b: {
-          title: 'B2B Business',
-          subtitle: '19% VAT',
-          features: ['Invoice billing', 'Corporate pricing', 'Volume discounts']
-        },
-        b2c: {
-          title: 'B2C Private',
-          subtitle: '7% VAT included',
-          features: ['Direct payment', 'Private events', 'Personal service']
-        }
-      },
-      serviceType: {
-        title: 'Select Service Type',
-        subtitle: 'Choose the type of catering service you need',
-        office: {
-          title: 'Office Catering',
-          icon: Building2,
-          description: 'Daily meals for your team'
-        },
-        event: {
-          title: 'Event Catering',
-          icon: Users,
-          description: 'Special events and celebrations'
-        },
-        wedding: {
-          title: 'Wedding Catering',
-          icon: Heart,
-          description: 'Your perfect wedding day'
-        },
-        corporate: {
-          title: 'Corporate Events',
-          icon: Briefcase,
-          description: 'Business meetings and conferences'
-        }
-      },
-      eventInfo: {
-        title: 'Event Information',
-        subtitle: 'Tell us about your event',
-        date: 'Delivery Date',
-        time: 'Event Time',
-        guests: 'Number of People',
-        location: 'Postal Code',
-        minGuests: 'Minimum 10 guests required'
-      },
-      menuSelection: {
-        title: 'Menu Selection',
-        subtitle: 'Choose your preferred menu'
-      },
-      productSelection: {
-        title: 'Menu Items',
-        subtitle: 'Add items from each category',
-        categories: {
-          starters: { name: 'Starters', icon: Utensils, color: 'text-green-600' },
-          mains: { name: 'Main Courses', icon: Coffee, color: 'text-red-600' },
-          sides: { name: 'Side Dishes', icon: Utensils, color: 'text-amber-600' },
-          desserts: { name: 'Desserts', icon: Cookie, color: 'text-pink-600' },
-          drinks: { name: 'Drinks', icon: Wine, color: 'text-blue-600' },
-          accessories: { name: 'Accessories', icon: ShoppingBag, color: 'text-purple-600' }
-        },
-        quantity: 'Quantity',
-        addToOrder: 'Add',
-        remove: 'Remove',
-        inOrder: 'In Order',
-        totalItems: 'Total Items',
-        orderSummary: 'Order Summary'
-      },
-      accessories: {
-        title: 'Optional: Choose Accessories',
-        subtitle: 'Plates & Cutlery',
-        moreInfo: 'More information',
-        orderOverview: 'Order Overview',
-        deliveryDate: 'Delivery Date',
-        postalCode: 'Postal Code',
-        flatFee: 'Flat Service Fee',
-        subtotal: 'Subtotal',
-        totalDue: 'Total Due',
-        minimumOrder: 'Minimum order of €388.80 required',
-        continueWithout: 'To Delivery Details without selection',
-        accessories: [
-          {
-            id: 1,
-            name: 'Standard Cutlery',
-            description: 'Set of knife, fork and/or spoon - based on order.',
-            details: 'Rental, incl. cleaning.',
-            price: 0,
-            type: 'rental',
-            unit: 'per portion',
-            minQuantity: 1
-          },
-          {
-            id: 2,
-            name: 'Dessert Cutlery',
-            description: 'Set of dessert fork and/or spoon - based on order.',
-            details: 'Rental, incl. cleaning.',
-            price: 0,
-            type: 'rental',
-            unit: 'per portion',
-            minQuantity: 1
-          },
-          {
-            id: 3,
-            name: 'Dessert Plate',
-            description: 'Premium porcelain dessert plates',
-            details: 'Elegant design, dishwasher safe',
-            price: 2.30,
-            type: 'purchase',
-            unit: 'per portion',
-            minQuantity: 10
-          }
-        ]
-      },
-      buttons: {
-        next: 'Continue',
-        back: 'Back',
-        confirm: 'Confirm Order',
-        backToHome: 'Back to Home'
-      }
-    },
-    DE: {
-      nav: {
-        about: 'Über uns',
-        services: 'Dienstleistungen',
-        menus: 'Menüs',
-        contact: 'Kontakt',
-        connect: 'Verbinden',
-        order: 'Jetzt bestellen'
-      },
-      steps: stepsConfig.reduce((acc, step) => {
-        acc[step.key] = step.label;
-        return acc;
-      }, {}),
-      businessType: {
-        title: 'Unternehmensart auswählen',
-        subtitle: 'Wählen Sie Ihren Kundentyp für genaue Preise',
-        b2b: {
-          title: 'B2B Unternehmen',
-          subtitle: '19% MwSt',
-          features: ['Rechnungsstellung', 'Firmenpreise', 'Mengenrabatte']
-        },
-        b2c: {
-          title: 'B2C Privat',
-          subtitle: '7% MwSt inklusive',
-          features: ['Direktzahlung', 'Private Veranstaltungen', 'Persönlicher Service']
-        }
-      },
-      serviceType: {
-        title: 'Service Typ auswählen',
-        subtitle: 'Wählen Sie die Art des Catering-Services',
-        office: {
-          title: 'Büro-Catering',
-          icon: Building2,
-          description: 'Tägliche Mahlzeiten für Ihr Team'
-        },
-        event: {
-          title: 'Event-Catering',
-          icon: Users,
-          description: 'Besondere Veranstaltungen und Feiern'
-        },
-        wedding: {
-          title: 'Hochzeits-Catering',
-          icon: Heart,
-          description: 'Ihr perfekter Hochzeitstag'
-        },
-        corporate: {
-          title: 'Firmenveranstaltungen',
-          icon: Briefcase,
-          description: 'Geschäftstreffen und Konferenzen'
-        }
-      },
-      eventInfo: {
-        title: 'Veranstaltungsinformation',
-        subtitle: 'Erzählen Sie uns von Ihrer Veranstaltung',
-        date: 'Lieferdatum',
-        time: 'Uhrzeit',
-        guests: 'Anzahl der Personen',
-        location: 'Postleitzahl',
-        minGuests: 'Mindestens 10 Personen erforderlich'
-      },
-      menuSelection: {
-        title: 'Menü-Auswahl',
-        subtitle: 'Wählen Sie Ihr bevorzugtes Menü'
-      },
-      productSelection: {
-        title: 'Menüpunkte',
-        subtitle: 'Fügen Sie Artikel aus jeder Kategorie hinzu',
-        categories: {
-          starters: { name: 'Vorspeisen', icon: Utensils, color: 'text-green-600' },
-          mains: { name: 'Hauptgerichte', icon: Coffee, color: 'text-red-600' },
-          sides: { name: 'Beilagen', icon: Utensils, color: 'text-amber-600' },
-          desserts: { name: 'Desserts', icon: Cookie, color: 'text-pink-600' },
-          drinks: { name: 'Getränke', icon: Wine, color: 'text-blue-600' },
-          accessories: { name: 'Zubehör', icon: ShoppingBag, color: 'text-purple-600' }
-        },
-        quantity: 'Menge',
-        addToOrder: 'Hinzufügen',
-        remove: 'Entfernen',
-        inOrder: 'In Bestellung',
-        totalItems: 'Gesamtartikel',
-        orderSummary: 'Bestellübersicht'
-      },
-      accessories: {
-        title: 'Optional: Zubehör wählen',
-        subtitle: 'Teller & Besteck',
-        moreInfo: 'Mehr Informationen',
-        orderOverview: 'Bestellübersicht',
-        deliveryDate: 'Lieferdatum',
-        postalCode: 'Postleitzahl',
-        flatFee: 'Pauschale Servicegebühr',
-        subtotal: 'Zwischensumme',
-        totalDue: 'Gesamtbetrag',
-        minimumOrder: 'Mindestbestellung von €388,80 erforderlich',
-        continueWithout: 'Zu Lieferdetails ohne Auswahl',
-        accessories: [
-          {
-            id: 1,
-            name: 'Standard Besteck',
-            description: 'Set aus Messer, Gabel und/oder Löffel - basierend auf Bestellung.',
-            details: 'Miete, inkl. Reinigung.',
-            price: 0,
-            type: 'rental',
-            unit: 'pro Portion',
-            minQuantity: 1
-          },
-          {
-            id: 2,
-            name: 'Dessertbesteck',
-            description: 'Set aus Dessertgabel und/oder -löffel - basierend auf Bestellung.',
-            details: 'Miete, inkl. Reinigung.',
-            price: 0,
-            type: 'rental',
-            unit: 'pro Portion',
-            minQuantity: 1
-          },
-          {
-            id: 3,
-            name: 'Dessertteller',
-            description: 'Premium Porzellan Dessertteller',
-            details: 'Elegantes Design, spülmaschinenfest',
-            price: 2.30,
-            type: 'purchase',
-            unit: 'pro Portion',
-            minQuantity: 10
-          }
-        ]
-      },
-      buttons: {
-        next: 'Weiter',
-        back: 'Zurück',
-        confirm: 'Bestellung Bestätigen',
-        backToHome: 'Zurück zur Startseite'
-      }
-    }
-  };
-
-  const t = content[language];
-
   // Helper functions
   const updateOrderData = (field, value) => {
     setOrderData(prev => ({
@@ -2309,7 +1493,13 @@ export default function OrderPage() {
     );
   };
 
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
+    // Check if ordering is paused
+    if (systemStatus?.orderingPaused) {
+      alert('Ordering is currently paused. Please try again later.');
+      return;
+    }
+
     // Calculate totals
     const guestCount = parseInt(orderData.guestCount) || 0;
     const flatServiceFee = 48.90;
@@ -2317,7 +1507,9 @@ export default function OrderPage() {
       return sum + (item.price * item.quantity * guestCount);
     }, 0);
     
-    const selectedMenuObj = menusData.find(m => m.id === orderData.selectedMenu);
+    const selectedMenuObj = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
     
     const foodItems = [
@@ -2337,17 +1529,41 @@ export default function OrderPage() {
       return;
     }
 
-    // Submit order logic here
-    console.log('Order submitted:', {
-      ...orderData,
-      selectedAccessories,
-      total,
-      guestCount
-    });
-    
-    alert('Order placed successfully! Redirecting to confirmation...');
-    // Redirect to confirmation page
-    // window.location.href = '/confirmation';
+    // Prepare order items
+    const orderItems = foodItems.map(item => ({
+      productId: item.id,
+      quantity: item.quantity,
+      price: item.price,
+      name: item.name
+    }));
+
+    try {
+      const order = await ordersApi.createOrder({
+        clientName: `${orderData.firstName || ''} ${orderData.lastName || ''}`.trim() || 'Guest',
+        contactEmail: orderData.email || '',
+        phone: orderData.phone || '',
+        eventType: orderData.eventType || '',
+        eventDate: orderData.eventDate || new Date().toISOString(),
+        eventTime: orderData.eventTime || '',
+        guests: guestCount,
+        location: orderData.location || '',
+        menuTier: orderData.menuTier,
+        specialRequests: orderData.specialRequests,
+        businessType: orderData.businessType,
+        serviceType: orderData.serviceType,
+        postalCode: orderData.postalCode,
+        items: orderItems,
+        subtotal: subtotal,
+        serviceFee: flatServiceFee,
+        total: total
+      });
+      
+      alert('Order placed successfully! Order ID: ' + order.id);
+      // Redirect to confirmation or home
+      window.location.href = '/home';
+    } catch (error: any) {
+      alert('Failed to place order: ' + (error.message || 'Unknown error'));
+    }
   };
 
   useEffect(() => {
@@ -2358,9 +1574,6 @@ export default function OrderPage() {
     window.location.href = '/home';
   };
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'DE' : 'EN');
-  };
 
   const getStepComponent = () => {
     const stepComponents = {
@@ -2497,7 +1710,9 @@ export default function OrderPage() {
               
               <div className="text-center">
                 <span className="text-xs text-gray-700 font-semibold">
-                  Step {currentStep} of {stepsConfig.length}
+                  {language === 'DE'
+                    ? `Schritt ${currentStep} von ${stepsConfig.length}`
+                    : `Step ${currentStep} of ${stepsConfig.length}`}
                 </span>
                 <div className="w-32 bg-gray-200 rounded-full h-1 mt-1">
                   <div 

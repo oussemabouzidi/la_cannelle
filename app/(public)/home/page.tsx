@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Clock, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Star, Crown, Shield, Heart, Quote } from 'lucide-react';
+import { useTranslation } from '@/lib/hooks/useTranslation';
 
 export default function CateringHomepage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const [language, setLanguage] = useState('DE');
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -375,7 +376,7 @@ export default function CateringHomepage() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/images/restaurant-hero.jpg')",
+            backgroundImage: "url('/images/community-feast.jpg')",
           }}
         >
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
@@ -537,8 +538,8 @@ export default function CateringHomepage() {
                 {/* Main Image with 3D Rotation */}
                 <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
                   <img 
-                    src="/images/exclusive-dining.jpg" 
-                    alt="Exclusive dining experience"
+                    src="/images/community-feast.jpg" 
+                    alt="Friends enjoying a lively catering spread"
                     className="w-full h-64 object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>

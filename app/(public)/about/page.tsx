@@ -7,7 +7,8 @@ import { Crown, Building } from 'lucide-react';
 
 export default function AboutPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const [language, setLanguage] = useState<'EN' | 'DE'>('EN');
+  const toggleLanguage = () => setLanguage((prev) => (prev === 'EN' ? 'DE' : 'EN'));
   const [isVisible, setIsVisible] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
@@ -94,234 +95,130 @@ export default function AboutPage() {
     setIsVisible(true);
   }, []);
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'DE' : 'EN');
-  };
-
-  const content = {
+  const translations = {
     EN: {
-      nav: {
-        about: 'About',
-        services: 'Services',
-        menus: 'Menus',
-        contact: 'Contact',
-        connect: 'Connect',
-        order: 'Order Now'
-      },
-      hero: {
-        title: 'Our Story',
-        subtitle: 'Crafting unforgettable culinary experiences since 2010'
-      },
+      nav: { services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order' },
+      hero: { title: 'About Us', subtitle: 'Crafting culinary excellence since our inception' },
       story: {
-        title: 'The La Cannelle Journey',
+        title: 'Our Story',
         content: [
-          'Founded in 2010, La Cannelle has been at the forefront of culinary excellence, serving both B2B and private clients with exceptional catering experiences. Our journey began with a simple passion for creating memorable moments through food.',
-          'From intimate gatherings to large corporate events, we have consistently delivered excellence, building our reputation on reliability, creativity, and uncompromising quality.',
-          'Today, we continue to innovate while staying true to our core values of exclusivity, passion, and professional excellence.'
+          'We partner closely with clients to understand their vision and deliver bespoke experiences.',
+          'Chefs craft seasonal menus that balance flavor, presentation, and dietary needs.',
+          'From intimate gatherings to large events, every detail is handled with care.'
         ]
       },
       values: {
-        title: 'Our Values',
-        exclusivity: {
-          title: 'EXCLUSIVITY',
-          subtitle: 'YOUR SPECIFICATIONS | OUR EXPERTISE | THE IMPLEMENTATION',
-          description: 'Every event demands full concentration, respect and dedication. Preferences are colorful and already different today than yesterday. Benefit from our experience, let yourself be convinced and trust in our abilities. Together we realize your event.'
-        },
-        passion: {
-          title: 'PASSION',
-          subtitle: 'ELEMENTAL | AUTHENTIC | DELICATE',
-          description: 'We constantly reinvent ourselves, exceed all standards and create unforgettable moments. Our dishes are created from natural ingredients, with love for detail and full dedication. The selection of the best products, experience, pulse of the time, craftsmanship and passion are elemental for success.'
-        },
-        company: {
-          title: 'COMPANY',
-          subtitle: 'INVITATION | IMPLEMENTATION | IMAGE',
-          description: 'You invite and from there our participation begins until perfection. Whether standing reception, gala dinner, company party, product unveiling or company celebration. It\'s all about you and your company, the reputation you represent and the lasting impression you leave.'
-        }
-      },
-      services: {
-        title: 'What We Offer',
-        items: [
-          'Corporate Catering & Office Catering',
-          'Event Catering & Trade Fair Catering',
-          'Private Occasions (Weddings, Anniversaries)',
-          'Fingerfood & Creative Snacks',
-          'Breakfast, Lunch & Dinner Services',
-          'Buffet & Menu Planning',
-          'Flying Service & Standing Receptions'
-        ]
+        passion: { title: 'Passion', description: 'Love for food and service drives everything we do.' },
+        exclusivity: { title: 'Exclusivity', description: 'Private, bespoke experiences crafted for your occasion.' },
+        company: { title: 'Trusted Partner', description: 'A dedicated team focused on your success.' }
       },
       team: {
-        title: 'Why Choose La Cannelle',
+        title: 'Our Team',
         items: [
-          {
-            icon: Award,
-            title: '14 Years of Excellence',
-            description: 'Over a decade of creating exceptional culinary experiences'
-          },
-          {
-            icon: Users,
-            title: 'Dual Expertise',
-            description: 'Specialized in both B2B corporate events and private celebrations'
-          },
-          {
-            icon: Heart,
-            title: 'Passionate Team',
-            description: 'Dedicated professionals committed to your satisfaction'
-          },
-          {
-            icon: Target,
-            title: 'Tailored Solutions',
-            description: 'Customized menus and services for every unique occasion'
-          }
+          { name: 'Head Chef', role: 'Culinary Direction' },
+          { name: 'Event Manager', role: 'Planning & Coordination' },
+          { name: 'Pastry Lead', role: 'Desserts & Baking' }
+        ]
+      },
+      services: {
+        title: 'What we offer',
+        items: [
+          { title: 'Personalized Service', description: 'Tailored menus and attentive coordination.' },
+          { title: 'Creative Menus', description: 'Innovative dishes inspired by seasonal ingredients.' },
+          { title: 'Reliable Delivery', description: 'Professional team ensuring timely service.' }
         ]
       },
       contact: {
-        title: 'Get In Touch',
-        address: 'Borsigstraße 2, 41541 Dormagen',
-        phone: '02133 978 2992',
-        mobile: '0163 599 7062',
-        email: 'booking@la-cannelle.com'
+        title: 'Get in touch',
+        address: '123 Culinary Street, Food City, FC 12345',
+        phone: '+1 (555) 123-4567',
+        mobile: '+1 (555) 987-6543',
+        email: 'info@catering.com'
       },
       cta: {
-        title: 'Ready to Create Something Extraordinary?',
-        subtitle: 'Let us bring your vision to life with our exceptional catering services',
-        button: 'Get a Quote'
+        title: 'Ready to plan your event?',
+        subtitle: 'Let’s create an unforgettable experience together.',
+        button: 'Start Now'
       },
       quoteModal: {
-        title: 'Get a Quote',
-        subtitle: 'Tell us about your event and we\'ll get back to you with a customized proposal',
+        title: 'Tell us about your event',
+        subtitle: 'Share a few details so we can craft the perfect experience',
         name: 'Full Name',
         email: 'Email Address',
         phone: 'Phone Number',
         eventType: 'Event Type',
         eventDate: 'Event Date',
         guests: 'Number of Guests',
-        message: 'Additional Details',
+        message: 'Tell us about your event...',
         submit: 'Submit Request',
         cancel: 'Cancel',
-        eventTypes: [
-          'Corporate Event',
-          'Wedding',
-          'Private Party',
-          'Conference',
-          'Trade Show',
-          'Other'
-        ]
-      }
+        eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other']
+      },
+      body: { style: 'classic' }
     },
     DE: {
-      nav: {
-        about: 'Über uns',
-        services: 'Dienstleistungen',
-        menus: 'Menüs',
-        contact: 'Kontakt',
-        connect: 'Verbinden',
-        order: 'Jetzt bestellen'
-      },
-      hero: {
-        title: 'Unsere Geschichte',
-        subtitle: 'Seit 2010 schaffen wir unvergessliche kulinarische Erlebnisse'
-      },
+      nav: { services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
+      hero: { title: 'Über uns', subtitle: 'Kulinarische Exzellenz seit unserer Gründung' },
       story: {
-        title: 'Die La Cannelle Reise',
+        title: 'Unsere Geschichte',
         content: [
-          'Gegründet im Jahr 2010, steht La Cannelle an der Spitze kulinarischer Exzellenz und bedient sowohl B2B- als auch Privatkunden mit außergewöhnlichen Catering-Erlebnissen. Unsere Reise begann mit einer einfachen Leidenschaft: unvergessliche Momente durch Essen zu schaffen.',
-          'Von intimen Zusammenkünften bis hin zu großen Firmenveranstaltungen haben wir kontinuierlich Exzellenz geliefert und unseren Ruf auf Zuverlässigkeit, Kreativität und kompromissloser Qualität aufgebaut.',
-          'Heute innovieren wir weiter, während wir unseren Kernwerten von Exklusivität, Leidenschaft und professioneller Exzellenz treu bleiben.'
+          'Wir arbeiten eng mit Kunden zusammen, um ihre Vision zu verstehen und maßgeschneiderte Erlebnisse zu liefern.',
+          'Unsere Küche erstellt saisonale Menüs, die Geschmack, Präsentation und Ernährungsbedürfnisse ausbalancieren.',
+          'Von intimen Feiern bis zu großen Events kümmern wir uns um jedes Detail.'
         ]
       },
       values: {
-        title: 'Unsere Werte',
-        exclusivity: {
-          title: 'EXKLUSIVITÄT',
-          subtitle: 'IHRE VORGABEN | UNSERE EXPERTISE | DIE UMSETZUNG',
-          description: 'Jede Veranstaltung verlangt volle Konzentration, Respekt und Hingabe. Vorlieben sind bunt und heute schon anders als gestern. Profitieren Sie von unserer Erfahrung, lassen Sie sich überzeugen und vertrauen Sie auf unser Können. Gemeinsam realisieren wir Ihre Veranstaltung.'
-        },
-        passion: {
-          title: 'LEIDENSCHAFT',
-          subtitle: 'ELEMENTAR | AUTHENTISCH | DELIKAT',
-          description: 'Wir erfinden uns ständig neu, übertreffen alle Standards und schaffen unvergessliche Momente. Unsere Gerichte entstehen aus natürlichen Zutaten, mit Liebe zum Detail und voller Hingabe. Die Auswahl bester Produkte, Erfahrung, Puls der Zeit, Handwerk und Leidenschaft sind elementar für den Erfolg.'
-        },
-        company: {
-          title: 'UNTERNEHMEN',
-          subtitle: 'EINLADUNG | UMSETZUNG | IMAGE',
-          description: 'Sie laden ein und ab dort beginnt unsere Teilnahme bis zur Perfektion. Ob Stehempfang, Galadinner, Firmenfest, Produktenthüllung oder Firmenfeier. Es geht um Sie und Ihr Unternehmen, den Ruf den Sie vertreten und den bleibenden Eindruck den Sie hinterlassen.'
-        }
-      },
-      services: {
-        title: 'Unsere Leistungen',
-        items: [
-          'Firmencatering & Büro-Catering',
-          'Event-Catering & Messecatering',
-          'Private Anlässe (Hochzeiten, Jubiläen)',
-          'Fingerfood & Kreative Snacks',
-          'Frühstück, Mittag- & Abendessen',
-          'Buffet & Menüplanung',
-          'Flying Service & Stehempfänge'
-        ]
+        passion: { title: 'Leidenschaft', description: 'Unsere Liebe zu Essen und Service treibt alles an.' },
+        exclusivity: { title: 'Exklusivität', description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.' },
+        company: { title: 'Vertrauenspartner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
       },
       team: {
-        title: 'Warum La Cannelle Wählen',
+        title: 'Unser Team',
         items: [
-          {
-            icon: Award,
-            title: '14 Jahre Exzellenz',
-            description: 'Über ein Jahrzehnt Erfahrung in außergewöhnlichen kulinarischen Erlebnissen'
-          },
-          {
-            icon: Users,
-            title: 'Doppelte Expertise',
-            description: 'Spezialisiert auf Firmenevents und private Feiern'
-          },
-          {
-            icon: Heart,
-            title: 'Leidenschaftliches Team',
-            description: 'Engagierte Profis, die Ihrer Zufriedenheit verpflichtet sind'
-          },
-          {
-            icon: Target,
-            title: 'Maßgeschneiderte Lösungen',
-            description: 'Individuelle Menüs und Services für jeden besonderen Anlass'
-          }
+          { name: 'Chefkoch', role: 'Kulinarische Leitung' },
+          { name: 'Event Manager', role: 'Planung & Koordination' },
+          { name: 'Pâtisserie Lead', role: 'Desserts & Backwaren' }
+        ]
+      },
+      services: {
+        title: 'Was wir bieten',
+        items: [
+          { title: 'Personalisierter Service', description: 'Individuelle Menüs und sorgfältige Koordination.' },
+          { title: 'Kreative Menüs', description: 'Innovative Gerichte mit saisonalen Zutaten.' },
+          { title: 'Zuverlässige Lieferung', description: 'Professionelles Team für pünktlichen Service.' }
         ]
       },
       contact: {
-        title: 'Kontaktieren Sie Uns',
-        address: 'Borsigstraße 2, 41541 Dormagen',
-        phone: '02133 978 2992',
-        mobile: '0163 599 7062',
-        email: 'booking@la-cannelle.com'
+        title: 'Nehmen Sie Kontakt auf',
+        address: 'Kulinarische Straße 123, Essen Stadt, 12345',
+        phone: '+49 123 456 789',
+        mobile: '+49 987 654 321',
+        email: 'info@catering.com'
       },
       cta: {
-        title: 'Bereit für etwas Außergewöhnliches?',
-        subtitle: 'Lassen Sie uns Ihre Vision mit unseren außergewöhnlichen Catering-Services zum Leben erwecken',
-        button: 'Angebot Einholen'
+        title: 'Bereit, Ihr Event zu planen?',
+        subtitle: 'Lassen Sie uns gemeinsam ein unvergessliches Erlebnis schaffen.',
+        button: 'Jetzt starten'
       },
       quoteModal: {
-        title: 'Angebot Einholen',
-        subtitle: 'Erzählen Sie uns von Ihrer Veranstaltung und wir senden Ihnen ein maßgeschneidertes Angebot',
+        title: 'Erzählen Sie uns von Ihrer Veranstaltung',
+        subtitle: 'Teilen Sie einige Details, damit wir das perfekte Erlebnis planen können',
         name: 'Vollständiger Name',
-        email: 'E-Mail Adresse',
+        email: 'E-Mail-Adresse',
         phone: 'Telefonnummer',
         eventType: 'Veranstaltungstyp',
         eventDate: 'Veranstaltungsdatum',
         guests: 'Anzahl der Gäste',
-        message: 'Zusätzliche Details',
-        submit: 'Anfrage Senden',
+        message: 'Erzählen Sie uns von Ihrer Veranstaltung...',
+        submit: 'Anfrage senden',
         cancel: 'Abbrechen',
-        eventTypes: [
-          'Firmenveranstaltung',
-          'Hochzeit',
-          'Private Feier',
-          'Konferenz',
-          'Messe',
-          'Andere'
-        ]
-      }
+        eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere']
+      },
+      body: { style: 'klassisch' }
     }
-  };
+  } as const;
 
-  const t = content[language];
+  const t = translations[language];
 
   return (
     <div className="min-h-screen bg-white">
@@ -901,13 +798,13 @@ export default function AboutPage() {
                 style={{ animationDelay: `${index * 150 + 300}ms` }}
               >
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4 group-hover:bg-amber-200 transition-colors">
-                  <item.icon className="text-amber-700" size={32} />
+                  <Star className="text-amber-700" size={32} />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3 font-elegant">
-                  {item.title}
+                  {item.name || item.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  {item.description}
+                  {item.role || item.description}
                 </p>
               </div>
             ))}
@@ -935,8 +832,13 @@ export default function AboutPage() {
               >
                 <div className="flex items-center gap-3">
                   <Star size={20} className="text-amber-500 flex-shrink-0" />
-                  <span className="text-gray-800 font-medium">{service}</span>
+                  <span className="text-gray-800 font-medium">
+                    {typeof service === 'string' ? service : service.title}
+                  </span>
                 </div>
+                {typeof service !== 'string' && service.description && (
+                  <p className="text-gray-600 mt-2 text-sm">{service.description}</p>
+                )}
               </div>
             ))}
           </div>

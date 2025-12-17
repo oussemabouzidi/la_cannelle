@@ -11,24 +11,18 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { customersApi, CustomerSummary } from '@/lib/api/customers';
+import { ordersApi, Order } from '@/lib/api/orders';
 
-interface Customer {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  joinDate: string;
-  totalOrders: number;
-  totalSpent: number;
-  lastOrder: string;
-  status: 'active' | 'inactive';
-  tier: 'regular' | 'premium' | 'vip';
-  location: string;
-  preferences: string[];
-  allergies: string[];
-  notes: string;
-  avatar: string;
-}
+type Customer = CustomerSummary & {
+  avatar?: string | null;
+  preferences?: string[] | null;
+  allergies?: string[] | null;
+  notes?: string | null;
+  status?: string | null;
+  tier?: string | null;
+  location?: string | null;
+};
 
 export default function Customers() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -55,125 +49,28 @@ export default function Customers() {
     return navigation.find(item => pathname.includes(item.id))?.id || 'dashboard';
   };
 
-  // Mock customer data with avatar URLs
-  const [customers, setCustomers] = useState<Customer[]>([
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@email.com',
-      phone: '+1 (555) 123-4567',
-      joinDate: '2024-01-15',
-      totalOrders: 12,
-      totalSpent: 1247.50,
-      lastOrder: '2024-11-20',
-      status: 'active',
-      tier: 'premium',
-      location: 'New York, NY',
-      preferences: ['Italian', 'Vegetarian', 'Desserts'],
-      allergies: ['Shellfish'],
-      notes: 'Prefers window seating',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      email: 'michael.chen@email.com',
-      phone: '+1 (555) 987-6543',
-      joinDate: '2023-11-08',
-      totalOrders: 8,
-      totalSpent: 845.00,
-      lastOrder: '2024-11-18',
-      status: 'active',
-      tier: 'regular',
-      location: 'Brooklyn, NY',
-      preferences: ['Asian Fusion', 'Spicy'],
-      allergies: ['Peanuts'],
-      notes: 'Loyal customer - birthday in December',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
-    },
-    {
-      id: 3,
-      name: 'Emma Rodriguez',
-      email: 'emma.rodriguez@email.com',
-      phone: '+1 (555) 456-7890',
-      joinDate: '2024-03-22',
-      totalOrders: 3,
-      totalSpent: 285.75,
-      lastOrder: '2024-10-15',
-      status: 'inactive',
-      tier: 'regular',
-      location: 'Queens, NY',
-      preferences: ['Mexican', 'Gluten-Free'],
-      allergies: ['Dairy', 'Gluten'],
-      notes: '',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
-    },
-    {
-      id: 4,
-      name: 'James Wilson',
-      email: 'james.wilson@email.com',
-      phone: '+1 (555) 234-5678',
-      joinDate: '2022-09-14',
-      totalOrders: 25,
-      totalSpent: 3120.00,
-      lastOrder: '2024-11-21',
-      status: 'active',
-      tier: 'vip',
-      location: 'Manhattan, NY',
-      preferences: ['French', 'Steak', 'Wine Pairings'],
-      allergies: [],
-      notes: 'VIP - corporate client',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
-    },
-    {
-      id: 5,
-      name: 'Lisa Thompson',
-      email: 'lisa.thompson@email.com',
-      phone: '+1 (555) 345-6789',
-      joinDate: '2024-06-30',
-      totalOrders: 6,
-      totalSpent: 520.25,
-      lastOrder: '2024-11-19',
-      status: 'active',
-      tier: 'premium',
-      location: 'New Jersey',
-      preferences: ['Seafood', 'Healthy'],
-      allergies: ['Shellfish'],
-      notes: 'Prefers early reservations',
-      avatar: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
-    }
-  ]);
+  const [customers, setCustomers] = useState<CustomerSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
 
-  // Mock order history
-  const [orders, setOrders] = useState([
-    {
-      id: 1001,
-      customerId: 1,
-      date: '2024-11-20',
-      items: ['Truffle Mushroom Risotto', 'Herb-crusted Rack of Lamb', 'Chocolate Fondant'],
-      total: 78.00,
-      status: 'completed',
-      type: 'dine-in'
-    },
-    {
-      id: 1002,
-      customerId: 1,
-      date: '2024-11-05',
-      items: ['Seared Scallops', 'Heirloom Tomato Burrata Salad'],
-      total: 46.00,
-      status: 'completed',
-      type: 'delivery'
-    },
-    {
-      id: 1003,
-      customerId: 4,
-      date: '2024-11-21',
-      items: ['Truffle Mushroom Risotto', 'Seared Scallops', 'Herb-crusted Rack of Lamb', 'Premium Wine Pairing'],
-      total: 152.50,
-      status: 'completed',
-      type: 'dine-in'
-    }
-  ]);
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [customerData, orderData] = await Promise.all([
+          customersApi.getCustomers(),
+          ordersApi.getOrders()
+        ]);
+        setCustomers(customerData);
+        setOrders(orderData);
+      } catch (err) {
+        console.error('Failed to load customers or orders', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   // Promotion state
   const [promotion, setPromotion] = useState({
@@ -204,6 +101,12 @@ export default function Customers() {
     vip: { label: 'VIP', color: 'text-purple-700 bg-purple-100' }
   };
 
+  const getTierMeta = (tier?: string | null) => {
+    if (!tier) return { label: 'Unassigned', color: 'text-gray-500 bg-gray-100' };
+    const key = tier.toLowerCase() as keyof typeof tiers;
+    return tiers[key] ?? { label: tier, color: 'text-gray-500 bg-gray-100' };
+  };
+
   // Filter customers
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -213,7 +116,10 @@ export default function Customers() {
   });
 
   const getCustomerOrders = (customerId: number) => {
-    return orders.filter(order => order.customerId === customerId);
+    return orders.filter(order => {
+      const oid = (order as any).customerId ?? order.userId;
+      return oid === customerId;
+    });
   };
 
   const getTierIcon = (tier: string) => {
@@ -270,9 +176,9 @@ export default function Customers() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 font-elegant">{customer.name}</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${tiers[customer.tier].color} flex items-center gap-1`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getTierMeta(customer.tier).color} flex items-center gap-1`}>
                     {getTierIcon(customer.tier)}
-                    {tiers[customer.tier].label}
+                    {getTierMeta(customer.tier).label}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     customer.status === 'active' 
@@ -362,8 +268,12 @@ export default function Customers() {
                   <div key={order.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="font-medium text-gray-900">Order #{order.id}</p>
-                        <p className="text-sm text-gray-600">{new Date(order.date).toLocaleDateString()}</p>
+                    <p className="font-medium text-gray-900">Order #{order.id}</p>
+                    <p className="text-sm text-gray-600">
+                      {order.createdAt || order.eventDate
+                        ? new Date(order.createdAt || order.eventDate).toLocaleDateString()
+                        : '—'}
+                    </p>
                       </div>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         order.status === 'completed' 
@@ -373,9 +283,13 @@ export default function Customers() {
                         {order.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700 mb-2">{order.items.join(', ')}</p>
+                    <p className="text-sm text-gray-700 mb-2">
+                      {order.items?.map(item => item.name).join(', ') || 'No items'}
+                    </p>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 capitalize">{order.type}</span>
+                      <span className="text-sm text-gray-600 capitalize">
+                        {order.serviceType || order.eventType || order.status || 'order'}
+                      </span>
                       <span className="font-semibold text-gray-900">€{order.total}</span>
                     </div>
                   </div>
@@ -692,9 +606,9 @@ export default function Customers() {
                               <div>
                                 <h3 className="font-semibold text-gray-900">{customer.name}</h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${tiers[customer.tier].color} flex items-center gap-1`}>
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTierMeta(customer.tier).color} flex items-center gap-1`}>
                                     {getTierIcon(customer.tier)}
-                                    {tiers[customer.tier].label}
+                                    {getTierMeta(customer.tier).label}
                                   </span>
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                     customer.status === 'active' 
@@ -799,14 +713,20 @@ export default function Customers() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-gray-900">€{order.total}</p>
-                              <p className="text-sm text-gray-600">{new Date(order.date).toLocaleDateString()}</p>
+                              <p className="font-bold text-gray-900">${order.total}</p>
+                              <p className="text-sm text-gray-600">
+                                {order.createdAt || order.eventDate
+                                  ? new Date(order.createdAt || order.eventDate).toLocaleDateString()
+                                  : '—'}
+                              </p>
                             </div>
                           </div>
                           
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm text-gray-700 mb-1">{order.items.join(', ')}</p>
+                              <p className="text-sm text-gray-700 mb-1">
+                                {order.items?.map(item => item.name).join(', ') || 'No items'}
+                              </p>
                               <div className="flex items-center gap-2">
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                   order.status === 'completed' 
@@ -815,7 +735,9 @@ export default function Customers() {
                                 }`}>
                                   {order.status}
                                 </span>
-                                <span className="text-xs text-gray-600 capitalize">{order.type}</span>
+                                <span className="text-xs text-gray-600 capitalize">
+                                  {order.serviceType || order.eventType || order.status || 'order'}
+                                </span>
                               </div>
                             </div>
                             <button

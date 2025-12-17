@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { systemApi, SystemStatus, ClosedDate } from '@/lib/api/system';
 
 export default function SystemControl() {
   const router = useRouter();    
@@ -17,19 +18,14 @@ export default function SystemControl() {
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('system');
   const [activeTab, setActiveTab] = useState('ordering');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
   // System state
-  const [systemStatus, setSystemStatus] = useState({
-    orderingPaused: false,
-    pauseReason: '',
-    pauseUntil: '',
-    capacityLimit: 50,
-    currentReservations: 35
-  });
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
 
   const handleNavigation = (path) => {
     router.push(path);
@@ -45,17 +41,13 @@ export default function SystemControl() {
   };
 
   // Closed dates
-  const [closedDates, setClosedDates] = useState([
-    { id: 1, date: '2024-12-25', reason: 'Christmas Day', recurring: true },
-    { id: 2, date: '2024-12-31', reason: 'New Years Eve', recurring: true },
-    { id: 3, date: '2024-11-15', reason: 'Private Event', recurring: false }
-  ]);
+  const [closedDates, setClosedDates] = useState<ClosedDate[]>([]);
 
   // Capacity settings
   const [capacitySettings, setCapacitySettings] = useState({
-    dailyLimit: 100,
-    perHourLimit: 25,
-    weekendMultiplier: 1.5,
+    dailyLimit: 0,
+    perHourLimit: 0,
+    weekendMultiplier: 1,
     enableAutoPause: true
   });
 
@@ -73,43 +65,88 @@ export default function SystemControl() {
     { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
     { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
   ];
+  const status = systemStatus ?? {
+    id: 0,
+    orderingPaused: false,
+    pauseReason: '',
+    pauseUntil: '',
+    capacityLimit: 0,
+    currentReservations: 0,
+    dailyLimit: capacitySettings.dailyLimit,
+    perHourLimit: capacitySettings.perHourLimit,
+    weekendMultiplier: capacitySettings.weekendMultiplier,
+    enableAutoPause: capacitySettings.enableAutoPause
+  };
 
-  const toggleOrdering = () => {
-    if (systemStatus.orderingPaused) {
-      // Resume ordering
-      setSystemStatus(prev => ({
-        ...prev,
-        orderingPaused: false,
-        pauseReason: '',
-        pauseUntil: ''
-      }));
-    } else {
-      // Pause ordering
-      setSystemStatus(prev => ({
-        ...prev,
-        orderingPaused: true,
-        pauseUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Tomorrow
-      }));
+  useEffect(() => {
+    const loadSystem = async () => {
+      try {
+        setIsLoading(true);
+        const [status, dates] = await Promise.all([
+          systemApi.getSystemStatus(),
+          systemApi.getClosedDates()
+        ]);
+        setSystemStatus(status);
+        setCapacitySettings({
+          dailyLimit: status.dailyLimit,
+          perHourLimit: status.perHourLimit,
+          weekendMultiplier: status.weekendMultiplier,
+          enableAutoPause: status.enableAutoPause
+        });
+        setClosedDates(dates);
+      } catch (err) {
+        console.error('Failed to load system status', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSystem();
+  }, []);
+
+  const toggleOrdering = async () => {
+    if (!systemStatus) return;
+    const nextStatus = {
+      orderingPaused: !status.orderingPaused,
+      pauseReason: status.orderingPaused ? '' : status.pauseReason,
+      pauseUntil: status.orderingPaused ? null : status.pauseUntil
+    };
+    try {
+      const updated = await systemApi.updateSystemStatus(nextStatus);
+      setSystemStatus(updated);
+    } catch (err) {
+      console.error('Failed to update ordering status', err);
     }
   };
 
-  const addClosedDate = () => {
-    if (newClosedDate.date && newClosedDate.reason) {
-      const newDate = {
-        id: Math.max(...closedDates.map(d => d.id)) + 1,
-        ...newClosedDate
-      };
-      setClosedDates([...closedDates, newDate]);
+  const addClosedDate = async () => {
+    if (!newClosedDate.date || !newClosedDate.reason) return;
+    try {
+      const created = await systemApi.createClosedDate(newClosedDate);
+      setClosedDates(prev => [...prev, created]);
       setNewClosedDate({ date: '', reason: '', recurring: false });
+    } catch (err) {
+      console.error('Failed to add closed date', err);
     }
   };
 
-  const removeClosedDate = (id) => {
-    setClosedDates(closedDates.filter(date => date.id !== id));
+  const removeClosedDate = async (id: number) => {
+    try {
+      await systemApi.deleteClosedDate(id);
+      setClosedDates(closedDates.filter(date => date.id !== id));
+    } catch (err) {
+      console.error('Failed to remove closed date', err);
+    }
   };
 
-  const updateCapacitySettings = (updates) => {
-    setCapacitySettings(prev => ({ ...prev, ...updates }));
+  const updateCapacitySettings = async (updates: Partial<SystemStatus>) => {
+    if (!systemStatus) return;
+    try {
+      const updated = await systemApi.updateSystemStatus({ ...updates });
+      setSystemStatus(updated);
+      setCapacitySettings(prev => ({ ...prev, ...updates }));
+    } catch (err) {
+      console.error('Failed to update capacity', err);
+    }
   };
 
   const isDateInPast = (dateString: string) => {
@@ -245,28 +282,28 @@ export default function SystemControl() {
                         Ordering System Status
                       </h3>
                       <p className={`text-sm ${
-                        systemStatus.orderingPaused ? 'text-red-600' : 'text-green-600'
+                        status.orderingPaused ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        {systemStatus.orderingPaused ? 'Ordering is currently PAUSED' : 'Ordering is ACTIVE'}
+                        {status.orderingPaused ? 'Ordering is currently PAUSED' : 'Ordering is ACTIVE'}
                       </p>
-                      {systemStatus.orderingPaused && systemStatus.pauseReason && (
-                        <p className="text-sm text-gray-600 mt-1">Reason: {systemStatus.pauseReason}</p>
+                      {status.orderingPaused && status.pauseReason && (
+                        <p className="text-sm text-gray-600 mt-1">Reason: {status.pauseReason}</p>
                       )}
                     </div>
                     <button
                       onClick={toggleOrdering}
                       className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-colors ${
-                        systemStatus.orderingPaused
+                        status.orderingPaused
                           ? 'bg-green-600 text-white hover:bg-green-700'
                           : 'bg-red-600 text-white hover:bg-red-700'
                       }`}
                     >
-                      {systemStatus.orderingPaused ? <Play size={20} /> : <Pause size={20} />}
-                      {systemStatus.orderingPaused ? 'Resume Ordering' : 'Pause Ordering'}
+                      {status.orderingPaused ? <Play size={20} /> : <Pause size={20} />}
+                      {status.orderingPaused ? 'Resume Ordering' : 'Pause Ordering'}
                     </button>
                   </div>
 
-                  {systemStatus.orderingPaused && (
+                  {status.orderingPaused && (
                     <div className="bg-white border border-gray-200 rounded-xl p-6">
                       <h4 className="font-semibold text-gray-900 mb-4">Pause Settings</h4>
                       <div className="grid gap-4">
@@ -276,7 +313,7 @@ export default function SystemControl() {
                           </label>
                           <input
                             type="text"
-                            value={systemStatus.pauseReason}
+                            value={status.pauseReason}
                             onChange={(e) => setSystemStatus(prev => ({ ...prev, pauseReason: e.target.value }))}
                             placeholder="E.g., Kitchen maintenance, Staff shortage..."
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
@@ -288,7 +325,7 @@ export default function SystemControl() {
                           </label>
                           <input
                             type="date"
-                            value={systemStatus.pauseUntil}
+                            value={status.pauseUntil}
                             onChange={(e) => setSystemStatus(prev => ({ ...prev, pauseUntil: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                           />
@@ -509,20 +546,20 @@ export default function SystemControl() {
                           <div className="flex justify-between text-sm mb-1">
                             <span className="text-amber-800">Today's Usage</span>
                             <span className="font-medium text-amber-900">
-                              {systemStatus.currentReservations} / {capacitySettings.dailyLimit}
+                              {status.currentReservations} / {capacitySettings.dailyLimit}
                             </span>
                           </div>
                           <div className="w-full bg-amber-200 rounded-full h-2">
                             <div 
                               className="bg-amber-600 h-2 rounded-full transition-all duration-300"
                               style={{ 
-                                width: `${(systemStatus.currentReservations / capacitySettings.dailyLimit) * 100}%` 
+                                width: `${(status.currentReservations / capacitySettings.dailyLimit) * 100}%` 
                               }}
                             ></div>
                           </div>
                         </div>
                         <p className="text-sm text-amber-700">
-                          {capacitySettings.dailyLimit - systemStatus.currentReservations} orders remaining today
+                          {capacitySettings.dailyLimit - status.currentReservations} orders remaining today
                         </p>
                       </div>
                     </div>

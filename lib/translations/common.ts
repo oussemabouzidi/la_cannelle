@@ -1,0 +1,66 @@
+// Common translations used across multiple pages
+
+export const commonTranslations = {
+  EN: {
+    nav: {
+      about: 'About',
+      services: 'Services',
+      menus: 'Menus',
+      contact: 'Contact',
+      connect: 'Connect',
+      order: 'Order Now'
+    },
+    common: {
+      loading: 'Loading...',
+      error: 'An error occurred',
+      success: 'Success',
+      cancel: 'Cancel',
+      save: 'Save',
+      delete: 'Delete',
+      edit: 'Edit',
+      add: 'Add',
+      remove: 'Remove',
+      search: 'Search',
+      filter: 'Filter',
+      close: 'Close',
+      submit: 'Submit',
+      back: 'Back',
+      next: 'Next',
+      previous: 'Previous',
+      confirm: 'Confirm',
+      yes: 'Yes',
+      no: 'No'
+    }
+  },
+  DE: {
+    nav: {
+      about: 'Über uns',
+      services: 'Dienstleistungen',
+      menus: 'Menüs',
+      contact: 'Kontakt',
+      connect: 'Verbinden',
+      order: 'Jetzt bestellen'
+    },
+    common: {
+      loading: 'Lädt...',
+      error: 'Ein Fehler ist aufgetreten',
+      success: 'Erfolg',
+      cancel: 'Abbrechen',
+      save: 'Speichern',
+      delete: 'Löschen',
+      edit: 'Bearbeiten',
+      add: 'Hinzufügen',
+      remove: 'Entfernen',
+      search: 'Suchen',
+      filter: 'Filtern',
+      close: 'Schließen',
+      submit: 'Absenden',
+      back: 'Zurück',
+      next: 'Weiter',
+      previous: 'Zurück',
+      confirm: 'Bestätigen',
+      yes: 'Ja',
+      no: 'Nein'
+    }
+  }
+};
