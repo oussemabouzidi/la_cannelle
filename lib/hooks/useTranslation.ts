@@ -5,16 +5,34 @@ import { translations, TranslationModule } from '../translations';
 export type Language = 'EN' | 'DE';
 
 export function useTranslation(module: TranslationModule = 'common') {
-  const [language, setLanguage] = useState<Language>('DE');
+  // Default to EN to align with the rest of the public pages; hydrate from storage on mount
+  const [language, setLanguage] = useState<Language>('EN');
 
-  // Load language from localStorage on mount
+  // Load saved language once on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedLanguage = localStorage.getItem('language') as Language;
-      if (savedLanguage === 'EN' || savedLanguage === 'DE') {
-        setLanguage(savedLanguage);
-      }
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('language') as Language | null;
+    if (saved === 'EN' || saved === 'DE') {
+      setLanguage(saved);
     }
+  }, []);
+
+  // Persist language changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('language', language);
+  }, [language]);
+
+  // Sync across tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'language' && (event.newValue === 'EN' || event.newValue === 'DE')) {
+        setLanguage(event.newValue);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   // Save language to localStorage when it changes
@@ -27,7 +45,13 @@ export function useTranslation(module: TranslationModule = 'common') {
 
   // Toggle between EN and DE
   const toggleLanguage = () => {
-    changeLanguage(language === 'EN' ? 'DE' : 'EN');
+    setLanguage((prev) => {
+      const next = prev === 'EN' ? 'DE' : 'EN';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('language', next);
+      }
+      return next;
+    });
   };
 
   // Simple, safe translation resolution with fallback to EN and common
