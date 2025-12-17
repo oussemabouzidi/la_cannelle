@@ -46,21 +46,6 @@ export const servicesTranslations = {
         'Rehearsal dinner options'
       ]
     },
-    // Alias for UI expecting weddings.*
-    weddings: {
-      title: 'Weddings',
-      subtitle: 'Your Perfect Day, Perfectly Catered',
-      description: 'Your wedding day deserves nothing but the best. Our wedding catering services combine elegant presentation, exquisite flavors, and flawless execution to create a dining experience your guests will remember forever.',
-      features: [
-        'Bridal consultation and menu design',
-        'Elegant table settings and presentation',
-        'Multiple course options',
-        'Wedding cake coordination',
-        'Special dietary accommodations',
-        'Rehearsal dinner options'
-      ]
-    },
-    // Alias used by UI
     weddings: {
       title: 'Weddings',
       subtitle: 'Your Perfect Day, Perfectly Catered',
@@ -77,20 +62,6 @@ export const servicesTranslations = {
     corporateCatering: {
       title: 'Corporate Catering',
       subtitle: 'Professional Excellence for Business',
-      description: 'Impress clients and motivate your team with our corporate catering solutions. From board meetings to company-wide celebrations, we provide sophisticated dining experiences that reflect your company\'s standards.',
-      features: [
-        'Executive dining services',
-        'Conference and meeting catering',
-        'Corporate event planning',
-        'Branded presentation options',
-        'Volume pricing available',
-        'Regular account management'
-      ]
-    },
-    // Alias for UI expecting corporateEvents.*
-    corporateEvents: {
-      title: 'Corporate Events',
-      subtitle: 'Impress Your Clients and Team',
       description: 'Impress clients and motivate your team with our corporate catering solutions. From board meetings to company-wide celebrations, we provide sophisticated dining experiences that reflect your company\'s standards.',
       features: [
         'Executive dining services',
@@ -178,35 +149,9 @@ export const servicesTranslations = {
         'Probeessen-Optionen'
       ]
     },
-    weddings: {
-      title: 'Hochzeiten',
-      subtitle: 'Ihr perfekter Tag, perfekt betreut',
-      description: 'Ihr Hochzeitstag verdient nur das Beste. Unsere Hochzeits-Catering-Services kombinieren elegante Präsentation, exquisite Aromen und makellose Ausführung, um ein kulinarisches Erlebnis zu schaffen, das Ihre Gäste für immer in Erinnerung behalten werden.',
-      features: [
-        'Personalisierte Menüberatung',
-        'Verkostungen für das Paar',
-        'Vollständiger Barservice verfügbar',
-        'Elegante Anrichtung und Präsentation',
-        'Erfahrenes Hochzeitsteam',
-        'Koordination mit Location und Dienstleistern'
-      ]
-    },
     corporateCatering: {
       title: 'Firmen-Catering',
       subtitle: 'Professionelle Exzellenz für Unternehmen',
-      description: 'Beeindrucken Sie Kunden und motivieren Sie Ihr Team mit unseren Firmen-Catering-Lösungen. Von Vorstandssitzungen bis hin zu firmenweiten Feiern bieten wir anspruchsvolle kulinarische Erlebnisse, die die Standards Ihres Unternehmens widerspiegeln.',
-      features: [
-        'Executive-Dining-Services',
-        'Konferenz- und Meeting-Catering',
-        'Firmen-Event-Planung',
-        'Markenpräsentations-Optionen',
-        'Mengenpreise verfügbar',
-        'Regelmäßiges Account-Management'
-      ]
-    },
-    corporateEvents: {
-      title: 'Firmenevents',
-      subtitle: 'Beeindrucken Sie Kunden und Team',
       description: 'Beeindrucken Sie Kunden und motivieren Sie Ihr Team mit unseren Firmen-Catering-Lösungen. Von Vorstandssitzungen bis hin zu firmenweiten Feiern bieten wir anspruchsvolle kulinarische Erlebnisse, die die Standards Ihres Unternehmens widerspiegeln.',
       features: [
         'Executive-Dining-Services',

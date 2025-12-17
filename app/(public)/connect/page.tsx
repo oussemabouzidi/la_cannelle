@@ -5,10 +5,28 @@ import { Menu, X, ChevronRight, Phone, Mail, MapPin, User, Lock, Eye, EyeOff, Ca
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import { connectTranslations } from '@/lib/translations/connect';
 
 export default function AccountPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { t, language, toggleLanguage } = useTranslation('connect');
+  const translation = useTranslation('connect');
+  const t = translation.t as typeof connectTranslations.EN;
+  const { language, toggleLanguage } = translation;
+  const basePreferences = {
+    newsletter: false,
+    smsNotifications: false,
+    eventReminders: false,
+  };
+  const normalizePreferences = (prefs?: string[] | Record<string, boolean>) => {
+    if (!prefs) return { ...basePreferences };
+    if (Array.isArray(prefs)) {
+      return prefs.reduce(
+        (acc, key) => ({ ...acc, [key]: true }),
+        { ...basePreferences }
+      );
+    }
+    return { ...basePreferences, ...prefs };
+  };
   const [isVisible, setIsVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +53,7 @@ export default function AccountPage() {
     company: '',
     position: '',
     location: '',
-    preferences: [] as string[],
+    preferences: normalizePreferences(),
     allergies: [] as string[]
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +74,7 @@ export default function AccountPage() {
               company: userProfile.company || '',
               position: userProfile.position || '',
               location: userProfile.location || '',
-              preferences: userProfile.preferences || [],
+              preferences: normalizePreferences(userProfile.preferences as any),
               allergies: userProfile.allergies || []
             });
           }
@@ -191,7 +209,9 @@ export default function AccountPage() {
         company: profile.company,
         position: profile.position,
         location: profile.location,
-        preferences: profile.preferences,
+        preferences: Object.entries(profile.preferences)
+          .filter(([, enabled]) => enabled)
+          .map(([key]) => key),
         allergies: profile.allergies
       });
       setIsEditing(false);

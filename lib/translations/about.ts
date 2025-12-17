@@ -32,7 +32,18 @@ export const aboutTranslations = {
       },
       passion: {
         title: 'Passion',
+        subtitle: 'Heart in every dish',
         description: 'Our love for food and service drives everything we do.'
+      },
+      exclusivity: {
+        title: 'Exclusivity',
+        subtitle: 'Private experiences',
+        description: 'Private, bespoke experiences crafted for your occasion.'
+      },
+      company: {
+        title: 'Trusted Partner',
+        subtitle: 'Your reliable ally',
+        description: 'A dedicated team focused on your success.'
       }
     },
     team: {
@@ -85,17 +96,6 @@ export const aboutTranslations = {
         { title: 'Reliable Delivery', description: 'Professional team ensuring timely service.' }
       ]
     },
-    values: {
-      ...commonTranslations.EN.values,
-      exclusivity: {
-        title: 'Exclusivity',
-        description: 'Private, bespoke experiences crafted for your occasion.'
-      },
-      company: {
-        title: 'Trusted Partner',
-        description: 'A dedicated team focused on your success.'
-      }
-    },
     body: {
       style: 'classic'
     },
@@ -143,7 +143,18 @@ export const aboutTranslations = {
       },
       passion: {
         title: 'Leidenschaft',
+        subtitle: 'Herz in jedem Gericht',
         description: 'Unsere Liebe zu Essen und Service treibt alles an, was wir tun.'
+      },
+      exclusivity: {
+        title: 'Exklusivität',
+        subtitle: 'Private Erlebnisse',
+        description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.'
+      },
+      company: {
+        title: 'Vertrauenspartner',
+        subtitle: 'Ihr verlässlicher Partner',
+        description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.'
       }
     },
     team: {
@@ -195,17 +206,6 @@ export const aboutTranslations = {
         { title: 'Kreative Menüs', description: 'Innovative Gerichte mit saisonalen Zutaten.' },
         { title: 'Zuverlässige Lieferung', description: 'Professionelles Team für pünktlichen Service.' }
       ]
-    },
-    values: {
-      ...commonTranslations.DE.values,
-      exclusivity: {
-        title: 'Exklusivität',
-        description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.'
-      },
-      company: {
-        title: 'Vertrauenspartner',
-        description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.'
-      }
     },
     body: {
       style: 'klassisch'

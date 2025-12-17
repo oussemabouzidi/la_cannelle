@@ -13,6 +13,9 @@ export interface RegisterData {
   phone?: string;
   company?: string;
   position?: string;
+  location?: string;
+  preferences?: string[];
+  allergies?: string[];
 }
 
 export interface User {

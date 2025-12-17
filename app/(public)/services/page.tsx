@@ -4,11 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Briefcase, Users, Heart, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import { servicesTranslations } from '@/lib/translations/services';
 
 
 export default function ServicesPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { t, language, toggleLanguage } = useTranslation('services');
+  const translation = useTranslation('services');
+  const t = translation.t as typeof servicesTranslations.EN;
+  const { language, toggleLanguage } = translation;
   const [isVisible, setIsVisible] = useState(false);
 
   const router = useRouter();
