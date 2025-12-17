@@ -856,14 +856,14 @@ export default function CateringHomepage() {
           </div>
 
           <div className="relative overflow-hidden py-10">
-            <div className="flex items-center gap-24 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
+            <div className="flex items-center gap-24 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '220%' }}>
               {[...brandLogos, ...brandLogos].map((logo, idx) => (
-                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-36 px-10 opacity-90 hover:opacity-100 transition-opacity duration-200">
+                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-36 px-10 opacity-95 hover:opacity-100 transition-opacity duration-200">
                   <img
                     src={logo.src}
                     alt={`${logo.name} logo`}
-                    className="h-28 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200"
-                    style={{ filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.25))' }}
+                    className="h-32 w-auto object-contain transition-all duration-200 drop-shadow-lg"
+                    style={{ filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))' }}
                     loading="lazy"
                   />
                 </div>
