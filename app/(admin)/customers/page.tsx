@@ -707,7 +707,8 @@ export default function Customers() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
                   <div className="space-y-3">
                     {orders.map((order) => {
-                      const customer = customers.find(c => c.id === order.customerId);
+                      const customerId = (order as any).customerId ?? order.userId;
+                      const customer = customers.find(c => c.id === customerId);
                       return (
                         <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
                           <div className="flex items-center justify-between mb-3">
