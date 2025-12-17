@@ -23,17 +23,17 @@ export default function CateringHomepage() {
     router.push('/order');
   };
   const brandLogos = [
-    { name: 'Montblanc', src: '/images/logos/montblanc.png' },
-    { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
-    { name: 'OMG', src: '/images/logos/omg.png' },
-    { name: 'DoiT International', src: '/images/logos/doit.png' },
-    { name: 'BBDO', src: '/images/logos/bbdo.png' },
-    { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
-    { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
-    { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
-    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.png' },
-    { name: 'Samsonite', src: '/images/logos/samsonite.png' },
-    { name: 'SABIC', src: '/images/logos/sabic.png' },
+    { name: 'Montblanc', src: 'https://logo.clearbit.com/montblanc.com?size=256' },
+    { name: 'Omnicom Media Group', src: 'https://logo.clearbit.com/omnicommediagroup.com?size=256' },
+    { name: 'OMG', src: 'https://logo.clearbit.com/omgstudios.com?size=256' },
+    { name: 'DoiT International', src: 'https://logo.clearbit.com/doit.com?size=256' },
+    { name: 'BBDO', src: 'https://logo.clearbit.com/bbdo.com?size=256' },
+    { name: 'IWC Schaffhausen', src: 'https://logo.clearbit.com/iwc.com?size=256' },
+    { name: 'Ruby Hotels', src: 'https://logo.clearbit.com/ruby-hotels.com?size=256' },
+    { name: 'RIMOWA', src: 'https://logo.clearbit.com/rimowa.com?size=256' },
+    { name: 'Ralph Lauren', src: 'https://logo.clearbit.com/ralphlauren.com?size=256' },
+    { name: 'Samsonite', src: 'https://logo.clearbit.com/samsonite.com?size=256' },
+    { name: 'SABIC', src: 'https://logo.clearbit.com/sabic.com?size=256' },
   ];
 
   return (
@@ -319,29 +319,7 @@ export default function CateringHomepage() {
         </div>
       </section>
 
-      {/* Brand Banner */}
-      <section className="bg-white py-14 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-4">
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
-          </div>
 
-          <div className="relative overflow-hidden py-6">
-            <div className="flex items-center gap-16 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
-              {[...brandLogos, ...brandLogos].map((logo, idx) => (
-                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-28 px-6 opacity-80 hover:opacity-100 transition-opacity duration-200">
-                  <img
-                    src={logo.src}
-                    alt={`${logo.name} logo`}
-                    className="h-20 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200 drop-shadow-sm"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Quick Menu Categories */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
@@ -870,6 +848,30 @@ export default function CateringHomepage() {
         </div>
       </section>
 
+      {/* Brand Banner */}
+      <section className="bg-white py-16 border-t border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-4">
+            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">Trusted By</p>
+          </div>
+
+          <div className="relative overflow-hidden py-8">
+            <div className="flex items-center gap-20 animate-logo-marquee whitespace-nowrap" style={{ minWidth: '200%' }}>
+              {[...brandLogos, ...brandLogos].map((logo, idx) => (
+                <div key={`${logo.name}-${idx}`} className="flex items-center justify-center h-32 px-8 opacity-80 hover:opacity-100 transition-opacity duration-200">
+                  <img
+                    src={logo.src}
+                    alt={`${logo.name} logo`}
+                    className="h-24 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-200 drop-shadow-sm"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -919,6 +921,7 @@ export default function CateringHomepage() {
     </div>
   );
 }
+
 
 
 
