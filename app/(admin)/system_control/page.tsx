@@ -314,7 +314,7 @@ export default function SystemControl() {
                           <input
                             type="text"
                             value={status.pauseReason}
-                            onChange={(e) => setSystemStatus(prev => ({ ...prev, pauseReason: e.target.value }))}
+                            onChange={(e) => setSystemStatus(prev => prev ? { ...prev, pauseReason: e.target.value } : prev)}
                             placeholder="E.g., Kitchen maintenance, Staff shortage..."
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                           />
@@ -326,7 +326,7 @@ export default function SystemControl() {
                           <input
                             type="date"
                             value={status.pauseUntil}
-                            onChange={(e) => setSystemStatus(prev => ({ ...prev, pauseUntil: e.target.value }))}
+                            onChange={(e) => setSystemStatus(prev => prev ? { ...prev, pauseUntil: e.target.value } : prev)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                           />
                         </div>
