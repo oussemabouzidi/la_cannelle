@@ -128,7 +128,7 @@ export default function SystemControl() {
     const nextStatus = {
       orderingPaused: !orderingDraft.orderingPaused,
       pauseReason: orderingDraft.pauseReason,
-      pauseUntil: orderingDraft.pauseUntil || ''
+      pauseUntil: orderingDraft.pauseUntil || undefined
     };
     try {
       const updated = await systemApi.updateSystemStatus(nextStatus);
@@ -200,7 +200,7 @@ export default function SystemControl() {
       const updated = await systemApi.updateSystemStatus({
         orderingPaused: orderingDraft.orderingPaused,
         pauseReason: orderingDraft.pauseReason,
-        pauseUntil: orderingDraft.pauseUntil || null
+        pauseUntil: orderingDraft.pauseUntil || undefined
       });
       setSystemStatus(updated);
       setOrderingDraft({
