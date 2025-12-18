@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Clock, Users, Leaf, Plus, Minus, Heart, Calendar, Users as UsersIcon, Utensils, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
+import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
 
 export default function MenusPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,6 +18,10 @@ export default function MenusPage() {
   const [showMenuPlanModal, setShowMenuPlanModal] = useState(false);
   const [isModalClosing, setIsModalClosing] = useState(false);
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const [menus, setMenus] = useState<ApiMenu[]>([]);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -241,98 +247,148 @@ export default function MenusPage() {
 
   const t = content[language];
 
-  const menuItems = {
-    all: [
-      {
-        id: 1,
-        name: 'Truffle-infused Wild Mushroom Risotto',
-        category: 'corporate',
-        description: 'Arborio rice with seasonal wild mushrooms, white truffle oil, and Parmigiano-Reggiano',
-        price: 24,
-        organic: true,
-        preparation: '25 min',
-        image: '/images/risotto.jpg',
-        popularity: 95,
-        dietary: ['Vegetarian', 'Gluten-Free'],
-        chefNote: 'Our signature dish featuring imported Italian truffles'
-      },
-      {
-        id: 2,
-        name: 'Herb-crusted Rack of Lamb',
-        category: 'wedding',
-        description: 'New Zealand lamb with rosemary crust, mint jus, and roasted root vegetables',
-        price: 38,
-        preparation: '35 min',
-        image: '/images/lamb.jpg',
-        popularity: 88,
-        dietary: ['Gluten-Free'],
-        chefNote: 'Premium New Zealand lamb with fresh garden herbs'
-      },
-      {
-        id: 3,
-        name: 'Seared Scallops with Citrus Beurre Blanc',
-        category: 'cocktail',
-        description: 'Day boat scallops with orange reduction, micro greens, and crispy prosciutto',
-        price: 28,
-        organic: true,
-        preparation: '20 min',
-        image: '/images/scallops.jpg',
-        popularity: 92,
-        dietary: ['Gluten-Free'],
-        chefNote: 'Fresh Atlantic scallops with citrus emulsion'
-      },
-      {
-        id: 4,
-        name: 'Heirloom Tomato Burrata Salad',
-        category: 'seasonal',
-        description: 'Colorful heirloom tomatoes with fresh burrata, basil oil, and balsamic reduction',
-        price: 18,
-        organic: true,
-        preparation: '15 min',
-        image: '/images/salad.jpg',
-        popularity: 85,
-        dietary: ['Vegetarian', 'Gluten-Free'],
-        chefNote: 'Farm-fresh heirloom tomatoes with Italian burrata'
-      },
-      {
-        id: 5,
-        name: 'Beef Wellington Canapés',
-        category: 'premium',
-        description: 'Mini beef wellington with mushroom duxelles and puff pastry',
-        price: 22,
-        preparation: '30 min',
-        image: '/images/beef-wellington.jpg',
-        popularity: 90,
-        dietary: [],
-        chefNote: 'Elegant bite-sized version of the classic'
-      },
-      {
-        id: 6,
-        name: 'Chocolate Fondant with Raspberry Coulis',
-        category: 'wedding',
-        description: 'Warm chocolate cake with liquid center and fresh raspberry sauce',
-        price: 16,
-        preparation: '18 min',
-        image: '/images/fondant.jpg',
-        popularity: 94,
-        dietary: ['Vegetarian'],
-        chefNote: 'Decadent chocolate dessert with seasonal berries'
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoadingData(true);
+        setFetchError(null);
+        const [fetchedMenus, fetchedProducts] = await Promise.all([
+          menusApi.getMenus({ isActive: true }),
+          productsApi.getProducts({ available: true }),
+        ]);
+
+        const normalizedMenus = (fetchedMenus || []).map((menu) => ({
+          ...menu,
+          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+        }));
+
+        setMenus(normalizedMenus);
+        setProducts(fetchedProducts || []);
+      } catch (error) {
+        console.error('Failed to fetch menus/products', error);
+        setFetchError('Unable to load menus right now.');
+      } finally {
+        setIsLoadingData(false);
       }
-    ]
-  };
+    };
+
+    loadData();
+  }, []);
+
+  const fallbackMenuItems = [
+    {
+      id: 1,
+      name: 'Truffle-infused Wild Mushroom Risotto',
+      category: 'corporate',
+      description: 'Arborio rice with seasonal wild mushrooms, white truffle oil, and Parmigiano-Reggiano',
+      price: 24,
+      organic: true,
+      preparation: '25 min',
+      image: '/images/risotto.jpg',
+      popularity: 95,
+      dietary: ['Vegetarian', 'Gluten-Free'],
+      chefNote: 'Our signature dish featuring imported Italian truffles'
+    },
+    {
+      id: 2,
+      name: 'Herb-crusted Rack of Lamb',
+      category: 'wedding',
+      description: 'New Zealand lamb with rosemary crust, mint jus, and roasted root vegetables',
+      price: 38,
+      preparation: '35 min',
+      image: '/images/lamb.jpg',
+      popularity: 88,
+      dietary: ['Gluten-Free'],
+      chefNote: 'Premium New Zealand lamb with fresh garden herbs'
+    },
+    {
+      id: 3,
+      name: 'Seared Scallops with Citrus Beurre Blanc',
+      category: 'cocktail',
+      description: 'Day boat scallops with orange reduction, micro greens, and crispy prosciutto',
+      price: 28,
+      organic: true,
+      preparation: '20 min',
+      image: '/images/scallops.jpg',
+      popularity: 92,
+      dietary: ['Gluten-Free'],
+      chefNote: 'Fresh Atlantic scallops with citrus emulsion'
+    },
+    {
+      id: 4,
+      name: 'Heirloom Tomato Burrata Salad',
+      category: 'seasonal',
+      description: 'Colorful heirloom tomatoes with fresh burrata, basil oil, and balsamic reduction',
+      price: 18,
+      organic: true,
+      preparation: '15 min',
+      image: '/images/salad.jpg',
+      popularity: 85,
+      dietary: ['Vegetarian', 'Gluten-Free'],
+      chefNote: 'Farm-fresh heirloom tomatoes with Italian burrata'
+    },
+    {
+      id: 5,
+      name: 'Beef Wellington Canapés',
+      category: 'premium',
+      description: 'Mini beef wellington with mushroom duxelles and puff pastry',
+      price: 22,
+      preparation: '30 min',
+      image: '/images/beef-wellington.jpg',
+      popularity: 90,
+      dietary: [],
+      chefNote: 'Elegant bite-sized version of the classic'
+    },
+    {
+      id: 6,
+      name: 'Chocolate Fondant with Raspberry Coulis',
+      category: 'wedding',
+      description: 'Warm chocolate cake with liquid center and fresh raspberry sauce',
+      price: 16,
+      preparation: '18 min',
+      image: '/images/fondant.jpg',
+      popularity: 94,
+      dietary: ['Vegetarian'],
+      chefNote: 'Decadent chocolate dessert with seasonal berries'
+    }
+  ];
+
+  const productItems = (products.length
+    ? products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        category: product.menuCategory || product.category || 'general',
+        description: product.description,
+        price: product.price ?? 0,
+        organic: product.ingredients?.some((ing) => ing.toLowerCase().includes('organic')) || false,
+        preparation: product.preparationTime ? `${product.preparationTime} min` : 'Prep time varies',
+        image: product.image || '/images/home_image.jpeg',
+        popularity: product.popularity ?? 80,
+        dietary: product.allergens && product.allergens.length ? product.allergens : [],
+        chefNote: product.ingredients && product.ingredients.length
+          ? `Includes: ${product.ingredients.slice(0, 3).join(', ')}`
+          : 'Crafted by our chefs for your event.',
+      }))
+    : fallbackMenuItems);
+
+  const categoryOptions = menus.length
+    ? ['all', ...Array.from(new Set(menus.map((menu) => menu.category || menu.type).filter(Boolean)))]
+    : ['all', 'corporate', 'wedding', 'cocktail', 'seasonal', 'premium'];
 
   const router = useRouter();
 
-  const handleOrderClick = () => {
-    router.push('/order');
+  const handleOrderClick = (productIds?: number[]) => {
+    const ids = productIds && productIds.length ? productIds : selectedItems.map((item) => item.id);
+    const query = ids.length ? `?products=${ids.join(',')}` : '';
+    router.push(`/order${query}`);
   };
 
-  const filteredItems = activeCategory === 'all' 
-    ? menuItems.all.filter(item => 
+  const filteredItems = activeCategory === 'all'
+    ? productItems.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    : menuItems.all.filter(item => 
-        item.category === activeCategory && 
+    : productItems.filter(item =>
+        item.category === activeCategory &&
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
@@ -547,8 +603,8 @@ export default function MenusPage() {
           <Calendar size={16} />
           {t.menuBuilder.viewPlan}
         </button>
-        <button 
-          onClick={handleOrderClick}
+        <button
+          onClick={() => handleOrderClick(selectedItems.map((item) => item.id))}
           className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-all duration-300 transform hover:scale-105"
         >
           {t.nav.order}
@@ -693,10 +749,10 @@ export default function MenusPage() {
             >
               {t.menuBuilder.close}
             </button>
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleOrderClick();
+                handleOrderClick(selectedItems.map((item) => item.id));
               }}
               disabled={selectedItems.length === 0}
               className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -811,8 +867,8 @@ export default function MenusPage() {
 <button onClick={() => {router.push('/connect')}}  className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 font-medium">
                 {t.nav.connect}
               </button>
-              <button 
-                onClick={handleOrderClick}
+              <button
+                onClick={() => handleOrderClick()}
                 className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
               >
                 {t.nav.order}
@@ -846,7 +902,7 @@ export default function MenusPage() {
                 <button className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 font-medium transition-all duration-300">
                   {t.nav.connect}
                 </button>
-                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
+                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105" onClick={() => handleOrderClick()}>
                   {t.nav.order}
                 </button>
               </div>
@@ -892,7 +948,7 @@ export default function MenusPage() {
               </div>
               
               <div className="flex flex-wrap justify-center gap-3 mb-12">
-                {['all', 'corporate', 'wedding', 'cocktail', 'seasonal', 'premium'].map((category, index) => (
+                {categoryOptions.map((category, index) => (
                   <button
                     key={category}
                     onClick={() => setActiveCategory(category)}
@@ -903,7 +959,7 @@ export default function MenusPage() {
                     } ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
                     style={{ animationDelay: `${index * 100 + 300}ms` }}
                   >
-                    {t.categories[category]}
+                    {t.categories[category] || category}
                   </button>
                 ))}
               </div>
@@ -921,6 +977,13 @@ export default function MenusPage() {
                   />
                 </div>
               </div>
+
+              {fetchError && (
+                <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
+              )}
+              {isLoadingData && !products.length && (
+                <p className="text-center text-sm text-gray-500 mb-4">Loading menus and products...</p>
+              )}
 
               {/* Menu Items Grid */}
               <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>

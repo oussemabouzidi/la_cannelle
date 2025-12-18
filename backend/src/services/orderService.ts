@@ -164,12 +164,13 @@ export const orderService = {
   },
 
   async updateOrderStatus(id: string, status: OrderStatus, cancellationReason?: string) {
+    const safeStatus = status?.toString().toUpperCase() as OrderStatus;
     const order = await prisma.order.update({
       where: { id },
       data: {
-        status,
+        status: safeStatus,
         ...(cancellationReason && { cancellationReason }),
-        ...(status === 'CANCELLED' && { paymentStatus: 'REFUNDED' as PaymentStatus })
+        ...(safeStatus === 'CANCELLED' && { paymentStatus: 'REFUNDED' as PaymentStatus })
       },
       include: {
         items: {

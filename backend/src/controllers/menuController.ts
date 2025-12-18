@@ -34,8 +34,24 @@ export const menuController = {
   async updateMenu(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const updateData: any = { ...req.body };
+
+    // Normalize date fields
     if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
     if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
+
+    // Normalize price (avoid sending empty string/NaN to Prisma)
+    if (updateData.price === '' || updateData.price === null) {
+      updateData.price = null;
+    } else if (updateData.price !== undefined) {
+      const parsedPrice = parseFloat(updateData.price);
+      updateData.price = Number.isFinite(parsedPrice) ? parsedPrice : null;
+    }
+    // Remove client-only fields that Prisma doesn't accept
+    delete updateData.products;
+    delete updateData.id;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+    delete updateData.menuProducts;
 
     const menu = await menuService.updateMenu(parseInt(id), updateData);
     res.json(menu);

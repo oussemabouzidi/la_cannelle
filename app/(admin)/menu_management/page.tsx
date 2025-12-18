@@ -101,6 +101,7 @@ export default function AdminMenuManagement() {
 
   const [menus, setMenus] = useState<MenuType[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [editingMenu, setEditingMenu] = useState<MenuType | null>(null);
 
   const normalizeMenu = (menu: any): MenuType => ({
     id: menu.id,
@@ -189,26 +190,25 @@ export default function AdminMenuManagement() {
   });
 
   // Load data from backend
+  const loadMenusAndProducts = async () => {
+    try {
+      setIsLoading(true);
+      const [menuResponse, productResponse] = await Promise.all([
+        menusApi.getMenus(),
+        productsApi.getProducts()
+      ]);
+
+      setMenus(menuResponse.map(normalizeMenu));
+      setMenuItems(productResponse.map(normalizeProduct));
+    } catch (err) {
+      console.error('Failed to load menus/products', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-
-        const [menuResponse, productResponse] = await Promise.all([
-          menusApi.getMenus(),
-          productsApi.getProducts()
-        ]);
-
-        setMenus(menuResponse.map(normalizeMenu));
-        setMenuItems(productResponse.map(normalizeProduct));
-      } catch (err) {
-        console.error('Failed to load menus/products', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
+    loadMenusAndProducts();
   }, []);
 
 const [newItem, setNewItem] = useState<NewItemState>({
@@ -326,13 +326,15 @@ const [newItem, setNewItem] = useState<NewItemState>({
   };
 
 // CRUD Operations for Menus
-  const addMenu = async () => {
+  const addMenu = async (menuData?: NewMenuState | MenuType) => {
     try {
-      const created = await menusApi.createMenu(newMenu as any);
-      const normalized = normalizeMenu(created);
-      setMenus([...menus, normalized]);
-      resetNewMenuForm();
+      const payload = menuData || newMenu;
+      const created = await menusApi.createMenu(payload as any);
+      await loadMenusAndProducts();
       setShowAddMenuForm(false);
+      if (!menuData) {
+        resetNewMenuForm();
+      }
     } catch (err) {
       console.error('Failed to create menu', err);
     }
@@ -345,6 +347,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
       setMenus(menus.map(menu =>
         menu.id === normalized.id ? normalized : menu
       ));
+      await loadMenusAndProducts();
     } catch (err) {
       console.error('Failed to update menu', err);
     }
@@ -362,21 +365,18 @@ const toggleMenuActive = async (menuId: number) => {
     }
   };
 
-  const deleteMenu = (menuId: number) => {
-    // Remove menu from all products first
-    const updatedItems = menuItems.map(item => ({
-      ...item,
-      menus: item.menus.filter(menu => menu !== menuId)
-    }));
-    setMenuItems(updatedItems);
-    
-    // Then delete the menu
-    setMenus(menus.filter(menu => menu.id !== menuId));
-    if (selectedMenu?.id === menuId) {
-      setSelectedMenu(null);
-    }
-    if (selectedMenuForDetail?.id === menuId) {
-      setSelectedMenuForDetail(null);
+  const deleteMenu = async (menuId: number) => {
+    try {
+      await menusApi.deleteMenu(menuId);
+      await loadMenusAndProducts();
+      if (selectedMenu?.id === menuId) {
+        setSelectedMenu(null);
+      }
+      if (selectedMenuForDetail?.id === menuId) {
+        setSelectedMenuForDetail(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete menu', err);
     }
   };
 
@@ -1153,10 +1153,7 @@ const AddMenuFormModal = () => {
   }, [newMenu]);
 
   const handleSaveMenu = () => {
-    setNewMenu(localMenuState);
-    addMenu();
-    setShowAddMenuForm(false);
-    resetNewMenuForm();
+    addMenu(localMenuState);
   };
 
   return (
@@ -1261,27 +1258,170 @@ const AddMenuFormModal = () => {
   );
 };
 
+const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
+  const [localMenuState, setLocalMenuState] = useState<MenuType>(menu);
+
+  useEffect(() => {
+    setLocalMenuState(menu);
+  }, [menu]);
+
+  const handleSaveMenu = async () => {
+    await updateMenu({ ...localMenuState });
+    setEditingMenu(null);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setEditingMenu(null)}>
+      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900 font-elegant">Edit Menu</h2>
+          <button onClick={() => setEditingMenu(null)} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+              <input
+                type="text"
+                value={localMenuState.name}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                placeholder="Menu name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <input
+                type="text"
+                value={localMenuState.category}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                placeholder="e.g., seasonal, luxury"
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <input
+                type="text"
+                value={localMenuState.type}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                placeholder="fixed, tasting, themed"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price (optional)</label>
+              <input
+                type="number"
+                value={localMenuState.price ?? 0}
+                onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              value={localMenuState.description}
+              onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+              placeholder="Describe this menu"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="menu-active-edit"
+              checked={localMenuState.isActive}
+              onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
+              className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+            />
+            <label htmlFor="menu-active-edit" className="text-sm text-gray-700">Menu is active</label>
+          </div>
+
+          <div className="flex gap-4">
+            <button
+              onClick={handleSaveMenu}
+              className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
+            >
+              <Save size={20} />
+              Save Menu
+            </button>
+            <button
+              onClick={() => setEditingMenu(null)}
+              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean }) => (
-  <button
+  <div
+    role="button"
+    tabIndex={0}
     onClick={() => setSelectedMenu(menu)}
-    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 ${
-      isSelected ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-gray-200 hover:border-amber-300 hover:bg-amber-50'
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        setSelectedMenu(menu);
+      }
+    }}
+    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 cursor-pointer ${
+      isSelected ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-gray-200 hover-border-amber-300 hover:bg-amber-50'
     }`}
   >
     <div className="flex items-center justify-between mb-2">
-      <h4 className="text-lg font-semibold text-gray-900">{menu.name}</h4>
-      <span className={`px-2 py-1 text-xs rounded-full ${
-        menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-      }`}>
-        {menu.isActive ? 'Active' : 'Inactive'}
-      </span>
+      <h4 className="text-lg font-semibold text-gray-900">{menu.name || 'Untitled menu'}</h4>
+      <div className="flex items-center gap-2">
+        <span className={`px-2 py-1 text-xs rounded-full ${
+          menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {menu.isActive ? 'Active' : 'Inactive'}
+        </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteMenu(menu.id);
+          }}
+          className="p-2 rounded-full hover:bg-red-50 text-red-600 border border-red-200 shadow-sm"
+          title="Delete menu"
+        >
+          <Trash2 size={16} />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingMenu(menu);
+          }}
+          className="p-2 rounded-full hover:bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
+          title="Edit menu"
+        >
+          <Edit size={16} />
+        </button>
+      </div>
     </div>
-    <p className="text-sm text-gray-600 line-clamp-2">{menu.description}</p>
+    <p className="text-sm text-gray-600 line-clamp-2">{menu.description || 'No description'}</p>
     <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-      <span className="capitalize">{menu.category}</span>
+      <span className="capitalize">{menu.category || 'uncategorized'}</span>
       {menu.price !== undefined ? <span>${menu.price}</span> : <span>Custom</span>}
     </div>
-  </button>
+  </div>
 );
 
 const ProductCard = ({ item }: { item: MenuItem }) => (
@@ -1786,6 +1926,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
 
       {showAddForm && <AddFormModal />}
       {showAddMenuForm && <AddMenuFormModal />}
+      {editingMenu && <EditMenuFormModal menu={editingMenu} />}
       
       {/* Menu Detail Modal */}
       {selectedMenuForDetail && (

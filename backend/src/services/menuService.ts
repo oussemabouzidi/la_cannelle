@@ -117,9 +117,15 @@ export const menuService = {
     price: number;
     image: string;
     productIds: number[];
+    products: number[];
   }>) {
     const updateData: any = { ...data };
     delete updateData.productIds;
+    delete updateData.products;
+    delete updateData.id;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+    delete updateData.menuProducts;
 
     const menu = await prisma.menu.update({
       where: { id },

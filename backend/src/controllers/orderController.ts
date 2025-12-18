@@ -25,33 +25,30 @@ export const orderController = {
       total
     } = req.body;
 
-    if (!clientName || !contactEmail || !phone || !eventType || !eventDate || !eventTime || !guests || !location || !items || !total) {
-      throw new AppError('Missing required fields', 400);
-    }
-
-    if (total < 388.80) {
-      throw new AppError('Minimum order of €388.80 required', 400);
+    // Relax validation: only require contact details
+    if (!contactEmail || !phone) {
+      throw new AppError('Contact email and phone are required', 400);
     }
 
     const order = await orderService.createOrder({
       userId: req.user?.id,
-      clientName,
+      clientName: clientName || 'Guest',
       contactEmail,
       phone,
-      eventType,
-      eventDate: new Date(eventDate),
-      eventTime,
-      guests: parseInt(guests),
-      location,
+      eventType: eventType || serviceType || businessType || 'Custom Event',
+      eventDate: eventDate ? new Date(eventDate) : new Date(),
+      eventTime: eventTime || 'TBD',
+      guests: parseInt(guests) || 1,
+      location: location || postalCode || 'Not provided',
       menuTier,
       specialRequests,
       businessType,
       serviceType,
       postalCode,
-      items,
+      items: Array.isArray(items) ? items : [],
       subtotal: parseFloat(subtotal) || 0,
       serviceFee: parseFloat(serviceFee) || 0,
-      total: parseFloat(total)
+      total: parseFloat(total) || 0
     });
 
     res.status(201).json(order);
@@ -110,7 +107,8 @@ export const orderController = {
       throw new AppError('Status is required', 400);
     }
 
-    const order = await orderService.updateOrderStatus(id, status, cancellationReason);
+    const normalizedStatus = String(status).toUpperCase() as any;
+    const order = await orderService.updateOrderStatus(id, normalizedStatus, cancellationReason);
     res.json(order);
   },
 

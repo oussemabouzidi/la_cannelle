@@ -211,6 +211,33 @@ model SystemStatus {
   @@map("system_status")
 }
 
+model CapacitySetting {
+  id               Int      @id @default(autoincrement())
+  dailyLimit       Int      @default(100)
+  perHourLimit     Int      @default(25)
+  weekendMultiplier Float   @default(1.5)
+  enableAutoPause  Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("capacity_settings")
+}
+
+model Promotion {
+  id          Int       @id @default(autoincrement())
+  title       String
+  message     String    @db.Text
+  discount    String?
+  validUntil  DateTime?
+  recipients  String    // all, active, vip, selected, tier names, etc.
+  userId      Int?      // specific customer when targeted
+  createdAt   DateTime  @default(now())
+
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("promotions")
+}
+
 model ClosedDate {
   id        Int       @id @default(autoincrement())
   date      DateTime  @unique

@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { customersApi, CustomerSummary } from '@/lib/api/customers';
 import { ordersApi, Order } from '@/lib/api/orders';
+import { promotionsApi } from '@/lib/api/promotions';
 
 type Customer = CustomerSummary & {
   avatar?: string;
@@ -143,18 +144,30 @@ export default function Customers() {
     }
   };
 
-  const sendPromotion = () => {
-    // In a real app, this would send emails/SMS to selected customers
-    console.log('Sending promotion:', promotion);
-    setShowPromotionModal(false);
-    setPromotion({
-      title: '',
-      message: '',
-      discount: '',
-      validUntil: '',
-      recipients: 'all',
-      selectedCustomers: []
-    });
+  const sendPromotion = async () => {
+    try {
+      await promotionsApi.sendPromotion({
+        title: promotion.title,
+        message: promotion.message,
+        discount: promotion.discount || undefined,
+        validUntil: promotion.validUntil || undefined,
+        recipients: promotion.recipients as any,
+        selectedCustomerIds: promotion.selectedCustomers
+      });
+      setShowPromotionModal(false);
+      setPromotion({
+        title: '',
+        message: '',
+        discount: '',
+        validUntil: '',
+        recipients: 'all',
+        selectedCustomers: []
+      });
+      alert('Promotion sent');
+    } catch (err: any) {
+      console.error('Failed to send promotion', err);
+      alert(err?.message || 'Failed to send promotion');
+    }
   };
 
   const CustomerDetailModal = ({ customer, onClose }: { customer: Customer; onClose: () => void }) => (

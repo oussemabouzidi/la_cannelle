@@ -20,11 +20,15 @@ const normalizeTier = (tier?: string[] | MenuTier[]): MenuTier[] | undefined => 
 const normalizeProductInput = <T extends {
   category?: string | ProductCategory;
   tier?: string[] | MenuTier[];
+  menus?: number[];
+  menuIds?: number[];
 }>(data: T) => {
   return {
     ...data,
     ...(data.category && { category: normalizeCategory(data.category) }),
-    ...(data.tier && { tier: normalizeTier(data.tier) })
+    ...(data.tier && { tier: normalizeTier(data.tier) }),
+    ...(data.menuIds && { menuIds: data.menuIds }),
+    ...(data.menus && { menuIds: data.menuIds ?? data.menus })
   };
 };
 
@@ -158,9 +162,20 @@ export const productService = {
     productCategories: string[];
     image: string;
     menuIds: number[];
+    menus: number[];
   }>) {
-    const updateData: any = { ...normalizeProductInput(data) };
+    const normalized = normalizeProductInput(data);
+    const updateData: any = { ...normalized };
+    const menuIds = normalized.menuIds;
     delete updateData.menuIds;
+    delete updateData.menus;
+    delete updateData.id;
+    delete updateData.popularity;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+    delete updateData.menuProducts;
+    delete updateData.orderItems;
+    delete updateData.favorites;
 
     const product = await prisma.product.update({
       where: { id },
@@ -175,16 +190,16 @@ export const productService = {
     });
 
     // Update menu associations if provided
-    if (data.menuIds !== undefined) {
+    if (menuIds !== undefined) {
       // Delete existing associations
       await prisma.menuProduct.deleteMany({
         where: { productId: id }
       });
 
       // Create new associations
-      if (data.menuIds.length > 0) {
+      if (menuIds.length > 0) {
         await prisma.menuProduct.createMany({
-          data: data.menuIds.map(menuId => ({ menuId, productId: id }))
+          data: menuIds.map(menuId => ({ menuId, productId: id }))
         });
       }
 

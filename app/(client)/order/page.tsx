@@ -32,6 +32,8 @@ export default function OrderPage() {
   const [menuItemsData, setMenuItemsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   // Load data from API
   useEffect(() => {
@@ -223,46 +225,52 @@ export default function OrderPage() {
       </div>
 
       <div className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              {t.eventInfo.date} *
-            </label>
-            <input
-              type="date"
-              value={orderData.eventDate}
-              onChange={(e) => updateOrderData('eventDate', e.target.value)}
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500"
-              required
-            />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                {t.eventInfo.date} *
+              </label>
+              <div className="relative group">
+                <input
+                  type="date"
+                  value={orderData.eventDate}
+                  onChange={(e) => updateOrderData('eventDate', e.target.value)}
+                  min={today}
+                  className="w-full pl-12 pr-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
+                  required
+                />
+                <Calendar className="absolute left-4 top-3.5 text-amber-500" size={20} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                {t.eventInfo.time} *
+              </label>
+              <div className="relative group">
+                <input
+                  type="time"
+                  value={orderData.eventTime}
+                  onChange={(e) => updateOrderData('eventTime', e.target.value)}
+                  step="900"
+                  className="w-full pl-12 pr-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
+                  required
+                />
+                <Clock className="absolute left-4 top-3.5 text-amber-500" size={20} />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              {t.eventInfo.time} *
-            </label>
-            <input
-              type="time"
-              value={orderData.eventTime}
-              onChange={(e) => updateOrderData('eventTime', e.target.value)}
-              step="900"
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500"
-              required
-            />
-          </div>
-        </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
             {t.eventInfo.guests} *
           </label>
           <input
-            type="number"
-            min="10"
+            type="text"
             value={orderData.guestCount || ''}
-            onChange={(e) => updateOrderData('guestCount', e.target.value)}
+            onChange={(e) => updateOrderData('guestCount', e.target.value.replace(/[^0-9]/g, ''))}
             inputMode="numeric"
-            step="1"
-            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500"
+            pattern="[0-9]*"
+            className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
             placeholder="10"
             required
           />
@@ -279,7 +287,7 @@ export default function OrderPage() {
             onChange={(e) => updateOrderData('postalCode', e.target.value)}
             inputMode="numeric"
             autoComplete="postal-code"
-            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500"
+            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500 shadow-sm"
             placeholder="Enter postal code"
             required
           />
@@ -313,12 +321,18 @@ export default function OrderPage() {
                 : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
             }`}
           >
-            <div className="relative h-48 bg-gray-200">
-              <img
-                src={menu.image}
-                alt={menu.name}
-                className="w-full h-full object-cover"
-              />
+          <div className="relative h-48 bg-gray-200">
+              {menu.image ? (
+                <img
+                  src={menu.image}
+                  alt={menu.name || 'Menu image'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                  No image
+                </div>
+              )}
               {!menu.isActive && (
                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                   <span className="text-white font-bold text-lg px-4 py-2 bg-red-600 rounded-lg">
@@ -583,11 +597,17 @@ export default function OrderPage() {
                   <div className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name || 'Product image'}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                            No image
+                          </div>
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -937,7 +957,8 @@ export default function OrderPage() {
                         type="date"
                         value={orderData.deliveryDate}
                         onChange={(e) => updateOrderData('deliveryDate', e.target.value)}
-                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                        min={today}
+                        className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-gray-900 placeholder:text-gray-500 bg-amber-50/60"
                       />
                       <CalendarIcon className="absolute right-3 top-3.5 text-gray-400" size={20} />
                     </div>
@@ -967,13 +988,12 @@ export default function OrderPage() {
                   </label>
                   <div className="relative">
                     <input
-                      type="number"
-                      min="10"
+                      type="text"
                       value={orderData.guestCount || ''}
-                      onChange={(e) => updateOrderData('guestCount', e.target.value)}
+                      onChange={(e) => updateOrderData('guestCount', e.target.value.replace(/[^0-9]/g, ''))}
                       inputMode="numeric"
-                      step="1"
-                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                      pattern="[0-9]*"
+                      className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-gray-900 placeholder:text-gray-500 bg-amber-50/60"
                       placeholder="10"
                     />
                     <Users className="absolute right-3 top-3.5 text-gray-400" size={20} />
@@ -1427,6 +1447,13 @@ export default function OrderPage() {
     }));
   };
 
+  const showNotification = (type: 'success' | 'error', message: string, duration = 2500) => {
+    setNotification({ type, message });
+    if (duration > 0) {
+      setTimeout(() => setNotification(null), duration);
+    }
+  };
+
   const addProductToOrder = (category, product) => {
     const quantityKey = `${category}_${product.id}`;
     const quantity = quantities[quantityKey] || 1;
@@ -1492,7 +1519,7 @@ export default function OrderPage() {
   const handleSubmitOrder = async () => {
     // Check if ordering is paused
     if (systemStatus?.orderingPaused) {
-      alert('Ordering is currently paused. Please try again later.');
+      showNotification('error', 'Ordering is currently paused. Please try again later.', 3000);
       return;
     }
 
@@ -1520,11 +1547,6 @@ export default function OrderPage() {
     const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
     
-    if (total < 388.80) {
-      alert(`Minimum order of €388.80 required. Your current total is €${total.toFixed(2)}`);
-      return;
-    }
-
     // Prepare order items
     const orderItems = foodItems.map(item => ({
       productId: item.id,
@@ -1535,14 +1557,14 @@ export default function OrderPage() {
 
     try {
       const order = await ordersApi.createOrder({
-        clientName: `${orderData.firstName || ''} ${orderData.lastName || ''}`.trim() || 'Guest',
-        contactEmail: orderData.email || '',
-        phone: orderData.phone || '',
-        eventType: orderData.eventType || '',
+        clientName: `${orderData.contactInfo.firstName || ''} ${orderData.contactInfo.lastName || ''}`.trim() || 'Guest',
+        contactEmail: orderData.contactInfo.email || '',
+        phone: orderData.contactInfo.phone || '',
+        eventType: orderData.serviceType || orderData.businessType || 'Custom',
         eventDate: orderData.eventDate || new Date().toISOString(),
         eventTime: orderData.eventTime || '',
         guests: guestCount,
-        location: orderData.location || '',
+        location: orderData.location || orderData.postalCode || '',
         menuTier: orderData.menuTier,
         specialRequests: orderData.specialRequests,
         businessType: orderData.businessType,
@@ -1554,11 +1576,12 @@ export default function OrderPage() {
         total: total
       });
       
-      alert('Order placed successfully! Order ID: ' + order.id);
-      // Redirect to confirmation or home
-      window.location.href = '/home';
+      showNotification('success', 'Order placed successfully! Order ID: ' + order.id, 2000);
+      setTimeout(() => {
+        window.location.href = '/home';
+      }, 2000);
     } catch (error: any) {
-      alert('Failed to place order: ' + (error.message || 'Unknown error'));
+      showNotification('error', 'Failed to place order: ' + (error.message || 'Unknown error'), 3500);
     }
   };
 
@@ -1592,7 +1615,14 @@ export default function OrderPage() {
   const CurrentStep = getStepComponent();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {notification && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+            {notification.message}
+          </div>
+        </div>
+      )}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         
@@ -1790,13 +1820,15 @@ export default function OrderPage() {
       </div>
 
       {/* Main Content */}
-      <div className="pt-48 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <CurrentStep />
+      <main className="flex-1">
+        <div className="pt-48 pb-16 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-6xl mx-auto">
+            <div className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+              <CurrentStep />
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 px-6 lg:px-8">

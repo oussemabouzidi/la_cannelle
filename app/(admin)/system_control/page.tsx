@@ -26,6 +26,13 @@ export default function SystemControl() {
 
   // System state
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [orderingDraft, setOrderingDraft] = useState({
+    orderingPaused: false,
+    pauseReason: '',
+    pauseUntil: ''
+  });
+  const [isSavingOrdering, setIsSavingOrdering] = useState(false);
+  const [orderingMessage, setOrderingMessage] = useState<string | null>(null);
 
   const handleNavigation = (path) => {
     router.push(path);
@@ -43,13 +50,15 @@ export default function SystemControl() {
   // Closed dates
   const [closedDates, setClosedDates] = useState<ClosedDate[]>([]);
 
-  // Capacity settings
+  // Capacity settings (draft)
   const [capacitySettings, setCapacitySettings] = useState({
     dailyLimit: 0,
     perHourLimit: 0,
     weekendMultiplier: 1,
     enableAutoPause: true
   });
+  const [isSavingCapacity, setIsSavingCapacity] = useState(false);
+  const [capacityMessage, setCapacityMessage] = useState<string | null>(null);
 
   const [newClosedDate, setNewClosedDate] = useState({
     date: '',
@@ -65,18 +74,24 @@ export default function SystemControl() {
     { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
     { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
   ];
-  const status = systemStatus ?? {
-    id: 0,
-    orderingPaused: false,
-    pauseReason: '',
-    pauseUntil: '',
-    capacityLimit: 0,
-    currentReservations: 0,
-    dailyLimit: capacitySettings.dailyLimit,
-    perHourLimit: capacitySettings.perHourLimit,
-    weekendMultiplier: capacitySettings.weekendMultiplier,
-    enableAutoPause: capacitySettings.enableAutoPause
-  };
+  const status = systemStatus
+    ? {
+        ...systemStatus,
+        pauseReason: systemStatus.pauseReason ?? '',
+        pauseUntil: systemStatus.pauseUntil ?? ''
+      }
+    : {
+        id: 0,
+        orderingPaused: orderingDraft.orderingPaused,
+        pauseReason: orderingDraft.pauseReason,
+        pauseUntil: orderingDraft.pauseUntil,
+        capacityLimit: 0,
+        currentReservations: 0,
+        dailyLimit: capacitySettings.dailyLimit,
+        perHourLimit: capacitySettings.perHourLimit,
+        weekendMultiplier: capacitySettings.weekendMultiplier,
+        enableAutoPause: capacitySettings.enableAutoPause
+      };
 
   useEffect(() => {
     const loadSystem = async () => {
@@ -87,6 +102,11 @@ export default function SystemControl() {
           systemApi.getClosedDates()
         ]);
         setSystemStatus(status);
+        setOrderingDraft({
+          orderingPaused: status.orderingPaused,
+          pauseReason: status.pauseReason ?? '',
+          pauseUntil: status.pauseUntil ?? ''
+        });
         setCapacitySettings({
           dailyLimit: status.dailyLimit,
           perHourLimit: status.perHourLimit,
@@ -106,13 +126,18 @@ export default function SystemControl() {
   const toggleOrdering = async () => {
     if (!systemStatus) return;
     const nextStatus = {
-      orderingPaused: !status.orderingPaused,
-      pauseReason: status.orderingPaused ? '' : status.pauseReason,
-      pauseUntil: status.orderingPaused ? '' : status.pauseUntil || ''
+      orderingPaused: !orderingDraft.orderingPaused,
+      pauseReason: orderingDraft.pauseReason,
+      pauseUntil: orderingDraft.pauseUntil || ''
     };
     try {
       const updated = await systemApi.updateSystemStatus(nextStatus);
       setSystemStatus(updated);
+      setOrderingDraft({
+        orderingPaused: updated.orderingPaused,
+        pauseReason: updated.pauseReason ?? '',
+        pauseUntil: updated.pauseUntil ?? ''
+      });
     } catch (err) {
       console.error('Failed to update ordering status', err);
     }
@@ -139,13 +164,56 @@ export default function SystemControl() {
   };
 
   const updateCapacitySettings = async (updates: Partial<SystemStatus>) => {
-    if (!systemStatus) return;
+    setCapacitySettings(prev => ({ ...prev, ...updates }));
+  };
+
+  const saveCapacitySettings = async () => {
+    setIsSavingCapacity(true);
+    setCapacityMessage(null);
     try {
-      const updated = await systemApi.updateSystemStatus({ ...updates });
+      const updated = await systemApi.updateSystemStatus({
+        dailyLimit: capacitySettings.dailyLimit,
+        perHourLimit: capacitySettings.perHourLimit,
+        weekendMultiplier: capacitySettings.weekendMultiplier,
+        enableAutoPause: capacitySettings.enableAutoPause
+      });
       setSystemStatus(updated);
-      setCapacitySettings(prev => ({ ...prev, ...updates }));
+      setCapacitySettings({
+        dailyLimit: updated.dailyLimit,
+        perHourLimit: updated.perHourLimit,
+        weekendMultiplier: updated.weekendMultiplier,
+        enableAutoPause: updated.enableAutoPause
+      });
+      setCapacityMessage('Capacity settings saved');
     } catch (err) {
-      console.error('Failed to update capacity', err);
+      console.error('Failed to save capacity settings', err);
+      setCapacityMessage('Failed to save capacity settings');
+    } finally {
+      setIsSavingCapacity(false);
+    }
+  };
+
+  const saveOrderingSettings = async () => {
+    setIsSavingOrdering(true);
+    setOrderingMessage(null);
+    try {
+      const updated = await systemApi.updateSystemStatus({
+        orderingPaused: orderingDraft.orderingPaused,
+        pauseReason: orderingDraft.pauseReason,
+        pauseUntil: orderingDraft.pauseUntil || null
+      });
+      setSystemStatus(updated);
+      setOrderingDraft({
+        orderingPaused: updated.orderingPaused,
+        pauseReason: updated.pauseReason ?? '',
+        pauseUntil: updated.pauseUntil ?? ''
+      });
+      setOrderingMessage('Ordering settings saved');
+    } catch (err) {
+      console.error('Failed to save ordering settings', err);
+      setOrderingMessage('Failed to save ordering settings');
+    } finally {
+      setIsSavingOrdering(false);
     }
   };
 
@@ -286,8 +354,8 @@ export default function SystemControl() {
                       }`}>
                         {status.orderingPaused ? 'Ordering is currently PAUSED' : 'Ordering is ACTIVE'}
                       </p>
-                      {status.orderingPaused && status.pauseReason && (
-                        <p className="text-sm text-gray-600 mt-1">Reason: {status.pauseReason}</p>
+                      {orderingDraft.pauseReason && (
+                        <p className="text-sm text-gray-600 mt-1">Reason: {orderingDraft.pauseReason}</p>
                       )}
                     </div>
                     <button
@@ -313,11 +381,9 @@ export default function SystemControl() {
                           </label>
                           <input
                             type="text"
-                            value={status.pauseReason}
+                            value={orderingDraft.pauseReason}
                             onChange={(e) =>
-                              setSystemStatus((prev): SystemStatus | null =>
-                                prev ? { ...prev, pauseReason: e.target.value } : prev
-                              )
+                              setOrderingDraft(prev => ({ ...prev, pauseReason: e.target.value }))
                             }
                             placeholder="E.g., Kitchen maintenance, Staff shortage..."
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
@@ -329,14 +395,28 @@ export default function SystemControl() {
                           </label>
                           <input
                             type="date"
-                            value={status.pauseUntil}
+                            value={orderingDraft.pauseUntil}
                             onChange={(e) =>
-                              setSystemStatus((prev): SystemStatus | null =>
-                                prev ? { ...prev, pauseUntil: e.target.value } : prev
-                              )
+                              setOrderingDraft(prev => ({ ...prev, pauseUntil: e.target.value }))
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                           />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end mt-4">
+                        <div className="flex items-center gap-3">
+                          {orderingMessage && (
+                            <span className="text-sm text-gray-700">{orderingMessage}</span>
+                          )}
+                          <button
+                            onClick={saveOrderingSettings}
+                            disabled={isSavingOrdering}
+                            className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Save size={18} />
+                            {isSavingOrdering ? 'Saving...' : 'Save Ordering Settings'}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -482,7 +562,7 @@ export default function SystemControl() {
                   <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-6">Capacity Settings</h3>
                     
-                    <div className="grid md:grid-cols-2 gap-6 mb-6">
+                      <div className="grid md:grid-cols-2 gap-6 mb-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Daily Order Limit
@@ -490,7 +570,7 @@ export default function SystemControl() {
                         <input
                           type="number"
                           value={capacitySettings.dailyLimit}
-                          onChange={(e) => updateCapacitySettings({ dailyLimit: parseInt(e.target.value) })}
+                          onChange={(e) => updateCapacitySettings({ dailyLimit: parseInt(e.target.value) || 0 })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                         />
                         <p className="text-sm text-gray-600 mt-1">Maximum orders per day</p>
@@ -503,7 +583,7 @@ export default function SystemControl() {
                         <input
                           type="number"
                           value={capacitySettings.perHourLimit}
-                          onChange={(e) => updateCapacitySettings({ perHourLimit: parseInt(e.target.value) })}
+                          onChange={(e) => updateCapacitySettings({ perHourLimit: parseInt(e.target.value) || 0 })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                         />
                         <p className="text-sm text-gray-600 mt-1">Maximum orders per hour</p>
@@ -540,6 +620,22 @@ export default function SystemControl() {
                         </p>
                       </div>
                     </label>
+
+                    <div className="flex justify-end mt-6">
+                      <div className="flex items-center gap-3">
+                        {capacityMessage && (
+                          <span className="text-sm text-gray-700">{capacityMessage}</span>
+                        )}
+                        <button
+                          onClick={saveCapacitySettings}
+                          disabled={isSavingCapacity}
+                          className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Save size={18} />
+                          {isSavingCapacity ? 'Saving...' : 'Save Capacity Settings'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Capacity Overview */}

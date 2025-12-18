@@ -39,43 +39,43 @@ export default function AdminOrders() {
     return navigation.find(item => pathname.includes(item.id))?.id || 'dashboard';
   };
 
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        setIsLoading(true);
-        const apiOrders = await ordersApi.getOrders();
-        const normalized: LocalOrder[] = apiOrders.map((order: Order) => ({
-          id: order.id,
-          client: order.clientName,
-          contact: order.contactEmail,
-          phone: order.phone,
-          eventType: order.eventType,
-          eventDate: order.eventDate,
-          eventTime: order.eventTime,
-          guests: order.guests,
-          location: order.location,
-          menuTier: order.menuTier?.toLowerCase(),
-          total: order.total,
-          status: order.status.toLowerCase(),
-          payment: order.paymentStatus.toLowerCase(),
-          specialRequests: order.specialRequests,
-          createdAt: order.createdAt,
-          dishes: order.items?.map((it) => ({
-            name: it.name,
-            quantity: it.quantity,
-            price: it.price
-          })) || [],
-          beverages: [],
-          cancellationReason: (order as any).cancellationReason ?? null
-        }));
-        setOrders(normalized);
-      } catch (err) {
-        console.error('Failed to load orders', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadOrders = async () => {
+    try {
+      setIsLoading(true);
+      const apiOrders = await ordersApi.getOrders();
+      const normalized: LocalOrder[] = apiOrders.map((order: Order) => ({
+        id: order.id,
+        client: order.clientName,
+        contact: order.contactEmail,
+        phone: order.phone,
+        eventType: order.eventType,
+        eventDate: order.eventDate,
+        eventTime: order.eventTime,
+        guests: order.guests,
+        location: order.location,
+        menuTier: order.menuTier?.toLowerCase(),
+        total: order.total,
+        status: order.status.toLowerCase(),
+        payment: order.paymentStatus.toLowerCase(),
+        specialRequests: order.specialRequests,
+        createdAt: order.createdAt,
+        dishes: order.items?.map((it) => ({
+          name: it.name,
+          quantity: it.quantity,
+          price: it.price
+        })) || [],
+        beverages: [],
+        cancellationReason: (order as any).cancellationReason ?? null
+      }));
+      setOrders(normalized);
+    } catch (err) {
+      console.error('Failed to load orders', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadOrders();
   }, []);
 
@@ -135,10 +135,11 @@ export default function AdminOrders() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      await ordersApi.updateOrderStatus(orderId, newStatus);
+      const updated = await ordersApi.updateOrderStatus(orderId, newStatus);
       setOrders(prev =>
         prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
+      setSelectedOrder(prev => prev && prev.id === orderId ? { ...prev, status: updated.status.toLowerCase?.() || newStatus } : prev);
     } catch (err) {
       console.error('Failed to update status', err);
     }
@@ -404,9 +405,12 @@ export default function AdminOrders() {
                 <option value="upcoming">Upcoming</option>
               </select>
 
-              <button className="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2 border border-amber-700">
+              <button
+                onClick={loadOrders}
+                className="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2 border border-amber-700"
+              >
                 <RefreshCw size={16} />
-                Refresh
+                {isLoading ? 'Refreshing...' : 'Refresh'}
               </button>
             </div>
           </div>

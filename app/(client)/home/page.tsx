@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Star, Crown, Shield, Heart } from 'lucide-react';
+import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
+import { productsApi, type Product } from '@/lib/api/products';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import type { Language } from '@/lib/hooks/useTranslation';
 
@@ -13,6 +15,10 @@ export default function CateringHomepage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t: rawT, language, toggleLanguage } = useTranslation('home');
   const [isVisible, setIsVisible] = useState(false);
+  const [menus, setMenus] = useState<ApiMenu[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const t = rawT as HomeTranslation;
 
   useEffect(() => {
@@ -21,9 +27,38 @@ export default function CateringHomepage() {
 
   const router = useRouter();
 
-  const handleOrderClick = () => {
-    router.push('/order');
+  const handleOrderClick = (selectedProducts?: number[]) => {
+    const query = selectedProducts?.length ? `?products=${selectedProducts.join(',')}` : '';
+    router.push(`/order${query}`);
   };
+
+  useEffect(() => {
+    const loadMenuData = async () => {
+      try {
+        setIsLoadingData(true);
+        setFetchError(null);
+        const [fetchedMenus, fetchedProducts] = await Promise.all([
+          menusApi.getMenus({ isActive: true }),
+          productsApi.getProducts({ available: true }),
+        ]);
+
+        const normalizedMenus = (fetchedMenus || []).map((menu) => ({
+          ...menu,
+          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+        }));
+
+        setMenus(normalizedMenus);
+        setProducts(fetchedProducts || []);
+      } catch (error) {
+        console.error('Failed to fetch menus/products', error);
+        setFetchError('Unable to load menus right now.');
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadMenuData();
+  }, []);
 
   const brandLogos = [
     { name: 'Montblanc', src: '/images/logos/montblanc.png' },
@@ -53,6 +88,57 @@ export default function CateringHomepage() {
     ...milestone,
     icon: journeyIcons[index] ?? Flag,
   }));
+
+  const showcaseItems = (products.length
+    ? products.slice(0, 3).map((product) => ({
+        id: product.id,
+        name: product.name,
+        category: product.menuCategory || product.category,
+        price: product.price !== undefined ? `${product.price.toFixed(2)} EUR` : undefined,
+        description: product.description,
+        image: product.image,
+        popular: product.popularity ? product.popularity >= 80 : false,
+        featured: product.popularity ? product.popularity >= 60 : false,
+        productIds: [product.id],
+      }))
+    : t.menuShowcase.items.map((item) => ({
+        name: item.name,
+        category: item.category,
+        price: item.price,
+        description: item.description,
+        image: item.image,
+        popular: item.popular,
+        featured: item.featured,
+      }))) as Array<{
+    id?: number;
+    name: string;
+    category?: string;
+    price?: string;
+    description?: string;
+    image?: string;
+    popular?: boolean;
+    featured?: boolean;
+    productIds?: number[];
+  }>;
+
+  const featuredMenus = (menus.length
+    ? menus.slice(0, 3).map((menu) => ({
+        id: menu.id,
+        name: menu.name,
+        desc: menu.description || menu.category,
+        price: menu.price !== undefined ? `${menu.price.toFixed(2)} EUR` : undefined,
+        productIds: menu.products,
+      }))
+    : t.menus.items.map((item) => ({
+        name: item.name,
+        desc: item.desc,
+      }))) as Array<{
+    id?: number;
+    name: string;
+    desc?: string;
+    price?: string;
+    productIds?: number[];
+  }>;
 
   return (
     <div className="min-h-screen bg-white">
@@ -227,7 +313,7 @@ export default function CateringHomepage() {
               <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
               <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
               <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
-              <button 
+              <button
                 onClick={toggleLanguage}
                 className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
               >
@@ -243,13 +329,13 @@ export default function CateringHomepage() {
                   </>
                 )}
               </button>
-              <button onClick={() => {router.push('/connect')}}  className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 font-medium">
+              <button onClick={() => { router.push('/connect') }} className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 font-medium">
                 {t.nav.connect}
               </button>
 
 
-              <button 
-                onClick={handleOrderClick}
+              <button
+                onClick={() => handleOrderClick()}
                 className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
               >
                 {t.nav.order}
@@ -257,7 +343,7 @@ export default function CateringHomepage() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="md:hidden transition-transform duration-300 hover:scale-110"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
@@ -274,7 +360,7 @@ export default function CateringHomepage() {
                 <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
                 <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
                 <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
-                <button 
+                <button
                   onClick={toggleLanguage}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
                 >
@@ -283,7 +369,7 @@ export default function CateringHomepage() {
                 <button className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 font-medium transition-all duration-300">
                   {t.nav.connect}
                 </button>
-                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105" onClick={handleOrderClick}>
+                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105" onClick={() => handleOrderClick()}>
                   {t.nav.order}
                 </button>
               </div>
@@ -295,7 +381,7 @@ export default function CateringHomepage() {
       {/* Hero Banner */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-stone-100">
         {/* Background Image with Overlay */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('/images/home_image.jpeg')",
@@ -358,31 +444,30 @@ export default function CateringHomepage() {
             {t.quickMenu.categories.map((category, index) => {
               const Icon = quickMenuIcons[index];
               return (
-              <div
-                key={index}
-                className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 ${
-                  isVisible ? 'animate-scale-in' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
-                {/* Hover Effect Background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
-                
-                {/* Icon */}
-                <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
-                  {Icon ? <Icon className="text-amber-600" size={28} /> : null}
+                <div
+                  key={index}
+                  className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 ${isVisible ? 'animate-scale-in' : 'opacity-0'
+                    }`}
+                  style={{ animationDelay: `${index * 150}ms` }}
+                >
+                  {/* Hover Effect Background */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
+
+                  {/* Icon */}
+                  <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
+                    {Icon ? <Icon className="text-amber-600" size={28} /> : null}
+                  </div>
+
+                  {/* Content */}
+                  <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">{category.name}</h3>
+                  <p className="text-gray-600 text-xs mb-2">{category.description}</p>
+                  <p className="text-amber-600 font-semibold text-xs">{category.count}</p>
+
+                  {/* Hover Arrow */}
+                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                    <ChevronRight size={16} className="text-amber-600" />
+                  </div>
                 </div>
-                
-                {/* Content */}
-                <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">{category.name}</h3>
-                <p className="text-gray-600 text-xs mb-2">{category.description}</p>
-                <p className="text-amber-600 font-semibold text-xs">{category.count}</p>
-                
-                {/* Hover Arrow */}
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                  <ChevronRight size={16} className="text-amber-600" />
-                </div>
-              </div>
               );
             })}
           </div>
@@ -411,7 +496,7 @@ export default function CateringHomepage() {
                 <p className="text-gray-600 leading-relaxed mb-6">
                   {t.exclusivity.text}
                 </p>
-                
+
                 {/* Interactive Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   {t.exclusivity.stats.map((stat, index) => (
@@ -431,14 +516,14 @@ export default function CateringHomepage() {
               <div className="relative group perspective-1000">
                 {/* Main Image with 3D Rotation */}
                 <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
-                  <img 
-                    src="/images/home_image.jpeg" 
+                  <img
+                    src="/images/home_image.jpeg"
                     alt="Friends enjoying a lively catering spread"
                     className="w-full h-64 object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
-                
+
                 {/* Floating Elements */}
                 <div className="absolute -top-3 -right-3 bg-white rounded-xl p-3 shadow-xl border border-amber-100 transform group-hover:scale-110 transition-transform duration-500">
                   <div className="flex items-center gap-2">
@@ -465,24 +550,30 @@ export default function CateringHomepage() {
             </div>
           </div>
 
+          {fetchError && !products.length && (
+            <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
+          )}
+          {isLoadingData && !products.length && (
+            <p className="text-center text-sm text-gray-500 mb-4">Loading menu items...</p>
+          )}
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {t.menuShowcase.items.map((item, index) => (
+            {showcaseItems.map((item, index) => (
               <div
-                key={index}
-                className={`group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden ${
-                  isVisible ? 'animate-scale-in' : 'opacity-0'
-                }`}
+                key={item.id ?? index}
+                className={`group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden ${isVisible ? 'animate-scale-in' : 'opacity-0'
+                  }`}
                 style={{ animationDelay: `${index * 200}ms` }}
               >
                 {/* Image */}
                 <div className="relative h-40 overflow-hidden">
-                  <img 
-                    src={item.image} 
+                  <img
+                    src={item.image || '/images/home_image.jpeg'}
                     alt={item.name}
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                  
+
                   {/* Badges */}
                   {item.popular && (
                     <div className="absolute top-3 left-3 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
@@ -494,10 +585,12 @@ export default function CateringHomepage() {
                       {t.menuShowcase.badges.featured}
                     </div>
                   )}
-                  
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-                    <span className="font-bold text-gray-900 text-sm">{item.price}</span>
-                  </div>
+
+                  {item.price && (
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+                      <span className="font-bold text-gray-900 text-sm">{item.price}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}
@@ -505,11 +598,14 @@ export default function CateringHomepage() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-bold text-gray-900 font-elegant">{item.name}</h3>
                   </div>
-                  <p className="text-amber-600 text-xs font-semibold mb-2">{item.category}</p>
+                  <p className="text-amber-600 text-xs font-semibold mb-2">{item.category || t.quickMenu.title}</p>
                   <p className="text-gray-600 text-xs mb-3">{item.description}</p>
-                  
+
                   {/* Interactive Button */}
-                  <button className="w-full bg-amber-50 text-amber-700 py-2 rounded-lg font-semibold hover:bg-amber-100 transition-all duration-300 transform group-hover:scale-105 flex items-center justify-center gap-2 text-sm">
+                  <button
+                    className="w-full bg-amber-50 text-amber-700 py-2 rounded-lg font-semibold hover:bg-amber-100 transition-all duration-300 transform group-hover:scale-105 flex items-center justify-center gap-2 text-sm"
+                    onClick={() => handleOrderClick(item.productIds)}
+                  >
                     {t.menuShowcase.viewDetails}
                     <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                   </button>
@@ -520,7 +616,7 @@ export default function CateringHomepage() {
 
           {/* View All Button */}
           <div className="text-center mt-8">
-            <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm">
+            <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm" onClick={() => handleOrderClick()}>
               {t.menuShowcase.exploreFull}
               <ChevronRight size={16} />
             </button>
@@ -529,203 +625,207 @@ export default function CateringHomepage() {
       </section>
 
       {/* Passion Section - Smaller */}
-<section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-900 to-amber-900 relative overflow-hidden">
-  {/* Animated Background */}
-  <div className="absolute inset-0">
-    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-stone-900 to-stone-900"></div>
-  </div>
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-900 to-amber-900 relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-stone-900 to-stone-900"></div>
+        </div>
 
-  <div className="max-w-6xl mx-auto relative">
-    <div className="grid lg:grid-cols-2 gap-8 items-center">
-      {/* Content */}
-      <div className={`transition-all duration-1000 ${isVisible ? 'animate-slide-in-left' : 'opacity-0 translate-x-10'}`}>
-        <div className="max-w-md text-white">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-amber-200 text-xs font-semibold mb-4 border border-white/20">
-            <Heart size={14} />
-            {t.passion.subtitle}
-          </div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4 font-elegant leading-tight">
-            {t.passion.title}
-          </h2>
-          <p className="text-amber-100 leading-relaxed mb-6">
-            {t.passion.text}
-          </p>
-
-          {/* Interactive Progress Bars */}
-          <div className="space-y-3 mb-6">
-            {t.passion.skills.map((item, index) => (
-              <div key={index} className="group">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-amber-200">{item.skill}</span>
-                  <span className="text-white font-semibold">{item.percentage}%</span>
+        <div className="max-w-6xl mx-auto relative">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            {/* Content */}
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-slide-in-left' : 'opacity-0 translate-x-10'}`}>
+              <div className="max-w-md text-white">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-amber-200 text-xs font-semibold mb-4 border border-white/20">
+                  <Heart size={14} />
+                  {t.passion.subtitle}
                 </div>
-                <div className="w-full bg-white/20 rounded-full h-1.5">
-                  <div 
-                    className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000 ease-out group-hover:bg-amber-400"
-                    style={{ width: `${item.percentage}%` }}
-                  ></div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4 font-elegant leading-tight">
+                  {t.passion.title}
+                </h2>
+                <p className="text-amber-100 leading-relaxed mb-6">
+                  {t.passion.text}
+                </p>
+
+                {/* Interactive Progress Bars */}
+                <div className="space-y-3 mb-6">
+                  {t.passion.skills.map((item, index) => (
+                    <div key={index} className="group">
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-amber-200">{item.skill}</span>
+                        <span className="text-white font-semibold">{item.percentage}%</span>
+                      </div>
+                      <div className="w-full bg-white/20 rounded-full h-1.5">
+                        <div
+                          className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000 ease-out group-hover:bg-amber-400"
+                          style={{ width: `${item.percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="px-6 py-3 bg-white text-stone-900 rounded-xl font-semibold hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 text-sm">
+                  {t.passion.cta}
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Image - Same size as Exclusivity */}
+            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-right' : 'opacity-0 -translate-x-10'}`}>
+              <div className="relative group perspective-1000">
+                {/* Main Image with 3D Rotation - Same as Exclusivity */}
+                <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
+                  <img
+                    src="/images/chef-passion.jpg"
+                    alt="Chef's passion"
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent"></div>
+                </div>
+
+                {/* Animated Chef Badge - Smaller like Exclusivity */}
+                <div className="absolute -top-3 -right-3 bg-amber-600 text-white rounded-xl p-3 shadow-xl transform group-hover:scale-110 transition-transform duration-500">
+                  <div className="text-center">
+                    <Award size={16} className="mx-auto mb-1" />
+                    <p className="text-xs font-bold">Master Chef</p>
+                    <p className="text-xs opacity-90">15+ Years</p>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <button className="px-6 py-3 bg-white text-stone-900 rounded-xl font-semibold hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 text-sm">
-            {t.passion.cta}
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-
-      {/* Image - Same size as Exclusivity */}
-      <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-right' : 'opacity-0 -translate-x-10'}`}>
-        <div className="relative group perspective-1000">
-          {/* Main Image with 3D Rotation - Same as Exclusivity */}
-          <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
-            <img 
-              src="/images/chef-passion.jpg" 
-              alt="Chef's passion"
-              className="w-full h-64 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent"></div>
-          </div>
-          
-          {/* Animated Chef Badge - Smaller like Exclusivity */}
-          <div className="absolute -top-3 -right-3 bg-amber-600 text-white rounded-xl p-3 shadow-xl transform group-hover:scale-110 transition-transform duration-500">
-            <div className="text-center">
-              <Award size={16} className="mx-auto mb-1" />
-              <p className="text-xs font-bold">Master Chef</p>
-              <p className="text-xs opacity-90">15+ Years</p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
-{/* Company Section - Matched to Exclusivity */}
-<section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden">
-  {/* Background Elements - Same as Exclusivity */}
-  <div className="absolute top-10 left-8 w-6 h-6 bg-amber-300/30 rounded-full animate-float"></div>
-  <div className="absolute top-20 right-12 w-4 h-4 bg-stone-400/20 rounded-full animate-float delay-500"></div>
-  <div className="absolute bottom-12 left-12 w-8 h-8 bg-amber-200/40 rounded-full animate-float delay-1000"></div>
+      {/* Company Section - Matched to Exclusivity */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden">
+        {/* Background Elements - Same as Exclusivity */}
+        <div className="absolute top-10 left-8 w-6 h-6 bg-amber-300/30 rounded-full animate-float"></div>
+        <div className="absolute top-20 right-12 w-4 h-4 bg-stone-400/20 rounded-full animate-float delay-500"></div>
+        <div className="absolute bottom-12 left-12 w-8 h-8 bg-amber-200/40 rounded-full animate-float delay-1000"></div>
 
-  <div className="max-w-6xl mx-auto relative">
-    {/* Header - Same as Exclusivity */}
-    <div className="text-center mb-8">
-      <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/80 backdrop-blur-sm rounded-full text-amber-700 text-xs font-semibold mb-4 shadow-lg border border-amber-100">
-          <Building size={14} />
-          {t.company.subtitle}
-        </div>
-        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 font-elegant leading-tight">
-          {t.company.title}
-        </h2>
-      </div>
-    </div>
+        <div className="max-w-6xl mx-auto relative">
+          {/* Header - Same as Exclusivity */}
+          <div className="text-center mb-8">
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/80 backdrop-blur-sm rounded-full text-amber-700 text-xs font-semibold mb-4 shadow-lg border border-amber-100">
+                <Building size={14} />
+                {t.company.subtitle}
+              </div>
+              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 font-elegant leading-tight">
+                {t.company.title}
+              </h2>
+            </div>
+          </div>
 
-    <div className="grid lg:grid-cols-2 gap-8 items-center">
-      {/* Content Column - Same layout as Exclusivity */}
-      <div className={`transition-all duration-1000 ${isVisible ? 'animate-slide-in-left' : 'opacity-0 translate-x-10'}`}>
-        <div className="max-w-md">
-          <p className="text-gray-600 leading-relaxed mb-6">
-            {t.company.text}
-          </p>
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            {/* Content Column - Same layout as Exclusivity */}
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-slide-in-left' : 'opacity-0 translate-x-10'}`}>
+              <div className="max-w-md">
+                <p className="text-gray-600 leading-relaxed mb-6">
+                  {t.company.text}
+                </p>
 
-          {/* Values Grid - Compact like Exclusivity stats */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {companyValues.map((value, index) => (
-              <div key={index} className="bg-white rounded-lg p-3 shadow-lg border border-amber-100 hover:shadow-xl transition-all duration-300 group text-center">
-                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
-                  <value.icon className="text-amber-600" size={16} />
+                {/* Values Grid - Compact like Exclusivity stats */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {companyValues.map((value, index) => (
+                    <div key={index} className="bg-white rounded-lg p-3 shadow-lg border border-amber-100 hover:shadow-xl transition-all duration-300 group text-center">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
+                        <value.icon className="text-amber-600" size={16} />
+                      </div>
+                      <h3 className="font-bold text-gray-900 mb-1 text-sm">{value.title}</h3>
+                      <p className="text-xs text-gray-600">{value.description}</p>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="font-bold text-gray-900 mb-1 text-sm">{value.title}</h3>
-                <p className="text-xs text-gray-600">{value.description}</p>
               </div>
-            ))}
+            </div>
+
+            {/* Image Column - Same as Exclusivity */}
+            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-right' : 'opacity-0 -translate-x-10'}`}>
+              <div className="relative group perspective-1000">
+                {/* Main Image with 3D Rotation - Same as Exclusivity */}
+                <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
+                  <img
+                    src="/images/restaurant-interior.jpg"
+                    alt="Elegant restaurant interior"
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+
+                {/* Floating Achievement Badge - Same style as Exclusivity */}
+                <div className="absolute -top-3 -right-3 bg-amber-600 text-white rounded-xl p-3 shadow-xl transform group-hover:scale-110 transition-transform duration-500">
+                  <div className="text-center">
+                    <Award className="mx-auto mb-1" size={16} />
+                    <p className="text-xs font-bold">{t.company.badge.title}</p>
+                    <p className="text-xs opacity-90">{t.company.badge.subtitle}</p>
+                  </div>
+                </div>
+
+                {/* Floating Review Card - Smaller and positioned like Exclusivity */}
+                <div className="absolute -bottom-3 -left-3 bg-white rounded-xl p-3 shadow-xl border border-amber-100 max-w-xs transform group-hover:scale-105 transition-transform duration-500">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                      <Star className="text-amber-600" size={12} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-xs">4.9/5</p>
+                      <p className="text-xs text-amber-600">{t.company.review.ratingLabel}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600 italic">
+                    {t.company.review.quote}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Timeline / Milestones - Keep but make more compact */}
+          <div className={`bg-white rounded-xl p-6 shadow-lg border border-amber-100 transition-all duration-1000 delay-600 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} mt-8`}>
+            <h3 className="text-lg font-bold text-gray-900 text-center mb-4 font-elegant">{t.journey.title}</h3>
+            <div className="grid md:grid-cols-4 gap-4 text-center">
+              {journeyMilestones.map((milestone, index) => (
+                <div key={index} className="relative">
+                  {index < 3 && (
+                    <div className="hidden md:block absolute top-4 left-1/2 w-full h-0.5 bg-amber-200 -z-10"></div>
+                  )}
+                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
+                    <milestone.icon className="text-amber-600" size={18} />
+                  </div>
+                  <p className="text-md font-bold text-amber-600 mb-1">{milestone.year}</p>
+                  <p className="text-gray-700 font-medium text-xs">{milestone.event}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Image Column - Same as Exclusivity */}
-      <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-right' : 'opacity-0 -translate-x-10'}`}>
-        <div className="relative group perspective-1000">
-          {/* Main Image with 3D Rotation - Same as Exclusivity */}
-          <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
-            <img 
-              src="/images/restaurant-interior.jpg" 
-              alt="Elegant restaurant interior"
-              className="w-full h-64 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-          </div>
-          
-          {/* Floating Achievement Badge - Same style as Exclusivity */}
-          <div className="absolute -top-3 -right-3 bg-amber-600 text-white rounded-xl p-3 shadow-xl transform group-hover:scale-110 transition-transform duration-500">
-            <div className="text-center">
-              <Award className="mx-auto mb-1" size={16} />
-              <p className="text-xs font-bold">{t.company.badge.title}</p>
-              <p className="text-xs opacity-90">{t.company.badge.subtitle}</p>
-            </div>
-          </div>
-
-          {/* Floating Review Card - Smaller and positioned like Exclusivity */}
-          <div className="absolute -bottom-3 -left-3 bg-white rounded-xl p-3 shadow-xl border border-amber-100 max-w-xs transform group-hover:scale-105 transition-transform duration-500">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
-                <Star className="text-amber-600" size={12} />
-              </div>
-              <div>
-                <p className="font-bold text-gray-900 text-xs">4.9/5</p>
-                <p className="text-xs text-amber-600">{t.company.review.ratingLabel}</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-600 italic">
-              {t.company.review.quote}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Timeline / Milestones - Keep but make more compact */}
-    <div className={`bg-white rounded-xl p-6 shadow-lg border border-amber-100 transition-all duration-1000 delay-600 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} mt-8`}>
-      <h3 className="text-lg font-bold text-gray-900 text-center mb-4 font-elegant">{t.journey.title}</h3>
-      <div className="grid md:grid-cols-4 gap-4 text-center">
-        {journeyMilestones.map((milestone, index) => (
-          <div key={index} className="relative">
-            {index < 3 && (
-              <div className="hidden md:block absolute top-4 left-1/2 w-full h-0.5 bg-amber-200 -z-10"></div>
-            )}
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
-              <milestone.icon className="text-amber-600" size={18} />
-            </div>
-            <p className="text-md font-bold text-amber-600 mb-1">{milestone.year}</p>
-            <p className="text-gray-700 font-medium text-xs">{milestone.event}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* Services Overview */}
-      <section id="services" className="py-12 px-4 sm:px-6 lg:px-8 bg-stone-50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center font-elegant">{t.services.title}</h2>
+      <section id="services" className="py-10 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-50 via-white to-amber-50/30">
+        <div className="max-w-6xl mx-auto">
+          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} text-center`}>
+            <p className="inline-flex px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold mb-3">{t.quickMenu.title}</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.services.title}</h2>
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto mb-6">Tailored experiences without the heavy layout—pick the format that fits your event.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             {t.services.items.map((service, index) => (
-              <div 
-                key={index} 
-                className={`bg-white p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-500 transform hover:-translate-y-1 border border-stone-100 ${
-                  isVisible ? 'animate-fade-in-up' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${index * 100 + 300}ms` }}
+              <div
+                key={index}
+                className={`flex flex-col gap-2 bg-white/90 p-4 rounded-xl border border-amber-100 shadow-sm hover:shadow-md transition-all duration-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'
+                  }`}
+                style={{ animationDelay: `${index * 120 + 200}ms` }}
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-2 font-elegant">{service.name}</h3>
-                <p className="text-gray-600 text-sm">{service.desc}</p>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-gray-900 font-elegant">{service.name}</h3>
+                  <span className="text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-1 rounded-full">Premium</span>
+                </div>
+                <p className="text-gray-600 text-sm leading-snug">{service.desc}</p>
               </div>
             ))}
           </div>
@@ -733,23 +833,38 @@ export default function CateringHomepage() {
       </section>
 
       {/* Featured Menus */}
-      <section id="menus" className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center font-elegant">{t.menus.title}</h2>
+      <section id="menus" className="py-10 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} text-center`}>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.menus.title}</h2>
+            <p className="text-sm text-gray-600 mb-4">A quick peek at what’s cooking—compact, curated, ready to order.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {t.menus.items.map((menu, index) => (
-              <div 
-                key={index} 
-                className={`bg-amber-50 p-6 rounded-lg hover:bg-amber-100 transition-all duration-500 transform hover:-translate-y-1 hover:shadow-lg ${
-                  isVisible ? 'animate-scale-in' : 'opacity-0'
-                }`}
+
+          {fetchError && !menus.length && (
+            <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
+          )}
+          {isLoadingData && !menus.length && (
+            <p className="text-center text-sm text-gray-500 mb-4">Loading featured menus...</p>
+          )}
+
+          <div className="grid md:grid-cols-3 gap-4">
+            {featuredMenus.map((menu, index) => (
+              <div
+                key={menu.id ?? index}
+                className={`bg-amber-50/70 p-5 rounded-xl hover:bg-amber-100 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md border border-amber-100 ${isVisible ? 'animate-scale-in' : 'opacity-0'
+                  }`}
                 style={{ animationDelay: `${index * 150 + 300}ms` }}
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-3 font-elegant">{menu.name}</h3>
-                <p className="text-gray-600 mb-4 text-sm font-light italic">{menu.desc}</p>
-                <button className="text-amber-700 font-semibold inline-flex items-center gap-2 hover:gap-3 transition-all duration-300 group text-sm">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 font-elegant">{menu.name}</h3>
+                  {menu.price && <span className="text-xs text-amber-700 font-semibold bg-white px-2 py-1 rounded-full shadow-sm">{menu.price}</span>}
+                </div>
+                <p className="text-gray-600 mb-3 text-sm leading-snug">{menu.desc}</p>
+                {menu.price && <p className="text-amber-700 font-semibold text-sm mb-3">From {menu.price}</p>}
+                <button
+                  className="text-amber-700 font-semibold inline-flex items-center gap-2 hover:gap-3 transition-all duration-200 group text-sm"
+                  onClick={() => handleOrderClick(menu.productIds)}
+                >
                   {t.menus.cta} <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
@@ -759,22 +874,22 @@ export default function CateringHomepage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-stone-50">
-        <div className="max-w-7xl mx-auto">
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center font-elegant">{t.testimonials.title}</h2>
+      <section className="py-10 px-4 sm:px-6 lg:px-8 bg-stone-50">
+        <div className="max-w-6xl mx-auto">
+          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} text-center`}>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.testimonials.title}</h2>
+            <p className="text-sm text-gray-600 mb-6">Short, sweet notes from recent clients.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {t.testimonials.items.map((testimonial, index) => (
-              <div 
-                key={index} 
-                className={`bg-white p-6 rounded-lg shadow-sm border border-stone-100 hover:shadow-lg transition-all duration-500 transform hover:-translate-y-1 ${
-                  isVisible ? 'animate-fade-in-up' : 'opacity-0'
-                }`}
-                style={{ animationDelay: `${index * 100 + 300}ms` }}
+              <div
+                key={index}
+                className={`bg-white/90 p-4 rounded-xl shadow-sm border border-stone-100 hover:shadow-md transition-all duration-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'
+                  }`}
+                style={{ animationDelay: `${index * 120 + 240}ms` }}
               >
-                <p className="text-gray-600 mb-4 italic text-sm">"{testimonial.text}"</p>
-                <p className="text-gray-900 font-semibold font-elegant text-sm">— {testimonial.author}</p>
+                <p className="text-gray-700 mb-3 text-sm leading-relaxed">"{testimonial.text}"</p>
+                <p className="text-gray-900 font-semibold font-elegant text-sm">- {testimonial.author}</p>
               </div>
             ))}
           </div>
