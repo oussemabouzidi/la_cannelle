@@ -68,10 +68,11 @@ export const productsApi = {
     throw new Error(response.error || 'Failed to update product');
   },
 
-  async deleteProduct(id: number): Promise<void> {
-    const response = await apiClient.delete(`/products/${id}`);
+  async deleteProduct(id: number): Promise<{ deleted?: boolean; archived?: boolean }> {
+    const response = await apiClient.delete<{ deleted?: boolean; archived?: boolean }>(`/products/${id}`);
     if (response.error) {
       throw new Error(response.error);
     }
+    return response.data || {};
   },
 };

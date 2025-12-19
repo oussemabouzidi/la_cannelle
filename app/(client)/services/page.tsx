@@ -252,8 +252,8 @@ export default function ServicesPage() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">Home</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">About</a>
+              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.home}</a>
+              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.about}</a>
               <a href="/services" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
               <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
               <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
@@ -299,11 +299,11 @@ export default function ServicesPage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Home</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">About</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Services</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Menus</a>
-                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">Contact</a>
+                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.home}</a>
+                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.about}</a>
+                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
+                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
+                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
@@ -533,44 +533,44 @@ export default function ServicesPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
-              <h3 className="text-2xl font-bold mb-4 font-elegant italic">Gourmet Catering</h3>
-              <p className="text-gray-400 italic">Creating unforgettable culinary experiences</p>
+              <h3 className="text-2xl font-bold mb-4 font-elegant italic">{t.footer.brandTitle}</h3>
+              <p className="text-gray-400 italic">{t.footer.brandTagline}</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Quick Links</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{t.footer.quickLinks}</h4>
               <div className="flex flex-col gap-2">
-                <a href="#about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">About</a>
-                <a href="#services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Services</a>
-                <a href="#menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Menus</a>
-                <a href="#contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Contact</a>
+                <a href="#about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.about}</a>
+                <a href="#services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.services}</a>
+                <a href="#menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.menus}</a>
+                <a href="#contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.contact}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Contact</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{t.footer.contact}</h4>
               <div className="flex flex-col gap-3 text-gray-400">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Phone size={18} />
-                  <span>+123 456 7890</span>
+                  <span>{t.footer.contactPhone}</span>
                 </div>
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Mail size={18} />
-                  <span>info@catering.com</span>
+                  <span>{t.footer.contactEmail}</span>
                 </div>
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <MapPin size={18} />
-                  <span>Your Location</span>
+                  <span>{t.footer.contactAddress}</span>
                 </div>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Hours</h4>
-              <p className="text-gray-400">Monday - Friday: 9am - 6pm</p>
-              <p className="text-gray-400">Saturday: 10am - 4pm</p>
-              <p className="text-gray-400">Sunday: Closed</p>
+              <h4 className="font-semibold mb-4 font-elegant">{t.footer.hoursTitle}</h4>
+              <p className="text-gray-400">{t.footer.hoursWeekdays}</p>
+              <p className="text-gray-400">{t.footer.hoursSaturday}</p>
+              <p className="text-gray-400">{t.footer.hoursSunday}</p>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Gourmet Catering. All rights reserved.</p>
+            <p>{t.footer.copyright}</p>
           </div>
         </div>
       </footer>

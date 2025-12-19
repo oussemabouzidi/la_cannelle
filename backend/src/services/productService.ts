@@ -211,8 +211,34 @@ export const productService = {
   },
 
   async deleteProduct(id: number) {
+    const existing = await prisma.product.findUnique({
+      where: { id }
+    });
+    if (!existing) {
+      throw new AppError('Product not found', 404);
+    }
+
+    const orderItemCount = await prisma.orderItem.count({
+      where: { productId: id }
+    });
+
+    if (orderItemCount > 0) {
+      await prisma.menuProduct.deleteMany({
+        where: { productId: id }
+      });
+      await prisma.favorite.deleteMany({
+        where: { productId: id }
+      });
+      await prisma.product.update({
+        where: { id },
+        data: { available: false }
+      });
+      return { archived: true };
+    }
+
     await prisma.product.delete({
       where: { id }
     });
+    return { deleted: true };
   }
 };

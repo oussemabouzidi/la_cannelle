@@ -1,11 +1,12 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { ordersApi } from '@/lib/api/orders';
 import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
-import { systemApi } from '@/lib/api/system';
+import { systemApi, type ClosedDate } from '@/lib/api/system';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { 
   Menu, X, ChevronRight, ChevronLeft, Phone, Mail, MapPin, 
@@ -20,7 +21,255 @@ import {
   FileText, Shield as ShieldIcon, Globe
 } from 'lucide-react';
 
+const formatDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseDateKey = (value: string) => {
+  const [year, month, day] = value.split('-').map((part) => parseInt(part, 10));
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
+const isSameDay = (a: Date, b: Date) => {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+};
+
+const DatePicker = ({
+  value,
+  onChange,
+  minDate,
+  language,
+  placeholder
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  minDate: Date;
+  language: 'EN' | 'DE';
+  placeholder: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const initialDate = value ? parseDateKey(value) : new Date();
+    const baseDate = initialDate || new Date();
+    return new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  });
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const locale = language === 'DE' ? 'de-DE' : 'en-US';
+  const minDateStart = new Date(minDate);
+  minDateStart.setHours(0, 0, 0, 0);
+
+  useEffect(() => {
+    if (!value) return;
+    const parsed = parseDateKey(value);
+    if (!parsed) return;
+    setCurrentMonth(new Date(parsed.getFullYear(), parsed.getMonth(), 1));
+  }, [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const monthLabel = currentMonth.toLocaleDateString(locale, {
+    month: 'long',
+    year: 'numeric'
+  });
+  const dayLabels = language === 'DE'
+    ? ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+  const daysInMonth = monthEnd.getDate();
+  const startDayIndex = (monthStart.getDay() + 6) % 7;
+  const totalCells = startDayIndex + daysInMonth;
+  const rows = Math.ceil(totalCells / 7);
+  const selectedDate = value ? parseDateKey(value) : null;
+  const prevMonthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 0);
+  const canGoPrev = prevMonthEnd >= minDateStart;
+
+  const displayValue = selectedDate
+    ? selectedDate.toLocaleDateString(locale)
+    : '';
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full pl-12 pr-4 py-3 text-left text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
+      >
+        {displayValue || placeholder}
+      </button>
+      <Calendar className="absolute left-4 top-3.5 text-amber-500" size={20} />
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-4 z-20">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              type="button"
+              onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+              disabled={!canGoPrev}
+              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                canGoPrev ? 'hover:bg-amber-50 text-gray-700' : 'text-gray-300 cursor-not-allowed'
+              }`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-sm font-semibold text-gray-900">{monthLabel}</span>
+            <button
+              type="button"
+              onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-50 text-gray-700"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-xs text-gray-500 mb-2">
+            {dayLabels.map((label) => (
+              <div key={label} className="text-center font-medium">
+                {label}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-sm">
+            {Array.from({ length: rows * 7 }).map((_, index) => {
+              const dayNumber = index - startDayIndex + 1;
+              if (dayNumber < 1 || dayNumber > daysInMonth) {
+                return <div key={`empty-${index}`} className="h-9" />;
+              }
+
+              const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayNumber);
+              const isPast = date < minDateStart;
+              const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
+              const isToday = isSameDay(date, minDateStart);
+
+              return (
+                <button
+                  key={date.toISOString()}
+                  type="button"
+                  onClick={() => {
+                    if (isPast) return;
+                    onChange(formatDateKey(date));
+                    setIsOpen(false);
+                  }}
+                  disabled={isPast}
+                  className={`h-9 rounded-lg flex items-center justify-center transition-colors ${
+                    isPast
+                      ? 'text-gray-300 cursor-not-allowed'
+                      : isSelected
+                      ? 'bg-amber-600 text-white shadow-md'
+                      : isToday
+                      ? 'border border-amber-400 text-amber-700'
+                      : 'hover:bg-amber-50 text-gray-700'
+                  }`}
+                >
+                  {dayNumber}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const buildTimeSlots = (intervalMinutes = 15) => {
+  const slots: string[] = [];
+  for (let total = 0; total < 24 * 60; total += intervalMinutes) {
+    const hour = String(Math.floor(total / 60)).padStart(2, '0');
+    const minute = String(total % 60).padStart(2, '0');
+    slots.push(`${hour}:${minute}`);
+  }
+  return slots;
+};
+
+const TimePicker = ({
+  value,
+  onChange,
+  language,
+  placeholder
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  language: 'EN' | 'DE';
+  placeholder: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement | null>(null);
+  const slots = useMemo(() => buildTimeSlots(15), []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full pl-12 pr-4 py-3 text-left text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
+      >
+        {value || placeholder}
+      </button>
+      <Clock className="absolute left-4 top-3.5 text-amber-500" size={20} />
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-2 z-20">
+          <div className="max-h-56 overflow-y-auto">
+            {slots.map((slot) => {
+              const isSelected = slot === value;
+              return (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => {
+                    onChange(slot);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-4 py-2 text-left text-sm rounded-lg transition-colors ${
+                    isSelected
+                      ? 'bg-amber-600 text-white'
+                      : 'text-gray-700 hover:bg-amber-50'
+                  }`}
+                >
+                  {slot}
+                </button>
+              );
+            })}
+          </div>
+          {!slots.length && (
+            <div className="px-4 py-3 text-sm text-gray-500">
+              {language === 'DE' ? 'Keine Zeiten verfuegbar.' : 'No times available.'}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function OrderPage() {
+  const router = useRouter();
   const { t, language, toggleLanguage, setLanguage: setAppLanguage } = useTranslation('order');
   const [currentStep, setCurrentStep] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
@@ -32,6 +281,7 @@ export default function OrderPage() {
   const [menuItemsData, setMenuItemsData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [systemStatus, setSystemStatus] = useState<any>(null);
+  const [closedDates, setClosedDates] = useState<ClosedDate[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
 
@@ -40,10 +290,11 @@ export default function OrderPage() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [menus, products, status] = await Promise.all([
+        const [menus, products, status, dates] = await Promise.all([
           menusApi.getMenus({ isActive: true }),
           productsApi.getProducts({ available: true }),
-          systemApi.getSystemStatus()
+          systemApi.getSystemStatus(),
+          systemApi.getClosedDates()
         ]);
 
         // Normalize shape so the client has product ids and menu ids available
@@ -64,6 +315,7 @@ export default function OrderPage() {
         setMenusData(normalizedMenus);
         setMenuItemsData(normalizedProducts);
         setSystemStatus(status);
+        setClosedDates(dates || []);
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
@@ -106,6 +358,84 @@ export default function OrderPage() {
       name: ''
     }
   });
+  const [contactErrors, setContactErrors] = useState({ email: '', phone: '' });
+
+  const validateEmailValue = (value: string) => {
+    if (!value) {
+      return language === 'DE' ? 'E-Mail ist erforderlich.' : 'Email is required.';
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return language === 'DE' ? 'Bitte eine gueltige E-Mail eingeben.' : 'Please enter a valid email address.';
+    }
+    return '';
+  };
+
+  const validatePhoneValue = (value: string) => {
+    if (!value) {
+      return language === 'DE' ? 'Telefonnummer ist erforderlich.' : 'Phone number is required.';
+    }
+    if (!/^\+?[0-9\s-]{7,15}$/.test(value)) {
+      return language === 'DE' ? 'Bitte eine gueltige Telefonnummer eingeben.' : 'Please enter a valid phone number.';
+    }
+    return '';
+  };
+
+  const updateContactInfoField = (field: string, value: string) => {
+    updateOrderData('contactInfo', {
+      ...orderData.contactInfo,
+      [field]: value
+    });
+    if (field === 'email') {
+      setContactErrors((prev) => ({ ...prev, email: validateEmailValue(value.trim()) }));
+    }
+    if (field === 'phone') {
+      setContactErrors((prev) => ({ ...prev, phone: validatePhoneValue(value.trim()) }));
+    }
+  };
+
+  const handleContactBlur = (field: 'email' | 'phone') => {
+    const value = (orderData.contactInfo[field] || '').trim();
+    if (field === 'email') {
+      setContactErrors((prev) => ({ ...prev, email: validateEmailValue(value) }));
+    }
+    if (field === 'phone') {
+      setContactErrors((prev) => ({ ...prev, phone: validatePhoneValue(value) }));
+    }
+  };
+
+  const closedDateMap = useMemo(() => {
+    const map = new Map<string, ClosedDate>();
+    closedDates.forEach((d) => {
+      const key = new Date(d.date).toISOString().split('T')[0];
+      map.set(key, d);
+    });
+    return map;
+  }, [closedDates]);
+  const selectedEventDate = orderData.eventDate || '';
+  const selectedEventKey = selectedEventDate
+    ? new Date(selectedEventDate).toISOString().split('T')[0]
+    : '';
+  const closedDateEntry = selectedEventKey ? closedDateMap.get(selectedEventKey) : undefined;
+  const isClosedDate = !!closedDateEntry;
+  const isOrderingPaused = !!systemStatus?.orderingPaused;
+  const orderBlocked = isClosedDate || isOrderingPaused;
+
+  const blockedMessage = useMemo(() => {
+    if (isOrderingPaused) {
+      const reason = systemStatus?.pauseReason ? ` (${systemStatus.pauseReason})` : '';
+      return language === 'DE'
+        ? `Bestellungen sind aktuell pausiert${reason}.`
+        : `Ordering is currently paused${reason}.`;
+    }
+    if (isClosedDate) {
+      const reason = closedDateEntry?.reason ? ` (${closedDateEntry.reason})` : '';
+      return language === 'DE'
+        ? `Das gewaehlte Datum ist geschlossen${reason}. Bitte waehlen Sie ein anderes Datum.`
+        : `The selected date is closed${reason}. Please choose another date.`;
+    }
+    return '';
+  }, [closedDateEntry, isClosedDate, isOrderingPaused, language, systemStatus?.pauseReason]);
+  const shouldBlockProgress = isOrderingPaused || (isClosedDate && currentStep >= 3);
 
   const stepsConfig = useMemo(() => [
     { key: 'eventType', label: language === 'DE' ? 'Anlass' : 'Event Type' },
@@ -215,15 +545,6 @@ export default function OrderPage() {
   // Step 3: Event Information
   const Step3 = () => (
     <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          {t.eventInfo.title}
-        </h2>
-        <p className="text-gray-600 text-lg">
-          {t.eventInfo.subtitle}
-        </p>
-      </div>
-
       <div className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
@@ -231,32 +552,30 @@ export default function OrderPage() {
                 {t.eventInfo.date} *
               </label>
               <div className="relative group">
-                <input
-                  type="date"
+                <DatePicker
                   value={orderData.eventDate}
-                  onChange={(e) => updateOrderData('eventDate', e.target.value)}
-                  min={today}
-                  className="w-full pl-12 pr-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
-                  required
+                  onChange={(value) => updateOrderData('eventDate', value)}
+                  minDate={new Date()}
+                  language={language}
+                  placeholder={language === 'DE' ? 'Datum waehlen' : 'Select date'}
                 />
-                <Calendar className="absolute left-4 top-3.5 text-amber-500" size={20} />
               </div>
+              {isClosedDate && (
+                <p className="mt-2 text-sm text-red-600">
+                  {blockedMessage}
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
                 {t.eventInfo.time} *
               </label>
-              <div className="relative group">
-                <input
-                  type="time"
-                  value={orderData.eventTime}
-                  onChange={(e) => updateOrderData('eventTime', e.target.value)}
-                  step="900"
-                  className="w-full pl-12 pr-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
-                  required
-                />
-                <Clock className="absolute left-4 top-3.5 text-amber-500" size={20} />
-              </div>
+              <TimePicker
+                value={orderData.eventTime}
+                onChange={(value) => updateOrderData('eventTime', value)}
+                language={language}
+                placeholder={language === 'DE' ? 'Uhrzeit waehlen' : 'Select time'}
+              />
             </div>
           </div>
 
@@ -418,6 +737,9 @@ export default function OrderPage() {
     const selectedMenuObj = menusData.find(
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
+    const categoryTitle = t.productSelection?.[currentCategory]
+      || currentCategory?.charAt(0).toUpperCase() + currentCategory?.slice(1);
+    const categorySubtitle = t.productSelection?.subtitles?.[currentCategory] || '';
     
     return (
       <div className="grid lg:grid-cols-3 gap-8">
@@ -579,11 +901,13 @@ export default function OrderPage() {
         <div className="lg:col-span-2 lg:order-1">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">
-              {t.productSelection?.title || 'Select Your Items'}
+              {categoryTitle}
             </h2>
-            <p className="text-gray-600 text-lg">
-              {t.productSelection.subtitle}
-            </p>
+            {categorySubtitle && (
+              <p className="text-gray-600 text-lg">
+                {categorySubtitle}
+              </p>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -735,6 +1059,7 @@ export default function OrderPage() {
     const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
     const currentSubtotal = subtotal + accessoriesSubtotal + flatServiceFee;
     const minimumOrder = 388.80;
+    const accessoriesList = Array.isArray(t.accessories?.items) ? t.accessories.items : [];
 
     return (
       <div className="grid lg:grid-cols-3 gap-8">
@@ -856,7 +1181,7 @@ export default function OrderPage() {
             </div>
 
             <div className="space-y-6">
-              {t.accessories.accessories.map((accessory) => {
+              {accessoriesList.map((accessory) => {
                 const isSelected = selectedAccessories.some(item => item.id === accessory.id);
                 const selectedItem = selectedAccessories.find(item => item.id === accessory.id);
                 
@@ -1003,7 +1328,12 @@ export default function OrderPage() {
               
               <button
                 onClick={nextStep}
-                className="w-full mt-8 bg-gray-900 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-black transition-colors"
+                disabled={shouldBlockProgress}
+                className={`w-full mt-8 py-4 px-6 rounded-lg text-base font-semibold transition-colors ${
+                  shouldBlockProgress
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-900 text-white hover:bg-black'
+                }`}
               >
                 {t.accessories.continueWithout}
               </button>
@@ -1070,14 +1400,15 @@ export default function OrderPage() {
             <input
               type="email"
               value={orderData.contactInfo.email}
-              onChange={(e) => updateOrderData('contactInfo', {
-                ...orderData.contactInfo,
-                email: e.target.value
-              })}
+              onChange={(e) => updateContactInfoField('email', e.target.value)}
+              onBlur={() => handleContactBlur('email')}
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
               placeholder="john@example.com"
               required
             />
+            {contactErrors.email && (
+              <p className="mt-2 text-sm text-red-600">{contactErrors.email}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -1086,14 +1417,17 @@ export default function OrderPage() {
             <input
               type="tel"
               value={orderData.contactInfo.phone}
-              onChange={(e) => updateOrderData('contactInfo', {
-                ...orderData.contactInfo,
-                phone: e.target.value
-              })}
+              onChange={(e) => updateContactInfoField('phone', e.target.value)}
+              onBlur={() => handleContactBlur('phone')}
+              inputMode="tel"
+              pattern="^\\+?[0-9\\s-]{7,15}$"
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
               placeholder="+49 123 456 789"
               required
             />
+            {contactErrors.phone && (
+              <p className="mt-2 text-sm text-red-600">{contactErrors.phone}</p>
+            )}
           </div>
         </div>
 
@@ -1382,13 +1716,28 @@ export default function OrderPage() {
                   </div>
                 </div>
 
+                {orderBlocked && (
+                  <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    {blockedMessage}
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <button
                   onClick={() => {
-                    // Handle payment submission
-                    alert('Order placed successfully!');
+                    if (orderData.paymentMethod === 'credit-card') {
+                      const { number, expiry, cvc, name } = orderData.cardDetails;
+                      const digitsOnly = number.replace(/\s+/g, '');
+                      const expiryValid = /^\d{2}\/\d{2}$/.test(expiry);
+                      if (!digitsOnly || digitsOnly.length < 12 || !expiryValid || cvc.length < 3 || !name.trim()) {
+                        showNotification('error', language === 'DE' ? 'Bitte gültige Kartendaten eingeben.' : 'Please enter valid card details.');
+                        return;
+                      }
+                    }
+                    handleSubmitOrder();
                   }}
-                  className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg"
+                  disabled={orderBlocked}
+                  className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Lock size={20} />
                   Pay €{grandTotal.toFixed(2)} Securely
@@ -1428,6 +1777,10 @@ export default function OrderPage() {
   };
 
   const nextStep = () => {
+    if (shouldBlockProgress) {
+      showNotification('error', blockedMessage, 3000);
+      return;
+    }
     if (currentStep === stepsConfig.length) {
       // Handle final submission
       handleSubmitOrder();
@@ -1519,7 +1872,28 @@ export default function OrderPage() {
   const handleSubmitOrder = async () => {
     // Check if ordering is paused
     if (systemStatus?.orderingPaused) {
-      showNotification('error', 'Ordering is currently paused. Please try again later.', 3000);
+      showNotification('error', language === 'DE'
+        ? 'Bestellungen sind aktuell pausiert. Bitte spaeter erneut versuchen.'
+        : 'Ordering is currently paused. Please try again later.', 3000);
+      return;
+    }
+
+    if (isClosedDate) {
+      showNotification('error', language === 'DE'
+        ? 'Das ausgewaehlte Datum ist geschlossen. Bitte waehlen Sie ein anderes Datum.'
+        : 'The selected date is closed. Please choose another date.', 3000);
+      return;
+    }
+
+    const contactEmail = (orderData.contactInfo.email || '').trim();
+    const contactPhone = (orderData.contactInfo.phone || '').trim();
+    const emailError = validateEmailValue(contactEmail);
+    const phoneError = validatePhoneValue(contactPhone);
+    setContactErrors({ email: emailError, phone: phoneError });
+    if (emailError || phoneError) {
+      showNotification('error', language === 'DE'
+        ? 'Bitte gueltige Kontaktdaten angeben.'
+        : 'Please provide valid contact details.', 3000);
       return;
     }
 
@@ -1558,8 +1932,8 @@ export default function OrderPage() {
     try {
       const order = await ordersApi.createOrder({
         clientName: `${orderData.contactInfo.firstName || ''} ${orderData.contactInfo.lastName || ''}`.trim() || 'Guest',
-        contactEmail: orderData.contactInfo.email || '',
-        phone: orderData.contactInfo.phone || '',
+        contactEmail,
+        phone: contactPhone,
         eventType: orderData.serviceType || orderData.businessType || 'Custom',
         eventDate: orderData.eventDate || new Date().toISOString(),
         eventTime: orderData.eventTime || '',
@@ -1612,7 +1986,7 @@ export default function OrderPage() {
     return stepComponents[currentStep] || Step1;
   };
 
-  const CurrentStep = getStepComponent();
+  const renderCurrentStep = getStepComponent();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -1721,7 +2095,10 @@ export default function OrderPage() {
                 <Globe size={12} className="mr-1" />
                 {language === 'EN' ? 'EN' : 'DE'}
               </button>
-              <button className="px-3 py-1.5 text-xs font-medium border border-amber-700 text-amber-700 rounded-md hover:bg-amber-50 transition-colors">
+              <button
+                onClick={() => router.push('/connect')}
+                className="px-3 py-1.5 text-xs font-medium border border-amber-700 text-amber-700 rounded-md hover:bg-amber-50 transition-colors"
+              >
                 {t.nav.connect}
               </button>
             </div>
@@ -1764,7 +2141,12 @@ export default function OrderPage() {
                 
                 <button
                   onClick={nextStep}
-                  className="px-4 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors inline-flex items-center shadow-sm"
+                  disabled={shouldBlockProgress}
+                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center shadow-sm ${
+                    shouldBlockProgress
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-amber-600 text-white hover:bg-amber-700'
+                  }`}
                 >
                   {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
                   <ChevronRight size={14} className="ml-1" />
@@ -1823,8 +2205,13 @@ export default function OrderPage() {
       <main className="flex-1">
         <div className="pt-48 pb-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
+            {orderBlocked && (
+              <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {blockedMessage}
+              </div>
+            )}
             <div className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <CurrentStep />
+              {renderCurrentStep()}
             </div>
           </div>
         </div>

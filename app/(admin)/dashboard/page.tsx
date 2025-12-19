@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
+import AdminLanguageToggle from '../components/AdminLanguageToggle';
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -25,12 +27,104 @@ import {
 import { dashboardApi, DashboardStats } from '@/lib/api/dashboard';
 
 export default function AdminDashboard() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('dashboard');
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { language, toggleLanguage } = useTranslation('admin');
+  const locale = language === 'DE' ? 'de-DE' : 'en-US';
+
+  const copy = {
+    EN: {
+      nav: {
+        dashboard: 'Dashboard',
+        orders: 'Orders',
+        menu: 'Menu Management',
+        system: 'System Control',
+        customers: 'Customers',
+        reports: 'Reports',
+      },
+      admin: {
+        user: 'Admin User',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Dashboard',
+      },
+      stats: {
+        totalOrders: 'Total Orders',
+        pending: 'Pending',
+        confirmed: 'Confirmed',
+        completed: 'Completed',
+        todayRevenue: "Today's Revenue",
+        weeklyRevenue: 'Weekly Revenue',
+        monthlyRevenue: 'Monthly Revenue',
+        growthLabel: 'from yesterday',
+      },
+      sections: {
+        todaysEvents: "Today's Events",
+        recentOrders: 'Recent Orders',
+      },
+      labels: {
+        guests: 'guests',
+        viewAllOrders: 'View All Orders',
+      },
+      status: {
+        confirmed: 'Confirmed',
+        pending: 'Pending',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+        preparation: 'In Preparation',
+        delivery: 'Out for Delivery',
+      },
+    },
+    DE: {
+      nav: {
+        dashboard: 'Uebersicht',
+        orders: 'Bestellungen',
+        menu: 'Menueverwaltung',
+        system: 'Systemsteuerung',
+        customers: 'Kunden',
+        reports: 'Berichte',
+      },
+      admin: {
+        user: 'Admin Benutzer',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Uebersicht',
+      },
+      stats: {
+        totalOrders: 'Gesamtbestellungen',
+        pending: 'Ausstehend',
+        confirmed: 'Bestaetigt',
+        completed: 'Abgeschlossen',
+        todayRevenue: 'Heutiger Umsatz',
+        weeklyRevenue: 'Wochenumsatz',
+        monthlyRevenue: 'Monatsumsatz',
+        growthLabel: 'seit gestern',
+      },
+      sections: {
+        todaysEvents: 'Heutige Events',
+        recentOrders: 'Letzte Bestellungen',
+      },
+      labels: {
+        guests: 'Gaeste',
+        viewAllOrders: 'Alle Bestellungen ansehen',
+      },
+      status: {
+        confirmed: 'Bestaetigt',
+        pending: 'Ausstehend',
+        completed: 'Abgeschlossen',
+        cancelled: 'Storniert',
+        preparation: 'In Vorbereitung',
+        delivery: 'In Lieferung',
+      },
+    },
+  } as const;
+  const t = copy[language] ?? copy.EN;
 
   // Get current active section from pathname (optional, for styling)
   const getActiveSection = () => {
@@ -44,6 +138,11 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
   useEffect(() => {
@@ -62,12 +161,12 @@ export default function AdminDashboard() {
   }, []);
 
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
-    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
-    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
-    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
-    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
+    { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
+    { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
+    { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
+    { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
+    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
   const data: DashboardStats = dashboardData ?? {
     orders: { total: 0, pending: 0, confirmed: 0, completed: 0 },
@@ -170,16 +269,23 @@ export default function AdminDashboard() {
                 <Users className="text-amber-700" size={20} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-600">Administrator</p>
+                <p className="font-semibold text-gray-900">{t.admin.user}</p>
+                <p className="text-sm text-gray-600">{t.admin.role}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         {/* Top Bar */}
         <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
           <div className="flex items-center justify-between p-4">
@@ -191,19 +297,20 @@ export default function AdminDashboard() {
                 <Menu size={20} />
               </button>
               <h1 className="text-2xl font-bold text-gray-900 font-elegant">
-                Dashboard
+                {t.header.title}
               </h1>
             </div>
             
             <div className="flex items-center gap-4">
               <div className="text-sm text-gray-600">
-                {new Date().toLocaleDateString('en-US', { 
+                {new Date().toLocaleDateString(locale, { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
                 })}
               </div>
+              <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
             </div>
           </div>
         </header>
@@ -218,7 +325,7 @@ export default function AdminDashboard() {
             }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Orders</p>
+                  <p className="text-sm font-medium text-gray-600">{t.stats.totalOrders}</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">{data.orders.total}</p>
                 </div>
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -226,9 +333,9 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex gap-4 mt-4 text-xs">
-                <span className="text-blue-600">Pending: {data.orders.pending}</span>
-                <span className="text-green-600">Confirmed: {data.orders.confirmed}</span>
-                <span className="text-gray-600">Completed: {data.orders.completed}</span>
+                <span className="text-blue-600">{t.stats.pending}: {data.orders.pending}</span>
+                <span className="text-green-600">{t.stats.confirmed}: {data.orders.confirmed}</span>
+                <span className="text-gray-600">{t.stats.completed}: {data.orders.completed}</span>
               </div>
             </div>
 
@@ -238,7 +345,7 @@ export default function AdminDashboard() {
             }`} style={{ animationDelay: '100ms' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
+                  <p className="text-sm font-medium text-gray-600">{t.stats.todayRevenue}</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.today.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -247,7 +354,7 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center gap-2 mt-4 text-sm text-green-600">
                 <TrendingUp size={16} />
-                <span>+{data.revenue.growth}% from yesterday</span>
+                <span>+{data.revenue.growth}% {t.stats.growthLabel}</span>
               </div>
             </div>
 
@@ -257,7 +364,7 @@ export default function AdminDashboard() {
             }`} style={{ animationDelay: '200ms' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Weekly Revenue</p>
+                  <p className="text-sm font-medium text-gray-600">{t.stats.weeklyRevenue}</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.week.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -272,7 +379,7 @@ export default function AdminDashboard() {
             }`} style={{ animationDelay: '300ms' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                  <p className="text-sm font-medium text-gray-600">{t.stats.monthlyRevenue}</p>
                   <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.month.toLocaleString()}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -288,7 +395,7 @@ export default function AdminDashboard() {
               isVisible ? 'animate-fade-in-up' : 'opacity-0'
             }`} style={{ animationDelay: '400ms' }}>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 font-elegant">Today's Events</h2>
+                <h2 className="text-xl font-bold text-gray-900 font-elegant">{t.sections.todaysEvents}</h2>
                 <Calendar className="text-gray-400" size={20} />
               </div>
               
@@ -301,7 +408,7 @@ export default function AdminDashboard() {
                       }`}></div>
                       <div>
                         <p className="font-semibold text-gray-900">{event.client}</p>
-                        <p className="text-sm text-gray-600">{event.time} • {event.guests} guests</p>
+                        <p className="text-sm text-gray-600">{event.time} • {event.guests} {t.labels.guests}</p>
                       </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -309,7 +416,7 @@ export default function AdminDashboard() {
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-amber-100 text-amber-800'
                     }`}>
-                      {event.status}
+                      {t.status[event.status as keyof typeof t.status] ?? event.status}
                     </span>
                   </div>
                 ))}
@@ -321,7 +428,7 @@ export default function AdminDashboard() {
               isVisible ? 'animate-fade-in-up' : 'opacity-0'
             }`} style={{ animationDelay: '500ms' }}>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 font-elegant">Recent Orders</h2>
+                <h2 className="text-xl font-bold text-gray-900 font-elegant">{t.sections.recentOrders}</h2>
                 <Package className="text-gray-400" size={20} />
               </div>
               
@@ -342,7 +449,7 @@ export default function AdminDashboard() {
                             ? 'bg-blue-100 text-blue-800'
                             : 'bg-amber-100 text-amber-800'
                         }`}>
-                          {order.status}
+                          {t.status[order.status as keyof typeof t.status] ?? order.status}
                         </span>
                         <button className="p-1 hover:bg-white rounded transition-colors">
                           <Eye size={14} className="text-gray-400" />
@@ -353,9 +460,12 @@ export default function AdminDashboard() {
                 ))}
               </div>
               
-              <button className="w-full mt-6 py-3 bg-amber-50 text-amber-700 rounded-xl hover:bg-amber-100 transition-colors font-medium flex items-center justify-center gap-2">
+              <button
+                onClick={() => router.push('/orders')}
+                className="w-full mt-6 py-3 bg-amber-50 text-amber-700 rounded-xl hover:bg-amber-100 transition-colors font-medium flex items-center justify-center gap-2"
+              >
                 <Plus size={16} />
-                View All Orders
+                {t.labels.viewAllOrders}
               </button>
             </div>
           </div>

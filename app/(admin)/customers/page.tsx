@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
+import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import { customersApi, CustomerSummary } from '@/lib/api/customers';
 import { ordersApi, Order } from '@/lib/api/orders';
 import { promotionsApi } from '@/lib/api/promotions';
@@ -26,7 +28,7 @@ type Customer = CustomerSummary & {
 };
 
 export default function Customers() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('customers');
   const [activeTab, setActiveTab] = useState('list');
@@ -36,9 +38,186 @@ export default function Customers() {
   const [showPromotionModal, setShowPromotionModal] = useState(false);
 
   const router = useRouter();
+  const { language, toggleLanguage } = useTranslation('admin');
+  const locale = language === 'DE' ? 'de-DE' : 'en-US';
+
+  const copy = {
+    EN: {
+      nav: {
+        dashboard: 'Dashboard',
+        orders: 'Orders',
+        menu: 'Menu Management',
+        system: 'System Control',
+        customers: 'Customers',
+        reports: 'Reports',
+      },
+      admin: {
+        user: 'Admin User',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Customer Management',
+        sectionTitle: 'Customers',
+        subtitle: 'Manage customer profiles, view order history, and send promotions',
+      },
+      tabs: {
+        list: 'Customer List',
+        history: 'Order History',
+      },
+      filters: {
+        searchPlaceholder: 'Search customers...',
+        allStatus: 'All Status',
+        active: 'Active',
+        inactive: 'Inactive',
+        found: 'customers found',
+      },
+      tiers: {
+        regular: 'Regular',
+        premium: 'Premium',
+        vip: 'VIP',
+        unassigned: 'Unassigned',
+      },
+      status: {
+        active: 'Active',
+        inactive: 'Inactive',
+        completed: 'Completed',
+        pending: 'Pending',
+      },
+      labels: {
+        orders: 'Orders',
+        total: 'Total',
+        lastOrder: 'Last Order',
+        view: 'View',
+        contact: 'Contact',
+        noCustomers: 'No customers found matching your criteria',
+        recentOrders: 'Recent Orders',
+        orderNumber: 'Order',
+        noItems: 'No items',
+        noOrders: 'No orders found',
+        viewProfile: 'View Profile',
+        customerAvatar: 'Customer avatar',
+      },
+      modal: {
+        contactInfo: 'Contact Information',
+        memberSince: 'Member since',
+        totalSpent: 'total spent',
+        preferencesNotes: 'Preferences & Notes',
+        dietaryPreferences: 'Dietary Preferences',
+        allergies: 'Allergies',
+        additionalNotes: 'Additional Notes',
+      },
+      promotion: {
+        title: 'Send Promotion',
+        promotionTitle: 'Promotion Title',
+        discountOffer: 'Discount Offer',
+        validUntil: 'Valid Until',
+        message: 'Message',
+        sendTo: 'Send To',
+        allCustomers: 'All Customers',
+        activeCustomersOnly: 'Active Customers Only',
+        vipCustomersOnly: 'VIP Customers Only',
+        send: 'Send Promotion',
+        cancel: 'Cancel',
+        placeholderTitle: 'Special Offer, Seasonal Discount...',
+        placeholderDiscount: '20% OFF, €25 discount, Free dessert...',
+        placeholderMessage: 'Write your promotion message here...',
+        sent: 'Promotion sent',
+        failed: 'Failed to send promotion',
+      },
+    },
+    DE: {
+      nav: {
+        dashboard: 'Uebersicht',
+        orders: 'Bestellungen',
+        menu: 'Menueverwaltung',
+        system: 'Systemsteuerung',
+        customers: 'Kunden',
+        reports: 'Berichte',
+      },
+      admin: {
+        user: 'Admin Benutzer',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Kundenverwaltung',
+        sectionTitle: 'Kunden',
+        subtitle: 'Kundenprofile verwalten, Bestellhistorie ansehen und Promotionen senden',
+      },
+      tabs: {
+        list: 'Kundenliste',
+        history: 'Bestellhistorie',
+      },
+      filters: {
+        searchPlaceholder: 'Kunden suchen...',
+        allStatus: 'Alle Status',
+        active: 'Aktiv',
+        inactive: 'Inaktiv',
+        found: 'Kunden gefunden',
+      },
+      tiers: {
+        regular: 'Standard',
+        premium: 'Premium',
+        vip: 'VIP',
+        unassigned: 'Nicht zugeordnet',
+      },
+      status: {
+        active: 'Aktiv',
+        inactive: 'Inaktiv',
+        completed: 'Abgeschlossen',
+        pending: 'Ausstehend',
+      },
+      labels: {
+        orders: 'Bestellungen',
+        total: 'Gesamt',
+        lastOrder: 'Letzte Bestellung',
+        view: 'Ansehen',
+        contact: 'Kontakt',
+        noCustomers: 'Keine Kunden gefunden, die den Kriterien entsprechen',
+        recentOrders: 'Letzte Bestellungen',
+        orderNumber: 'Bestellung',
+        noItems: 'Keine Artikel',
+        noOrders: 'Keine Bestellungen gefunden',
+        viewProfile: 'Profil ansehen',
+        customerAvatar: 'Kundenavatar',
+      },
+      modal: {
+        contactInfo: 'Kontaktinformationen',
+        memberSince: 'Mitglied seit',
+        totalSpent: 'Gesamtumsatz',
+        preferencesNotes: 'Praeferenzen & Notizen',
+        dietaryPreferences: 'Ernaehrungspraeferenzen',
+        allergies: 'Allergien',
+        additionalNotes: 'Zusaetzliche Notizen',
+      },
+      promotion: {
+        title: 'Promotion senden',
+        promotionTitle: 'Promotion Titel',
+        discountOffer: 'Rabattangebot',
+        validUntil: 'Gueltig bis',
+        message: 'Nachricht',
+        sendTo: 'Senden an',
+        allCustomers: 'Alle Kunden',
+        activeCustomersOnly: 'Nur aktive Kunden',
+        vipCustomersOnly: 'Nur VIP-Kunden',
+        send: 'Promotion senden',
+        cancel: 'Abbrechen',
+        placeholderTitle: 'Sonderangebot, Saisonrabatt...',
+        placeholderDiscount: '20% RABATT, 25 EUR Rabatt, Kostenloses Dessert...',
+        placeholderMessage: 'Schreiben Sie hier Ihre Promotion-Nachricht...',
+        sent: 'Promotion gesendet',
+        failed: 'Promotion konnte nicht gesendet werden',
+      },
+    },
+  } as const;
+  const t = copy[language] ?? copy.EN;
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
   // Get current active section from pathname (optional, for styling)
@@ -89,12 +268,12 @@ export default function Customers() {
   });
 
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
-    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
-    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
-    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
-    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
+    { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
+    { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
+    { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
+    { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
+    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
 
   const handleNavigation = (path: string) => {
@@ -106,13 +285,13 @@ export default function Customers() {
   const getAvatarSrc = (avatar?: string): string => avatar ?? fallbackAvatar;
 
   const tiers: Record<'regular' | 'premium' | 'vip', { label: string; color: string }> = {
-    regular: { label: 'Regular', color: 'text-gray-600 bg-gray-100' },
-    premium: { label: 'Premium', color: 'text-amber-700 bg-amber-100' },
-    vip: { label: 'VIP', color: 'text-purple-700 bg-purple-100' }
+    regular: { label: t.tiers.regular, color: 'text-gray-600 bg-gray-100' },
+    premium: { label: t.tiers.premium, color: 'text-amber-700 bg-amber-100' },
+    vip: { label: t.tiers.vip, color: 'text-purple-700 bg-purple-100' }
   };
 
   const getTierMeta = (tier?: string | null) => {
-    if (!tier) return { label: 'Unassigned', color: 'text-gray-500 bg-gray-100' };
+    if (!tier) return { label: t.tiers.unassigned, color: 'text-gray-500 bg-gray-100' };
     const key = tier.toLowerCase() as keyof typeof tiers;
     return tiers[key] ?? { label: tier, color: 'text-gray-500 bg-gray-100' };
   };
@@ -163,10 +342,10 @@ export default function Customers() {
         recipients: 'all',
         selectedCustomers: []
       });
-      alert('Promotion sent');
+      alert(t.promotion.sent);
     } catch (err: any) {
       console.error('Failed to send promotion', err);
-      alert(err?.message || 'Failed to send promotion');
+      alert(err?.message || t.promotion.failed);
     }
   };
 
@@ -180,7 +359,7 @@ export default function Customers() {
               <div className="relative">
                 <img 
                   src={getAvatarSrc(customer.avatar)} 
-                  alt={customer.name || 'Customer avatar'}
+                  alt={customer.name || t.labels.customerAvatar}
                   className="w-16 h-16 rounded-full object-cover border-2 border-amber-200"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = fallbackAvatar;
@@ -211,7 +390,7 @@ export default function Customers() {
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-600'
                   }`}>
-                    {customer.status}
+                    {t.status[customer.status as keyof typeof t.status] ?? customer.status}
                   </span>
                 </div>
               </div>
@@ -227,7 +406,7 @@ export default function Customers() {
             {/* Customer Info */}
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.modal.contactInfo}</h3>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <Mail size={16} className="text-gray-600" />
@@ -244,18 +423,18 @@ export default function Customers() {
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <Calendar size={16} className="text-gray-600" />
                     <div>
-                      <span className="text-gray-900">Member since {new Date(customer.joinDate).toLocaleDateString()}</span>
-                      <p className="text-xs text-gray-600 mt-1">{customer.totalOrders} orders · €{customer.totalSpent} total spent</p>
+                      <span className="text-gray-900">{t.modal.memberSince} {new Date(customer.joinDate).toLocaleDateString(locale)}</span>
+                      <p className="text-xs text-gray-600 mt-1">{customer.totalOrders} {t.labels.orders} ?? ?'?{customer.totalSpent} {t.modal.totalSpent}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Preferences & Notes</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.modal.preferencesNotes}</h3>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Dietary Preferences</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">{t.modal.dietaryPreferences}</p>
                     <div className="flex flex-wrap gap-1">
                       {customer.preferences.map((pref, index) => (
                         <span key={index} className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
@@ -266,7 +445,7 @@ export default function Customers() {
                   </div>
                   {customer.allergies.length > 0 && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Allergies</p>
+                      <p className="text-sm font-medium text-gray-700 mb-2">{t.modal.allergies}</p>
                       <div className="flex flex-wrap gap-1">
                         {customer.allergies.map((allergy, index) => (
                           <span key={index} className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
@@ -278,7 +457,7 @@ export default function Customers() {
                   )}
                   {customer.notes && (
                     <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Additional Notes</p>
+                      <p className="text-sm font-medium text-gray-700 mb-2">{t.modal.additionalNotes}</p>
                       <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-lg border border-gray-200">{customer.notes}</p>
                     </div>
                   )}
@@ -288,16 +467,16 @@ export default function Customers() {
 
             {/* Order History */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.labels.recentOrders}</h3>
               <div className="space-y-3">
                 {getCustomerOrders(customer.id).map((order) => (
                   <div key={order.id} className="p-4 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                    <p className="font-medium text-gray-900">Order #{order.id}</p>
+                    <p className="font-medium text-gray-900">{t.labels.orderNumber} #{order.id}</p>
                     <p className="text-sm text-gray-600">
                       {order.createdAt || order.eventDate
-                        ? new Date(order.createdAt || order.eventDate).toLocaleDateString()
+                        ? new Date(order.createdAt || order.eventDate).toLocaleDateString(locale)
                         : '—'}
                     </p>
                       </div>
@@ -306,15 +485,15 @@ export default function Customers() {
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {order.status}
+                        {t.status[order.status as keyof typeof t.status] ?? order.status}
                       </span>
                     </div>
                     <p className="text-sm text-gray-700 mb-2">
-                      {order.items?.map(item => item.name).join(', ') || 'No items'}
+                      {order.items?.map(item => item.name).join(', ') || t.labels.noItems}
                     </p>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 capitalize">
-                        {order.serviceType || order.eventType || order.status || 'order'}
+                        {order.serviceType || order.eventType || order.status || t.labels.orderNumber.toLowerCase()}
                       </span>
                       <span className="font-semibold text-gray-900">€{order.total}</span>
                     </div>
@@ -323,29 +502,11 @@ export default function Customers() {
                 {getCustomerOrders(customer.id).length === 0 && (
                   <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                     <Package size={32} className="mx-auto text-gray-400 mb-2" />
-                    <p className="text-gray-500">No orders found</p>
+                    <p className="text-gray-500">{t.labels.noOrders}</p>
                   </div>
                 )}
               </div>
 
-              {/* Quick Actions */}
-              <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
-                <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
-                <div className="flex flex-wrap gap-2">
-                  <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium flex items-center gap-2">
-                    <MessageCircle size={14} />
-                    Send Message
-                  </button>
-                  <button className="px-4 py-2 bg-white text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium flex items-center gap-2">
-                    <Gift size={14} />
-                    Send Offer
-                  </button>
-                  <button className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium flex items-center gap-2">
-                    <Edit size={14} />
-                    Edit Profile
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -353,12 +514,12 @@ export default function Customers() {
     </div>
   );
 
-  const PromotionModal = () => (
+  const renderPromotionModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 font-elegant">Send Promotion</h2>
+            <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.promotion.title}</h2>
             <button onClick={() => setShowPromotionModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
               <X size={24} />
             </button>
@@ -367,29 +528,29 @@ export default function Customers() {
 
         <div className="p-6 space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Promotion Title</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.promotionTitle}</label>
             <input
               type="text"
               value={promotion.title}
               onChange={(e) => setPromotion(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Special Offer, Seasonal Discount..."
+              placeholder={t.promotion.placeholderTitle}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Discount Offer</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.discountOffer}</label>
             <input
               type="text"
               value={promotion.discount}
               onChange={(e) => setPromotion(prev => ({ ...prev, discount: e.target.value }))}
-              placeholder="20% OFF, €25 discount, Free dessert..."
+              placeholder={t.promotion.placeholderDiscount}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Valid Until</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.validUntil}</label>
             <input
               type="date"
               value={promotion.validUntil}
@@ -399,18 +560,18 @@ export default function Customers() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.message}</label>
             <textarea
               value={promotion.message}
               onChange={(e) => setPromotion(prev => ({ ...prev, message: e.target.value }))}
               rows={4}
-              placeholder="Write your promotion message here..."
+              placeholder={t.promotion.placeholderMessage}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">Send To</label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">{t.promotion.sendTo}</label>
             <div className="space-y-2">
               {['all', 'active', 'vip'].map(recipientType => (
                 <label key={recipientType} className="flex items-center gap-3">
@@ -423,9 +584,9 @@ export default function Customers() {
                     className="text-amber-600 focus:ring-amber-500"
                   />
                   <span className="text-gray-700 capitalize">
-                    {recipientType === 'all' ? 'All Customers' :
-                     recipientType === 'active' ? 'Active Customers Only' :
-                     'VIP Customers Only'}
+                    {recipientType === 'all' ? t.promotion.allCustomers :
+                     recipientType === 'active' ? t.promotion.activeCustomersOnly :
+                     t.promotion.vipCustomersOnly}
                   </span>
                 </label>
               ))}
@@ -439,13 +600,13 @@ export default function Customers() {
               className="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
             >
               <Send size={20} />
-              Send Promotion
+              {t.promotion.send}
             </button>
             <button
               onClick={() => setShowPromotionModal(false)}
               className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
-              Cancel
+              {t.promotion.cancel}
             </button>
           </div>
         </div>
@@ -506,24 +667,32 @@ export default function Customers() {
                 <Users className="text-amber-700" size={20} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-600">Administrator</p>
+                <p className="font-semibold text-gray-900">{t.admin.user}</p>
+                <p className="text-sm text-gray-600">{t.admin.role}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
               <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
                 <Menu size={20} />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 font-elegant">Customer Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h1>
             </div>
+            <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
           </div>
         </header>
 
@@ -531,21 +700,21 @@ export default function Customers() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 font-elegant">Customers</h2>
-              <p className="text-gray-600">Manage customer profiles, view order history, and send promotions</p>
+              <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.sectionTitle}</h2>
+              <p className="text-gray-600">{t.header.subtitle}</p>
             </div>
             <button
               onClick={() => setShowPromotionModal(true)}
               className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2"
             >
               <Gift size={20} />
-              Send Promotion
+              {t.promotion.send}
             </button>
           </div>
 
           {/* Tabs */}
           <div className="bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm mb-6">
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-gray-100 overflow-x-auto whitespace-nowrap">
               <button
                 onClick={() => setActiveTab('list')}
                 className={`flex-1 px-6 py-4 font-medium transition-colors ${
@@ -554,7 +723,7 @@ export default function Customers() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Customer List
+                {t.tabs.list}
               </button>
               <button
                 onClick={() => setActiveTab('history')}
@@ -564,7 +733,7 @@ export default function Customers() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Order History
+                {t.tabs.history}
               </button>
             </div>
 
@@ -578,7 +747,7 @@ export default function Customers() {
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                       <input
                         type="text"
-                        placeholder="Search customers..."
+                        placeholder={t.filters.searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
@@ -590,13 +759,13 @@ export default function Customers() {
                       onChange={(e) => setStatusFilter(e.target.value)}
                       className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                     >
-                      <option value="all">All Status</option>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
+                      <option value="all">{t.filters.allStatus}</option>
+                      <option value="active">{t.filters.active}</option>
+                      <option value="inactive">{t.filters.inactive}</option>
                     </select>
 
                     <div className="text-sm text-gray-600 flex items-center justify-center">
-                      {filteredCustomers.length} customers found
+                      {filteredCustomers.length} {t.filters.found}
                     </div>
                   </div>
 
@@ -616,7 +785,7 @@ export default function Customers() {
                               <div className="relative">
                                 <img 
                                   src={getAvatarSrc(customer.avatar)} 
-                                  alt={customer.name || 'Customer avatar'}
+                                  alt={customer.name || t.labels.customerAvatar}
                                   className="w-12 h-12 rounded-full object-cover border-2 border-amber-200"
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).src = fallbackAvatar;
@@ -641,7 +810,7 @@ export default function Customers() {
                                       ? 'bg-green-100 text-green-800'
                                       : 'bg-gray-100 text-gray-600'
                                   }`}>
-                                    {customer.status}
+                                    {t.status[customer.status as keyof typeof t.status] ?? customer.status}
                                   </span>
                                 </div>
                               </div>
@@ -669,19 +838,19 @@ export default function Customers() {
                             <div className="grid grid-cols-3 gap-4 pt-3 border-t border-gray-100">
                               <div className="text-center">
                                 <p className="text-lg font-bold text-gray-900">{customer.totalOrders}</p>
-                                <p className="text-xs text-gray-600">Orders</p>
+                                <p className="text-xs text-gray-600">{t.labels.orders}</p>
                               </div>
                               <div className="text-center">
                                 <p className="text-lg font-bold text-gray-900">€{customer.totalSpent}</p>
-                                <p className="text-xs text-gray-600">Total</p>
+                                <p className="text-xs text-gray-600">{t.labels.total}</p>
                               </div>
                               <div className="text-center">
                                 <p className="text-sm font-bold text-gray-900">
                                   {customer.lastOrder
-                                    ? new Date(customer.lastOrder).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                    ? new Date(customer.lastOrder).toLocaleDateString(locale, { month: 'short', day: 'numeric' })
                                     : '—'}
                                 </p>
-                                <p className="text-xs text-gray-600">Last Order</p>
+                                <p className="text-xs text-gray-600">{t.labels.lastOrder}</p>
                               </div>
                             </div>
                           </div>
@@ -693,11 +862,11 @@ export default function Customers() {
                               className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium flex items-center justify-center gap-1"
                             >
                               <Eye size={14} />
-                              View
+                              {t.labels.view}
                             </button>
                             <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center gap-1">
                               <MessageCircle size={14} />
-                              Contact
+                              {t.labels.contact}
                             </button>
                           </div>
                         </div>
@@ -708,7 +877,7 @@ export default function Customers() {
                   {filteredCustomers.length === 0 && (
                     <div className="text-center py-12 bg-white rounded-2xl">
                       <Users size={48} className="mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500 text-lg">No customers found matching your criteria</p>
+                      <p className="text-gray-500 text-lg">{t.labels.noCustomers}</p>
                     </div>
                   )}
                 </div>
@@ -717,7 +886,7 @@ export default function Customers() {
               {/* Order History Tab */}
               {activeTab === 'history' && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.labels.recentOrders}</h3>
                   <div className="space-y-3">
                     {orders.map((order) => {
                       const customerId = 'customerId' in (order as any)
@@ -731,7 +900,7 @@ export default function Customers() {
                               <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
                                 <img 
                                   src={getAvatarSrc(customer?.avatar)} 
-                                  alt={customer?.name || 'Customer avatar'}
+                                  alt={customer?.name || t.labels.customerAvatar}
                                   className="w-10 h-10 rounded-full object-cover"
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).src = fallbackAvatar;
@@ -740,14 +909,14 @@ export default function Customers() {
                               </div>
                               <div>
                                 <p className="font-semibold text-gray-900">{customer?.name}</p>
-                                <p className="text-sm text-gray-600">Order #{order.id}</p>
+                                <p className="text-sm text-gray-600">{t.labels.orderNumber} #{order.id}</p>
                               </div>
                             </div>
                             <div className="text-right">
                               <p className="font-bold text-gray-900">${order.total}</p>
                               <p className="text-sm text-gray-600">
                                 {order.createdAt || order.eventDate
-                                  ? new Date(order.createdAt || order.eventDate).toLocaleDateString()
+                                  ? new Date(order.createdAt || order.eventDate).toLocaleDateString(locale)
                                   : '—'}
                               </p>
                             </div>
@@ -756,7 +925,7 @@ export default function Customers() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm text-gray-700 mb-1">
-                                {order.items?.map(item => item.name).join(', ') || 'No items'}
+                                {order.items?.map(item => item.name).join(', ') || t.labels.noItems}
                               </p>
                               <div className="flex items-center gap-2">
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -764,7 +933,7 @@ export default function Customers() {
                                     ? 'bg-green-100 text-green-800'
                                     : 'bg-yellow-100 text-yellow-800'
                                 }`}>
-                                  {order.status}
+                                  {t.status[order.status as keyof typeof t.status] ?? order.status}
                                 </span>
                                 <span className="text-xs text-gray-600 capitalize">
                                   {order.serviceType || order.eventType || order.status || 'order'}
@@ -775,7 +944,7 @@ export default function Customers() {
                               onClick={() => customer && setSelectedCustomer(customer)}
                               className="px-3 py-1 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors text-sm font-medium"
                             >
-                              View Profile
+                              {t.labels.viewProfile}
                             </button>
                           </div>
                         </div>
@@ -797,7 +966,7 @@ export default function Customers() {
         />
       )}
 
-      {showPromotionModal && <PromotionModal />}
+      {showPromotionModal && renderPromotionModal()}
     </div>
   );
 }

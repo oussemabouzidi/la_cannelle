@@ -1,17 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronRight, Phone, Mail, MapPin, User, Lock, Eye, EyeOff, Calendar, Heart, CreditCard, Settings, LogOut, Bell, Shield, Package } from 'lucide-react';
+import { Menu, X, Phone, Mail, MapPin, Heart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { connectTranslations } from '@/lib/translations/connect';
+import { commonTranslations } from '@/lib/translations/common';
 
 export default function AccountPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const translation = useTranslation('connect');
   const t = translation.t as typeof connectTranslations.EN;
   const { language, toggleLanguage } = translation;
+  const commonNav = commonTranslations[language].nav;
+  const commonFooter = commonTranslations[language].footer;
   const basePreferences = {
     newsletter: false,
     smsNotifications: false,
@@ -93,32 +96,6 @@ export default function AccountPage() {
   };
 
   // Mock data
-  const orders = [
-    {
-      id: 1,
-      eventName: 'Corporate Gala Dinner',
-      date: '2024-12-15',
-      guests: 120,
-      status: 'confirmed',
-      total: 8450
-    },
-    {
-      id: 2,
-      eventName: 'Product Launch Party',
-      date: '2024-11-20',
-      guests: 80,
-      status: 'pending',
-      total: 5200
-    },
-    {
-      id: 3,
-      eventName: 'Annual Company Celebration',
-      date: '2024-10-05',
-      guests: 200,
-      status: 'completed',
-      total: 15200
-    }
-  ];
 
   const favorites = [
     {
@@ -138,23 +115,6 @@ export default function AccountPage() {
       name: 'Chocolate Fondant with Raspberry Coulis',
       category: 'Dessert',
       price: 16
-    }
-  ];
-
-  const paymentMethods = [
-    {
-      id: 1,
-      type: 'visa',
-      last4: '4242',
-      expiry: '12/25',
-      default: true
-    },
-    {
-      id: 2,
-      type: 'mastercard',
-      last4: '8888',
-      expiry: '08/24',
-      default: false
     }
   ];
 
@@ -221,24 +181,18 @@ export default function AccountPage() {
     }
   };
 
-  const TabContent = () => {
+  const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <ProfileTab />;
-      case 'orders':
-        return <OrdersTab />;
+        return renderProfileTab();
       case 'favorites':
-        return <FavoritesTab />;
-      case 'payments':
-        return <PaymentsTab />;
-      case 'settings':
-        return <SettingsTab />;
+        return renderFavoritesTab();
       default:
-        return <ProfileTab />;
+        return renderProfileTab();
     }
   };
 
-  const ProfileTab = () => (
+  const renderProfileTab = () => (
     <div className="space-y-8">
       {/* Personal Information */}
       <div className="bg-white rounded-2xl shadow-lg border border-stone-100 p-8">
@@ -394,46 +348,8 @@ export default function AccountPage() {
     </div>
   );
 
-  const OrdersTab = () => (
-    <div className="space-y-8">
-      <div className="bg-white rounded-2xl shadow-lg border border-stone-100 p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 font-elegant">
-          {t.orders.title}
-        </h3>
-        
-        <div className="space-y-6">
-          {orders.map((order) => (
-            <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900">{order.eventName}</h4>
-                  <p className="text-gray-600 text-sm mt-1">
-                    {new Date(order.date).toLocaleDateString()} • {order.guests} guests
-                  </p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  order.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                  order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                  order.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {t.orders.status[order.status]}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xl font-bold text-amber-700">${order.total}</span>
-                <button className="text-amber-600 font-semibold hover:text-amber-700 transition-colors">
-                  {t.orders.viewDetails}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
-  const FavoritesTab = () => (
+  const renderFavoritesTab = () => (
     <div className="bg-white rounded-2xl shadow-lg border border-stone-100 p-8">
       <h3 className="text-2xl font-bold text-gray-900 mb-6 font-elegant">
         {t.favorites.title}
@@ -463,104 +379,7 @@ export default function AccountPage() {
     </div>
   );
 
-  const PaymentsTab = () => (
-    <div className="space-y-8">
-      <div className="bg-white rounded-2xl shadow-lg border border-stone-100 p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 font-elegant">
-          {t.payments.title}
-        </h3>
-        
-        <div className="space-y-4 mb-6">
-          {paymentMethods.map((card) => (
-            <div key={card.id} className="flex justify-between items-center p-4 border border-gray-200 rounded-lg">
-              <div className="flex items-center gap-4">
-                <CreditCard className="text-gray-400" size={24} />
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    {card.type.toUpperCase()} •••• {card.last4}
-                  </p>
-                  <p className="text-gray-600 text-sm">Expires {card.expiry}</p>
-                </div>
-                {card.default && (
-                  <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-semibold">
-                    {t.payments.default}
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {!card.default && (
-                  <button className="text-amber-600 hover:text-amber-700 transition-colors text-sm">
-                    {t.payments.setDefault}
-                  </button>
-                )}
-                <button className="text-red-600 hover:text-red-700 transition-colors text-sm">
-                  {t.payments.remove}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <button className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-amber-400 hover:text-amber-600 transition-colors flex items-center justify-center gap-2">
-          <CreditCard size={20} />
-          {t.payments.addCard}
-        </button>
-      </div>
-    </div>
-  );
 
-  const SettingsTab = () => (
-    <div className="space-y-8">
-      <div className="bg-white rounded-2xl shadow-lg border border-stone-100 p-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 font-elegant">
-          {t.settings.title}
-        </h3>
-        
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Shield className="text-gray-400" size={20} />
-              <span className="font-semibold text-gray-900">{t.settings.security}</span>
-            </div>
-            <ChevronRight className="text-gray-400" size={20} />
-          </div>
-          
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Bell className="text-gray-400" size={20} />
-              <span className="font-semibold text-gray-900">{t.settings.notifications}</span>
-            </div>
-            <ChevronRight className="text-gray-400" size={20} />
-          </div>
-          
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Settings className="text-gray-400" size={20} />
-              <span className="font-semibold text-gray-900">{t.settings.privacy}</span>
-            </div>
-            <ChevronRight className="text-gray-400" size={20} />
-          </div>
-          
-          <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <User className="text-gray-400" size={20} />
-              <span className="font-semibold text-gray-900">{t.settings.language}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-600">{language}</span>
-              <ChevronRight className="text-gray-400" size={20} />
-            </div>
-          </div>
-          
-          <div className="border-t pt-6">
-            <button className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">
-              {t.settings.delete}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -617,8 +436,8 @@ export default function AccountPage() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">Home</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">About</a>
+              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{commonNav.home}</a>
+              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{commonNav.about}</a>
               <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
               <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
               <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
@@ -664,11 +483,11 @@ export default function AccountPage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Home</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">About</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Services</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Menus</a>
-                <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">Contact</a>
+                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.home}</a>
+                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.about}</a>
+                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.services}</a>
+                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.menus}</a>
+                <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{commonNav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
@@ -709,7 +528,7 @@ export default function AccountPage() {
         <div className="max-w-7xl mx-auto">
           {/* Tab Navigation */}
           <div className="flex overflow-x-auto gap-1 mb-8 pb-2">
-            {['profile', 'orders', 'favorites', 'payments', 'settings'].map((tab) => (
+            {['profile', 'favorites'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -726,7 +545,7 @@ export default function AccountPage() {
 
           {/* Tab Content */}
           <div className={`transition-all duration-500 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <TabContent />
+            {renderTabContent()}
           </div>
         </div>
       </section>
@@ -740,17 +559,17 @@ export default function AccountPage() {
               <p className="text-gray-400 italic">Crafting unforgettable culinary experiences since 2010</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Quick Links</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.quickLinks}</h4>
               <div className="flex flex-col gap-2">
-                <a href="/home" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Home</a>
-                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">About</a>
-                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Services</a>
-                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Menus</a>
-                <a href="/contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Contact</a>
+                <a href="/home" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.home}</a>
+                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.about}</a>
+                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.services}</a>
+                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.menus}</a>
+                <a href="/contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.contact}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Contact</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.contact}</h4>
               <div className="flex flex-col gap-3 text-gray-400">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Phone size={18} />
@@ -767,7 +586,7 @@ export default function AccountPage() {
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Follow Us</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.followUs}</h4>
               <div className="flex flex-col gap-2 text-gray-400">
                 <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">Instagram</a>
                 <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-white transition-colors duration-300">TikTok</a>

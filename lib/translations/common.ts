@@ -1,6 +1,29 @@
-// Common translations used across multiple pages
+import type { Language } from '../hooks/useTranslation';
 
-export const commonTranslations = {
+type CommonTranslations = Record<Language, {
+  nav: {
+    home: string;
+    about: string;
+    services: string;
+    menus: string;
+    contact: string;
+    connect: string;
+    order: string;
+  };
+  footer: {
+    quickLinks: string;
+    contact: string;
+    followUs: string;
+  };
+  buttons: {
+    next: string;
+    back: string;
+    confirm: string;
+    backToHome: string;
+  };
+}>;
+
+export const commonTranslations: CommonTranslations = {
   EN: {
     nav: {
       home: 'Home',
@@ -9,28 +32,18 @@ export const commonTranslations = {
       menus: 'Menus',
       contact: 'Contact',
       connect: 'Connect',
-      order: 'Order Now',
+      order: 'Order',
     },
-    common: {
-      loading: 'Loading...',
-      error: 'An error occurred',
-      success: 'Success',
-      cancel: 'Cancel',
-      save: 'Save',
-      delete: 'Delete',
-      edit: 'Edit',
-      add: 'Add',
-      remove: 'Remove',
-      search: 'Search',
-      filter: 'Filter',
-      close: 'Close',
-      submit: 'Submit',
-      back: 'Back',
+    footer: {
+      quickLinks: 'Quick Links',
+      contact: 'Contact',
+      followUs: 'Follow Us',
+    },
+    buttons: {
       next: 'Next',
-      previous: 'Previous',
+      back: 'Back',
       confirm: 'Confirm',
-      yes: 'Yes',
-      no: 'No',
+      backToHome: 'Back to Home',
     },
   },
   DE: {
@@ -41,28 +54,18 @@ export const commonTranslations = {
       menus: 'Menüs',
       contact: 'Kontakt',
       connect: 'Verbinden',
-      order: 'Jetzt bestellen',
+      order: 'Bestellen',
     },
-    common: {
-      loading: 'Lädt...',
-      error: 'Ein Fehler ist aufgetreten',
-      success: 'Erfolg',
-      cancel: 'Abbrechen',
-      save: 'Speichern',
-      delete: 'Löschen',
-      edit: 'Bearbeiten',
-      add: 'Hinzufügen',
-      remove: 'Entfernen',
-      search: 'Suchen',
-      filter: 'Filtern',
-      close: 'Schließen',
-      submit: 'Absenden',
-      back: 'Zurück',
+    footer: {
+      quickLinks: 'Schnellzugriff',
+      contact: 'Kontakt',
+      followUs: 'Folgen Sie uns',
+    },
+    buttons: {
       next: 'Weiter',
-      previous: 'Zurück',
+      back: 'Zurück',
       confirm: 'Bestätigen',
-      yes: 'Ja',
-      no: 'Nein',
+      backToHome: 'Zurück zur Startseite',
     },
   },
 };

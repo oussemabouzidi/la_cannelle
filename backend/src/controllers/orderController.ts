@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { orderService } from '../services/orderService';
+import { systemService } from '../services/systemService';
 import { AppError } from '../middleware/errorHandler';
 
 export const orderController = {
@@ -30,13 +31,30 @@ export const orderController = {
       throw new AppError('Contact email and phone are required', 400);
     }
 
+    const eventDateObj = eventDate ? new Date(eventDate) : new Date();
+
+    const systemStatus = await systemService.getSystemStatus();
+    if (systemStatus?.orderingPaused) {
+      return res.status(403).json({ error: 'Ordering is currently paused' });
+    }
+
+    const closedDates = await systemService.getClosedDates();
+    const eventKey = eventDateObj.toISOString().split('T')[0];
+    const isClosed = closedDates.some((d) => {
+      const closedKey = new Date(d.date).toISOString().split('T')[0];
+      return closedKey === eventKey;
+    });
+    if (isClosed) {
+      return res.status(403).json({ error: 'Selected date is closed for orders' });
+    }
+
     const order = await orderService.createOrder({
       userId: req.user?.id,
       clientName: clientName || 'Guest',
       contactEmail,
       phone,
       eventType: eventType || serviceType || businessType || 'Custom Event',
-      eventDate: eventDate ? new Date(eventDate) : new Date(),
+      eventDate: eventDateObj,
       eventTime: eventTime || 'TBD',
       guests: parseInt(guests) || 1,
       location: location || postalCode || 'Not provided',

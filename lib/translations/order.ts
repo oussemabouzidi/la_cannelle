@@ -1,254 +1,331 @@
-import { commonTranslations } from './common';
+import type { Language } from '../hooks/useTranslation';
 
-// Steps configuration for order page
-const stepsConfig = [
-  { key: 'eventType', label: 'Event Type' },
-  { key: 'service', label: 'Service' },
-  { key: 'event', label: 'Event Info' },
-  { key: 'menu', label: 'Menu Selection' },
-  { key: 'starters', label: 'Starters' },
-  { key: 'mains', label: 'Mains' },
-  { key: 'sides', label: 'Sides' },
-  { key: 'desserts', label: 'Desserts' },
-  { key: 'drinks', label: 'Drinks' },
-  { key: 'accessories', label: 'Accessories' },
-  { key: 'details', label: 'Delivery Details' },
-  { key: 'payment', label: 'Payment' }
-];
+type OrderTranslations = {
+  nav: { connect: string };
+  buttons: { back: string; next: string; confirm: string; backToHome: string };
+  eventType: {
+    title: string;
+    subtitle: string;
+    options: {
+      business: { title: string; subtitle: string };
+      private: { title: string; subtitle: string };
+    };
+  };
+  serviceType: {
+    title: string;
+    subtitle: string;
+    options: {
+      business: { key: string; title: string; description: string }[];
+      private: { key: string; title: string; description: string }[];
+    };
+  };
+  eventInfo: {
+    title: string;
+    subtitle: string;
+    date: string;
+    time: string;
+    guests: string;
+    minGuests: string;
+    location: string;
+  };
+  menuSelection: { title: string; subtitle: string };
+  productSelection: {
+    orderSummary: string;
+    starters: string;
+    mains: string;
+    sides: string;
+    desserts: string;
+    drinks: string;
+    subtitles: {
+      starters: string;
+      mains: string;
+      sides: string;
+      desserts: string;
+      drinks: string;
+    };
+  };
+  accessories: {
+    title: string;
+    subtitle: string;
+    include: string;
+    deliveryDate: string;
+    postalCode: string;
+    continueWithout: string;
+    orderOverview: string;
+    items: {
+      id: string;
+      name: string;
+      description: string;
+      details?: string;
+      price: number;
+      unit: string;
+      minQuantity?: number;
+    }[];
+  };
+  delivery: {
+    title: string;
+    subtitle: string;
+    contact: { first: string; last: string; email: string; phone: string; company: string };
+    requests: string;
+  };
+  payment: {
+    title: string;
+    subtitle: string;
+    method: string;
+    cardNumber: string;
+    expiry: string;
+    cvc: string;
+    name: string;
+    terms: string;
+    payCta: string;
+  };
+};
 
-export const orderTranslations = {
-  EN: {
-    ...commonTranslations.EN,
-    steps: stepsConfig.reduce((acc, step) => {
-      acc[step.key] = step.label;
-      return acc;
-    }, {} as Record<string, string>),
-    eventType: {
-      title: 'Choose your occasion',
-      subtitle: 'Select whether this is a business or private event',
-      options: {
-        business: {
-          title: 'Business Event',
-          subtitle: 'Teams, clients, fairs'
-        },
-        private: {
-          title: 'Private Occasion',
-          subtitle: 'Family and friends celebrations'
-        }
-      }
+const en: OrderTranslations = {
+  nav: { connect: 'Connect' },
+  buttons: { back: 'Back', next: 'Next', confirm: 'Confirm', backToHome: 'Back to Home' },
+  eventType: {
+    title: 'Select your occasion',
+    subtitle: 'Tell us what you’re planning',
+    options: {
+      business: { title: 'Business', subtitle: 'Corporate, meetings, launches' },
+      private: { title: 'Private', subtitle: 'Weddings, parties, family events' },
     },
-    serviceType: {
-      title: 'Service focus',
-      subtitle: 'Tell us what kind of catering you need next',
-      options: {
-        business: [
-          { key: 'office', title: 'Office Catering', description: 'In-office lunches and meetings' },
-          { key: 'corporate', title: 'Corporate Events', description: 'Receptions, galas and client dinners' },
-          { key: 'fair', title: 'Event & Fair Catering', description: 'Trade shows and public events' }
-        ],
-        private: [
-          { key: 'wedding', title: 'Wedding', description: 'Ceremony, dinner and brunch' },
-          { key: 'party', title: 'Partyservice', description: 'Birthdays and private parties' }
-        ]
-      }
-    },
-    eventInfo: {
-      title: 'Event Information',
-      subtitle: 'Tell us about your event',
-      date: 'Delivery Date',
-      time: 'Event Time',
-      guests: 'Number of People',
-      location: 'Postal Code',
-      minGuests: 'Minimum 10 guests required'
-    },
-    menuSelection: {
-      title: 'Menu Selection',
-      subtitle: 'Choose your preferred menu'
-    },
-    productSelection: {
-      title: 'Menu Items',
-      subtitle: 'Select items from each category',
-      orderSummary: 'Order Summary',
-      starters: 'Starters',
-      mains: 'Main Courses',
-      sides: 'Sides',
-      desserts: 'Desserts',
-      drinks: 'Beverages'
-    },
-    accessories: {
-      title: 'Accessories & Extras',
-      subtitle: 'Add finishing touches to your event',
-      orderOverview: 'Order Overview',
-      deliveryDate: 'Delivery Date',
-      postalCode: 'Postal Code',
-      continueWithout: 'To Delivery Details without selection',
-      accessories: [
-        {
-          id: 1,
-          name: 'Standard Cutlery',
-          description: 'Set of knife, fork and/or spoon - based on order.',
-          details: 'Rental, incl. cleaning.',
-          price: 0,
-          type: 'rental',
-          unit: 'per portion',
-          minQuantity: 1
-        },
-        {
-          id: 2,
-          name: 'Dessert Cutlery',
-          description: 'Set of dessert fork and/or spoon - based on order.',
-          details: 'Rental, incl. cleaning.',
-          price: 0,
-          type: 'rental',
-          unit: 'per portion',
-          minQuantity: 1
-        },
-        {
-          id: 3,
-          name: 'Dessert Plate',
-          description: 'Premium porcelain dessert plates',
-          details: 'Elegant design, dishwasher safe',
-          price: 2.30,
-          type: 'purchase',
-          unit: 'per portion',
-          minQuantity: 10
-        }
-      ]
-    },
-    buttons: {
-      next: 'Continue',
-      back: 'Back',
-      confirm: 'Confirm Order',
-      backToHome: 'Back to Home'
-    },
-    review: {
-      title: 'Review Your Order',
-      subtitle: 'Please review all details before confirming',
-      orderSummary: 'Order Summary',
-      eventDetails: 'Event Details',
-      items: 'Items',
-      subtotal: 'Subtotal',
-      serviceFee: 'Service Fee',
-      total: 'Total',
-      confirm: 'Confirm Order',
-      minOrder: "Minimum order of ƒ'ª388.80 required"
-    }
   },
-  DE: {
-    ...commonTranslations.DE,
-    steps: stepsConfig.reduce((acc, step) => {
-      acc[step.key] = step.label;
-      return acc;
-    }, {} as Record<string, string>),
-    eventType: {
-      title: 'Anlass wählen',
-      subtitle: 'Business Event oder privater Anlass auswählen',
-      options: {
-        business: {
-          title: 'Business Event',
-          subtitle: 'Teams, Kunden, Messen'
-        },
-        private: {
-          title: 'Privater Anlass',
-          subtitle: 'Familie & Freunde feiern'
-        }
-      }
+  serviceType: {
+    title: 'Choose a service',
+    subtitle: 'Pick the format that fits your event',
+    options: {
+      business: [
+        { key: 'buffet', title: 'Buffet', description: 'Flexible self-serve format.' },
+        { key: 'plated', title: 'Plated', description: 'Restaurant-style service.' },
+        { key: 'fingerfood', title: 'Finger Food', description: 'Light bites for networking.' },
+      ],
+      private: [
+        { key: 'family', title: 'Family Style', description: 'Shared dishes for lively tables.' },
+        { key: 'cocktail', title: 'Cocktail', description: 'Elegant canapés and drinks.' },
+        { key: 'bbq', title: 'BBQ', description: 'Outdoor and casual experiences.' },
+      ],
     },
-    serviceType: {
-      title: 'Leistung auswählen',
-      subtitle: 'Was benötigen Sie als nächstes?',
-      options: {
-        business: [
-          { key: 'office', title: 'Office Catering', description: 'Lunch & Meetings im Büro' },
-          { key: 'corporate', title: 'Corporate Events', description: 'Empfänge, Galas, Kundenevents' },
-          { key: 'fair', title: 'Event- & Messe-Catering', description: 'Messen und öffentliche Events' }
-        ],
-        private: [
-          { key: 'wedding', title: 'Hochzeit', description: 'Zeremonie, Dinner & Brunch' },
-          { key: 'party', title: 'Partyservice', description: 'Geburtstage & private Feiern' }
-        ]
-      }
+  },
+  eventInfo: {
+    title: 'Event details',
+    subtitle: 'When and where is your event?',
+    date: 'Event Date',
+    time: 'Event Time',
+    guests: 'Number of Guests',
+    minGuests: 'Minimum 10 guests',
+    location: 'Postal Code / Location',
+  },
+  menuSelection: { title: 'Menu selection', subtitle: 'Pick a curated menu' },
+  productSelection: {
+    orderSummary: 'Order summary',
+    starters: 'Starters',
+    mains: 'Mains',
+    sides: 'Sides',
+    desserts: 'Desserts',
+    drinks: 'Drinks',
+    subtitles: {
+      starters: 'Begin with light starters.',
+      mains: 'Choose the main dishes.',
+      sides: 'Pick sides to complement the menu.',
+      desserts: 'Sweet finishes for your guests.',
+      drinks: 'Add beverages for everyone.',
     },
-    eventInfo: {
-      title: 'Veranstaltungsinformation',
-      subtitle: 'Erzählen Sie uns von Ihrer Veranstaltung',
-      date: 'Lieferdatum',
-      time: 'Uhrzeit',
-      guests: 'Personenanzahl',
-      location: 'Postleitzahl',
-      minGuests: 'Mindestens 10 Personen erforderlich'
+  },
+  accessories: {
+    title: 'Accessories & extras',
+    subtitle: 'Add rentals and extras',
+    include: 'Include accessories',
+    deliveryDate: 'Delivery Date',
+    postalCode: 'Postal Code',
+    continueWithout: 'Continue without accessories',
+    orderOverview: 'Delivery details',
+    items: [
+      {
+        id: 'premium-dinnerware',
+        name: 'Premium Dinnerware',
+        description: 'Ceramic plate, cutlery, and linen napkin per guest.',
+        details: 'Collected after the event.',
+        price: 3.0,
+        unit: '/ guest',
+      },
+      {
+        id: 'eco-disposables',
+        name: 'Eco Disposable Set',
+        description: 'Compostable plate, fork, knife, and napkin per guest.',
+        details: 'Ideal for outdoor events.',
+        price: 1.5,
+        unit: '/ guest',
+      },
+      {
+        id: 'glassware',
+        name: 'Glassware Set',
+        description: 'Water and wine glasses per guest.',
+        details: 'Includes wash and pickup.',
+        price: 1.8,
+        unit: '/ guest',
+      },
+      {
+        id: 'table-linens',
+        name: 'Table Linens',
+        description: 'Clean white table linen per guest seat.',
+        details: 'Pressed and delivered with setup.',
+        price: 1.2,
+        unit: '/ guest',
+      },
+      {
+        id: 'serving-utensils',
+        name: 'Serving Utensils',
+        description: 'Serving spoons and tongs for buffet lines.',
+        details: 'Included with menu orders.',
+        price: 0,
+        unit: '',
+      },
+    ],
+  },
+  delivery: {
+    title: 'Delivery details',
+    subtitle: 'How can we reach you?',
+    contact: { first: 'First Name', last: 'Last Name', email: 'Email Address', phone: 'Phone Number', company: 'Company (Optional)' },
+    requests: 'Special Requests',
+  },
+  payment: {
+    title: 'Payment Details',
+    subtitle: 'Secure payment with SSL encryption',
+    method: 'Select Payment Method',
+    cardNumber: 'Card Number',
+    expiry: 'Expiry Date',
+    cvc: 'CVC',
+    name: 'Name on Card',
+    terms: 'I agree to the Terms & Conditions and Privacy Policy.',
+    payCta: 'Pay securely',
+  },
+};
+
+const de: OrderTranslations = {
+  nav: { connect: 'Verbinden' },
+  buttons: { back: 'Zurück', next: 'Weiter', confirm: 'Bestätigen', backToHome: 'Zurück zur Startseite' },
+  eventType: {
+    title: 'Anlass wählen',
+    subtitle: 'Erzählen Sie uns von Ihrem Event',
+    options: {
+      business: { title: 'Business', subtitle: 'Corporate, Meetings, Launches' },
+      private: { title: 'Privat', subtitle: 'Hochzeiten, Feiern, Familie' },
     },
-    menuSelection: {
-      title: 'Menü-Auswahl',
-      subtitle: 'Wählen Sie Ihr bevorzugtes Menü'
+  },
+  serviceType: {
+    title: 'Service wählen',
+    subtitle: 'Wählen Sie das passende Format',
+    options: {
+      business: [
+        { key: 'buffet', title: 'Buffet', description: 'Flexibles Self-Service Konzept.' },
+        { key: 'plated', title: 'Gedecktes Menü', description: 'Service wie im Restaurant.' },
+        { key: 'fingerfood', title: 'Fingerfood', description: 'Snacks für Networking.' },
+      ],
+      private: [
+        { key: 'family', title: 'Family Style', description: 'Geteilte Gerichte für große Tafeln.' },
+        { key: 'cocktail', title: 'Cocktail', description: 'Elegante Häppchen und Drinks.' },
+        { key: 'bbq', title: 'Grill', description: 'Locker und im Freien.' },
+      ],
     },
-    productSelection: {
-      title: 'Menü-Artikel',
-      subtitle: 'Wählen Sie Artikel aus jeder Kategorie',
-      orderSummary: 'Bestellübersicht',
-      starters: 'Vorspeisen',
-      mains: 'Hauptgerichte',
-      sides: 'Beilagen',
-      desserts: 'Nachspeisen',
-      drinks: 'Getränke'
+  },
+  eventInfo: {
+    title: 'Eventdetails',
+    subtitle: 'Wann und wo findet es statt?',
+    date: 'Datum',
+    time: 'Uhrzeit',
+    guests: 'Anzahl Gäste',
+    minGuests: 'Mindestens 10 Gäste',
+    location: 'Postleitzahl / Ort',
+  },
+  menuSelection: { title: 'Menüauswahl', subtitle: 'Wählen Sie ein kuratiertes Menü' },
+  productSelection: {
+    orderSummary: 'Bestellübersicht',
+    starters: 'Vorspeisen',
+    mains: 'Hauptgänge',
+    sides: 'Beilagen',
+    desserts: 'Desserts',
+    drinks: 'Getränke',
+    subtitles: {
+      starters: 'Starte mit leichten Vorspeisen.',
+      mains: 'Waehle die Hauptgaenge.',
+      sides: 'Ergaenze mit passenden Beilagen.',
+      desserts: 'Suesser Abschluss fuer deine Gaeste.',
+      drinks: 'Fuege Getraenke fuer alle hinzu.',
     },
-    accessories: {
-      title: 'Zubehör & Extras',
-      subtitle: 'Fügen Sie letzte Details zu Ihrer Veranstaltung hinzu',
-      orderOverview: 'Bestellübersicht',
-      deliveryDate: 'Lieferdatum',
-      postalCode: 'Postleitzahl',
-      continueWithout: 'Zu Lieferdetails ohne Auswahl',
-      accessories: [
-        {
-          id: 1,
-          name: 'Standard Besteck',
-          description: 'Set aus Messer, Gabel und/oder Löffel - basierend auf Bestellung.',
-          details: 'Miete, inkl. Reinigung.',
-          price: 0,
-          type: 'rental',
-          unit: 'pro Portion',
-          minQuantity: 1
-        },
-        {
-          id: 2,
-          name: 'Dessertbesteck',
-          description: 'Set aus Dessertgabel und/oder -löffel - basierend auf Bestellung.',
-          details: 'Miete, inkl. Reinigung.',
-          price: 0,
-          type: 'rental',
-          unit: 'pro Portion',
-          minQuantity: 1
-        },
-        {
-          id: 3,
-          name: 'Dessertteller',
-          description: 'Premium Porzellan Dessertteller',
-          details: 'Elegantes Design, spülmaschinenfest',
-          price: 2.30,
-          type: 'purchase',
-          unit: 'pro Portion',
-          minQuantity: 10
-        }
-      ]
-    },
-    buttons: {
-      next: 'Weiter',
-      back: 'Zurück',
-      confirm: 'Bestellung bestätigen',
-      backToHome: 'Zurück zur Startseite'
-    },
-    review: {
-      title: 'Bestellung überprüfen',
-      subtitle: 'Bitte überprüfen Sie alle Details vor der Bestätigung',
-      orderSummary: 'Bestellübersicht',
-      eventDetails: 'Veranstaltungsdetails',
-      items: 'Artikel',
-      subtotal: 'Zwischensumme',
-      serviceFee: 'Servicegebühr',
-      total: 'Gesamt',
-      confirm: 'Bestellung bestätigen',
-      minOrder: "Mindestbestellung von ƒ'ª388.80 erforderlich"
-    }
-  }
+  },
+  accessories: {
+    title: 'Extras & Zubehör',
+    subtitle: 'Mieten und Extras hinzufügen',
+    include: 'Zubehör hinzufügen',
+    deliveryDate: 'Lieferdatum',
+    postalCode: 'Postleitzahl',
+    continueWithout: 'Ohne Zubehör fortfahren',
+    orderOverview: 'Lieferdetails',
+    items: [
+      {
+        id: 'premium-dinnerware',
+        name: 'Premium Tafelservice',
+        description: 'Keramikteller, Besteck und Leinenserviette pro Gast.',
+        details: 'Wird nach dem Event abgeholt.',
+        price: 3.0,
+        unit: '/ Gast',
+      },
+      {
+        id: 'eco-disposables',
+        name: 'Oeko Einweg-Set',
+        description: 'Kompostierbarer Teller, Gabel, Messer und Serviette pro Gast.',
+        details: 'Ideal fuer Outdoor-Events.',
+        price: 1.5,
+        unit: '/ Gast',
+      },
+      {
+        id: 'glassware',
+        name: 'Glas-Set',
+        description: 'Wasser- und Weinglaeser pro Gast.',
+        details: 'Inklusive Reinigung und Abholung.',
+        price: 1.8,
+        unit: '/ Gast',
+      },
+      {
+        id: 'table-linens',
+        name: 'Tischwaesche',
+        description: 'Saubere weisse Tischwaesche pro Sitzplatz.',
+        details: 'Gepresst und geliefert.',
+        price: 1.2,
+        unit: '/ Gast',
+      },
+      {
+        id: 'serving-utensils',
+        name: 'Servierbesteck',
+        description: 'Servierloeffel und Zangen fuer Buffets.',
+        details: 'Im Menue enthalten.',
+        price: 0,
+        unit: '',
+      },
+    ],
+  },
+  delivery: {
+    title: 'Lieferdetails',
+    subtitle: 'Wie erreichen wir Sie?',
+    contact: { first: 'Vorname', last: 'Nachname', email: 'E-Mail', phone: 'Telefonnummer', company: 'Firma (optional)' },
+    requests: 'Besondere Wünsche',
+  },
+  payment: {
+    title: 'Zahlungsdetails',
+    subtitle: 'Sichere Zahlung mit SSL',
+    method: 'Zahlungsmethode auswählen',
+    cardNumber: 'Kartennummer',
+    expiry: 'Ablaufdatum',
+    cvc: 'CVC',
+    name: 'Name auf der Karte',
+    terms: 'Ich stimme den AGB und der Datenschutzerklärung zu.',
+    payCta: 'Sicher bezahlen',
+  },
+};
+
+export const orderTranslations: Record<Language, OrderTranslations> = {
+  EN: en,
+  DE: de,
 };

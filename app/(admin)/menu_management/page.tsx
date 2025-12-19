@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
+import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
 
@@ -58,13 +60,13 @@ type NewMenuState = Omit<MenuType, 'id' | 'products'> & {
 
 export default function AdminMenuManagement() {
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('menu');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [menuFilter, setMenuFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('available');
   const [editingItem, setEditingItem] = useState<MenuItem | MenuType | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAddMenuForm, setShowAddMenuForm] = useState(false);
@@ -74,17 +76,251 @@ export default function AdminMenuManagement() {
   const [expandedMenu, setExpandedMenu] = useState<number | null>(null);
   const [selectedMenuForDetail, setSelectedMenuForDetail] = useState<MenuType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const { language, toggleLanguage } = useTranslation('admin');
+  const locale = language === 'DE' ? 'de-DE' : 'en-US';
+  const copy = {
+    EN: {
+      nav: {
+        dashboard: 'Dashboard',
+        orders: 'Orders',
+        menu: 'Menu Management',
+        system: 'System Control',
+        customers: 'Customers',
+        reports: 'Reports',
+      },
+      admin: {
+        user: 'Admin User',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Menu Management',
+        subtitle: 'Manage menus, products, categories, and availability',
+        totalProducts: 'Total Products',
+        totalMenus: 'Menus',
+      },
+      menu: {
+        starts: 'Starts',
+        ends: 'Ends',
+        noImage: 'No image',
+        noImageAvailable: 'No Image Available',
+        editItem: 'Edit Menu Item',
+        addItem: 'Add New Menu Item',
+        dishImage: 'Dish Image',
+        uploadImage: 'Upload image',
+        imageUrl: 'Or Enter Image URL',
+        name: 'Name',
+        category: 'Category',
+        menuSection: 'Menu Section',
+        type: 'Type',
+        description: 'Description',
+        sellingPrice: 'Selling Price ($)',
+        cost: 'Cost ($)',
+        prepTime: 'Prep Time (min)',
+        productCategories: 'Product Categories',
+        includeMenus: 'Include in Menus',
+        assignMenus: 'Assign to Menus',
+        menuTiers: 'Menu Tiers',
+        ingredients: 'Ingredients',
+        noMenusYet: 'No menus created yet',
+        createMenu: 'Create Menu',
+        editMenu: 'Edit Menu',
+        priceOptional: 'Price (optional)',
+        menuActive: 'Menu is active',
+        custom: 'Custom',
+        costLabel: 'Cost',
+        includedInMenus: 'Included in menus:',
+        popularity: 'Popularity',
+        menusTitle: 'Menus',
+        menuHint: 'Click on a menu to view details',
+        only: 'Only',
+        menuSections: 'Menu Sections:',
+        splitView: 'Split View',
+        productsOnly: 'Products Only',
+      },
+      actions: {
+        active: 'Active',
+        inactive: 'Inactive',
+        available: 'Available',
+        unavailable: 'Unavailable',
+        saveChanges: 'Save Changes',
+        saveMenu: 'Save Menu',
+        cancel: 'Cancel',
+        addIngredient: 'Add Ingredient',
+        edit: 'Edit',
+        addMenu: 'Add Menu',
+        addProduct: 'Add Product',
+        addProductToMenu: 'Add Product to Menu',
+        addFirstProduct: 'Add Your First Product',
+        deleteMenuTitle: 'Delete menu',
+        editMenuTitle: 'Edit menu',
+        archiveItemTitle: 'Archive Item',
+        deleteItemTitle: 'Delete Item',
+      },
+      filters: {
+        allCategories: 'All Categories',
+        starters: 'Starters',
+        mains: 'Main Courses',
+        desserts: 'Desserts',
+        beverages: 'Beverages',
+        sides: 'Sides',
+        allMenus: 'All Menus',
+        unassigned: 'Not in any menu',
+        allStatus: 'All Status',
+        available: 'Available',
+        unavailable: 'Unavailable',
+        searchProducts: 'Search products...',
+      },
+      categories: {
+        starter: 'Starter',
+        main: 'Main Course',
+        dessert: 'Dessert',
+        beverage: 'Beverage',
+        side: 'Side',
+      },
+      placeholders: {
+        imageUrl: 'https://example.com/image.jpg',
+        dishName: 'Enter dish name',
+        dishDescription: 'Describe the dish, ingredients, and special features',
+        price: '0.00',
+        prepTime: '15',
+        ingredients: 'e.g., Atlantic salmon, lemon, butter',
+        menuName: 'Menu name',
+        menuCategory: 'e.g., seasonal, luxury',
+        menuType: 'fixed, tasting, themed',
+        menuDescription: 'Describe this menu',
+      },
+    },
+    DE: {
+      nav: {
+        dashboard: 'Uebersicht',
+        orders: 'Bestellungen',
+        menu: 'Menueverwaltung',
+        system: 'Systemsteuerung',
+        customers: 'Kunden',
+        reports: 'Berichte',
+      },
+      admin: {
+        user: 'Admin Benutzer',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Menueverwaltung',
+        subtitle: 'Menues, Produkte, Kategorien und Verfuegbarkeit verwalten',
+        totalProducts: 'Produkte gesamt',
+        totalMenus: 'Menues',
+      },
+      menu: {
+        starts: 'Startet',
+        ends: 'Endet',
+        noImage: 'Kein Bild',
+        noImageAvailable: 'Kein Bild verfuegbar',
+        editItem: 'Menuepunkt bearbeiten',
+        addItem: 'Neuen Menuepunkt hinzufuegen',
+        dishImage: 'Gerichtebild',
+        uploadImage: 'Bild hochladen',
+        imageUrl: 'Oder Bild-URL eingeben',
+        name: 'Name',
+        category: 'Kategorie',
+        menuSection: 'Menueabschnitt',
+        type: 'Typ',
+        description: 'Beschreibung',
+        sellingPrice: 'Verkaufspreis ($)',
+        cost: 'Kosten ($)',
+        prepTime: 'Vorbereitungszeit (Min)',
+        productCategories: 'Produktkategorien',
+        includeMenus: 'In Menues aufnehmen',
+        assignMenus: 'Menues zuordnen',
+        menuTiers: 'Menue-Stufen',
+        ingredients: 'Zutaten',
+        noMenusYet: 'Noch keine Menues erstellt',
+        createMenu: 'Menue erstellen',
+        editMenu: 'Menue bearbeiten',
+        priceOptional: 'Preis (optional)',
+        menuActive: 'Menue ist aktiv',
+        custom: 'Individuell',
+        costLabel: 'Kosten',
+        includedInMenus: 'In Menues enthalten:',
+        popularity: 'Beliebtheit',
+        menusTitle: 'Menues',
+        menuHint: 'Klicke auf ein Menue, um Details zu sehen',
+        only: 'Nur',
+        menuSections: 'Menueabschnitte:',
+        splitView: 'Geteilte Ansicht',
+        productsOnly: 'Nur Produkte',
+      },
+      actions: {
+        active: 'Aktiv',
+        inactive: 'Inaktiv',
+        available: 'Verfuegbar',
+        unavailable: 'Nicht verfuegbar',
+        saveChanges: 'Aenderungen speichern',
+        saveMenu: 'Menue speichern',
+        cancel: 'Abbrechen',
+        addIngredient: 'Zutat hinzufuegen',
+        edit: 'Bearbeiten',
+        addMenu: 'Menue hinzufuegen',
+        addProduct: 'Produkt hinzufuegen',
+        addProductToMenu: 'Produkt zum Menue hinzufuegen',
+        addFirstProduct: 'Erstes Produkt hinzufuegen',
+        deleteMenuTitle: 'Menue loeschen',
+        editMenuTitle: 'Menue bearbeiten',
+        archiveItemTitle: 'Artikel archivieren',
+        deleteItemTitle: 'Artikel loeschen',
+      },
+      filters: {
+        allCategories: 'Alle Kategorien',
+        starters: 'Vorspeisen',
+        mains: 'Hauptgerichte',
+        desserts: 'Desserts',
+        beverages: 'Getraenke',
+        sides: 'Beilagen',
+        allMenus: 'Alle Menues',
+        unassigned: 'In keinem Menue',
+        allStatus: 'Alle Status',
+        available: 'Verfuegbar',
+        unavailable: 'Nicht verfuegbar',
+        searchProducts: 'Produkte suchen...',
+      },
+      categories: {
+        starter: 'Vorspeise',
+        main: 'Hauptgericht',
+        dessert: 'Dessert',
+        beverage: 'Getraenk',
+        side: 'Beilage',
+      },
+      placeholders: {
+        imageUrl: 'https://example.com/image.jpg',
+        dishName: 'Gerichtname eingeben',
+        dishDescription: 'Gericht, Zutaten und Besonderheiten beschreiben',
+        price: '0.00',
+        prepTime: '15',
+        ingredients: 'z.B. Atlantischer Lachs, Zitrone, Butter',
+        menuName: 'Menue-Name',
+        menuCategory: 'z.B. saisonal, luxus',
+        menuType: 'fest, tasting, thematisch',
+        menuDescription: 'Dieses Menue beschreiben',
+      },
+    },
+  } as const;
+  const t = copy[language] ?? copy.EN;
+
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
-    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
-    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
-    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
-    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
+    { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
+    { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
+    { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
+    { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
+    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
   const menuCategories = [
@@ -139,7 +375,7 @@ export default function AdminMenuManagement() {
                 {menu.type || 'Unspecified'}
               </span>
               <span className={`px-3 py-1 rounded-full font-semibold ${menu.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                {menu.isActive ? 'Active' : 'Inactive'}
+                {menu.isActive ? t.actions.active : t.actions.inactive}
               </span>
               {menu.price !== undefined && (
                 <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full font-semibold">
@@ -148,8 +384,8 @@ export default function AdminMenuManagement() {
               )}
             </div>
             <div className="text-sm text-gray-600 space-y-1">
-              {menu.startDate && <p>Starts: {new Date(menu.startDate).toLocaleDateString()}</p>}
-              {menu.endDate && <p>Ends: {new Date(menu.endDate).toLocaleDateString()}</p>}
+              {menu.startDate && <p>{t.menu.starts}: {new Date(menu.startDate).toLocaleDateString(locale)}</p>}
+              {menu.endDate && <p>{t.menu.ends}: {new Date(menu.endDate).toLocaleDateString(locale)}</p>}
             </div>
           </div>
           <div className="p-6 bg-gray-50">
@@ -157,7 +393,7 @@ export default function AdminMenuManagement() {
               {menu.image ? (
                 <img src={menu.image} alt={menu.name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-400">{t.menu.noImage}</div>
               )}
             </div>
           </div>
@@ -189,6 +425,24 @@ export default function AdminMenuManagement() {
     popularity: product.popularity ?? 0
   });
 
+  const showNotification = (type: 'success' | 'error', message: string, duration = 2500) => {
+    setNotification({ type, message });
+    if (duration > 0) {
+      setTimeout(() => setNotification(null), duration);
+    }
+  };
+
+  const syncSelectedMenus = (nextMenus: MenuType[]) => {
+    if (selectedMenu) {
+      const updatedMenu = nextMenus.find(menu => menu.id === selectedMenu.id) || null;
+      setSelectedMenu(updatedMenu);
+    }
+    if (selectedMenuForDetail) {
+      const updatedDetailMenu = nextMenus.find(menu => menu.id === selectedMenuForDetail.id) || null;
+      setSelectedMenuForDetail(updatedDetailMenu);
+    }
+  };
+
   // Load data from backend
   const loadMenusAndProducts = async () => {
     try {
@@ -198,8 +452,10 @@ export default function AdminMenuManagement() {
         productsApi.getProducts()
       ]);
 
-      setMenus(menuResponse.map(normalizeMenu));
+      const normalizedMenus = menuResponse.map(normalizeMenu);
+      setMenus(normalizedMenus);
       setMenuItems(productResponse.map(normalizeProduct));
+      syncSelectedMenus(normalizedMenus);
     } catch (err) {
       console.error('Failed to load menus/products', err);
     } finally {
@@ -299,7 +555,8 @@ const [newItem, setNewItem] = useState<NewItemState>({
     const oldItem = menuItems.find(item => item.id === updatedItem.id);
     if (!oldItem) return;
     try {
-      const saved = await productsApi.updateProduct(updatedItem.id, updatedItem as any);
+      const payload = { ...updatedItem, menuIds: updatedItem.menus };
+      const saved = await productsApi.updateProduct(updatedItem.id, payload as any);
       const normalized = normalizeProduct(saved);
 
       setMenuItems(menuItems.map(item =>
@@ -317,11 +574,15 @@ const [newItem, setNewItem] = useState<NewItemState>({
           return { ...menu, products };
         });
         setMenus(updatedMenus);
+        syncSelectedMenus(updatedMenus);
       }
 
       setEditingItem(null);
+      showNotification('success', language === 'DE' ? 'Produkt aktualisiert.' : 'Product updated.');
     } catch (err) {
       console.error('Failed to update product', err);
+      const message = err instanceof Error ? err.message : 'Unable to update product.';
+      showNotification('error', language === 'DE' ? 'Produkt konnte nicht aktualisiert werden.' : message);
     }
   };
 
@@ -386,16 +647,33 @@ const toggleMenuActive = async (menuId: number) => {
     ));
   };
 
-  const deleteMenuItem = (id: number) => {
-    // Remove item from all menus first
-    const updatedMenus = menus.map(menu => ({
-      ...menu,
-      products: menu.products.filter(productId => productId !== id)
-    }));
-    setMenus(updatedMenus);
-    
-    // Then delete the item
-    setMenuItems(menuItems.filter(item => item.id !== id));
+  const deleteMenuItem = async (id: number) => {
+    try {
+      const result = await productsApi.deleteProduct(id);
+      // Remove item from all menus first
+      const updatedMenus = menus.map(menu => ({
+        ...menu,
+        products: menu.products.filter(productId => productId !== id)
+      }));
+      setMenus(updatedMenus);
+      syncSelectedMenus(updatedMenus);
+
+      // Then delete the item locally
+      setMenuItems(menuItems.filter(item => item.id !== id));
+      if (result.archived) {
+        showNotification('success', language === 'DE'
+          ? 'Produkt archiviert (bereits in Bestellungen).'
+          : 'Product archived (already in orders).');
+      } else {
+        showNotification('success', language === 'DE'
+          ? 'Produkt geloescht.'
+          : 'Product deleted.');
+      }
+    } catch (err) {
+      console.error('Failed to delete product', err);
+      const message = err instanceof Error ? err.message : 'Unable to delete product right now.';
+      showNotification('error', language === 'DE' ? 'Produkt konnte nicht geloescht werden.' : message);
+    }
   };
 
   const restoreMenuItem = (id: number) => {
@@ -539,7 +817,7 @@ const toggleMenuActive = async (menuId: number) => {
           <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center">
             <div className="text-center">
               <Utensils className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">No Image Available</p>
+              <p className="text-gray-400 text-sm">{t.menu.noImageAvailable}</p>
             </div>
           </div>
         ) : (
@@ -598,7 +876,7 @@ const toggleMenuActive = async (menuId: number) => {
         <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900 font-elegant">Edit Menu Item</h2>
+            <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.editItem}</h2>
               <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
                 <X size={24} />
               </button>
@@ -608,7 +886,7 @@ const toggleMenuActive = async (menuId: number) => {
           <div className="p-6 space-y-6">
             <div className="grid md:grid-cols-4 gap-6">
               <div className="md:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Dish Image</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.dishImage}</label>
                 <div className="space-y-4">
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                     <div className="aspect-square w-full overflow-hidden rounded-lg mb-4">
@@ -626,7 +904,7 @@ const toggleMenuActive = async (menuId: number) => {
                     </div>
                     <div>
                       <label className="block">
-                        <span className="sr-only">Upload image</span>
+                        <span className="sr-only">{t.menu.uploadImage}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -638,13 +916,13 @@ const toggleMenuActive = async (menuId: number) => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Or Enter Image URL</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.imageUrl}</label>
                     <input
                       type="text"
                       value={localItem.image}
                       onChange={(e) => handleLocalSave({ ...localItem, image: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder="https://example.com/image.jpg"
+                      placeholder={t.placeholders.imageUrl}
                     />
                   </div>
                 </div>
@@ -653,31 +931,31 @@ const toggleMenuActive = async (menuId: number) => {
               <div className="md:col-span-3 space-y-6">
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
                     <input
                       type="text"
                       value={localItem.name}
                       onChange={(e) => handleLocalSave({ ...localItem, name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder="Enter dish name"
+                      placeholder={t.placeholders.dishName}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
                     <select
                       value={localItem.category}
                       onChange={(e) => handleLocalSave({ ...localItem, category: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                     >
-                      <option value="starter">Starter</option>
-                      <option value="main">Main Course</option>
-                      <option value="dessert">Dessert</option>
-                      <option value="beverage">Beverage</option>
-                      <option value="side">Side</option>
+                      <option value="starter">{t.categories.starter}</option>
+                      <option value="main">{t.categories.main}</option>
+                      <option value="dessert">{t.categories.dessert}</option>
+                      <option value="beverage">{t.categories.beverage}</option>
+                      <option value="side">{t.categories.side}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Menu Section</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSection}</label>
                     <select
                       value={localItem.menuCategory}
                       onChange={(e) => handleLocalSave({ ...localItem, menuCategory: e.target.value })}
@@ -693,49 +971,49 @@ const toggleMenuActive = async (menuId: number) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
                   <textarea
                     value={localItem.description}
                     onChange={(e) => handleLocalSave({ ...localItem, description: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder="Describe the dish, ingredients, and special features"
+                    placeholder={t.placeholders.dishDescription}
                   />
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.sellingPrice}</label>
                     <input
                       type="number"
                       value={localItem.price}
                       onChange={(e) => handleLocalSave({ ...localItem, price: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder="0.00"
+                      placeholder={t.placeholders.price}
                       min="0"
                       step="0.01"
                     />
                   </div>
                   <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cost ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.cost}</label>
                     <input
                       type="number"
                       value={localItem.cost}
                       onChange={(e) => handleLocalSave({ ...localItem, cost: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder="0.00"
+                      placeholder={t.placeholders.price}
                       min="0"
                       step="0.01"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Prep Time (min)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.prepTime}</label>
                     <input
                       type="number"
                       value={localItem.preparationTime}
                       onChange={(e) => handleLocalSave({ ...localItem, preparationTime: parseInt(e.target.value) })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder="15"
+                      placeholder={t.placeholders.prepTime}
                       min="1"
                     />
                   </div>
@@ -743,7 +1021,7 @@ const toggleMenuActive = async (menuId: number) => {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Product Categories</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.productCategories}</label>
                     <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                       {productCategories.map(category => (
                         <div key={category} className="flex items-center gap-2">
@@ -766,7 +1044,7 @@ const toggleMenuActive = async (menuId: number) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">Include in Menus</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.includeMenus}</label>
                     <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                       {menus.map(menu => (
                         <div key={menu.id} className="flex items-center gap-2">
@@ -786,19 +1064,19 @@ const toggleMenuActive = async (menuId: number) => {
                           <span className={`text-xs px-2 py-1 rounded ${
                             menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {menu.isActive ? 'Active' : 'Inactive'}
+                            {menu.isActive ? t.actions.active : t.actions.inactive}
                           </span>
                         </div>
                       ))}
                       {menus.length === 0 && (
-                        <p className="text-sm text-gray-500 text-center py-2">No menus created yet</p>
+                        <p className="text-sm text-gray-500 text-center py-2">{t.menu.noMenusYet}</p>
                       )}
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Menu Tiers</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuTiers}</label>
                   <div className="flex gap-3">
                     {tiers.map(tier => (
                       <button
@@ -827,13 +1105,13 @@ const toggleMenuActive = async (menuId: number) => {
                     className="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                   >
                     <Save size={20} />
-                    Save Changes
+                    {t.actions.saveChanges}
                   </button>
                   <button
                     onClick={onClose}
                     className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                   >
-                    Cancel
+                    {t.actions.cancel}
                   </button>
                 </div>
               </div>
@@ -863,7 +1141,7 @@ const AddFormModal = () => {
       <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 font-elegant">Add New Menu Item</h2>
+            <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.addItem}</h2>
             <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
               <X size={24} />
             </button>
@@ -873,7 +1151,7 @@ const AddFormModal = () => {
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-4 gap-6">
             <div className="md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Dish Image</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.dishImage}</label>
               <div className="space-y-4">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   <div className="aspect-square w-full overflow-hidden rounded-lg mb-4">
@@ -887,7 +1165,7 @@ const AddFormModal = () => {
                   </div>
                   <div>
                     <label className="block">
-                      <span className="sr-only">Upload image</span>
+                      <span className="sr-only">{t.menu.uploadImage}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -898,13 +1176,13 @@ const AddFormModal = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Or Enter Image URL</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.imageUrl}</label>
                   <input
                     type="text"
                     value={localItem.image}
                     onChange={(e) => setLocalItem({ ...localItem, image: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder="https://example.com/image.jpg"
+                    placeholder={t.placeholders.imageUrl}
                   />
                 </div>
               </div>
@@ -913,31 +1191,31 @@ const AddFormModal = () => {
             <div className="md:col-span-3 space-y-6">
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
                   <input
                     type="text"
                     value={localItem.name}
                     onChange={(e) => setLocalItem({ ...localItem, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder="Enter dish name"
+                    placeholder={t.placeholders.dishName}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
                   <select
                     value={localItem.category}
                     onChange={(e) => setLocalItem({ ...localItem, category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                   >
-                    <option value="starter">Starter</option>
-                    <option value="main">Main Course</option>
-                    <option value="dessert">Dessert</option>
-                    <option value="beverage">Beverage</option>
-                    <option value="side">Side</option>
+                    <option value="starter">{t.categories.starter}</option>
+                    <option value="main">{t.categories.main}</option>
+                    <option value="dessert">{t.categories.dessert}</option>
+                    <option value="beverage">{t.categories.beverage}</option>
+                    <option value="side">{t.categories.side}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Menu Section</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSection}</label>
                   <select
                     value={localItem.menuCategory}
                     onChange={(e) => setLocalItem({ ...localItem, menuCategory: e.target.value })}
@@ -953,49 +1231,49 @@ const AddFormModal = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
                 <textarea
                   value={localItem.description}
                   onChange={(e) => setLocalItem({ ...localItem, description: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                  placeholder="Describe the dish..."
+                  placeholder={t.placeholders.dishDescription}
                 />
               </div>
 
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Selling Price ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.sellingPrice}</label>
                   <input
                     type="number"
                     value={localItem.price}
                     onChange={(e) => setLocalItem({ ...localItem, price: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder="0.00"
+                    placeholder={t.placeholders.price}
                     min="0"
                     step="0.01"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cost ($)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.cost}</label>
                   <input
                     type="number"
                     value={localItem.cost}
                     onChange={(e) => setLocalItem({ ...localItem, cost: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder="0.00"
+                    placeholder={t.placeholders.price}
                     min="0"
                     step="0.01"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Prep Time (min)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.prepTime}</label>
                   <input
                     type="number"
                     value={localItem.preparationTime}
                     onChange={(e) => setLocalItem({ ...localItem, preparationTime: parseInt(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder="15"
+                    placeholder={t.placeholders.prepTime}
                     min="1"
                   />
                 </div>
@@ -1003,7 +1281,7 @@ const AddFormModal = () => {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Product Categories</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.productCategories}</label>
                   <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                     {productCategories.map(category => (
                       <div key={category} className="flex items-center gap-2">
@@ -1028,7 +1306,7 @@ const AddFormModal = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Assign to Menus</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.assignMenus}</label>
                   <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                     {menus.map(menu => (
                       <div key={menu.id} className="flex items-center gap-2">
@@ -1054,7 +1332,7 @@ const AddFormModal = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Menu Tiers</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuTiers}</label>
                 <div className="flex gap-3">
                   {tiers.map(tier => (
                     <button
@@ -1080,7 +1358,7 @@ const AddFormModal = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Ingredients</label>
+                <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.ingredients}</label>
                 <div className="space-y-3">
                   {localItem.ingredients.map((ingredient, index) => (
                     <div key={index} className="flex items-center gap-3">
@@ -1089,7 +1367,7 @@ const AddFormModal = () => {
                         value={ingredient}
                         onChange={(e) => updateLocalIngredient(index, e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                        placeholder="e.g., Atlantic salmon, lemon, butter"
+                        placeholder={t.placeholders.ingredients}
                       />
                       {localItem.ingredients.length > 1 && (
                         <button
@@ -1113,7 +1391,7 @@ const AddFormModal = () => {
                   className="mt-2 px-4 py-2 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium flex items-center gap-2"
                 >
                   <Plus size={16} />
-                  Add Ingredient
+                  {t.actions.addIngredient}
                 </button>
               </div>
 
@@ -1128,13 +1406,13 @@ const AddFormModal = () => {
                   className="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <Save size={20} />
-                  Save Changes
+                  {t.actions.saveChanges}
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
                   className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Cancel
+                  {t.actions.cancel}
                 </button>
               </div>
             </div>
@@ -1160,7 +1438,7 @@ const AddMenuFormModal = () => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddMenuForm(false)}>
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900 font-elegant">Create Menu</h2>
+          <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.createMenu}</h2>
           <button onClick={() => setShowAddMenuForm(false)} className="p-2 hover:bg-gray-100 rounded-lg">
             <X size={24} />
           </button>
@@ -1169,46 +1447,46 @@ const AddMenuFormModal = () => {
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
               <input
                 type="text"
                 value={localMenuState.name}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="Menu name"
+                placeholder={t.placeholders.menuName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
               <input
                 type="text"
                 value={localMenuState.category}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="e.g., seasonal, luxury"
+                placeholder={t.placeholders.menuCategory}
               />
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
               <input
                 type="text"
                 value={localMenuState.type}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="fixed, tasting, themed"
+                placeholder={t.placeholders.menuType}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Price (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
               <input
                 type="number"
                 value={localMenuState.price ?? 0}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="0.00"
+                placeholder={t.placeholders.price}
                 min="0"
                 step="0.01"
               />
@@ -1216,13 +1494,13 @@ const AddMenuFormModal = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
             <textarea
               value={localMenuState.description}
               onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-              placeholder="Describe this menu"
+              placeholder={t.placeholders.menuDescription}
             />
           </div>
 
@@ -1234,7 +1512,7 @@ const AddMenuFormModal = () => {
               onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
               className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
             />
-            <label htmlFor="menu-active" className="text-sm text-gray-700">Menu is active</label>
+            <label htmlFor="menu-active" className="text-sm text-gray-700">{t.menu.menuActive}</label>
           </div>
 
           <div className="flex gap-4">
@@ -1243,13 +1521,13 @@ const AddMenuFormModal = () => {
               className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
             >
               <Save size={20} />
-              Save Menu
+              {t.actions.saveMenu}
             </button>
             <button
               onClick={() => setShowAddMenuForm(false)}
               className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
-              Cancel
+              {t.actions.cancel}
             </button>
           </div>
         </div>
@@ -1274,7 +1552,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setEditingMenu(null)}>
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900 font-elegant">Edit Menu</h2>
+          <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.editMenu}</h2>
           <button onClick={() => setEditingMenu(null)} className="p-2 hover:bg-gray-100 rounded-lg">
             <X size={24} />
           </button>
@@ -1283,46 +1561,46 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
         <div className="p-6 space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
               <input
                 type="text"
                 value={localMenuState.name}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="Menu name"
+                placeholder={t.placeholders.menuName}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
               <input
                 type="text"
                 value={localMenuState.category}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="e.g., seasonal, luxury"
+                placeholder={t.placeholders.menuCategory}
               />
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
               <input
                 type="text"
                 value={localMenuState.type}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="fixed, tasting, themed"
+                placeholder={t.placeholders.menuType}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Price (optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
               <input
                 type="number"
                 value={localMenuState.price ?? 0}
                 onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder="0.00"
+                placeholder={t.placeholders.price}
                 min="0"
                 step="0.01"
               />
@@ -1330,13 +1608,13 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
             <textarea
               value={localMenuState.description}
               onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-              placeholder="Describe this menu"
+              placeholder={t.placeholders.menuDescription}
             />
           </div>
 
@@ -1348,7 +1626,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
               onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
               className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
             />
-            <label htmlFor="menu-active-edit" className="text-sm text-gray-700">Menu is active</label>
+            <label htmlFor="menu-active-edit" className="text-sm text-gray-700">{t.menu.menuActive}</label>
           </div>
 
           <div className="flex gap-4">
@@ -1357,13 +1635,13 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
               className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
             >
               <Save size={20} />
-              Save Menu
+              {t.actions.saveMenu}
             </button>
             <button
               onClick={() => setEditingMenu(null)}
               className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
-              Cancel
+              {t.actions.cancel}
             </button>
           </div>
         </div>
@@ -1392,7 +1670,7 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
         <span className={`px-2 py-1 text-xs rounded-full ${
           menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
-          {menu.isActive ? 'Active' : 'Inactive'}
+          {menu.isActive ? t.actions.active : t.actions.inactive}
         </span>
         <button
           onClick={(e) => {
@@ -1400,7 +1678,7 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
             deleteMenu(menu.id);
           }}
           className="p-2 rounded-full hover:bg-red-50 text-red-600 border border-red-200 shadow-sm"
-          title="Delete menu"
+          title={t.actions.deleteMenuTitle}
         >
           <Trash2 size={16} />
         </button>
@@ -1410,7 +1688,7 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
             setEditingMenu(menu);
           }}
           className="p-2 rounded-full hover:bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
-          title="Edit menu"
+          title={t.actions.editMenuTitle}
         >
           <Edit size={16} />
         </button>
@@ -1419,7 +1697,7 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
     <p className="text-sm text-gray-600 line-clamp-2">{menu.description || 'No description'}</p>
     <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
       <span className="capitalize">{menu.category || 'uncategorized'}</span>
-      {menu.price !== undefined ? <span>${menu.price}</span> : <span>Custom</span>}
+      {menu.price !== undefined ? <span>${menu.price}</span> : <span>{t.menu.custom}</span>}
     </div>
   </div>
 );
@@ -1451,7 +1729,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
               ? 'bg-green-100 text-green-800' 
               : 'bg-red-100 text-red-800'
           }`}>
-            {item.available ? 'Available' : 'Unavailable'}
+            {item.available ? t.actions.available : t.actions.unavailable}
           </span>
         </div>
       </div>
@@ -1469,7 +1747,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-gray-900">${item.price}</p>
-            <p className="text-sm text-gray-600">Cost: ${item.cost}</p>
+            <p className="text-sm text-gray-600">{t.menu.costLabel}: ${item.cost}</p>
           </div>
         </div>
         
@@ -1493,7 +1771,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
 
         {/* Menu Associations */}
         <div className="mb-3">
-          <p className="text-xs text-gray-500 mb-1">Included in menus:</p>
+          <p className="text-xs text-gray-500 mb-1">{t.menu.includedInMenus}</p>
           <div className="flex flex-wrap gap-1">
             {item.menus.slice(0, 2).map((menuId: number) => {
               const menu = menus.find(m => m.id === menuId);
@@ -1510,7 +1788,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             )}
             {item.menus.length === 0 && (
               <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
-                Not in any menu
+                {t.filters.unassigned}
               </span>
             )}
           </div>
@@ -1537,7 +1815,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
         {/* Popularity */}
         <div className="mb-6">
           <div className="flex items-center justify-between text-sm mb-1">
-            <span className="text-gray-600">Popularity</span>
+            <span className="text-gray-600">{t.menu.popularity}</span>
             <span className="font-medium text-gray-900">{item.popularity}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -1555,13 +1833,13 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium flex items-center justify-center gap-1"
           >
             <Edit size={14} />
-            Edit
+            {t.actions.edit}
           </button>
           {item.available ? (
             <button
               onClick={() => archiveMenuItem(item.id)}
               className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex items-center gap-1"
-              title="Archive Item"
+              title={t.actions.archiveItemTitle}
             >
               <Archive size={14} />
             </button>
@@ -1577,7 +1855,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           <button
             onClick={() => deleteMenuItem(item.id)}
             className="px-3 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
-            title="Delete Item"
+            title={t.actions.deleteItemTitle}
           >
             <Trash2 size={14} />
           </button>
@@ -1587,39 +1865,46 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
   );
 
   const ViewModeToggle = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-1 flex items-center">
+    <div className="bg-white rounded-lg border border-gray-200 p-1 flex flex-wrap items-center gap-1">
       <button
         onClick={() => setViewMode('split')}
-        className={`px-3 py-2 rounded-md flex items-center gap-2 text-sm font-medium ${
+        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium ${
           viewMode === 'split' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'
         }`}
       >
         <LayoutGrid size={16} />
-        Split View
+        {t.menu.splitView}
       </button>
       <button
         onClick={() => setViewMode('menus')}
-        className={`px-3 py-2 rounded-md flex items-center gap-2 text-sm font-medium ${
+        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium ${
           viewMode === 'menus' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'
         }`}
       >
         <List size={16} />
-        Menus Only
+        {t.menu.menusTitle} {t.menu.only}
       </button>
       <button
         onClick={() => setViewMode('products')}
-        className={`px-3 py-2 rounded-md flex items-center gap-2 text-sm font-medium ${
+        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium ${
           viewMode === 'products' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'
         }`}
       >
         <Grid size={16} />
-        Products Only
+        {t.menu.productsOnly}
       </button>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100">
+      {notification && (
+        <div className="fixed top-6 right-6 z-50">
+          <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+            {notification.message}
+          </div>
+        </div>
+      )}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -1693,28 +1978,36 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 <Users className="text-amber-700" size={20} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-600">Administrator</p>
+                <p className="font-semibold text-gray-900">{t.admin.user}</p>
+                <p className="text-sm text-gray-600">{t.admin.role}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
-          <div className="flex items-center justify-between p-4">
+          <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-4">
               <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
                 <Menu size={20} />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 font-elegant">Menu Management</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:justify-end lg:gap-4">
               <ViewModeToggle />
+              <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
               <span className="text-sm text-gray-600">
-                Total Products: {menuItems.length} | Menus: {menus.length}
+                {t.header.totalProducts}: {menuItems.length} | {t.header.totalMenus}: {menus.length}
               </span>
             </div>
           </div>
@@ -1722,25 +2015,25 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
 
         <main className="p-6">
           {/* Header with Add Buttons */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 font-elegant">Menu Management</h2>
-              <p className="text-gray-600">Manage menus, products, categories, and availability</p>
+              <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h2>
+              <p className="text-gray-600">{t.header.subtitle}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => setShowAddMenuForm(true)}
                 className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2"
               >
                 <FolderPlus size={20} />
-                Add Menu
+                {t.actions.addMenu}
               </button>
               <button
                 onClick={() => setShowAddForm(true)}
                 className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2"
               >
                 <Plus size={20} />
-                Add Product
+                {t.actions.addProduct}
               </button>
             </div>
           </div>
@@ -1754,7 +2047,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder={t.filters.searchProducts}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
@@ -1766,12 +2059,12 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
               >
-                <option value="all">All Categories</option>
-                <option value="starter">Starters</option>
-                <option value="main">Main Courses</option>
-                <option value="dessert">Desserts</option>
-                <option value="beverage">Beverages</option>
-                <option value="side">Sides</option>
+                <option value="all">{t.filters.allCategories}</option>
+                <option value="starter">{t.filters.starters}</option>
+                <option value="main">{t.filters.mains}</option>
+                <option value="dessert">{t.filters.desserts}</option>
+                <option value="beverage">{t.filters.beverages}</option>
+                <option value="side">{t.filters.sides}</option>
               </select>
 
               <select
@@ -1779,8 +2072,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 onChange={(e) => setMenuFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
               >
-                <option value="all">All Menus</option>
-                <option value="unassigned">Not in any menu</option>
+                <option value="all">{t.filters.allMenus}</option>
+                <option value="unassigned">{t.filters.unassigned}</option>
                 {menus.map(menu => (
                   <option key={menu.id} value={menu.id}>
                     {menu.name}
@@ -1793,12 +2086,12 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
               >
-                <option value="all">All Status</option>
-                <option value="available">Available</option>
-                <option value="unavailable">Unavailable</option>
+                <option value="all">{t.filters.allStatus}</option>
+                <option value="available">{t.filters.available}</option>
+                <option value="unavailable">{t.filters.unavailable}</option>
               </select>
 
-              <div className="text-sm text-gray-600 flex items-center justify-center">
+              <div className="text-sm text-gray-600 flex items-center justify-start md:justify-center md:col-span-5 lg:col-span-1">
                 {filteredItems.length} products found
               </div>
             </div>
@@ -1813,14 +2106,14 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
               }`}>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-gray-900 font-elegant">Menus</h3>
+                    <h3 className="text-xl font-bold text-gray-900 font-elegant">{t.menu.menusTitle}</h3>
                     <span className="text-sm text-gray-600">{menus.length} menus</span>
                   </div>
-                  <p className="text-gray-600 text-sm mt-1">Click on a menu to view details</p>
+                  <p className="text-gray-600 text-sm mt-1">{t.menu.menuHint}</p>
                 </div>
                 
                 <div className="p-4">
-                  <div className="grid grid-cols-1 gap-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                  <div className="grid grid-cols-1 gap-3 max-h-none overflow-visible lg:max-h-[calc(100vh-300px)] lg:overflow-y-auto">
                     {menus.map(menu => (
                       <MenuCard 
                         key={menu.id} 
@@ -1831,7 +2124,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                     {menus.length === 0 && (
                       <div className="col-span-full text-center py-12">
                         <Layers size={48} className="mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-500 text-lg">No menus created yet</p>
+                        <p className="text-gray-500 text-lg">{t.menu.noMenusYet}</p>
                         <button
                           onClick={() => setShowAddMenuForm(true)}
                           className="mt-4 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2 mx-auto"
@@ -1857,7 +2150,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                       {selectedMenu ? `${selectedMenu.name} - Products` : 'All Products'}
                     </h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Menu Sections:</span>
+                      <span className="text-sm text-gray-600">{t.menu.menuSections}</span>
                       <div className="flex flex-wrap gap-1">
                         {menuCategories.slice(0, 3).map(category => (
                           <span key={category} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs capitalize">
@@ -1881,7 +2174,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 </div>
                 
                 <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 max-h-[calc(100vh-300px)] overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 max-h-none overflow-visible lg:max-h-[calc(100vh-300px)] lg:overflow-y-auto">
                     {(selectedMenu ? getProductsForSelectedMenu() : filteredItems).map((item, index) => (
                       <ProductCard key={item.id} item={item} />
                     ))}
@@ -1903,7 +2196,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                           className="mt-4 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 mx-auto"
                         >
                           <Plus size={20} />
-                          {selectedMenu ? 'Add Product to Menu' : 'Add Your First Product'}
+                          {selectedMenu ? t.actions.addProductToMenu : t.actions.addFirstProduct}
                         </button>
                       </div>
                     )}

@@ -60,11 +60,21 @@ class ApiClient {
         credentials: 'include',
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = undefined;
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          return {
+            error: parseError instanceof Error ? parseError.message : 'Invalid response format',
+          };
+        }
+      }
 
       if (!response.ok) {
         return {
-          error: data.error || `HTTP error! status: ${response.status}`,
+          error: (data && data.error) || text || `HTTP error! status: ${response.status}`,
         };
       }
 

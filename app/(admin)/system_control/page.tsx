@@ -10,18 +10,27 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
+import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import { systemApi, SystemStatus, ClosedDate } from '@/lib/api/system';
 
 export default function SystemControl() {
   const router = useRouter();    
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('system');
   const [activeTab, setActiveTab] = useState('ordering');
   const [isLoading, setIsLoading] = useState(true);
+  const { language, toggleLanguage } = useTranslation('admin');
+  const locale = language === 'DE' ? 'de-DE' : 'en-US';
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
   // System state
@@ -66,13 +75,169 @@ export default function SystemControl() {
     recurring: false
   });
 
+  const copy = {
+    EN: {
+      nav: {
+        dashboard: 'Dashboard',
+        orders: 'Orders',
+        menu: 'Menu Management',
+        system: 'System Control',
+        customers: 'Customers',
+        reports: 'Reports',
+      },
+      admin: {
+        user: 'Admin User',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'System Control',
+        sectionTitle: 'System Settings',
+        subtitle: 'Manage ordering, business hours, and capacity limits',
+      },
+      tabs: {
+        ordering: 'Ordering Control',
+        dates: 'Closed Dates',
+        capacity: 'Capacity Limits',
+      },
+      ordering: {
+        statusTitle: 'Ordering System Status',
+        paused: 'Ordering is currently PAUSED',
+        active: 'Ordering is ACTIVE',
+        reason: 'Reason',
+        resume: 'Resume Ordering',
+        pause: 'Pause Ordering',
+        pauseSettings: 'Pause Settings',
+        pauseReasonLabel: 'Reason for Pause (Optional)',
+        resumeOn: 'Resume Ordering On',
+        saving: 'Saving...',
+        save: 'Save Ordering Settings',
+        noticeTitle: 'Important Notice',
+        noticeBody:
+          "When ordering is paused, customers will see a maintenance message and won't be able to place new orders. Existing orders will remain active and can be fulfilled.",
+        pausePlaceholder: 'E.g., Kitchen maintenance, Staff shortage...',
+      },
+      closedDates: {
+        addTitle: 'Add Closed Date',
+        date: 'Date',
+        reason: 'Reason',
+        reasonPlaceholder: 'E.g., Holiday, Private Event...',
+        recurring: 'Recurring annually',
+        add: 'Add Closed Date',
+        upcoming: 'Upcoming Closed Dates',
+        recurringBadge: 'Recurring',
+        noneUpcoming: 'No upcoming closed dates',
+        past: 'Past Closed Dates',
+      },
+      capacity: {
+        title: 'Capacity Settings',
+        dailyLimit: 'Daily Order Limit',
+        dailyHelp: 'Maximum orders per day',
+        perHourLimit: 'Per Hour Limit',
+        perHourHelp: 'Maximum orders per hour',
+        weekendMultiplier: 'Weekend Capacity Multiplier',
+        sameWeekday: 'Same as weekdays',
+        increase25: '25% increase',
+        increase50: '50% increase',
+        increase100: '100% increase (double)',
+        autoPauseLabel: 'Auto-pause when capacity reached',
+        autoPauseHelp: 'Automatically pause ordering when daily limit is reached',
+        save: 'Save Capacity Settings',
+        saving: 'Saving...',
+        currentCapacity: 'Current Capacity',
+        todayUsage: "Today's Usage",
+        remaining: 'orders remaining today',
+        weekendCapacity: 'Weekend Capacity',
+        orders: 'orders',
+        weekendSame: 'Same as weekdays',
+        weekendIncrease: 'increase on weekends',
+      },
+    },
+    DE: {
+      nav: {
+        dashboard: 'Uebersicht',
+        orders: 'Bestellungen',
+        menu: 'Menueverwaltung',
+        system: 'Systemsteuerung',
+        customers: 'Kunden',
+        reports: 'Berichte',
+      },
+      admin: {
+        user: 'Admin Benutzer',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Systemsteuerung',
+        sectionTitle: 'Systemeinstellungen',
+        subtitle: 'Bestellungen, Oeffnungszeiten und Kapazitaetsgrenzen verwalten',
+      },
+      tabs: {
+        ordering: 'Bestellsteuerung',
+        dates: 'Schliesstage',
+        capacity: 'Kapazitaetsgrenzen',
+      },
+      ordering: {
+        statusTitle: 'Status des Bestellsystems',
+        paused: 'Bestellungen sind derzeit PAUSIERT',
+        active: 'Bestellungen sind AKTIV',
+        reason: 'Grund',
+        resume: 'Bestellungen fortsetzen',
+        pause: 'Bestellungen pausieren',
+        pauseSettings: 'Pause Einstellungen',
+        pauseReasonLabel: 'Grund fuer die Pause (optional)',
+        resumeOn: 'Bestellungen fortsetzen am',
+        saving: 'Speichert...',
+        save: 'Bestelleinstellungen speichern',
+        noticeTitle: 'Wichtiger Hinweis',
+        noticeBody:
+          'Wenn Bestellungen pausiert sind, sehen Kunden eine Wartungsmeldung und koennen keine neuen Bestellungen aufgeben. Bestehende Bestellungen bleiben aktiv und koennen erfuellt werden.',
+        pausePlaceholder: 'Z.B. Kuechenwartung, Personalmangel...',
+      },
+      closedDates: {
+        addTitle: 'Schliesstag hinzufuegen',
+        date: 'Datum',
+        reason: 'Grund',
+        reasonPlaceholder: 'Z.B. Feiertag, Private Veranstaltung...',
+        recurring: 'Jaehrlich wiederkehrend',
+        add: 'Schliesstag hinzufuegen',
+        upcoming: 'Bevorstehende Schliesstage',
+        recurringBadge: 'Wiederkehrend',
+        noneUpcoming: 'Keine bevorstehenden Schliesstage',
+        past: 'Vergangene Schliesstage',
+      },
+      capacity: {
+        title: 'Kapazitaetseinstellungen',
+        dailyLimit: 'Taegliches Bestelllimit',
+        dailyHelp: 'Maximale Bestellungen pro Tag',
+        perHourLimit: 'Limit pro Stunde',
+        perHourHelp: 'Maximale Bestellungen pro Stunde',
+        weekendMultiplier: 'Wochenend-Kapazitaetsfaktor',
+        sameWeekday: 'Wie an Werktagen',
+        increase25: '25% Erhoehung',
+        increase50: '50% Erhoehung',
+        increase100: '100% Erhoehung (doppelt)',
+        autoPauseLabel: 'Automatisch pausieren bei Kapazitaet',
+        autoPauseHelp: 'Bestellungen automatisch pausieren, wenn das Tageslimit erreicht ist',
+        save: 'Kapazitaetseinstellungen speichern',
+        saving: 'Speichert...',
+        currentCapacity: 'Aktuelle Kapazitaet',
+        todayUsage: 'Heutige Auslastung',
+        remaining: 'Bestellungen heute verbleibend',
+        weekendCapacity: 'Wochenend-Kapazitaet',
+        orders: 'Bestellungen',
+        weekendSame: 'Wie an Werktagen',
+        weekendIncrease: 'Erhoehung am Wochenende',
+      },
+    },
+  } as const;
+  const t = copy[language] ?? copy.EN;
+
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
-    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
-    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
-    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
-    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
+    { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
+    { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
+    { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
+    { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
+    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
   const status = systemStatus
     ? {
@@ -277,37 +442,45 @@ export default function SystemControl() {
                 <Users className="text-amber-700" size={20} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-600">Administrator</p>
+                <p className="font-semibold text-gray-900">{t.admin.user}</p>
+                <p className="text-sm text-gray-600">{t.admin.role}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
               <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
                 <Menu size={20} />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 font-elegant">System Control</h1>
+              <h1 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h1>
             </div>
+            <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
           </div>
         </header>
 
         <main className="p-6">
           {/* Header */}
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 font-elegant">System Settings</h2>
-            <p className="text-gray-600">Manage ordering, business hours, and capacity limits</p>
+            <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.sectionTitle}</h2>
+            <p className="text-gray-600">{t.header.subtitle}</p>
           </div>
 
           {/* Control Tabs */}
           <div className="bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm mb-6">
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-gray-100 overflow-x-auto whitespace-nowrap">
               <button
                 onClick={() => setActiveTab('ordering')}
                 className={`flex-1 px-6 py-4 font-medium transition-colors ${
@@ -316,7 +489,7 @@ export default function SystemControl() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Ordering Control
+                {t.tabs.ordering}
               </button>
               <button
                 onClick={() => setActiveTab('dates')}
@@ -326,7 +499,7 @@ export default function SystemControl() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Closed Dates
+                {t.tabs.dates}
               </button>
               <button
                 onClick={() => setActiveTab('capacity')}
@@ -336,7 +509,7 @@ export default function SystemControl() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Capacity Limits
+                {t.tabs.capacity}
               </button>
             </div>
 
@@ -347,15 +520,15 @@ export default function SystemControl() {
                   <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Ordering System Status
+                        {t.ordering.statusTitle}
                       </h3>
                       <p className={`text-sm ${
                         status.orderingPaused ? 'text-red-600' : 'text-green-600'
                       }`}>
-                        {status.orderingPaused ? 'Ordering is currently PAUSED' : 'Ordering is ACTIVE'}
+                        {status.orderingPaused ? t.ordering.paused : t.ordering.active}
                       </p>
                       {orderingDraft.pauseReason && (
-                        <p className="text-sm text-gray-600 mt-1">Reason: {orderingDraft.pauseReason}</p>
+                        <p className="text-sm text-gray-600 mt-1">{t.ordering.reason}: {orderingDraft.pauseReason}</p>
                       )}
                     </div>
                     <button
@@ -367,17 +540,17 @@ export default function SystemControl() {
                       }`}
                     >
                       {status.orderingPaused ? <Play size={20} /> : <Pause size={20} />}
-                      {status.orderingPaused ? 'Resume Ordering' : 'Pause Ordering'}
+                      {status.orderingPaused ? t.ordering.resume : t.ordering.pause}
                     </button>
                   </div>
 
                   {status.orderingPaused && (
                     <div className="bg-white border border-gray-200 rounded-xl p-6">
-                      <h4 className="font-semibold text-gray-900 mb-4">Pause Settings</h4>
+                      <h4 className="font-semibold text-gray-900 mb-4">{t.ordering.pauseSettings}</h4>
                       <div className="grid gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Reason for Pause (Optional)
+                            {t.ordering.pauseReasonLabel}
                           </label>
                           <input
                             type="text"
@@ -385,13 +558,13 @@ export default function SystemControl() {
                             onChange={(e) =>
                               setOrderingDraft(prev => ({ ...prev, pauseReason: e.target.value }))
                             }
-                            placeholder="E.g., Kitchen maintenance, Staff shortage..."
+                            placeholder={t.ordering.pausePlaceholder}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Resume Ordering On
+                            {t.ordering.resumeOn}
                           </label>
                           <input
                             type="date"
@@ -415,7 +588,7 @@ export default function SystemControl() {
                             className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Save size={18} />
-                            {isSavingOrdering ? 'Saving...' : 'Save Ordering Settings'}
+                            {isSavingOrdering ? t.ordering.saving : t.ordering.save}
                           </button>
                         </div>
                       </div>
@@ -426,10 +599,9 @@ export default function SystemControl() {
                     <div className="flex items-start gap-3">
                       <AlertTriangle className="text-amber-600 mt-0.5" size={20} />
                       <div>
-                        <h4 className="font-semibold text-amber-900 mb-2">Important Notice</h4>
+                        <h4 className="font-semibold text-amber-900 mb-2">{t.ordering.noticeTitle}</h4>
                         <p className="text-amber-800 text-sm">
-                          When ordering is paused, customers will see a maintenance message and won't be able to place new orders.
-                          Existing orders will remain active and can be fulfilled.
+                          {t.ordering.noticeBody}
                         </p>
                       </div>
                     </div>
@@ -441,10 +613,10 @@ export default function SystemControl() {
               {activeTab === 'dates' && (
                 <div className="space-y-6">
                   <div className="bg-white border border-gray-200 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Closed Date</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.closedDates.addTitle}</h3>
                     <div className="grid md:grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t.closedDates.date}</label>
                         <input
                           type="date"
                           value={newClosedDate.date}
@@ -453,12 +625,12 @@ export default function SystemControl() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t.closedDates.reason}</label>
                         <input
                           type="text"
                           value={newClosedDate.reason}
                           onChange={(e) => setNewClosedDate(prev => ({ ...prev, reason: e.target.value }))}
-                          placeholder="E.g., Holiday, Private Event..."
+                          placeholder={t.closedDates.reasonPlaceholder}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                         />
                       </div>
@@ -471,7 +643,7 @@ export default function SystemControl() {
                           onChange={(e) => setNewClosedDate(prev => ({ ...prev, recurring: e.target.checked }))}
                           className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                         />
-                        <span className="text-sm text-gray-700">Recurring annually</span>
+                        <span className="text-sm text-gray-700">{t.closedDates.recurring}</span>
                       </label>
                       <button
                         onClick={addClosedDate}
@@ -479,14 +651,14 @@ export default function SystemControl() {
                         className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                       >
                         <Plus size={16} />
-                        Add Closed Date
+                        {t.closedDates.add}
                       </button>
                     </div>
                   </div>
 
                   {/* Upcoming Closed Dates */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Closed Dates</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.closedDates.upcoming}</h3>
                     <div className="space-y-3">
                       {upcomingClosedDates.map((date) => (
                         <div key={date.id} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
@@ -494,7 +666,7 @@ export default function SystemControl() {
                             <CalendarIcon className="text-gray-400" size={20} />
                             <div>
                               <p className="font-medium text-gray-900">
-                                {new Date(date.date).toLocaleDateString('en-US', { 
+                                {new Date(date.date).toLocaleDateString(locale, { 
                                   weekday: 'long', 
                                   year: 'numeric', 
                                   month: 'long', 
@@ -505,7 +677,7 @@ export default function SystemControl() {
                             </div>
                             {date.recurring && (
                               <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                                Recurring
+                                {t.closedDates.recurringBadge}
                               </span>
                             )}
                           </div>
@@ -520,7 +692,7 @@ export default function SystemControl() {
                       {upcomingClosedDates.length === 0 && (
                         <div className="text-center py-8 text-gray-500">
                           <CalendarIcon size={32} className="mx-auto mb-2 opacity-50" />
-                          <p>No upcoming closed dates</p>
+                          <p>{t.closedDates.noneUpcoming}</p>
                         </div>
                       )}
                     </div>
@@ -529,7 +701,7 @@ export default function SystemControl() {
                   {/* Past Closed Dates */}
                   {pastClosedDates.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Past Closed Dates</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.closedDates.past}</h3>
                       <div className="space-y-3">
                         {pastClosedDates.map((date) => (
                           <div key={date.id} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg opacity-60">
@@ -537,7 +709,7 @@ export default function SystemControl() {
                               <CalendarIcon className="text-gray-400" size={20} />
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {new Date(date.date).toLocaleDateString()}
+                                  {new Date(date.date).toLocaleDateString(locale)}
                                 </p>
                                 <p className="text-sm text-gray-600">{date.reason}</p>
                               </div>
@@ -560,12 +732,12 @@ export default function SystemControl() {
               {activeTab === 'capacity' && (
                 <div className="space-y-6">
                   <div className="bg-white border border-gray-200 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-6">Capacity Settings</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6">{t.capacity.title}</h3>
                     
                       <div className="grid md:grid-cols-2 gap-6 mb-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Daily Order Limit
+                          {t.capacity.dailyLimit}
                         </label>
                         <input
                           type="number"
@@ -573,12 +745,12 @@ export default function SystemControl() {
                           onChange={(e) => updateCapacitySettings({ dailyLimit: parseInt(e.target.value) || 0 })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                         />
-                        <p className="text-sm text-gray-600 mt-1">Maximum orders per day</p>
+                        <p className="text-sm text-gray-600 mt-1">{t.capacity.dailyHelp}</p>
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Per Hour Limit
+                          {t.capacity.perHourLimit}
                         </label>
                         <input
                           type="number"
@@ -586,23 +758,23 @@ export default function SystemControl() {
                           onChange={(e) => updateCapacitySettings({ perHourLimit: parseInt(e.target.value) || 0 })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                         />
-                        <p className="text-sm text-gray-600 mt-1">Maximum orders per hour</p>
+                        <p className="text-sm text-gray-600 mt-1">{t.capacity.perHourHelp}</p>
                       </div>
                     </div>
 
                     <div className="mb-6">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Weekend Capacity Multiplier
+                        {t.capacity.weekendMultiplier}
                       </label>
                       <select
                         value={capacitySettings.weekendMultiplier}
                         onChange={(e) => updateCapacitySettings({ weekendMultiplier: parseFloat(e.target.value) })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                       >
-                        <option value="1">Same as weekdays</option>
-                        <option value="1.25">25% increase</option>
-                        <option value="1.5">50% increase</option>
-                        <option value="2">100% increase (double)</option>
+                        <option value="1">{t.capacity.sameWeekday}</option>
+                        <option value="1.25">{t.capacity.increase25}</option>
+                        <option value="1.5">{t.capacity.increase50}</option>
+                        <option value="2">{t.capacity.increase100}</option>
                       </select>
                     </div>
 
@@ -614,9 +786,9 @@ export default function SystemControl() {
                         className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                       />
                       <div>
-                        <span className="font-medium text-gray-900">Auto-pause when capacity reached</span>
+                        <span className="font-medium text-gray-900">{t.capacity.autoPauseLabel}</span>
                         <p className="text-sm text-gray-600">
-                          Automatically pause ordering when daily limit is reached
+                          {t.capacity.autoPauseHelp}
                         </p>
                       </div>
                     </label>
@@ -632,7 +804,7 @@ export default function SystemControl() {
                           className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Save size={18} />
-                          {isSavingCapacity ? 'Saving...' : 'Save Capacity Settings'}
+                          {isSavingCapacity ? t.capacity.saving : t.capacity.save}
                         </button>
                       </div>
                     </div>
@@ -643,12 +815,12 @@ export default function SystemControl() {
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
                       <div className="flex items-center gap-3 mb-4">
                         <UsersIcon className="text-amber-600" size={24} />
-                        <h4 className="font-semibold text-amber-900">Current Capacity</h4>
+                        <h4 className="font-semibold text-amber-900">{t.capacity.currentCapacity}</h4>
                       </div>
                       <div className="space-y-3">
                         <div>
                           <div className="flex justify-between text-sm mb-1">
-                            <span className="text-amber-800">Today's Usage</span>
+                            <span className="text-amber-800">{t.capacity.todayUsage}</span>
                             <span className="font-medium text-amber-900">
                               {status.currentReservations} / {capacitySettings.dailyLimit}
                             </span>
@@ -663,7 +835,7 @@ export default function SystemControl() {
                           </div>
                         </div>
                         <p className="text-sm text-amber-700">
-                          {capacitySettings.dailyLimit - status.currentReservations} orders remaining today
+                          {capacitySettings.dailyLimit - status.currentReservations} {t.capacity.remaining}
                         </p>
                       </div>
                     </div>
@@ -671,14 +843,15 @@ export default function SystemControl() {
                     <div className="bg-green-50 border border-green-200 rounded-xl p-6">
                       <div className="flex items-center gap-3 mb-4">
                         <Check className="text-green-600" size={24} />
-                        <h4 className="font-semibold text-green-900">Weekend Capacity</h4>
+                        <h4 className="font-semibold text-green-900">{t.capacity.weekendCapacity}</h4>
                       </div>
                       <p className="text-lg font-bold text-green-900 mb-2">
-                        {Math.floor(capacitySettings.dailyLimit * capacitySettings.weekendMultiplier)} orders
+                        {Math.floor(capacitySettings.dailyLimit * capacitySettings.weekendMultiplier)} {t.capacity.orders}
                       </p>
                       <p className="text-sm text-green-700">
-                        {capacitySettings.weekendMultiplier === 1 ? 'Same as weekdays' : 
-                         `${((capacitySettings.weekendMultiplier - 1) * 100)}% increase on weekends`}
+                        {capacitySettings.weekendMultiplier === 1
+                          ? t.capacity.weekendSame
+                          : `${((capacitySettings.weekendMultiplier - 1) * 100)}% ${t.capacity.weekendIncrease}`}
                       </p>
                     </div>
                   </div>

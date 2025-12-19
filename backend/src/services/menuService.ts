@@ -35,6 +35,9 @@ export const menuService = {
       where,
       include: {
         menuProducts: {
+          where: {
+            product: { is: {} }
+          },
           include: {
             product: true
           }
@@ -53,6 +56,9 @@ export const menuService = {
       where: { id },
       include: {
         menuProducts: {
+          where: {
+            product: { is: {} }
+          },
           include: {
             product: true
           }
@@ -96,6 +102,9 @@ export const menuService = {
       },
       include: {
         menuProducts: {
+          where: {
+            product: { is: {} }
+          },
           include: {
             product: true
           }
@@ -132,6 +141,9 @@ export const menuService = {
       data: updateData,
       include: {
         menuProducts: {
+          where: {
+            product: { is: {} }
+          },
           include: {
             product: true
           }

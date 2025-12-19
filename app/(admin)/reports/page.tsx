@@ -10,12 +10,14 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
+import AdminLanguageToggle from '../components/AdminLanguageToggle';
 
 
 export default function Reports() {
         const router = useRouter();
     
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('reports');
   const [activeTab, setActiveTab] = useState('revenue');
@@ -24,9 +26,251 @@ export default function Reports() {
     start: '',
     end: ''
   });
+  const { language, toggleLanguage } = useTranslation('admin');
+  const locale = language === 'DE' ? 'de-DE' : 'en-US';
+
+  const copy = {
+    EN: {
+      nav: {
+        dashboard: 'Dashboard',
+        orders: 'Orders',
+        menu: 'Menu Management',
+        system: 'System Control',
+        customers: 'Customers',
+        reports: 'Reports',
+      },
+      admin: {
+        user: 'Admin User',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Analytics & Reports',
+      },
+      dateRange: {
+        last7: 'Last 7 Days',
+        last30: 'Last 30 Days',
+        last90: 'Last 90 Days',
+        custom: 'Custom Range',
+      },
+      buttons: {
+        exportData: 'Export Data',
+        exportCsv: 'Export CSV',
+        exportPdf: 'Export PDF',
+        exportAll: 'Export All',
+      },
+      stats: {
+        totalRevenue: 'Total Revenue',
+        totalOrders: 'Total Orders',
+        avgOrder: 'Average',
+        customerRetention: 'Customer Retention',
+        returningCustomers: 'returning customers',
+        avgCustomerValue: 'Avg. Customer Value',
+        lifetimeValue: 'Lifetime value per customer',
+        vsPrevious: 'vs previous period',
+      },
+      tabs: {
+        revenue: 'Revenue Reports',
+        popular: 'Popular Items',
+        export: 'Export Data',
+      },
+      revenue: {
+        trend: 'Revenue Trend',
+        revenueLabel: 'Revenue',
+        byCategory: 'Revenue by Category',
+        mostPopular: 'Most Popular Items',
+        orders: 'Orders',
+        popularity: 'Popularity',
+        revenueByTier: 'Revenue by Menu Tier',
+        bestDays: 'Best Performing Days',
+        orderAnalysis: 'Order Analysis',
+        peakHours: 'Peak Hours',
+        avgPrep: 'Avg. Prep Time',
+        completionRate: 'Completion Rate',
+      },
+      categoryPerformance: {
+        title: 'Category Performance',
+        ofTotal: 'of total',
+      },
+      customerInsights: {
+        title: 'Customer Insights',
+        newCustomers: 'New Customers',
+        returningRate: 'Returning Rate',
+        avgOrders: 'Avg. Orders per Customer',
+        repeatRate: 'Repeat Order Rate',
+      },
+      exports: {
+        revenueTitle: 'Revenue Reports',
+        revenueDesc: 'Export detailed revenue and sales data',
+        ordersTitle: 'Order History',
+        ordersDesc: 'Complete order records and details',
+        customersTitle: 'Customer Data',
+        customersDesc: 'Customer profiles and order history',
+        menuTitle: 'Menu Performance',
+        menuDesc: 'Item popularity and sales metrics',
+        financialTitle: 'Financial Summary',
+        financialDesc: 'PDF report with charts and insights',
+        fullTitle: 'Complete Data',
+        fullDesc: 'All data in a single archive',
+      },
+      trends: {
+        up: 'Growing',
+        down: 'Declining',
+        stable: 'Stable',
+      },
+      categories: {
+        mainCourses: 'Main Courses',
+        starters: 'Starters',
+        desserts: 'Desserts',
+        beverages: 'Beverages',
+        winePairings: 'Wine Pairings',
+        mainCourse: 'Main Course',
+        starter: 'Starter',
+        dessert: 'Dessert',
+        beverage: 'Beverage',
+      },
+      tiers: {
+        essential: 'Essential',
+        premium: 'Premium',
+        luxury: 'Luxury',
+      },
+      exportAlert: {
+        success: 'data exported successfully!',
+      },
+    },
+    DE: {
+      nav: {
+        dashboard: 'Uebersicht',
+        orders: 'Bestellungen',
+        menu: 'Menueverwaltung',
+        system: 'Systemsteuerung',
+        customers: 'Kunden',
+        reports: 'Berichte',
+      },
+      admin: {
+        user: 'Admin Benutzer',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Analysen & Berichte',
+      },
+      dateRange: {
+        last7: 'Letzte 7 Tage',
+        last30: 'Letzte 30 Tage',
+        last90: 'Letzte 90 Tage',
+        custom: 'Benutzerdefinierter Zeitraum',
+      },
+      buttons: {
+        exportData: 'Daten exportieren',
+        exportCsv: 'CSV exportieren',
+        exportPdf: 'PDF exportieren',
+        exportAll: 'Alles exportieren',
+      },
+      stats: {
+        totalRevenue: 'Gesamtumsatz',
+        totalOrders: 'Gesamtbestellungen',
+        avgOrder: 'Durchschnitt',
+        customerRetention: 'Kundenbindung',
+        returningCustomers: 'wiederkehrende Kunden',
+        avgCustomerValue: 'Durchschn. Kundenwert',
+        lifetimeValue: 'Lebenszeitwert pro Kunde',
+        vsPrevious: 'im Vergleich zum vorherigen Zeitraum',
+      },
+      tabs: {
+        revenue: 'Umsatzberichte',
+        popular: 'Beliebte Artikel',
+        export: 'Daten exportieren',
+      },
+      revenue: {
+        trend: 'Umsatztrend',
+        revenueLabel: 'Umsatz',
+        byCategory: 'Umsatz nach Kategorie',
+        mostPopular: 'Beliebteste Artikel',
+        orders: 'Bestellungen',
+        popularity: 'Beliebtheit',
+        revenueByTier: 'Umsatz nach Menue-Stufe',
+        bestDays: 'Beste Tage',
+        orderAnalysis: 'Bestellanalyse',
+        peakHours: 'Spitzenzeiten',
+        avgPrep: 'Durchschn. Vorbereitungszeit',
+        completionRate: 'Abschlussquote',
+      },
+      categoryPerformance: {
+        title: 'Kategorie-Performance',
+        ofTotal: 'vom Gesamt',
+      },
+      customerInsights: {
+        title: 'Kunden-Insights',
+        newCustomers: 'Neue Kunden',
+        returningRate: 'Rueckkehrrate',
+        avgOrders: 'Durchschn. Bestellungen pro Kunde',
+        repeatRate: 'Wiederbestellrate',
+      },
+      exports: {
+        revenueTitle: 'Umsatzberichte',
+        revenueDesc: 'Detaillierte Umsatz- und Verkaufsdaten exportieren',
+        ordersTitle: 'Bestellhistorie',
+        ordersDesc: 'Vollstaendige Bestelldaten und Details',
+        customersTitle: 'Kundendaten',
+        customersDesc: 'Kundenprofile und Bestellhistorie',
+        menuTitle: 'Menue-Performance',
+        menuDesc: 'Artikelbeliebtheit und Verkaufskennzahlen',
+        financialTitle: 'Finanzuebersicht',
+        financialDesc: 'PDF-Bericht mit Diagrammen und Insights',
+        fullTitle: 'Komplette Daten',
+        fullDesc: 'Alle Daten in einem Archiv',
+      },
+      trends: {
+        up: 'Wachsend',
+        down: 'Ruecklaeufig',
+        stable: 'Stabil',
+      },
+      categories: {
+        mainCourses: 'Hauptgerichte',
+        starters: 'Vorspeisen',
+        desserts: 'Desserts',
+        beverages: 'Getraenke',
+        winePairings: 'Weinbegleitung',
+        mainCourse: 'Hauptgericht',
+        starter: 'Vorspeise',
+        dessert: 'Dessert',
+        beverage: 'Getraenk',
+      },
+      tiers: {
+        essential: 'Essential',
+        premium: 'Premium',
+        luxury: 'Luxury',
+      },
+      exportAlert: {
+        success: 'Daten erfolgreich exportiert!',
+      },
+    },
+  } as const;
+  const t = copy[language] ?? copy.EN;
+
+  const categoryLabels: Record<string, string> = {
+    'Main Courses': t.categories.mainCourses,
+    'Starters': t.categories.starters,
+    'Desserts': t.categories.desserts,
+    'Beverages': t.categories.beverages,
+    'Wine Pairings': t.categories.winePairings,
+    'Main Course': t.categories.mainCourse,
+    'Starter': t.categories.starter,
+    'Dessert': t.categories.dessert,
+    'Beverage': t.categories.beverage,
+  };
+  const tierLabels: Record<string, string> = {
+    Essential: t.tiers.essential,
+    Premium: t.tiers.premium,
+    Luxury: t.tiers.luxury,
+  };
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
     // Get current active section from pathname (optional, for styling)
@@ -151,12 +395,12 @@ export default function Reports() {
   };
 
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
-    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
-    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
-    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
-    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
+    { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
+    { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
+    { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
+    { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
+    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
 
 
@@ -179,17 +423,17 @@ export default function Reports() {
   const exportData = (type) => {
     // In a real app, this would generate and download CSV/PDF files
     console.log(`Exporting ${type} data for date range: ${dateRange}`);
-    alert(`${type.toUpperCase()} data exported successfully!`);
+    alert(`${type.toUpperCase()} ${t.exportAlert.success}`);
   };
 
   const RevenueChart = ({ data }) => (
     <div className="bg-white p-6 rounded-2xl border border-stone-100">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Revenue Trend</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t.revenue.trend}</h3>
         <div className="flex items-center gap-2 text-sm">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-            <span className="text-gray-600">Revenue</span>
+            <span className="text-gray-600">{t.revenue.revenueLabel}</span>
           </div>
         </div>
       </div>
@@ -220,7 +464,7 @@ export default function Reports() {
 
   const CategoryBreakdown = ({ data }) => (
     <div className="bg-white p-6 rounded-2xl border border-stone-100">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenue by Category</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">{t.revenue.byCategory}</h3>
       
       <div className="space-y-4">
         {data.byCategory.map((category, index) => {
@@ -228,7 +472,7 @@ export default function Reports() {
           return (
             <div key={category.category} className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="font-medium text-gray-900">{category.category}</span>
+                <span className="font-medium text-gray-900">{categoryLabels[category.category] ?? category.category}</span>
                 <span className="text-gray-600">€{category.revenue.toLocaleString()} ({category.percentage}%)</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -247,7 +491,7 @@ export default function Reports() {
   const PopularItemsList = ({ items }) => (
     <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden">
       <div className="p-6 border-b border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900">Most Popular Items</h3>
+        <h3 className="text-lg font-semibold text-gray-900">{t.revenue.mostPopular}</h3>
       </div>
       
       <div className="divide-y divide-gray-100">
@@ -260,26 +504,26 @@ export default function Reports() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">{item.name}</h4>
-                  <p className="text-sm text-gray-600">{item.category}</p>
+                  <p className="text-sm text-gray-600">{categoryLabels[item.category] ?? item.category}</p>
                 </div>
               </div>
               <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getTrendColor(item.trend)}`}>
                 {getTrendIcon(item.trend)}
-                {item.trend === 'up' ? 'Growing' : item.trend === 'down' ? 'Declining' : 'Stable'}
+                {item.trend === 'up' ? t.trends.up : item.trend === 'down' ? t.trends.down : t.trends.stable}
               </div>
             </div>
             
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-gray-600">Orders</p>
+                <p className="text-gray-600">{t.revenue.orders}</p>
                 <p className="font-semibold text-gray-900">{item.orders}</p>
               </div>
               <div>
-                <p className="text-gray-600">Revenue</p>
+                <p className="text-gray-600">{t.revenue.revenueLabel}</p>
                 <p className="font-semibold text-gray-900">€{item.revenue}</p>
               </div>
               <div>
-                <p className="text-gray-600">Popularity</p>
+                <p className="text-gray-600">{t.revenue.popularity}</p>
                 <div className="flex items-center gap-2">
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
@@ -349,34 +593,42 @@ export default function Reports() {
                 <Users className="text-amber-700" size={20} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-600">Administrator</p>
+                <p className="font-semibold text-gray-900">{t.admin.user}</p>
+                <p className="text-sm text-gray-600">{t.admin.role}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
               <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
                 <Menu size={20} />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 font-elegant">Analytics & Reports</h1>
+              <h1 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h1>
             </div>
             <div className="flex items-center gap-3">
+              <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm"
               >
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-                <option value="custom">Custom Range</option>
+                <option value="7d">{t.dateRange.last7}</option>
+                <option value="30d">{t.dateRange.last30}</option>
+                <option value="90d">{t.dateRange.last90}</option>
+                <option value="custom">{t.dateRange.custom}</option>
               </select>
               
               {dateRange === 'custom' && (
@@ -401,7 +653,7 @@ export default function Reports() {
                 className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2 text-sm"
               >
                 <Download size={16} />
-                Export Data
+                {t.buttons.exportData}
               </button>
             </div>
           </div>
@@ -413,50 +665,50 @@ export default function Reports() {
             {/* Total Revenue */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-gray-600">Total Revenue</h3>
+                <h3 className="text-sm font-medium text-gray-600">{t.stats.totalRevenue}</h3>
                 <TrendUp size={20} className="text-green-500" />
               </div>
               <p className="text-2xl font-bold text-gray-900 mb-2">€{revenueData.totalRevenue.toLocaleString()}</p>
               <div className="flex items-center gap-1 text-sm">
                 <span className="text-green-600 font-medium">+{revenueData.growthRate}%</span>
-                <span className="text-gray-600">vs previous period</span>
+                <span className="text-gray-600">{t.stats.vsPrevious}</span>
               </div>
             </div>
 
             {/* Total Orders */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-gray-600">Total Orders</h3>
+                <h3 className="text-sm font-medium text-gray-600">{t.stats.totalOrders}</h3>
                 <Package size={20} className="text-amber-500" />
               </div>
               <p className="text-2xl font-bold text-gray-900 mb-2">{revenueData.totalOrders}</p>
-              <p className="text-sm text-gray-600">Average: €{revenueData.averageOrderValue}/order</p>
+              <p className="text-sm text-gray-600">{t.stats.avgOrder}: €{revenueData.averageOrderValue}/order</p>
             </div>
 
             {/* Customer Metrics */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-gray-600">Customer Retention</h3>
+                <h3 className="text-sm font-medium text-gray-600">{t.stats.customerRetention}</h3>
                 <Users size={20} className="text-blue-500" />
               </div>
               <p className="text-2xl font-bold text-gray-900 mb-2">{customerAnalytics.retentionRate}%</p>
-              <p className="text-sm text-gray-600">{customerAnalytics.returningCustomers} returning customers</p>
+              <p className="text-sm text-gray-600">{customerAnalytics.returningCustomers} {t.stats.returningCustomers}</p>
             </div>
 
             {/* Average Value */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-gray-600">Avg. Customer Value</h3>
+                <h3 className="text-sm font-medium text-gray-600">{t.stats.avgCustomerValue}</h3>
                 <DollarSign size={20} className="text-green-500" />
               </div>
               <p className="text-2xl font-bold text-gray-900 mb-2">€{customerAnalytics.avgCustomerValue}</p>
-              <p className="text-sm text-gray-600">Lifetime value per customer</p>
+              <p className="text-sm text-gray-600">{t.stats.lifetimeValue}</p>
             </div>
           </div>
 
           {/* Tabs */}
           <div className="bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm mb-6">
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-gray-100 overflow-x-auto whitespace-nowrap">
               <button
                 onClick={() => setActiveTab('revenue')}
                 className={`flex-1 px-6 py-4 font-medium transition-colors ${
@@ -465,7 +717,7 @@ export default function Reports() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Revenue Reports
+                {t.tabs.revenue}
               </button>
               <button
                 onClick={() => setActiveTab('popular')}
@@ -475,7 +727,7 @@ export default function Reports() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Popular Items
+                {t.tabs.popular}
               </button>
               <button
                 onClick={() => setActiveTab('export')}
@@ -485,7 +737,7 @@ export default function Reports() {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                Export Data
+                {t.tabs.export}
               </button>
             </div>
 
@@ -501,14 +753,14 @@ export default function Reports() {
                   {/* Additional Revenue Metrics */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
-                      <h4 className="font-semibold text-amber-900 mb-2">Revenue by Menu Tier</h4>
+                      <h4 className="font-semibold text-amber-900 mb-2">{t.revenue.revenueByTier}</h4>
                       <div className="space-y-3">
                         {revenueData.byTier.map((tier) => (
                           <div key={tier.tier} className="flex justify-between items-center">
-                            <span className="text-amber-800 font-medium">{tier.tier}</span>
+                            <span className="text-amber-800 font-medium">{tierLabels[tier.tier] ?? tier.tier}</span>
                             <div className="text-right">
                               <p className="font-bold text-amber-900">€{tier.revenue.toLocaleString()}</p>
-                              <p className="text-sm text-amber-700">{tier.orders} orders</p>
+                              <p className="text-sm text-amber-700">{tier.orders} {t.revenue.orders}</p>
                             </div>
                           </div>
                         ))}
@@ -516,7 +768,7 @@ export default function Reports() {
                     </div>
 
                     <div className="bg-green-50 rounded-2xl p-6 border border-green-200">
-                      <h4 className="font-semibold text-green-900 mb-2">Best Performing Days</h4>
+                      <h4 className="font-semibold text-green-900 mb-2">{t.revenue.bestDays}</h4>
                       <div className="space-y-2">
                         {revenueData.dailyRevenue
                           .sort((a, b) => b.revenue - a.revenue)
@@ -524,7 +776,7 @@ export default function Reports() {
                           .map((day, index) => (
                             <div key={day.date} className="flex justify-between items-center">
                               <span className="text-green-800">
-                                {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long' })}
+                                {new Date(day.date).toLocaleDateString(locale, { weekday: 'long' })}
                               </span>
                               <span className="font-bold text-green-900">€{day.revenue}</span>
                             </div>
@@ -534,18 +786,18 @@ export default function Reports() {
                     </div>
 
                     <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
-                      <h4 className="font-semibold text-blue-900 mb-2">Order Analysis</h4>
+                      <h4 className="font-semibold text-blue-900 mb-2">{t.revenue.orderAnalysis}</h4>
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <span className="text-blue-800">Peak Hours</span>
+                          <span className="text-blue-800">{t.revenue.peakHours}</span>
                           <span className="font-bold text-blue-900">7:00-9:00 PM</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-blue-800">Avg. Prep Time</span>
+                          <span className="text-blue-800">{t.revenue.avgPrep}</span>
                           <span className="font-bold text-blue-900">22 min</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-blue-800">Completion Rate</span>
+                          <span className="text-blue-800">{t.revenue.completionRate}</span>
                           <span className="font-bold text-blue-900">98.2%</span>
                         </div>
                       </div>
@@ -562,14 +814,14 @@ export default function Reports() {
                   {/* Performance Metrics */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white rounded-2xl p-6 border border-stone-100">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Category Performance</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.categoryPerformance.title}</h3>
                       <div className="space-y-4">
                         {revenueData.byCategory.map((category) => (
                           <div key={category.category} className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">{category.category}</span>
+                            <span className="font-medium text-gray-900">{categoryLabels[category.category] ?? category.category}</span>
                             <div className="text-right">
                               <p className="font-bold text-gray-900">€{category.revenue.toLocaleString()}</p>
-                              <p className="text-sm text-gray-600">{category.percentage}% of total</p>
+                              <p className="text-sm text-gray-600">{category.percentage}% {t.categoryPerformance.ofTotal}</p>
                             </div>
                           </div>
                         ))}
@@ -577,22 +829,22 @@ export default function Reports() {
                     </div>
 
                     <div className="bg-white rounded-2xl p-6 border border-stone-100">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Insights</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.customerInsights.title}</h3>
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-700">New Customers</span>
+                          <span className="text-gray-700">{t.customerInsights.newCustomers}</span>
                           <span className="font-bold text-gray-900">{customerAnalytics.newCustomers}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-700">Returning Rate</span>
+                          <span className="text-gray-700">{t.customerInsights.returningRate}</span>
                           <span className="font-bold text-green-600">{customerAnalytics.retentionRate}%</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-700">Avg. Orders per Customer</span>
+                          <span className="text-gray-700">{t.customerInsights.avgOrders}</span>
                           <span className="font-bold text-gray-900">4.2</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-700">Repeat Order Rate</span>
+                          <span className="text-gray-700">{t.customerInsights.repeatRate}</span>
                           <span className="font-bold text-green-600">72%</span>
                         </div>
                       </div>
@@ -610,14 +862,14 @@ export default function Reports() {
                       <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <DollarSign className="text-amber-600" size={24} />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Revenue Reports</h3>
-                      <p className="text-sm text-gray-600 mb-4">Export detailed revenue and sales data</p>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t.exports.revenueTitle}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{t.exports.revenueDesc}</p>
                       <button
                         onClick={() => exportData('revenue')}
                         className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                       >
                         <Download size={16} />
-                        Export CSV
+                        {t.buttons.exportCsv}
                       </button>
                     </div>
 
@@ -626,14 +878,14 @@ export default function Reports() {
                       <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Package className="text-blue-600" size={24} />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Order History</h3>
-                      <p className="text-sm text-gray-600 mb-4">Complete order records and details</p>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t.exports.ordersTitle}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{t.exports.ordersDesc}</p>
                       <button
                         onClick={() => exportData('orders')}
                         className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                       >
                         <Download size={16} />
-                        Export CSV
+                        {t.buttons.exportCsv}
                       </button>
                     </div>
 
@@ -642,14 +894,14 @@ export default function Reports() {
                       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Users className="text-green-600" size={24} />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Customer Data</h3>
-                      <p className="text-sm text-gray-600 mb-4">Customer profiles and order history</p>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t.exports.customersTitle}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{t.exports.customersDesc}</p>
                       <button
                         onClick={() => exportData('customers')}
                         className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                       >
                         <Download size={16} />
-                        Export CSV
+                        {t.buttons.exportCsv}
                       </button>
                     </div>
 
@@ -658,14 +910,14 @@ export default function Reports() {
                       <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Utensils className="text-purple-600" size={24} />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Menu Performance</h3>
-                      <p className="text-sm text-gray-600 mb-4">Item popularity and sales metrics</p>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t.exports.menuTitle}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{t.exports.menuDesc}</p>
                       <button
                         onClick={() => exportData('menu')}
                         className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                       >
                         <Download size={16} />
-                        Export CSV
+                        {t.buttons.exportCsv}
                       </button>
                     </div>
 
@@ -674,14 +926,14 @@ export default function Reports() {
                       <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <FileText className="text-red-600" size={24} />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Financial Summary</h3>
-                      <p className="text-sm text-gray-600 mb-4">PDF report with charts and insights</p>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t.exports.financialTitle}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{t.exports.financialDesc}</p>
                       <button
                         onClick={() => exportData('financial')}
                         className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                       >
                         <FileText size={16} />
-                        Export PDF
+                        {t.buttons.exportPdf}
                       </button>
                     </div>
 
@@ -690,14 +942,14 @@ export default function Reports() {
                       <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Download className="text-amber-600" size={24} />
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2">Complete Data</h3>
-                      <p className="text-sm text-gray-600 mb-4">All data in a single archive</p>
+                      <h3 className="font-semibold text-gray-900 mb-2">{t.exports.fullTitle}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{t.exports.fullDesc}</p>
                       <button
                         onClick={() => exportData('full')}
                         className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                       >
                         <Download size={16} />
-                        Export All
+                        {t.buttons.exportAll}
                       </button>
                     </div>
                   </div>

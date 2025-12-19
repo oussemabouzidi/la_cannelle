@@ -5,10 +5,12 @@ import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Clock, Users, Leaf, P
 import { useRouter } from 'next/navigation';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
 import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
+import { commonTranslations } from '@/lib/translations/common';
+import { DEFAULT_LANGUAGE, STORAGE_KEY, type Language } from '@/lib/hooks/useTranslation';
 
 export default function MenusPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE);
   const [activeCategory, setActiveCategory] = useState('all');
   const [isVisible, setIsVisible] = useState(false);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
@@ -22,9 +24,21 @@ export default function MenusPage() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const commonFooter = commonTranslations[language].footer;
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const next = stored === 'DE' || stored === 'EN' ? (stored as Language) : DEFAULT_LANGUAGE;
+    setLanguage(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = next.toLowerCase();
+    }
   }, []);
 
   // Handle click outside modal
@@ -55,12 +69,22 @@ export default function MenusPage() {
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === 'EN' ? 'DE' : 'EN');
+    setLanguage((prev) => {
+      const next = prev === 'EN' ? 'DE' : 'EN';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, next);
+      }
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = next.toLowerCase();
+      }
+      return next;
+    });
   };
 
   const content: Record<string, any> = {
     EN: {
       nav: {
+        home: 'Home',
         about: 'About',
         services: 'Services',
         menus: 'Menus',
@@ -106,7 +130,7 @@ export default function MenusPage() {
         subtitle: 'Flexible options to suit your needs',
         basic: {
           name: 'Essential',
-          price: '$45',
+          price: '€45',
           period: 'per person',
           features: [
             '3-course menu selection',
@@ -118,7 +142,7 @@ export default function MenusPage() {
         },
         premium: {
           name: 'Premium',
-          price: '$75',
+          price: '€75',
           period: 'per person',
           features: [
             '5-course gourmet menu',
@@ -132,7 +156,7 @@ export default function MenusPage() {
         },
         luxury: {
           name: 'Luxury',
-          price: '$120',
+          price: '€120',
           period: 'per person',
           features: [
             '7-course bespoke menu',
@@ -153,6 +177,7 @@ export default function MenusPage() {
     },
     DE: {
       nav: {
+        home: 'Startseite',
         about: 'Über uns',
         services: 'Dienstleistungen',
         menus: 'Menüs',
@@ -452,9 +477,6 @@ export default function MenusPage() {
               Organic
             </span>
           )}
-          <span className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-            {item.preparation}
-          </span>
         </div>
 
         {/* Favorite Button */}
@@ -490,7 +512,7 @@ export default function MenusPage() {
             {item.name}
           </h4>
           <span className="text-2xl font-bold text-amber-700 font-elegant ml-3">
-            ${item.price}
+            €{item.price}
           </span>
         </div>
         
@@ -566,7 +588,7 @@ export default function MenusPage() {
             {t.menuBuilder.totalItems} ({selectedItems.length})
           </span>
           <span className="text-lg font-bold text-amber-700">
-            ${getTotalPrice()}
+            €{getTotalPrice()}
           </span>
         </div>
         
@@ -575,7 +597,7 @@ export default function MenusPage() {
             <div key={item.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-900">{item.name}</p>
-                <p className="text-xs text-gray-600">${item.price} × {item.quantity}</p>
+                <p className="text-xs text-gray-600">€{item.price} × {item.quantity}</p>
               </div>
               <button 
                 onClick={() => removeFromMenuPlan(item.id)}
@@ -633,7 +655,7 @@ export default function MenusPage() {
             </h3>
             <div className="flex items-center gap-4">
               <span className="text-lg font-bold text-amber-700">
-                {t.menuBuilder.totalPrice}: ${getTotalPrice()}
+                {t.menuBuilder.totalPrice}: €{getTotalPrice()}
               </span>
               <button
                 onClick={closeModal}
@@ -653,7 +675,7 @@ export default function MenusPage() {
               </div>
               <div className="text-right">
                 <p className="font-semibold text-amber-800">{t.menuBuilder.totalPrice}</p>
-                <p className="text-amber-700 font-bold text-lg">${getTotalPrice() * quantity}</p>
+                <p className="text-amber-700 font-bold text-lg">€{getTotalPrice() * quantity}</p>
               </div>
             </div>
           </div>
@@ -708,7 +730,7 @@ export default function MenusPage() {
                   </div>
                   
                   <span className="text-lg font-bold text-amber-700 min-w-20 text-right">
-                    ${item.price * item.quantity}
+                    €{item.price * item.quantity}
                   </span>
                   
                   <button 
@@ -842,8 +864,8 @@ export default function MenusPage() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">Home</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">About</a>
+              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.home}</a>
+              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.about}</a>
               <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
               <a href="/menus" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
               <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
@@ -888,11 +910,11 @@ export default function MenusPage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Home</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">About</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Services</a>
-                <a href="/menus" className="text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Menus</a>
-                <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">Contact</a>
+                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.home}</a>
+                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.about}</a>
+                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
+                <a href="/menus" className="text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
+                <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
@@ -1022,17 +1044,17 @@ export default function MenusPage() {
               <p className="text-gray-400 italic">Creating unforgettable culinary experiences</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Quick Links</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.quickLinks}</h4>
               <div className="flex flex-col gap-2">
-                <a href="/home" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Home</a>
-                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">About</a>
-                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Services</a>
-                <a href="/menus" className="text-amber-400 font-semibold transition-all duration-300 transform hover:translate-x-1">Menus</a>
-                <a href="/contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Contact</a>
+                <a href="/home" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.home}</a>
+                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.about}</a>
+                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.services}</a>
+                <a href="/menus" className="text-amber-400 font-semibold transition-all duration-300 transform hover:translate-x-1">{t.nav.menus}</a>
+                <a href="/contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.contact}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Contact</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.contact}</h4>
               <div className="flex flex-col gap-3 text-gray-400">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Phone size={18} />
@@ -1049,7 +1071,7 @@ export default function MenusPage() {
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Follow Us</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.followUs}</h4>
               <div className="flex flex-col gap-2 text-gray-400">
                 <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">Instagram</a>
                 <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-white transition-colors duration-300">TikTok</a>

@@ -9,18 +9,163 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
+import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import { ordersApi, Order } from '@/lib/api/orders';
 
 
 export default function AdminOrders() {
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [activeSection, setActiveSection] = useState('orders');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const { language, toggleLanguage } = useTranslation('admin');
+
+  const copy = {
+    EN: {
+      nav: {
+        dashboard: 'Dashboard',
+        orders: 'Orders',
+        menu: 'Menu Management',
+        system: 'System Control',
+        customers: 'Customers',
+        reports: 'Reports',
+      },
+      admin: {
+        user: 'Admin User',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Orders Management',
+      },
+      filters: {
+        searchPlaceholder: 'Search orders...',
+        allStatus: 'All Status',
+        allDates: 'All Dates',
+        today: 'Today',
+        upcoming: 'Upcoming',
+        refresh: 'Refresh',
+        refreshing: 'Refreshing...',
+      },
+      table: {
+        title: 'All Orders',
+        orderId: 'Order ID',
+        client: 'Client',
+        event: 'Event',
+        dateTime: 'Date & Time',
+        guests: 'Guests',
+        total: 'Total',
+        status: 'Status',
+        actions: 'Actions',
+        paymentPaid: 'Paid',
+        paymentPending: 'Pending',
+      },
+      modal: {
+        title: 'Order Details',
+        clientInfo: 'Client Information',
+        eventDetails: 'Event Details',
+        clientLabel: 'Client',
+        eventType: 'Event Type',
+        orderItems: 'Order Items',
+        quantity: 'Qty',
+        total: 'Total',
+        specialRequests: 'Special Requests',
+        statusManagement: 'Status Management',
+        cancelOrder: 'Cancel Order',
+        cancelPlaceholder: 'Reason for cancellation...',
+        cancelAction: 'Cancel Order & Process Refund',
+      },
+      status: {
+        pending: 'Pending',
+        confirmed: 'Confirmed',
+        preparation: 'In Preparation',
+        delivery: 'Out for Delivery',
+        completed: 'Completed',
+        cancelled: 'Cancelled',
+      },
+      labels: {
+        guests: 'guests',
+        emptyState: 'No orders found matching your criteria',
+        viewDetails: 'View Details',
+        markComplete: 'Mark Complete',
+        cancelOrder: 'Cancel Order',
+      },
+    },
+    DE: {
+      nav: {
+        dashboard: 'Uebersicht',
+        orders: 'Bestellungen',
+        menu: 'Menueverwaltung',
+        system: 'Systemsteuerung',
+        customers: 'Kunden',
+        reports: 'Berichte',
+      },
+      admin: {
+        user: 'Admin Benutzer',
+        role: 'Administrator',
+      },
+      header: {
+        title: 'Bestellverwaltung',
+      },
+      filters: {
+        searchPlaceholder: 'Bestellungen suchen...',
+        allStatus: 'Alle Status',
+        allDates: 'Alle Daten',
+        today: 'Heute',
+        upcoming: 'Bevorstehend',
+        refresh: 'Aktualisieren',
+        refreshing: 'Aktualisiere...',
+      },
+      table: {
+        title: 'Alle Bestellungen',
+        orderId: 'Bestell-ID',
+        client: 'Kunde',
+        event: 'Event',
+        dateTime: 'Datum & Uhrzeit',
+        guests: 'Gaeste',
+        total: 'Gesamt',
+        status: 'Status',
+        actions: 'Aktionen',
+        paymentPaid: 'Bezahlt',
+        paymentPending: 'Ausstehend',
+      },
+      modal: {
+        title: 'Bestelldetails',
+        clientInfo: 'Kundeninformationen',
+        eventDetails: 'Eventdetails',
+        clientLabel: 'Kunde',
+        eventType: 'Eventtyp',
+        orderItems: 'Bestellpositionen',
+        quantity: 'Menge',
+        total: 'Gesamt',
+        specialRequests: 'Besondere Wuensche',
+        statusManagement: 'Statusverwaltung',
+        cancelOrder: 'Bestellung stornieren',
+        cancelPlaceholder: 'Grund fuer die Stornierung...',
+        cancelAction: 'Bestellung stornieren und Rueckerstattung ausloesen',
+      },
+      status: {
+        pending: 'Ausstehend',
+        confirmed: 'Bestaetigt',
+        preparation: 'In Vorbereitung',
+        delivery: 'In Lieferung',
+        completed: 'Abgeschlossen',
+        cancelled: 'Storniert',
+      },
+      labels: {
+        guests: 'Gaeste',
+        emptyState: 'Keine Bestellungen gefunden, die den Kriterien entsprechen',
+        viewDetails: 'Details ansehen',
+        markComplete: 'Als abgeschlossen markieren',
+        cancelOrder: 'Bestellung stornieren',
+      },
+    },
+  } as const;
+  const t = copy[language] ?? copy.EN;
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -28,6 +173,11 @@ export default function AdminOrders() {
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
     // Get current active section from pathname (optional, for styling)
@@ -103,21 +253,21 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<LocalOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const statusOptions = [
-    { value: 'pending', label: 'Pending', color: 'bg-amber-100 text-amber-800' },
-    { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-100 text-blue-800' },
-    { value: 'preparation', label: 'In Preparation', color: 'bg-purple-100 text-purple-800' },
-    { value: 'delivery', label: 'Out for Delivery', color: 'bg-indigo-100 text-indigo-800' },
-    { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800' },
-    { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' }
+    { value: 'pending', label: t.status.pending, color: 'bg-amber-100 text-amber-800' },
+    { value: 'confirmed', label: t.status.confirmed, color: 'bg-blue-100 text-blue-800' },
+    { value: 'preparation', label: t.status.preparation, color: 'bg-purple-100 text-purple-800' },
+    { value: 'delivery', label: t.status.delivery, color: 'bg-indigo-100 text-indigo-800' },
+    { value: 'completed', label: t.status.completed, color: 'bg-green-100 text-green-800' },
+    { value: 'cancelled', label: t.status.cancelled, color: 'bg-red-100 text-red-800' }
   ];
 
   const navigation = [
-    { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, path: '/dashboard' },
-    { id: 'orders', name: 'Orders', icon: Package, path: '/orders' },
-    { id: 'menu', name: 'Menu Management', icon: Menu, path: '/menu_management' },
-    { id: 'system', name: 'System Control', icon: Clock, path: '/system_control' },
-    { id: 'customers', name: 'Customers', icon: Users, path: '/customers' },
-    { id: 'reports', name: 'Reports', icon: DollarSign, path: '/reports' }
+    { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
+    { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
+    { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
+    { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
+    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
 
 
@@ -156,7 +306,7 @@ export default function AdminOrders() {
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6 border-b border-gray-300 bg-gray-50">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 font-elegant">Order Details - {order.id}</h2>
+            <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.modal.title} - {order.id}</h2>
             <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg text-gray-700">
               <X size={24} />
             </button>
@@ -167,13 +317,13 @@ export default function AdminOrders() {
           {/* Client Information */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Client Information</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t.modal.clientInfo}</h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <User size={18} className="text-gray-600" />
                   <div>
                     <p className="font-medium text-gray-900">{order.client}</p>
-                    <p className="text-sm text-gray-700">Client</p>
+                    <p className="text-sm text-gray-700">{t.modal.clientLabel}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -188,11 +338,11 @@ export default function AdminOrders() {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Event Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t.modal.eventDetails}</h3>
               <div className="space-y-3">
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <p className="font-medium text-gray-900">{order.eventType}</p>
-                  <p className="text-sm text-gray-700">Event Type</p>
+                    <p className="text-sm text-gray-700">{t.modal.eventType}</p>
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Calendar size={18} className="text-gray-600" />
@@ -203,7 +353,7 @@ export default function AdminOrders() {
                 </div>
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <Users size={18} className="text-gray-600" />
-                  <p className="text-gray-900">{order.guests} guests</p>
+                  <p className="text-gray-900">{order.guests} {t.labels.guests}</p>
                 </div>
                 <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                   <MapPin size={18} className="text-gray-600 mt-1" />
@@ -215,13 +365,13 @@ export default function AdminOrders() {
 
           {/* Order Items */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Order Items</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.modal.orderItems}</h3>
             <div className="space-y-3">
               {order.dishes.map((item, index) => (
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border border-gray-200">
                   <div>
                     <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-700">Qty: {item.quantity}</p>
+                    <p className="text-sm text-gray-700">{t.modal.quantity}: {item.quantity}</p>
                   </div>
                   <p className="font-semibold text-gray-900">€{item.price * item.quantity}</p>
                 </div>
@@ -230,14 +380,14 @@ export default function AdminOrders() {
                 <div key={index} className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border border-gray-200">
                   <div>
                     <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-700">Qty: {item.quantity}</p>
+                    <p className="text-sm text-gray-700">{t.modal.quantity}: {item.quantity}</p>
                   </div>
                   <p className="font-semibold text-gray-900">€{item.price * item.quantity}</p>
                 </div>
               ))}
             </div>
             <div className="flex justify-between items-center p-4 border-t border-gray-300 mt-4 bg-gray-50 rounded-lg">
-              <p className="text-lg font-bold text-gray-900">Total</p>
+              <p className="text-lg font-bold text-gray-900">{t.modal.total}</p>
               <p className="text-lg font-bold text-gray-900">€{order.total}</p>
             </div>
           </div>
@@ -245,14 +395,14 @@ export default function AdminOrders() {
           {/* Special Requests */}
           {order.specialRequests && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 border-b pb-2">Special Requests</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 border-b pb-2">{t.modal.specialRequests}</h3>
               <p className="text-gray-900 bg-amber-50 p-4 rounded-lg border border-amber-200">{order.specialRequests}</p>
             </div>
           )}
 
           {/* Status Management */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Status Management</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.modal.statusManagement}</h3>
             <div className="flex flex-wrap gap-2">
               {statusOptions.map(status => (
                 <button
@@ -273,10 +423,10 @@ export default function AdminOrders() {
           {/* Cancellation Section */}
           {order.status !== 'cancelled' && (
             <div className="border-t border-gray-300 pt-6">
-              <h3 className="text-lg font-semibold text-red-800 mb-4 border-b pb-2">Cancel Order</h3>
+              <h3 className="text-lg font-semibold text-red-800 mb-4 border-b pb-2">{t.modal.cancelOrder}</h3>
               <div className="space-y-3">
                 <textarea
-                  placeholder="Reason for cancellation..."
+                  placeholder={t.modal.cancelPlaceholder}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 bg-white"
                   rows={3}
                 />
@@ -284,7 +434,7 @@ export default function AdminOrders() {
                   onClick={() => cancelOrder(order.id, 'Client request')}
                   className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium border border-red-700"
                 >
-                  Cancel Order & Process Refund
+                  {t.modal.cancelAction}
                 </button>
               </div>
             </div>
@@ -346,24 +496,32 @@ export default function AdminOrders() {
                 <Users className="text-amber-800" size={20} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Admin User</p>
-                <p className="text-sm text-gray-700">Administrator</p>
+                <p className="font-semibold text-gray-900">{t.admin.user}</p>
+                <p className="text-sm text-gray-700">{t.admin.role}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
         <header className="bg-white border-b border-gray-300">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
               <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-200 text-gray-700">
                 <Menu size={20} />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 font-elegant">Orders Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h1>
             </div>
+            <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
           </div>
         </header>
 
@@ -377,7 +535,7 @@ export default function AdminOrders() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
                 <input
                   type="text"
-                  placeholder="Search orders..."
+                  placeholder={t.filters.searchPlaceholder}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
@@ -389,7 +547,7 @@ export default function AdminOrders() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
               >
-                <option value="all">All Status</option>
+                <option value="all">{t.filters.allStatus}</option>
                 {statusOptions.map(status => (
                   <option key={status.value} value={status.value}>{status.label}</option>
                 ))}
@@ -400,9 +558,9 @@ export default function AdminOrders() {
                 onChange={(e) => setDateFilter(e.target.value)}
                 className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
               >
-                <option value="all">All Dates</option>
-                <option value="today">Today</option>
-                <option value="upcoming">Upcoming</option>
+                <option value="all">{t.filters.allDates}</option>
+                <option value="today">{t.filters.today}</option>
+                <option value="upcoming">{t.filters.upcoming}</option>
               </select>
 
               <button
@@ -410,7 +568,7 @@ export default function AdminOrders() {
                 className="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2 border border-amber-700"
               >
                 <RefreshCw size={16} />
-                {isLoading ? 'Refreshing...' : 'Refresh'}
+                {isLoading ? t.filters.refreshing : t.filters.refresh}
               </button>
             </div>
           </div>
@@ -420,21 +578,21 @@ export default function AdminOrders() {
             isVisible ? 'animate-fade-in-up' : 'opacity-0'
           }`} style={{ animationDelay: '200ms' }}>
             <div className="p-6 border-b border-gray-300">
-              <h2 className="text-xl font-bold text-gray-900 font-elegant">All Orders ({filteredOrders.length})</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-elegant">{t.table.title} ({filteredOrders.length})</h2>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Order ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Event</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Date & Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Guests</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Total</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.orderId}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.client}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.event}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.dateTime}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.guests}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.total}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.status}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">{t.table.actions}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-300">
@@ -466,7 +624,7 @@ export default function AdminOrders() {
                           <div className={`text-xs ${
                             order.payment === 'paid' ? 'text-green-700' : 'text-amber-700'
                           }`}>
-                            {order.payment === 'paid' ? 'Paid' : 'Pending'}
+                            {order.payment === 'paid' ? t.table.paymentPaid : t.table.paymentPending}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
@@ -479,21 +637,21 @@ export default function AdminOrders() {
                             <button
                               onClick={() => setSelectedOrder(order)}
                               className="p-2 text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
-                              title="View Details"
+                              title={t.labels.viewDetails}
                             >
                               <Eye size={16} />
                             </button>
                             <button
                               onClick={() => updateOrderStatus(order.id, 'completed')}
                               className="p-2 text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-200"
-                              title="Mark Complete"
+                              title={t.labels.markComplete}
                             >
                               <CheckCircle size={16} />
                             </button>
                             <button
                               onClick={() => cancelOrder(order.id, 'Admin action')}
                               className="p-2 text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
-                              title="Cancel Order"
+                              title={t.labels.cancelOrder}
                             >
                               <XCircle size={16} />
                             </button>
@@ -509,7 +667,7 @@ export default function AdminOrders() {
             {filteredOrders.length === 0 && (
               <div className="text-center py-12 border-t border-gray-300">
                 <Package size={48} className="mx-auto text-gray-500 mb-4" />
-                <p className="text-gray-700 text-lg">No orders found matching your criteria</p>
+                <p className="text-gray-700 text-lg">{t.labels.emptyState}</p>
               </div>
             )}
           </div>

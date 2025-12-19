@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { productService } from '../services/productService';
+import { AppError } from '../middleware/errorHandler';
 
 export const productController = {
   async getProducts(req: AuthRequest, res: Response) {
@@ -36,7 +37,15 @@ export const productController = {
 
   async deleteProduct(req: AuthRequest, res: Response) {
     const { id } = req.params;
-    await productService.deleteProduct(parseInt(id));
-    res.status(204).send();
+    try {
+      const result = await productService.deleteProduct(parseInt(id));
+      res.json(result);
+    } catch (error) {
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      console.error('Failed to delete product', error);
+      return res.status(500).json({ error: 'Unable to delete product' });
+    }
   }
 };

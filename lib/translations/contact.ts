@@ -1,134 +1,60 @@
-import { commonTranslations } from './common';
+import type { Language } from '../hooks/useTranslation';
 
-export const contactTranslations = {
-  EN: {
-    ...commonTranslations.EN,
-    hero: {
-      title: 'Get in Touch',
-      subtitle: 'We\'d love to hear from you'
-    },
-    form: {
-      name: 'Full Name',
-      email: 'Email Address',
-      phone: 'Phone Number',
-      eventType: 'Event Type',
-      eventDate: 'Event Date',
-      guests: 'Number of Guests',
-      message: 'Message',
-      eventTypes: [
-        'Corporate Event',
-        'Wedding',
-        'Private Party',
-        'Conference',
-        'Product Launch',
-        'Other'
-      ],
-      submit: 'Send Message',
-      placeholder: {
-        name: 'Enter your name',
-        email: 'Enter your email',
-        phone: 'Enter your phone number',
-        eventType: 'Select event type',
-        message: 'Tell us about your event...'
-      }
-    },
-    // Alias to keep components expecting contactForm.* working
-    contactForm: {
-      title: 'Send Us a Message',
-      name: 'Full Name',
-      email: 'Email Address',
-      phone: 'Phone Number',
-      eventType: 'Event Type',
-      eventDate: 'Event Date',
-      guests: 'Number of Guests',
-      message: 'Message',
-      eventTypes: [
-        'Corporate Event',
-        'Wedding',
-        'Private Party',
-        'Conference',
-        'Product Launch',
-        'Other'
-      ],
-      submit: 'Send Message',
-      button: 'Send Message',
-      placeholder: {
-        name: 'Enter your name',
-        email: 'Enter your email',
-        phone: 'Enter your phone number',
-        eventType: 'Select event type',
-        message: 'Tell us about your event...'
-      }
-    },
-    info: {
-      title: 'Contact Information',
-      phone: {
-        label: 'Phone',
-        value: '+1 (555) 123-4567'
-      },
-      email: {
-        label: 'Email',
-        value: 'info@catering.com'
-      },
-      address: {
-        label: 'Address',
-        value: '123 Culinary Street, Food City, FC 12345'
-      },
-      hours: {
-        label: 'Business Hours',
-        value: 'Mon-Fri: 9:00 AM - 6:00 PM'
-      }
-    },
-    contactInfo: {
-      title: 'Contact Information',
-      phone: '+1 (555) 123-4567',
-      mobile: '+1 (555) 987-6543',
-      email: 'info@catering.com',
-      address: '123 Culinary Street, Food City, FC 12345',
-      hours: {
-        title: 'Business Hours',
-        weekdays: 'Monday - Friday: 9:00 AM - 6:00 PM',
-        saturday: 'Saturday: 10:00 AM - 4:00 PM',
-        sunday: 'Sunday: Closed'
-      }
-    },
-    success: {
-      title: 'Thank You!',
-      message: 'We\'ll get back to you soon.'
-    }
+const base = {
+  nav: { about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order Now' },
+  hero: { title: 'Get in Touch', subtitle: "Let’s create something extraordinary together" },
+  quickOrder: {
+    title: 'Quick Order',
+    subtitle: 'Need immediate assistance? Place a quick order',
+    button: 'Quick Order Now',
   },
-  DE: {
-    ...commonTranslations.DE,
-    hero: {
-      title: 'Kontaktieren Sie uns',
-      subtitle: 'Wir freuen uns von Ihnen zu hören'
+  social: {
+    title: 'Follow Us',
+    instagram: 'Instagram',
+    tiktok: 'TikTok',
+  },
+  contactForm: {
+    title: 'Send Us a Message',
+    name: 'Full Name',
+    email: 'Email Address',
+    phone: 'Phone Number',
+    eventType: 'Event Type',
+    eventDate: 'Event Date',
+    guests: 'Number of Guests',
+    message: 'Your Message',
+    eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other'],
+    button: 'Send Message',
+    submit: 'Send Message',
+  },
+  contactInfo: {
+    title: 'Contact Information',
+    phone: '02133 978 2992',
+    mobile: '0163 599 7062',
+    email: 'booking@la-cannelle.com',
+    address: 'Borsigstraße 2, 41541 Dormagen',
+    hours: {
+      title: 'Business Hours',
+      weekdays: 'Monday - Friday: 9:00 AM - 6:00 PM',
+      saturday: 'Saturday: 10:00 AM - 4:00 PM',
+      sunday: 'Sunday: Closed',
     },
-    form: {
-      name: 'Vollständiger Name',
-      email: 'E-Mail-Adresse',
-      phone: 'Telefonnummer',
-      eventType: 'Veranstaltungstyp',
-      eventDate: 'Veranstaltungsdatum',
-      guests: 'Anzahl der Gäste',
-      message: 'Nachricht',
-      eventTypes: [
-        'Firmenevent',
-        'Hochzeit',
-        'Private Feier',
-        'Konferenz',
-        'Produktvorstellung',
-        'Andere'
-      ],
-      submit: 'Nachricht senden',
-      placeholder: {
-        name: 'Geben Sie Ihren Namen ein',
-        email: 'Geben Sie Ihre E-Mail ein',
-        phone: 'Geben Sie Ihre Telefonnummer ein',
-        eventType: 'Veranstaltungstyp auswählen',
-        message: 'Erzählen Sie uns von Ihrer Veranstaltung...'
-      }
+  },
+  success: { message: 'Thank you for reaching out!' },
+};
+
+export const contactTranslations: Record<Language, typeof base> = {
+  EN: base,
+  DE: {
+    ...base,
+    nav: { about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Jetzt bestellen' },
+    hero: { title: 'Kontaktieren Sie uns', subtitle: 'Lassen Sie uns gemeinsam etwas Besonderes schaffen' },
+    quickOrder: {
+      title: 'Schnellbestellung',
+      subtitle: 'Brauchen Sie sofort Hilfe? Geben Sie eine Schnellbestellung auf',
+      button: 'Jetzt Schnellbestellen',
     },
     contactForm: {
+      ...base.contactForm,
       title: 'Senden Sie uns eine Nachricht',
       name: 'Vollständiger Name',
       email: 'E-Mail-Adresse',
@@ -136,60 +62,23 @@ export const contactTranslations = {
       eventType: 'Veranstaltungstyp',
       eventDate: 'Veranstaltungsdatum',
       guests: 'Anzahl der Gäste',
-      message: 'Nachricht',
-      eventTypes: [
-        'Firmenevent',
-        'Hochzeit',
-        'Private Feier',
-        'Konferenz',
-        'Produktvorstellung',
-        'Andere'
-      ],
-      submit: 'Nachricht senden',
+      message: 'Ihre Nachricht',
+      eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere'],
       button: 'Nachricht senden',
-      placeholder: {
-        name: 'Geben Sie Ihren Namen ein',
-        email: 'Geben Sie Ihre E-Mail ein',
-        phone: 'Geben Sie Ihre Telefonnummer ein',
-        eventType: 'Veranstaltungstyp auswählen',
-        message: 'Erzählen Sie uns von Ihrer Veranstaltung...'
-      }
-    },
-    info: {
-      title: 'Kontaktinformationen',
-      phone: {
-        label: 'Telefon',
-        value: '+49 123 456 789'
-      },
-      email: {
-        label: 'E-Mail',
-        value: 'info@catering.com'
-      },
-      address: {
-        label: 'Adresse',
-        value: 'Kulinarische Straße 123, Essen Stadt, 12345'
-      },
-      hours: {
-        label: 'Geschäftszeiten',
-        value: 'Mo-Fr: 9:00 - 18:00 Uhr'
-      }
+      submit: 'Nachricht senden',
     },
     contactInfo: {
+      ...base.contactInfo,
       title: 'Kontaktinformationen',
-      phone: '+49 123 456 789',
-      mobile: '+49 987 654 321',
-      email: 'info@catering.com',
-      address: 'Kulinarische Straße 123, Essen Stadt, 12345',
+      phone: '+49 2133 978 2992',
+      mobile: '+49 163 599 7062',
       hours: {
         title: 'Geschäftszeiten',
-        weekdays: 'Mo-Fr: 9:00 - 18:00 Uhr',
-        saturday: 'Samstag: 10:00 - 16:00 Uhr',
-        sunday: 'Sonntag: Geschlossen'
-      }
+        weekdays: 'Montag - Freitag: 9:00 - 18:00',
+        saturday: 'Samstag: 10:00 - 16:00',
+        sunday: 'Sonntag: Geschlossen',
+      },
     },
-    success: {
-      title: 'Vielen Dank!',
-      message: 'Wir werden uns bald bei Ihnen melden.'
-    }
-  }
+    success: { message: 'Danke für Ihre Nachricht!' },
+  },
 };

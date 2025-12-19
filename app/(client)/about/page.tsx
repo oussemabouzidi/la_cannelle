@@ -4,11 +4,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Users, Heart, Target, Award, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Crown, Building } from 'lucide-react';
+import { commonTranslations } from '@/lib/translations/common';
+import { DEFAULT_LANGUAGE, STORAGE_KEY, type Language } from '@/lib/hooks/useTranslation';
 
 export default function AboutPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState<'EN' | 'DE'>('EN');
-  const toggleLanguage = () => setLanguage((prev) => (prev === 'EN' ? 'DE' : 'EN'));
+  const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE);
+  const toggleLanguage = () => {
+    setLanguage((prev) => {
+      const next = prev === 'EN' ? 'DE' : 'EN';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, next);
+      }
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = next.toLowerCase();
+      }
+      return next;
+    });
+  };
   const [isVisible, setIsVisible] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
@@ -95,6 +108,17 @@ export default function AboutPage() {
     setIsVisible(true);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const next = stored === 'DE' || stored === 'EN' ? (stored as Language) : DEFAULT_LANGUAGE;
+    setLanguage(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = next.toLowerCase();
+    }
+  }, []);
+
     type AboutContent = {
     nav: { services: string; menus: string; contact: string; connect: string; order: string };
     hero: { title: string; subtitle: string };
@@ -104,9 +128,11 @@ export default function AboutPage() {
       exclusivity: { title: string; subtitle: string; description: string };
       company: { title: string; subtitle: string; description: string };
     };
+    valuesSection: { title: string; subtitle: string };
     team: { title: string; items: { name: string; role: string }[] };
     services: { title: string; items: { title: string; description: string }[] };
     contact: { title: string; address: string; phone: string; mobile: string; email: string };
+    contactLabels: { address: string; phone: string; email: string };
     cta: { title: string; subtitle: string; button: string };
     quoteModal: {
       title: string;
@@ -115,6 +141,7 @@ export default function AboutPage() {
       email: string;
       phone: string;
       eventType: string;
+      eventTypePlaceholder: string;
       eventDate: string;
       guests: string;
       message: string;
@@ -122,6 +149,7 @@ export default function AboutPage() {
       cancel: string;
       eventTypes: string[];
     };
+    footer: { quickLinks: string; contact: string; followUs: string };
     body: { style: string };
   };
 
@@ -142,12 +170,17 @@ export default function AboutPage() {
         exclusivity: { title: 'Exclusivity', subtitle: 'Private experiences', description: 'Private, bespoke experiences crafted for your occasion.' },
         company: { title: 'Trusted Partner', subtitle: 'Your reliable ally', description: 'A dedicated team focused on your success.' }
       },
+      valuesSection: {
+        title: 'Our Values',
+        subtitle: 'The principles that guide our culinary excellence and service'
+      },
       team: {
         title: 'Our Team',
         items: [
           { name: 'Head Chef', role: 'Culinary Direction' },
           { name: 'Event Manager', role: 'Planning & Coordination' },
-          { name: 'Pastry Lead', role: 'Desserts & Baking' }
+          { name: 'Pastry Lead', role: 'Desserts & Baking' },
+          { name: 'Service Lead', role: 'Front-of-house excellence' }
         ]
       },
       services: {
@@ -165,6 +198,11 @@ export default function AboutPage() {
         mobile: '+1 (555) 987-6543',
         email: 'info@catering.com'
       },
+      contactLabels: {
+        address: 'Address',
+        phone: 'Phone',
+        email: 'Email'
+      },
       cta: {
         title: 'Ready to plan your event?',
         subtitle: 'Let’s create an unforgettable experience together.',
@@ -177,12 +215,18 @@ export default function AboutPage() {
         email: 'Email Address',
         phone: 'Phone Number',
         eventType: 'Event Type',
+        eventTypePlaceholder: 'Select Event Type',
         eventDate: 'Event Date',
         guests: 'Number of Guests',
         message: 'Tell us about your event...',
         submit: 'Submit Request',
         cancel: 'Cancel',
         eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other']
+      },
+      footer: {
+        quickLinks: 'Quick Links',
+        contact: 'Contact',
+        followUs: 'Follow Us'
       },
       body: { style: 'classic' }
     },
@@ -202,12 +246,17 @@ export default function AboutPage() {
         exclusivity: { title: 'Exklusivität', subtitle: 'Private Erlebnisse', description: 'Private, maßgeschneiderte Erlebnisse für Ihren Anlass.' },
         company: { title: 'Vertrauenspartner', subtitle: 'Ihr verlässlicher Partner', description: 'Ein engagiertes Team, das sich auf Ihren Erfolg konzentriert.' }
       },
+      valuesSection: {
+        title: 'Unsere Werte',
+        subtitle: 'Die Prinzipien, die unsere kulinarische Exzellenz und unseren Service leiten'
+      },
       team: {
         title: 'Unser Team',
         items: [
           { name: 'Chefkoch', role: 'Kulinarische Leitung' },
           { name: 'Event Manager', role: 'Planung & Koordination' },
-          { name: 'Pâtisserie Lead', role: 'Desserts & Backwaren' }
+          { name: 'Patisserie Lead', role: 'Desserts & Backwaren' },
+          { name: 'Serviceleitung', role: 'Service & Gaestebetreuung' }
         ]
       },
       services: {
@@ -225,6 +274,11 @@ export default function AboutPage() {
         mobile: '+49 987 654 321',
         email: 'info@catering.com'
       },
+      contactLabels: {
+        address: 'Adresse',
+        phone: 'Telefon',
+        email: 'E-Mail'
+      },
       cta: {
         title: 'Bereit, Ihr Event zu planen?',
         subtitle: 'Lassen Sie uns gemeinsam ein unvergessliches Erlebnis schaffen.',
@@ -237,6 +291,7 @@ export default function AboutPage() {
         email: 'E-Mail-Adresse',
         phone: 'Telefonnummer',
         eventType: 'Veranstaltungstyp',
+        eventTypePlaceholder: 'Veranstaltungstyp wählen',
         eventDate: 'Veranstaltungsdatum',
         guests: 'Anzahl der Gäste',
         message: 'Erzählen Sie uns von Ihrer Veranstaltung...',
@@ -244,11 +299,17 @@ export default function AboutPage() {
         cancel: 'Abbrechen',
         eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere']
       },
+      footer: {
+        quickLinks: 'Schnellzugriff',
+        contact: 'Kontakt',
+        followUs: 'Folgen Sie uns'
+      },
       body: { style: 'klassisch' }
     }
   };
 
   const t: AboutContent = translations[language];
+  const commonNav = commonTranslations[language].nav;
 
   return (
     <div className="min-h-screen bg-white">
@@ -432,7 +493,7 @@ export default function AboutPage() {
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
                   >
-                    <option value="">Select Event Type</option>
+                    <option value="">{t.quoteModal.eventTypePlaceholder}</option>
                     {t.quoteModal.eventTypes.map((type, index) => (
                       <option key={index} value={type}>{type}</option>
                     ))}
@@ -510,8 +571,8 @@ export default function AboutPage() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">Home</a>
-              <a href="/about" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">About</a>
+              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{commonNav.home}</a>
+              <a href="/about" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{commonNav.about}</a>
               <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
               <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
               <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
@@ -557,11 +618,11 @@ export default function AboutPage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Home</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">About</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Services</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Menus</a>
-                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">Contact</a>
+                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.home}</a>
+                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.about}</a>
+                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.services}</a>
+                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.menus}</a>
+                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{commonNav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
@@ -635,8 +696,8 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto relative">
           <div className="text-center mb-12">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 font-elegant">Our Values</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">The principles that guide our culinary excellence and service</p>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 font-elegant">{t.valuesSection.title}</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">{t.valuesSection.subtitle}</p>
             </div>
           </div>
 
@@ -887,14 +948,14 @@ export default function AboutPage() {
                 <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-amber-50 transition-colors">
                   <MapPin className="text-amber-700" size={24} />
                   <div>
-                    <p className="font-semibold text-gray-900">Address</p>
+                    <p className="font-semibold text-gray-900">{t.contactLabels.address}</p>
                     <p className="text-gray-600">{t.contact.address}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-amber-50 transition-colors">
                   <Phone className="text-amber-700" size={24} />
                   <div>
-                    <p className="font-semibold text-gray-900">Phone</p>
+                    <p className="font-semibold text-gray-900">{t.contactLabels.phone}</p>
                     <p className="text-gray-600">{t.contact.phone}</p>
                     <p className="text-gray-600 text-sm">{t.contact.mobile}</p>
                   </div>
@@ -902,7 +963,7 @@ export default function AboutPage() {
                 <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-amber-50 transition-colors">
                   <Mail className="text-amber-700" size={24} />
                   <div>
-                    <p className="font-semibold text-gray-900">Email</p>
+                    <p className="font-semibold text-gray-900">{t.contactLabels.email}</p>
                     <p className="text-gray-600">{t.contact.email}</p>
                   </div>
                 </div>
@@ -970,16 +1031,16 @@ export default function AboutPage() {
               <p className="text-gray-400 italic">Crafting unforgettable culinary experiences since 2010</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Quick Links</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{t.footer.quickLinks}</h4>
               <div className="flex flex-col gap-2">
-                <a href="/" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Home</a>
-                <a href="/about" className="text-amber-400 font-semibold transition-all duration-300 transform hover:translate-x-1">About</a>
-                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Services</a>
-                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Menus</a>
+                <a href="/" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.home}</a>
+                <a href="/about" className="text-amber-400 font-semibold transition-all duration-300 transform hover:translate-x-1">{commonNav.about}</a>
+                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.services}</a>
+                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.menus}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Contact</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{t.footer.contact}</h4>
               <div className="flex flex-col gap-3 text-gray-400">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Phone size={18} />
@@ -996,7 +1057,7 @@ export default function AboutPage() {
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Follow Us</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{t.footer.followUs}</h4>
               <div className="flex flex-col gap-2 text-gray-400">
                 <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">Instagram</a>
                 <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-white transition-colors duration-300">TikTok</a>

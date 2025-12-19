@@ -3,14 +3,28 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/api';
+import { DEFAULT_LANGUAGE, STORAGE_KEY, type Language } from '@/lib/hooks/useTranslation';
+import { commonTranslations } from '@/lib/translations/common';
 
 export default function ContactPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState<'EN' | 'DE'>('EN');
-  const toggleLanguage = () => setLanguage((prev) => (prev === 'EN' ? 'DE' : 'EN'));
+  const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE);
+  const toggleLanguage = () => {
+    setLanguage((prev) => {
+      const next = prev === 'EN' ? 'DE' : 'EN';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, next);
+      }
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = next.toLowerCase();
+      }
+      return next;
+    });
+  };
   const translations = {
     EN: {
-      nav: { about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order Now' },
+      nav: { home: 'Home', about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order Now' },
       hero: { title: 'Get in Touch', subtitle: "Let's create something extraordinary together" },
       quickOrder: {
         title: 'Quick Order',
@@ -22,12 +36,18 @@ export default function ContactPage() {
         instagram: 'Instagram',
         tiktok: 'TikTok',
       },
+      location: {
+        title: 'Our Location',
+        loading: 'Loading Google Maps...',
+        openMap: 'Open in Google Maps',
+      },
       contactForm: {
         title: 'Send Us a Message',
         name: 'Full Name',
         email: 'Email Address',
         phone: 'Phone Number',
         eventType: 'Event Type',
+        eventTypePlaceholder: 'Select Event Type',
         eventDate: 'Event Date',
         guests: 'Number of Guests',
         message: 'Your Message',
@@ -51,7 +71,7 @@ export default function ContactPage() {
       success: { message: 'Thank you for reaching out!' },
     },
     DE: {
-      nav: { about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Jetzt bestellen' },
+      nav: { home: 'Startseite', about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Jetzt bestellen' },
       hero: { title: 'Kontaktieren Sie uns', subtitle: 'Lassen Sie uns gemeinsam etwas Besonderes schaffen' },
       quickOrder: {
         title: 'Schnellbestellung',
@@ -63,12 +83,18 @@ export default function ContactPage() {
         instagram: 'Instagram',
         tiktok: 'TikTok',
       },
+      location: {
+        title: 'Unser Standort',
+        loading: 'Google Maps wird geladen...',
+        openMap: 'In Google Maps oeffnen',
+      },
       contactForm: {
         title: 'Senden Sie uns eine Nachricht',
         name: 'Vollständiger Name',
         email: 'E-Mail-Adresse',
         phone: 'Telefonnummer',
         eventType: 'Veranstaltungstyp',
+        eventTypePlaceholder: 'Veranstaltungstyp waehlen',
         eventDate: 'Veranstaltungsdatum',
         guests: 'Anzahl der Gäste',
         message: 'Ihre Nachricht',
@@ -93,6 +119,7 @@ export default function ContactPage() {
     },
   } as const;
   const t = translations[language] || translations.EN;
+  const commonFooter = commonTranslations[language].footer;
   const [isVisible, setIsVisible] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -108,17 +135,58 @@ export default function ContactPage() {
     setIsVisible(true);
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const next = stored === 'DE' || stored === 'EN' ? (stored as Language) : DEFAULT_LANGUAGE;
+    setLanguage(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = next.toLowerCase();
+    }
+  }, []);
+
+  const updateFormValue = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    updateFormValue(e.target.name, e.target.value);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
+    const emailValue = formData.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+      alert(language === 'DE' ? 'Bitte geben Sie eine gueltige E-Mail-Adresse ein.' : 'Please enter a valid email address.');
+      return;
+    }
+    const phoneValue = formData.phone.trim();
+    if (phoneValue && !/^\+?[0-9\s-]{7,15}$/.test(phoneValue)) {
+      alert(language === 'DE' ? 'Bitte geben Sie eine gültige Telefonnummer ein.' : 'Please enter a valid phone number.');
+      return;
+    }
+
+    const response = await apiClient.post('/contact', {
+      ...formData,
+      language
+    });
+    if (response.error) {
+      alert(language === 'DE' ? 'Senden fehlgeschlagen. Bitte versuchen Sie es erneut.' : 'Failed to send. Please try again.');
+      return;
+    }
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      eventType: '',
+      eventDate: '',
+      guests: '',
+      message: ''
+    });
     alert(t.success.message);
   };
 
@@ -199,6 +267,7 @@ export default function ContactPage() {
         email: 'E-Mail-Adresse',
         phone: 'Telefonnummer',
         eventType: 'Veranstaltungstyp',
+        eventTypePlaceholder: 'Veranstaltungstyp waehlen',
         eventDate: 'Veranstaltungsdatum',
         guests: 'Anzahl der Gäste',
         message: 'Ihre Nachricht',
@@ -360,8 +429,8 @@ const handleOrderClick = () => {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">Home</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">About</a>
+              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.home}</a>
+              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.about}</a>
               <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
               <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
               <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
@@ -407,11 +476,11 @@ const handleOrderClick = () => {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Home</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">About</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Services</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">Menus</a>
-                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">Contact</a>
+                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.home}</a>
+                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.about}</a>
+                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
+                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
+                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
@@ -504,7 +573,12 @@ const handleOrderClick = () => {
                         type="tel"
                         name="phone"
                         value={formData.phone}
-                        onChange={handleInputChange}
+                        onChange={(e) => {
+                          const sanitized = e.target.value.replace(/[^0-9+\s-]/g, '');
+                          updateFormValue('phone', sanitized);
+                        }}
+                        inputMode="tel"
+                        pattern="^\\+?[0-9\\s-]{7,15}$"
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
                         placeholder="+49 123 456 789"
                       />
@@ -520,7 +594,7 @@ const handleOrderClick = () => {
                         required
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white"
                       >
-                        <option value="" className="text-gray-500">Select Event Type</option>
+                        <option value="" className="text-gray-500">{t.contactForm.eventTypePlaceholder}</option>
                         {t.contactForm.eventTypes.map((type, index) => (
                           <option key={index} value={type} className="text-gray-900">{type}</option>
                         ))}
@@ -546,11 +620,15 @@ const handleOrderClick = () => {
                         {t.contactForm.guests}
                       </label>
                       <input
-                        type="number"
+                        type="text"
                         name="guests"
                         value={formData.guests}
-                        onChange={handleInputChange}
-                        min="1"
+                        onChange={(e) => {
+                          const sanitized = e.target.value.replace(/[^0-9]/g, '');
+                          updateFormValue('guests', sanitized);
+                        }}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
                         placeholder="50"
                       />
@@ -638,7 +716,11 @@ const handleOrderClick = () => {
                 <p className="text-amber-100 mb-6 font-light">
                   {t.quickOrder.subtitle}
                 </p>
-                <button className="w-full bg-white text-amber-700 py-3 px-6 rounded-lg font-semibold hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 hover:shadow-lg inline-flex items-center justify-center gap-2 group">
+                <button
+                  type="button"
+                  onClick={() => router.push('/order')}
+                  className="w-full bg-white text-amber-700 py-3 px-6 rounded-lg font-semibold hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 hover:shadow-lg inline-flex items-center justify-center gap-2 group"
+                >
                   <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                   {t.quickOrder.button}
                 </button>
@@ -654,15 +736,12 @@ const handleOrderClick = () => {
                 <div className="flex gap-4">
                   <a 
                     href="https://www.instagram.com/lacannellecatering/" 
-                    className="flex-1 bg-gradient-to-br from-pink-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                    className="flex-1 bg-gradient-to-br from-pink-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"
                   >
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-white">
+                      <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zM17.75 6a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.75 6z" />
+                    </svg>
                     {t.social.instagram}
-                  </a>
-                  <a 
-                    href="https://www.tiktok.com/@lacannellecatering" 
-                    className="flex-1 bg-black text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                  >
-                    {t.social.tiktok}
                   </a>
                 </div>
               </div>
@@ -680,7 +759,7 @@ const handleOrderClick = () => {
             <div className="p-6 border-b border-stone-200">
               <h3 className="text-2xl font-bold text-gray-900 font-elegant flex items-center gap-3">
                 <MapPin className="text-amber-700" size={24} />
-                Our Location
+                {t.location.title}
               </h3>
             </div>
 <div className="h-96 bg-gradient-to-br from-amber-100 to-stone-200 flex items-center justify-center relative">
@@ -689,9 +768,9 @@ const handleOrderClick = () => {
     <div className="text-center">
       <MapPin size={48} className="text-amber-700 mx-auto mb-4" />
       <p className="text-xl font-semibold text-gray-900 mb-2">{t.contactInfo.address}</p>
-      <p className="text-gray-600">Loading Google Maps...</p>
+      <p className="text-gray-600">{t.location.loading}</p>
       <button className="mt-4 bg-amber-700 text-white px-6 py-2 rounded-lg hover:bg-amber-800 transition-colors">
-        Open in Google Maps
+        {t.location.openMap}
       </button>
     </div>
   </div>
@@ -732,16 +811,16 @@ const handleOrderClick = () => {
               <p className="text-gray-400 italic">Crafting unforgettable culinary experiences since 2010</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Quick Links</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.quickLinks}</h4>
               <div className="flex flex-col gap-2">
-                <a href="/" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Home</a>
-                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">About</a>
-                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Services</a>
-                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">Menus</a>
+                <a href="/" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.home}</a>
+                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.about}</a>
+                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.services}</a>
+                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.menus}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Contact</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.contact}</h4>
               <div className="flex flex-col gap-3 text-gray-400">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Phone size={18} />
@@ -758,10 +837,14 @@ const handleOrderClick = () => {
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <h4 className="font-semibold mb-4 font-elegant">Follow Us</h4>
+              <h4 className="font-semibold mb-4 font-elegant">{commonFooter.followUs}</h4>
               <div className="flex flex-col gap-2 text-gray-400">
-                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">Instagram</a>
-                <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-white transition-colors duration-300">TikTok</a>
+                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300 inline-flex items-center gap-2">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+                    <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zM17.75 6a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.75 6z" />
+                  </svg>
+                  Instagram
+                </a>
               </div>
             </div>
           </div>

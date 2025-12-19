@@ -1,348 +1,277 @@
-import { commonTranslations } from './common';
+import type { Language } from '../hooks/useTranslation';
 
-export const homeTranslations = {
-  EN: {
-    ...commonTranslations.EN,
-    hero: {
-      title: 'Culinary Excellence for Your Special Moments',
-      subtitle: 'Creating unforgettable experiences through exceptional catering',
-      cta: 'Order Now',
-    },
-    quickMenu: {
-      title: 'Our Specialties',
-      description: 'Discover our carefully crafted menu categories for every occasion',
-      categories: [
-        {
-          name: 'Finger Food',
-          count: '25+ Items',
-          gradient: 'from-amber-500 to-orange-500',
-          description: 'Elegant bite-sized delights',
-        },
-        {
-          name: 'Desserts',
-          count: '15+ Varieties',
-          gradient: 'from-pink-500 to-rose-500',
-          description: 'Sweet endings to perfection',
-        },
-        {
-          name: 'Buffet',
-          count: '8+ Themes',
-          gradient: 'from-emerald-500 to-teal-500',
-          description: 'Grand culinary experiences',
-        },
-        {
-          name: 'Special Occasions',
-          count: 'Custom',
-          gradient: 'from-purple-500 to-indigo-500',
-          description: 'Tailored for your events',
-        },
-      ],
-    },
-    exclusivity: {
-      title: 'EXCLUSIVITY',
-      subtitle: 'YOUR SPECIFICATIONS | OUR EXPERTISE | THE IMPLEMENTATION',
-      text: 'Every event demands full concentration, respect and dedication. Preferences are colorful and already different today than yesterday. Benefit from our experience, let yourself be convinced and trust in our abilities. Together we realize your event.',
-      stats: [
-        { number: '500+', label: 'Events' },
-        { number: '98%', label: 'Satisfaction' },
-        { number: '24/7', label: 'Support' },
-      ],
-      badge: {
-        title: 'Premium',
-        subtitle: 'Service',
-      },
-    },
-    menuShowcase: {
-      title: 'Signature Creations',
-      description: 'Experience our most sought-after culinary masterpieces',
-      items: [
-        {
-          name: 'Truffle Arancini',
-          category: 'Finger Food',
-          price: '€24',
-          image: '/images/truffle-arancini.jpg',
-          description: 'Crispy risotto balls with black truffle',
-          popular: true,
-        },
-        {
-          name: 'Chocolate Sphere',
-          category: 'Desserts',
-          price: '€18',
-          image: '/images/chocolate-sphere.jpg',
-          description: 'Molten chocolate with gold leaf',
-          featured: true,
-        },
-        {
-          name: 'Mediterranean Buffet',
-          category: 'Buffet',
-          price: '€45',
-          image: '/images/mediterranean-buffet.jpg',
-          description: 'Fresh flavors from the Mediterranean coast',
-        },
-      ],
-      badges: {
-        popular: 'Popular',
-        featured: 'Featured',
-      },
-      viewDetails: 'View Details',
-      exploreFull: 'Explore Full Menu',
-    },
-    passion: {
-      title: 'PASSION',
-      subtitle: 'ELEMENTAL | AUTHENTIC | DELICATE',
-      text: 'We constantly reinvent ourselves, exceed all standards and create unforgettable moments. Our dishes are created from natural ingredients, with love for detail and full dedication. The selection of the best products, experience, pulse of the time, craftsmanship and passion are elemental for success.',
-      skills: [
-        { skill: 'Culinary Innovation', percentage: 95 },
-        { skill: 'Ingredient Quality', percentage: 98 },
-        { skill: 'Customer Satisfaction', percentage: 96 },
-      ],
-      cta: 'Our Story',
-    },
-    company: {
-      title: 'COMPANY',
-      subtitle: 'INVITATION | IMPLEMENTATION | IMAGE',
-      text: "You invite and from there our participation begins until perfection. Whether standing reception, gala dinner, company celebration, product launch or company party. It's about you and your company, the reputation you represent and the lasting impression you leave behind.",
-      values: {
-        mission: { title: 'Our Mission', description: 'Exceptional culinary experiences' },
-        vision: { title: 'Our Vision', description: 'Trusted luxury dining worldwide' },
-        excellence: { title: 'Excellence', description: 'Highest standards in every dish' },
-        community: { title: 'Community', description: 'Building lasting relationships' },
-      },
-      badge: {
-        title: 'Since 2008',
-        subtitle: 'Established',
-      },
-      review: {
-        ratingLabel: 'Rating',
-        quote: '"Unforgettable dining experience."',
-      },
-    },
-    journey: {
-      title: 'Our Journey',
-      milestones: [
-        { year: '2008', event: 'Founded' },
-        { year: '2012', event: 'Michelin Star' },
-        { year: '2018', event: 'Expansion' },
-        { year: '2024', event: 'Innovation' },
-      ],
-    },
-    services: {
-      title: 'Our Services',
-      items: [
-        { name: 'Corporate Events', desc: 'Professional catering for business occasions' },
-        { name: 'Private Celebrations', desc: 'Personalized menus for special moments' },
-        { name: 'Gala Dinners', desc: 'Elegant dining experiences' },
-        { name: 'Cocktail Receptions', desc: 'Sophisticated cocktail events' },
-      ],
-    },
-    menus: {
-      title: 'Featured Menus',
-      cta: 'Learn More',
-      items: [
-        { name: 'Seasonal Selection', desc: 'Fresh ingredients from local sources' },
-        { name: 'Gourmet Collection', desc: 'Refined dishes for discerning palates' },
-        { name: 'Traditional Favorites', desc: 'Classic recipes with modern accents' },
-      ],
-    },
-    testimonials: {
-      title: 'What Our Clients Say',
-      items: [
-        { text: 'Exceptional quality and service. Every detail was perfect for our corporate event.', author: 'Sarah M.' },
-        { text: 'The attention to detail and flavors exceeded all our expectations.', author: 'Michael K.' },
-        { text: 'Professional, creative, and absolutely delicious. Highly recommended!', author: 'Anna L.' },
-      ],
-    },
-    brandBanner: {
-      title: 'Trusted By',
-    },
-    footer: {
-      tagline: 'Creating unforgettable culinary experiences',
-      quickLinksTitle: 'Quick Links',
-      contactTitle: 'Contact',
-      hoursTitle: 'Hours',
-      contact: {
-        phone: '+123 456 7890',
-        email: 'info@catering.com',
-        location: 'Your Location',
-      },
-      hours: {
-        weekdays: 'Monday - Friday: 9am - 6pm',
-        saturday: 'Saturday: 10am - 4pm',
-        sunday: 'Sunday: Closed',
-      },
-      copyright: '© 2025 Gourmet Catering. All rights reserved.',
+type HomeTranslations = {
+  nav: { home: string; about: string; services: string; menus: string; contact: string; connect: string; order: string };
+  hero: { title: string; subtitle: string; cta: string };
+  quickMenu: {
+    title: string;
+    description: string;
+    categories: { title: string; description: string }[];
+  };
+  exclusivity: {
+    subtitle: string;
+    title: string;
+    text: string;
+    stats: { number: string; label: string }[];
+    badge: { title: string; subtitle: string };
+  };
+  company: {
+    subtitle: string;
+    title: string;
+    text: string;
+    badge: { title: string; subtitle: string };
+    review: { ratingLabel: string; quote: string; author: string };
+    values: {
+      mission: { title: string; subtitle: string; description: string };
+      vision: { title: string; subtitle: string; description: string };
+      excellence: { title: string; subtitle: string; description: string };
+      community: { title: string; subtitle: string; description: string };
+    };
+  };
+  menuShowcase: {
+    title: string;
+    description: string;
+    items: { name: string; category: string; price: string; description: string; image?: string; popular?: boolean; featured?: boolean }[];
+    badges: { popular: string; featured: string };
+    viewDetails: string;
+    exploreFull: string;
+  };
+  passion: {
+    subtitle: string;
+    title: string;
+    text: string;
+    skills: { title: string; description: string }[];
+    cta: string;
+  };
+  journey: { title: string; milestones: { title: string; date: string; description: string }[] };
+  services: { title: string; items: { title: string; description: string; icon?: string }[]; cta: string };
+  menus: { title: string; items: { name: string; desc: string; price?: string }[]; cta: string };
+  testimonials: { title: string; items: { quote: string; name: string; role: string }[] };
+  brandBanner: { title: string; subtitle: string };
+  footer: {
+    tagline: string;
+    quickLinksTitle: string;
+    contactTitle: string;
+    contact: { phone: string; email: string; location: string };
+    hoursTitle: string;
+    hours: { weekdays: string; saturday: string; sunday: string };
+    copyright: string;
+  };
+};
+
+const en: HomeTranslations = {
+  nav: { home: 'Home', about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order' },
+  hero: { title: 'Culinary excellence for unforgettable events', subtitle: 'Tailored catering, thoughtful service, and bold flavors for every occasion.', cta: 'Plan your event' },
+  quickMenu: {
+    title: 'Popular picks',
+    description: 'Choose a starting point or build your own experience.',
+    categories: [
+      { title: 'Chef’s tasting', description: 'Seasonal highlights' },
+      { title: 'Private dining', description: 'Intimate gatherings' },
+      { title: 'Business events', description: 'Polished service' },
+      { title: 'Celebrations', description: 'Make it memorable' },
+    ],
+  },
+  exclusivity: {
+    subtitle: 'Signature approach',
+    title: 'Elevated catering without compromise',
+    text: 'From menu design to on-site execution, we obsess over the details so you can enjoy the moment.',
+    stats: [
+      { number: '500+', label: 'Events served' },
+      { number: '4.9/5', label: 'Client rating' },
+      { number: '30+', label: 'Team members' },
+    ],
+    badge: { title: 'Trusted partner', subtitle: 'End-to-end support' },
+  },
+  company: {
+    subtitle: 'Crafted for you',
+    title: 'Hospitality-first mindset',
+    text: 'We combine fine dining techniques with warm, attentive service for guests that feel cared for.',
+    badge: { title: 'Premium service', subtitle: 'Discreet & reliable' },
+    review: { ratingLabel: 'Client feedback', quote: '“Flawless execution and beautiful cuisine.”', author: 'Event Partner' },
+    values: {
+      mission: { title: 'Mission', subtitle: 'Delight every guest', description: 'Designing experiences that bring people together.' },
+      vision: { title: 'Vision', subtitle: 'Raise the bar', description: 'Setting new standards for modern catering.' },
+      excellence: { title: 'Excellence', subtitle: 'Precision & care', description: 'Quality ingredients, expert chefs, perfect timing.' },
+      community: { title: 'Community', subtitle: 'People first', description: 'Building lasting relationships with clients and teams.' },
     },
   },
-  DE: {
-    ...commonTranslations.DE,
-    hero: {
-      title: 'Kulinarische Exzellenz für Ihre besonderen Momente',
-      subtitle: 'Unvergessliche Erlebnisse durch außergewöhnliches Catering',
-      cta: 'Jetzt bestellen',
-    },
-    quickMenu: {
-      title: 'Unsere Spezialitäten',
-      description: 'Entdecken Sie unsere sorgfältig zusammengestellten Menükategorien für jeden Anlass',
-      categories: [
-        {
-          name: 'Fingerfood',
-          count: '25+ Häppchen',
-          gradient: 'from-amber-500 to-orange-500',
-          description: 'Elegante Häppchen in einem Biss',
-        },
-        {
-          name: 'Desserts',
-          count: '15+ Variationen',
-          gradient: 'from-pink-500 to-rose-500',
-          description: 'Süße Abschlüsse in Perfektion',
-        },
-        {
-          name: 'Buffet',
-          count: '8+ Themen',
-          gradient: 'from-emerald-500 to-teal-500',
-          description: 'Große kulinarische Erlebnisse',
-        },
-        {
-          name: 'Besondere Anlässe',
-          count: 'Individuell',
-          gradient: 'from-purple-500 to-indigo-500',
-          description: 'Maßgeschneidert für Ihre Events',
-        },
-      ],
-    },
-    exclusivity: {
-      title: 'EXKLUSIVITÄT',
-      subtitle: 'IHRE VORGABEN | UNSERE EXPERTISE | DIE UMSETZUNG',
-      text: 'Jede Veranstaltung verlangt volle Konzentration, Respekt und Hingabe. Vorlieben sind vielfältig und heute schon anders als gestern. Profitieren Sie von unserer Erfahrung, lassen Sie sich überzeugen und vertrauen Sie auf unser Können. Gemeinsam realisieren wir Ihre Veranstaltung.',
-      stats: [
-        { number: '500+', label: 'Events' },
-        { number: '98%', label: 'Zufriedenheit' },
-        { number: '24/7', label: 'Betreuung' },
-      ],
-      badge: {
-        title: 'Premium',
-        subtitle: 'Service',
-      },
-    },
-    menuShowcase: {
-      title: 'Signaturkreationen',
-      description: 'Erleben Sie unsere gefragtesten kulinarischen Meisterwerke',
-      items: [
-        {
-          name: 'Trüffel-Arancini',
-          category: 'Fingerfood',
-          price: '24 €',
-          image: '/images/truffle-arancini.jpg',
-          description: 'Knusprige Risotto-Bällchen mit schwarzem Trüffel',
-          popular: true,
-        },
-        {
-          name: 'Schokoladen-Sphäre',
-          category: 'Desserts',
-          price: '18 €',
-          image: '/images/chocolate-sphere.jpg',
-          description: 'Flüssige Schokolade mit Blattgold',
-          featured: true,
-        },
-        {
-          name: 'Mediterranes Buffet',
-          category: 'Buffet',
-          price: '45 €',
-          image: '/images/mediterranean-buffet.jpg',
-          description: 'Frische Aromen der Mittelmeerküste',
-        },
-      ],
-      badges: {
-        popular: 'Beliebt',
-        featured: 'Empfohlen',
-      },
-      viewDetails: 'Details ansehen',
-      exploreFull: 'Gesamtes Menü entdecken',
-    },
-    passion: {
-      title: 'LEIDENSCHAFT',
-      subtitle: 'ELEMENTAR | AUTHENTISCH | DELIKAT',
-      text: 'Wir erfinden uns ständig neu, übertreffen alle Standards und schaffen unvergessliche Momente. Unsere Gerichte entstehen aus natürlichen Zutaten, mit Liebe zum Detail und voller Hingabe. Die Auswahl bester Produkte, Erfahrung, Zeitgeist, Handwerk und Leidenschaft sind elementar für den Erfolg.',
-      skills: [
-        { skill: 'Kulinarische Innovation', percentage: 95 },
-        { skill: 'Zutatenqualität', percentage: 98 },
-        { skill: 'Kundenzufriedenheit', percentage: 96 },
-      ],
-      cta: 'Unsere Geschichte',
-    },
-    company: {
-      title: 'UNTERNEHMEN',
-      subtitle: 'EINLADUNG | UMSETZUNG | IMAGE',
-      text: 'Sie laden ein und ab dort beginnt unsere Teilnahme bis zur Perfektion. Ob Stehempfang, Galadinner, Firmenfest, Produktenthüllung oder Firmenfeier. Es geht um Sie und Ihr Unternehmen, den Ruf den Sie vertreten und den bleibenden Eindruck den Sie hinterlassen.',
-      values: {
-        mission: { title: 'Unsere Mission', description: 'Außergewöhnliche kulinarische Erlebnisse' },
-        vision: { title: 'Unsere Vision', description: 'Vertrauenswürdige Fine Dining weltweit' },
-        excellence: { title: 'Exzellenz', description: 'Höchste Standards in jedem Gericht' },
-        community: { title: 'Gemeinschaft', description: 'Dauerhafte Beziehungen aufbauen' },
-      },
-      badge: {
-        title: 'Seit 2008',
-        subtitle: 'Etabliert',
-      },
-      review: {
-        ratingLabel: 'Bewertung',
-        quote: '„Unvergessliches kulinarisches Erlebnis.“',
-      },
-    },
-    journey: {
-      title: 'Unser Werdegang',
-      milestones: [
-        { year: '2008', event: 'Gegründet' },
-        { year: '2012', event: 'Michelin-Stern' },
-        { year: '2018', event: 'Expansion' },
-        { year: '2024', event: 'Innovation' },
-      ],
-    },
-    services: {
-      title: 'Unsere Dienstleistungen',
-      items: [
-        { name: 'Firmenveranstaltungen', desc: 'Professionelles Catering für geschäftliche Anlässe' },
-        { name: 'Private Feiern', desc: 'Personalisierte Menüs für besondere Momente' },
-        { name: 'Galadinner', desc: 'Elegante Dining-Erlebnisse' },
-        { name: 'Stehempfänge', desc: 'Anspruchsvolle Cocktail-Events' },
-      ],
-    },
-    menus: {
-      title: 'Ausgewählte Menüs',
-      cta: 'Mehr erfahren',
-      items: [
-        { name: 'Saisonale Auswahl', desc: 'Frische Zutaten aus lokalen Quellen' },
-        { name: 'Gourmet-Kollektion', desc: 'Raffinierte Gerichte für anspruchsvolle Gaumen' },
-        { name: 'Traditionelle Favoriten', desc: 'Klassische Rezepte mit modernen Akzenten' },
-      ],
-    },
-    testimonials: {
-      title: 'Was unsere Kunden sagen',
-      items: [
-        { text: 'Außergewöhnliche Qualität und Service. Jedes Detail war perfekt für unsere Firmenveranstaltung.', author: 'Sarah M.' },
-        { text: 'Die Liebe zum Detail und die Aromen übertrafen alle unsere Erwartungen.', author: 'Michael K.' },
-        { text: 'Professionell, kreativ und absolut köstlich. Sehr empfehlenswert!', author: 'Anna L.' },
-      ],
-    },
-    brandBanner: {
-      title: 'Vertraut von',
-    },
-    footer: {
-      tagline: 'Unvergessliche kulinarische Erlebnisse schaffen',
-      quickLinksTitle: 'Schnellzugriff',
-      contactTitle: 'Kontakt',
-      hoursTitle: 'Öffnungszeiten',
-      contact: {
-        phone: '+123 456 7890',
-        email: 'info@catering.com',
-        location: 'Ihr Standort',
-      },
-      hours: {
-        weekdays: 'Montag - Freitag: 9–18 Uhr',
-        saturday: 'Samstag: 10–16 Uhr',
-        sunday: 'Sonntag: Geschlossen',
-      },
-      copyright: '© 2025 Gourmet Catering. Alle Rechte vorbehalten.',
+  menuShowcase: {
+    title: 'Featured menus',
+    description: 'Curated selections that guests love.',
+    items: [
+      { name: 'Seasonal Signature', category: 'Chef’s pick', price: '€65', description: 'Five-course tasting with seasonal highlights.', popular: true, featured: true },
+      { name: 'Garden Fresh', category: 'Vegetarian', price: '€48', description: 'Vibrant vegetarian dishes packed with flavor.', featured: true },
+      { name: 'Business Classic', category: 'Corporate', price: '€55', description: 'Elegant options for meetings and receptions.' },
+    ],
+    badges: { popular: 'Popular', featured: 'Featured' },
+    viewDetails: 'View details',
+    exploreFull: 'Explore all menus',
+  },
+  passion: {
+    subtitle: 'Made by chefs',
+    title: 'Modern techniques, generous hospitality',
+    text: 'Our kitchen team balances innovation with comfort, delivering plates that photograph beautifully and taste even better.',
+    skills: [
+      { title: 'Menu design', description: 'Tailored to your theme and guests.' },
+      { title: 'Dietary care', description: 'Thoughtful options for every requirement.' },
+      { title: 'Logistics', description: 'On-time delivery and coordinated service.' },
+    ],
+    cta: 'Meet the team',
+  },
+  journey: {
+    title: 'How we work',
+    milestones: [
+      { title: 'Discovery', date: 'Step 1', description: 'We learn about your event goals and guests.' },
+      { title: 'Design', date: 'Step 2', description: 'Menus and experiences tailored to your needs.' },
+      { title: 'Taste', date: 'Step 3', description: 'Optional tastings and adjustments.' },
+      { title: 'Deliver', date: 'Step 4', description: 'Flawless execution on the day.' },
+    ],
+  },
+  services: {
+    title: 'Service formats',
+    items: [
+      { title: 'Full-service catering', description: 'Staffed events with on-site coordination.' },
+      { title: 'Drop-off', description: 'Beautifully packed dishes ready to serve.' },
+      { title: 'Bar & beverages', description: 'Curated drinks, wine pairings, and cocktails.' },
+    ],
+    cta: 'See all services',
+  },
+  menus: {
+    title: 'Menu snapshots',
+    items: [
+      { name: 'Brunch Social', desc: 'Morning spreads with pastries, fruit, and hot dishes.' },
+      { name: 'Evening Soirée', desc: 'Passed canapés and elegant mains.' },
+      { name: 'Family Style', desc: 'Shared plates for a lively table.' },
+    ],
+    cta: 'View menu plans',
+  },
+  testimonials: {
+    title: 'What clients say',
+    items: [
+      { quote: 'Professional, responsive, and delicious.', name: 'Laura M.', role: 'Corporate client' },
+      { quote: 'Guests still talk about the food weeks later.', name: 'David K.', role: 'Event host' },
+    ],
+  },
+  brandBanner: { title: 'Trusted by leading brands', subtitle: 'Events, offsites, launches, and celebrations.' },
+  footer: {
+    tagline: 'Crafting unforgettable culinary experiences.',
+    quickLinksTitle: 'Quick links',
+    contactTitle: 'Contact',
+    contact: { phone: '+49 2133 978 2992', email: 'booking@la-cannelle.com', location: 'Dormagen, Germany' },
+    hoursTitle: 'Hours',
+    hours: { weekdays: 'Mon - Fri: 9:00 - 18:00', saturday: 'Sat: 10:00 - 16:00', sunday: 'Sun: Closed' },
+    copyright: '© 2025 La Cannelle Catering. All rights reserved.',
+  },
+};
+
+const de: HomeTranslations = {
+  nav: { home: 'Startseite', about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
+  hero: { title: 'Kulinarische Exzellenz für unvergessliche Events', subtitle: 'Maßgeschneidertes Catering, aufmerksamer Service und mutige Aromen für jeden Anlass.', cta: 'Event planen' },
+  quickMenu: {
+    title: 'Beliebte Optionen',
+    description: 'Wählen Sie einen Startpunkt oder stellen Sie Ihr Erlebnis selbst zusammen.',
+    categories: [
+      { title: 'Chef Degustation', description: 'Saisonale Highlights' },
+      { title: 'Private Dining', description: 'Für kleine Runden' },
+      { title: 'Business Events', description: 'Polierter Service' },
+      { title: 'Feiern', description: 'Unvergessliche Momente' },
+    ],
+  },
+  exclusivity: {
+    subtitle: 'Signature Ansatz',
+    title: 'Catering ohne Kompromisse',
+    text: 'Von der Menügestaltung bis zur Umsetzung kümmern wir uns um jedes Detail, damit Sie den Moment genießen können.',
+    stats: [
+      { number: '500+', label: 'Betreute Events' },
+      { number: '4,9/5', label: 'Kundenzufriedenheit' },
+      { number: '30+', label: 'Teammitglieder' },
+    ],
+    badge: { title: 'Verlässlicher Partner', subtitle: 'Rundum-Betreuung' },
+  },
+  company: {
+    subtitle: 'Für Sie gemacht',
+    title: 'Gastfreundschaft zuerst',
+    text: 'Wir verbinden Fine-Dining-Technik mit herzlichem Service, damit sich Gäste umsorgt fühlen.',
+    badge: { title: 'Premium-Service', subtitle: 'Diskret & zuverlässig' },
+    review: { ratingLabel: 'Kundenstimme', quote: '„Makellose Umsetzung und wunderschöne Küche.“', author: 'Eventpartner' },
+    values: {
+      mission: { title: 'Mission', subtitle: 'Jeden Gast begeistern', description: 'Erlebnisse gestalten, die Menschen verbinden.' },
+      vision: { title: 'Vision', subtitle: 'Neue Maßstäbe', description: 'Wir setzen Standards für modernes Catering.' },
+      excellence: { title: 'Exzellenz', subtitle: 'Präzision & Sorgfalt', description: 'Beste Zutaten, erfahrene Köche, perfektes Timing.' },
+      community: { title: 'Gemeinschaft', subtitle: 'Menschen im Fokus', description: 'Langfristige Beziehungen zu Kunden und Teams.' },
     },
   },
+  menuShowcase: {
+    title: 'Ausgewählte Menüs',
+    description: 'Kuratiert und bei Gästen beliebt.',
+    items: [
+      { name: 'Saisonale Signatures', category: 'Chef-Auswahl', price: '65 €', description: 'Fünf Gänge mit saisonalen Highlights.', popular: true, featured: true },
+      { name: 'Garden Fresh', category: 'Vegetarisch', price: '48 €', description: 'Bunte vegetarische Gerichte voller Geschmack.', featured: true },
+      { name: 'Business Classic', category: 'Business', price: '55 €', description: 'Elegante Optionen für Meetings und Empfänge.' },
+    ],
+    badges: { popular: 'Beliebt', featured: 'Empfohlen' },
+    viewDetails: 'Details ansehen',
+    exploreFull: 'Alle Menüs ansehen',
+  },
+  passion: {
+    subtitle: 'Von Köchen gemacht',
+    title: 'Moderne Technik, großzügige Gastlichkeit',
+    text: 'Unser Küchenteam verbindet Innovation mit Wohlfühlmomenten – ästhetisch und köstlich zugleich.',
+    skills: [
+      { title: 'Menügestaltung', description: 'Passend zu Thema und Gästen.' },
+      { title: 'Ernährungswünsche', description: 'Sorgfältige Optionen für alle Bedürfnisse.' },
+      { title: 'Logistik', description: 'Pünktliche Lieferung und koordinierter Service.' },
+    ],
+    cta: 'Team kennenlernen',
+  },
+  journey: {
+    title: 'So arbeiten wir',
+    milestones: [
+      { title: 'Erkundung', date: 'Schritt 1', description: 'Wir verstehen Ziele und Gäste.' },
+      { title: 'Konzept', date: 'Schritt 2', description: 'Menüs und Erlebnisse abgestimmt auf Sie.' },
+      { title: 'Verkostung', date: 'Schritt 3', description: 'Optionales Tasting und Feinschliff.' },
+      { title: 'Durchführung', date: 'Schritt 4', description: 'Perfekte Umsetzung am Eventtag.' },
+    ],
+  },
+  services: {
+    title: 'Service-Formate',
+    items: [
+      { title: 'Full-Service Catering', description: 'Events mit Team vor Ort.' },
+      { title: 'Drop-off', description: 'Schön verpackt und servierfertig.' },
+      { title: 'Bar & Getränke', description: 'Wein, Cocktails und Pairings.' },
+    ],
+    cta: 'Alle Services ansehen',
+  },
+  menus: {
+    title: 'Menü-Einblicke',
+    items: [
+      { name: 'Brunch Social', desc: 'Frühstücks-Spezialitäten und warme Gerichte.' },
+      { name: 'Evening Soirée', desc: 'Fingerfood und elegante Hauptgänge.' },
+      { name: 'Family Style', desc: 'Geteilte Platten für lebendige Tische.' },
+    ],
+    cta: 'Menüpläne anzeigen',
+  },
+  testimonials: {
+    title: 'Stimmen unserer Kunden',
+    items: [
+      { quote: 'Professionell, reaktionsschnell und köstlich.', name: 'Laura M.', role: 'Unternehmenskunde' },
+      { quote: 'Die Gäste schwärmen noch Wochen später.', name: 'David K.', role: 'Event-Gastgeber' },
+    ],
+  },
+  brandBanner: { title: 'Vertraut von führenden Marken', subtitle: 'Events, Offsites, Launches und Feiern.' },
+  footer: {
+    tagline: 'Unvergessliche kulinarische Erlebnisse.',
+    quickLinksTitle: 'Schnellzugriff',
+    contactTitle: 'Kontakt',
+    contact: { phone: '+49 2133 978 2992', email: 'booking@la-cannelle.com', location: 'Dormagen, Deutschland' },
+    hoursTitle: 'Öffnungszeiten',
+    hours: { weekdays: 'Mo - Fr: 9:00 - 18:00', saturday: 'Sa: 10:00 - 16:00', sunday: 'So: Geschlossen' },
+    copyright: '© 2025 La Cannelle Catering. Alle Rechte vorbehalten.',
+  },
+};
+
+export const homeTranslations: Record<Language, HomeTranslations> = {
+  EN: en,
+  DE: de,
 };

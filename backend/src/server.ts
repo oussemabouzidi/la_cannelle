@@ -12,16 +12,32 @@ import reportsRoutes from './routes/reports';
 import systemRoutes from './routes/system';
 import favoriteRoutes from './routes/favorites';
 import promotionRoutes from './routes/promotions';
+import contactRoutes from './routes/contact';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const normalizedFrontendUrl = FRONTEND_URL.replace(/\/$/, '');
+const allowedOrigins = new Set<string>([
+  normalizedFrontendUrl,
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+]);
 
 // Middleware
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    if (allowedOrigins.has(normalizedOrigin) || process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -43,6 +59,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/promotions', promotionRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Error handling
 app.use(errorHandler);
