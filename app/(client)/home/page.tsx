@@ -662,15 +662,15 @@ export default function CateringHomepage() {
                   {t.passion.skills.map((item, index) => (
                     <div key={index} className="group">
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-amber-200">{item.skill}</span>
-                        <span className="text-white font-semibold">{item.percentage}%</span>
+                        <span className="text-amber-200">{item.title}</span>
                       </div>
                       <div className="w-full bg-white/20 rounded-full h-1.5">
                         <div
                           className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000 ease-out group-hover:bg-amber-400"
-                          style={{ width: `${item.percentage}%` }}
+                          style={{ width: `${90 - index * 8}%` }}
                         ></div>
                       </div>
+                      <p className="text-xs text-amber-100/80 mt-2">{item.description}</p>
                     </div>
                   ))}
                 </div>
