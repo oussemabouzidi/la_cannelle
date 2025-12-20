@@ -139,7 +139,7 @@ export default function Reports() {
     },
     DE: {
       nav: {
-        dashboard: 'Uebersicht',
+        dashboard: 'ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -214,7 +214,7 @@ export default function Reports() {
         customersDesc: 'Kundenprofile und Bestellhistorie',
         menuTitle: 'Menue-Performance',
         menuDesc: 'Artikelbeliebtheit und Verkaufskennzahlen',
-        financialTitle: 'Finanzuebersicht',
+        financialTitle: 'Finanzubersicht',
         financialDesc: 'PDF-Bericht mit Diagrammen und Insights',
         fullTitle: 'Komplette Daten',
         fullDesc: 'Alle Daten in einem Archiv',

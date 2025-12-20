@@ -21,6 +21,40 @@ import {
   FileText, Shield as ShieldIcon, Globe
 } from 'lucide-react';
 
+const GERMAN_STATES = [
+  { code: 'BW', name: 'Baden-Wuerttemberg' },
+  { code: 'BY', name: 'Bavaria' },
+  { code: 'BE', name: 'Berlin' },
+  { code: 'BB', name: 'Brandenburg' },
+  { code: 'HB', name: 'Bremen' },
+  { code: 'HH', name: 'Hamburg' },
+  { code: 'HE', name: 'Hesse' },
+  { code: 'MV', name: 'Mecklenburg-Vorpommern' },
+  { code: 'NI', name: 'Lower Saxony' },
+  { code: 'NW', name: 'North Rhine-Westphalia' },
+  { code: 'RP', name: 'Rhineland-Palatinate' },
+  { code: 'SL', name: 'Saarland' },
+  { code: 'SN', name: 'Saxony' },
+  { code: 'ST', name: 'Saxony-Anhalt' },
+  { code: 'SH', name: 'Schleswig-Holstein' },
+  { code: 'TH', name: 'Thuringia' }
+];
+
+const MIN_GUESTS = 11;
+const MIN_ORDER_TOTAL = 388.80;
+
+const normalizePlaces = (data: any) => {
+  const defaultPostCode = data?.['post code'] || '';
+  const defaultState = data?.['state'] || '';
+  const defaultStateCode = data?.['state abbreviation'] || '';
+  return (data?.places || []).map((place: any) => ({
+    code: place?.['post code'] || defaultPostCode,
+    city: place?.['place name'] || '',
+    state: place?.['state'] || defaultState,
+    stateCode: place?.['state abbreviation'] || defaultStateCode
+  }));
+};
+
 const formatDateKey = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -268,6 +302,125 @@ const TimePicker = ({
   );
 };
 
+const PostalCodeFields = ({
+  label,
+  required,
+  orderData,
+  postalCopy,
+  cityLookupOptions,
+  cityLookupError,
+  cityLookupLoading,
+  postalLookupError,
+  postalLookupLoading,
+  handleStateChange,
+  handleCityChange,
+  handlePostalCodeSelect,
+  handlePostalCodeChange,
+  lookupPostalCodesByCity,
+  lookupPostalCode
+}) => (
+  <div className="space-y-4">
+    {label && (
+      <label className="block text-sm font-semibold text-gray-900 mb-2">
+        {label}{required ? ' *' : ''}
+      </label>
+    )}
+    <div className="grid md:grid-cols-3 gap-4">
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">
+          {postalCopy.state}
+        </label>
+        <select
+          value={orderData.state}
+          onChange={(e) => handleStateChange(e.target.value)}
+          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
+        >
+          <option value="">{postalCopy.statePlaceholder}</option>
+          {GERMAN_STATES.map((state) => (
+            <option key={state.code} value={state.code}>
+              {state.code} - {state.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="md:col-span-2">
+        <label className="block text-xs font-semibold text-gray-700 mb-1">
+          {postalCopy.city}
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={orderData.city}
+            onChange={(e) => handleCityChange(e.target.value)}
+            className="flex-1 px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+            placeholder={postalCopy.cityPlaceholder}
+          />
+          <button
+            type="button"
+            onClick={lookupPostalCodesByCity}
+            disabled={cityLookupLoading}
+            className={`px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
+              cityLookupLoading
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-amber-600 text-white hover:bg-amber-700'
+            }`}
+          >
+            {cityLookupLoading ? postalCopy.searching : postalCopy.findPostal}
+          </button>
+        </div>
+        {cityLookupError && (
+          <p className="mt-1 text-sm text-red-600">{cityLookupError}</p>
+        )}
+      </div>
+    </div>
+
+    {cityLookupOptions.length > 0 && (
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-1">
+          {postalCopy.selectPostal}
+        </label>
+        <select
+          value={orderData.postalCode}
+          onChange={(e) => handlePostalCodeSelect(e.target.value)}
+          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
+        >
+          <option value="">{postalCopy.selectPostal}</option>
+          {cityLookupOptions.map((option) => (
+            <option key={`${option.code}-${option.city}`} value={option.code}>
+              {option.code}{option.city ? ` - ${option.city}` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
+    )}
+
+    <div>
+      <label className="block text-xs font-semibold text-gray-700 mb-1">
+        {postalCopy.postalCode}
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={orderData.postalCode}
+          onChange={(e) => handlePostalCodeChange(e.target.value)}
+          onBlur={lookupPostalCode}
+          inputMode="numeric"
+          pattern="[0-9]{5}"
+          maxLength={5}
+          autoComplete="postal-code"
+          required={required}
+          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+          placeholder={postalCopy.postalPlaceholder}
+        />
+        <MapPinIcon className="absolute right-3 top-3.5 text-gray-400" size={20} />
+      </div>
+      <p className={`mt-1 text-xs ${postalLookupError ? 'text-red-600' : 'text-gray-500'}`}>
+        {postalLookupLoading ? postalCopy.checking : (postalLookupError || postalCopy.germanyOnly)}
+      </p>
+    </div>
+  </div>
+);
+
 export default function OrderPage() {
   const router = useRouter();
   const { t, language, toggleLanguage, setLanguage: setAppLanguage } = useTranslation('order');
@@ -348,8 +501,11 @@ export default function OrderPage() {
     },
     specialRequests: '',
     deliveryOption: 'standard',
+    city: '',
+    state: '',
     postalCode: '',
     deliveryDate: '',
+    companyInfo: '',
     paymentMethod: '',
     cardDetails: {
       number: '',
@@ -359,6 +515,15 @@ export default function OrderPage() {
     }
   });
   const [contactErrors, setContactErrors] = useState({ email: '', phone: '' });
+  const [companyErrors, setCompanyErrors] = useState({ name: '', info: '' });
+  const [guestCountError, setGuestCountError] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState('');
+  const [postalLookupError, setPostalLookupError] = useState('');
+  const [postalLookupLoading, setPostalLookupLoading] = useState(false);
+  const [cityLookupOptions, setCityLookupOptions] = useState([]);
+  const [cityLookupError, setCityLookupError] = useState('');
+  const [cityLookupLoading, setCityLookupLoading] = useState(false);
 
   const validateEmailValue = (value: string) => {
     if (!value) {
@@ -380,6 +545,17 @@ export default function OrderPage() {
     return '';
   };
 
+  const validateCompanyName = (value: string) => {
+    if (orderData.businessType !== 'business') {
+      return '';
+    }
+    return value ? '' : (language === 'DE' ? 'Firmenname ist erforderlich.' : 'Company name is required.');
+  };
+
+  const validateCompanyInfo = (value: string) => {
+    return '';
+  };
+
   const updateContactInfoField = (field: string, value: string) => {
     updateOrderData('contactInfo', {
       ...orderData.contactInfo,
@@ -393,6 +569,19 @@ export default function OrderPage() {
     }
   };
 
+  const updateCompanyName = (value: string) => {
+    updateOrderData('contactInfo', {
+      ...orderData.contactInfo,
+      company: value
+    });
+    setCompanyErrors((prev) => ({ ...prev, name: validateCompanyName(value.trim()) }));
+  };
+
+  const updateCompanyInfo = (value: string) => {
+    updateOrderData('companyInfo', value);
+    setCompanyErrors((prev) => ({ ...prev, info: '' }));
+  };
+
   const handleContactBlur = (field: 'email' | 'phone') => {
     const value = (orderData.contactInfo[field] || '').trim();
     if (field === 'email') {
@@ -401,6 +590,175 @@ export default function OrderPage() {
     if (field === 'phone') {
       setContactErrors((prev) => ({ ...prev, phone: validatePhoneValue(value) }));
     }
+  };
+
+  useEffect(() => {
+    if (orderData.businessType !== 'business') {
+      setCompanyErrors({ name: '', info: '' });
+    }
+  }, [orderData.businessType]);
+
+  const getGuestCountError = () => (
+    language === 'DE'
+      ? 'Anzahl der Gaeste muss groesser als 10 sein.'
+      : 'Guest count must be greater than 10.'
+  );
+
+  const handleGuestCountChange = (value: string) => {
+    const digitsOnly = value.replace(/[^0-9]/g, '');
+    updateOrderData('guestCount', digitsOnly);
+    if (!digitsOnly) {
+      setGuestCountError('');
+      return;
+    }
+    const nextCount = parseInt(digitsOnly, 10) || 0;
+    setGuestCountError(nextCount >= MIN_GUESTS ? '' : getGuestCountError());
+  };
+
+  const handlePostalCodeChange = (value: string) => {
+    const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 5);
+    updateOrderData('postalCode', digitsOnly);
+    setPostalLookupError('');
+    setCityLookupError('');
+    setCityLookupOptions([]);
+  };
+
+  const handlePostalCodeSelect = (value: string) => {
+    const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 5);
+    updateOrderData('postalCode', digitsOnly);
+    setPostalLookupError('');
+  };
+
+  const handleCityChange = (value: string) => {
+    updateOrderData('city', value);
+    setCityLookupError('');
+    setCityLookupOptions([]);
+  };
+
+  const handleStateChange = (value: string) => {
+    updateOrderData('state', value);
+    setCityLookupError('');
+    setCityLookupOptions([]);
+  };
+
+  const lookupPostalCode = async () => {
+    const postalCode = (orderData.postalCode || '').trim();
+    if (!postalCode) {
+      setPostalLookupError('');
+      return;
+    }
+    if (!/^\d{5}$/.test(postalCode)) {
+      setPostalLookupError(
+        language === 'DE'
+          ? 'Bitte 5-stellige deutsche PLZ eingeben.'
+          : 'Enter a 5-digit German postal code.'
+      );
+      return;
+    }
+
+    setPostalLookupLoading(true);
+    setPostalLookupError('');
+    try {
+      const response = await fetch(`https://api.zippopotam.us/de/${postalCode}`);
+      if (!response.ok) {
+        throw new Error('Postal code not found');
+      }
+      const data = await response.json();
+      const places = normalizePlaces(data);
+      if (!orderData.city && places[0]?.city) {
+        updateOrderData('city', places[0].city);
+      }
+      if (!orderData.state && places[0]?.stateCode) {
+        updateOrderData('state', places[0].stateCode);
+      }
+    } catch (error) {
+      setPostalLookupError(
+        language === 'DE'
+          ? 'Postleitzahl nicht gefunden (nur Deutschland).'
+          : 'Postal code not found in Germany.'
+      );
+    } finally {
+      setPostalLookupLoading(false);
+    }
+  };
+
+  const lookupPostalCodesByCity = async () => {
+    const stateCode = (orderData.state || '').trim();
+    const city = (orderData.city || '').trim();
+    if (!stateCode || !city) {
+      setCityLookupError(
+        language === 'DE'
+          ? 'Bitte Bundesland und Stadt angeben.'
+          : 'Please select a state and city.'
+      );
+      setCityLookupOptions([]);
+      return;
+    }
+
+    setCityLookupLoading(true);
+    setCityLookupError('');
+    try {
+      const queryCity = encodeURIComponent(city.replace(/\s+/g, ' ').toLowerCase());
+      const response = await fetch(`https://api.zippopotam.us/de/${stateCode.toLowerCase()}/${queryCity}`);
+      if (!response.ok) {
+        throw new Error('City not found');
+      }
+      const data = await response.json();
+      const places = normalizePlaces(data);
+      const uniqueOptions = [];
+      const seenCodes = new Set();
+      places.forEach((place) => {
+        if (!place.code || seenCodes.has(place.code)) return;
+        seenCodes.add(place.code);
+        uniqueOptions.push(place);
+      });
+      setCityLookupOptions(uniqueOptions);
+      if (uniqueOptions.length === 1 && uniqueOptions[0].code) {
+        updateOrderData('postalCode', uniqueOptions[0].code);
+        setPostalLookupError('');
+      }
+    } catch (error) {
+      setCityLookupError(
+        language === 'DE'
+          ? 'Keine PLZ fuer diese Stadt gefunden.'
+          : 'No postal codes found for this city.'
+      );
+      setCityLookupOptions([]);
+    } finally {
+      setCityLookupLoading(false);
+    }
+  };
+
+  const getOrderTotals = () => {
+    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const flatServiceFee = 48.90;
+    const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
+      return sum + (item.price * item.quantity * guestCount);
+    }, 0);
+
+    const selectedMenuObj = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
+    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+
+    const foodItems = [
+      ...orderData.selectedStarters,
+      ...orderData.selectedMains,
+      ...orderData.selectedSides,
+      ...orderData.selectedDesserts,
+      ...orderData.selectedDrinks
+    ];
+    const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
+    const total = subtotal + accessoriesSubtotal + flatServiceFee;
+
+    return {
+      guestCount,
+      subtotal,
+      total,
+      menuSubtotal,
+      foodSubtotal
+    };
   };
 
   const closedDateMap = useMemo(() => {
@@ -436,6 +794,222 @@ export default function OrderPage() {
     return '';
   }, [closedDateEntry, isClosedDate, isOrderingPaused, language, systemStatus?.pauseReason]);
   const shouldBlockProgress = isOrderingPaused || (isClosedDate && currentStep >= 3);
+
+  const postalCopy = useMemo(() => ({
+    state: language === 'DE' ? 'Bundesland' : 'State',
+    statePlaceholder: language === 'DE' ? 'Bundesland waehlen' : 'Select state',
+    city: language === 'DE' ? 'Stadt' : 'City',
+    cityPlaceholder: language === 'DE' ? 'z.B. Berlin' : 'e.g. Berlin',
+    findPostal: language === 'DE' ? 'PLZ suchen' : 'Find postal codes',
+    searching: language === 'DE' ? 'Suche...' : 'Searching...',
+    selectPostal: language === 'DE' ? 'Postleitzahl waehlen' : 'Select postal code',
+    postalCode: language === 'DE' ? 'Postleitzahl' : 'Postal Code',
+    postalPlaceholder: language === 'DE' ? 'z.B. 10115' : 'e.g. 10115',
+    germanyOnly: language === 'DE' ? 'Nur Deutschland (5-stellig).' : 'Germany only (5 digits).',
+    checking: language === 'DE' ? 'Pruefe...' : 'Checking...'
+  }), [language]);
+
+  const postalFieldProps = {
+    orderData,
+    postalCopy,
+    cityLookupOptions,
+    cityLookupError,
+    cityLookupLoading,
+    postalLookupError,
+    postalLookupLoading,
+    handleStateChange,
+    handleCityChange,
+    handlePostalCodeSelect,
+    handlePostalCodeChange,
+    lookupPostalCodesByCity,
+    lookupPostalCode
+  };
+
+  const getStepValidationError = (step: number) => {
+    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const hasValidGuestCount = guestCount >= MIN_GUESTS;
+    const hasValidPostal = /^\d{5}$/.test(orderData.postalCode || '');
+    const totals = getOrderTotals();
+
+    const contactEmail = (orderData.contactInfo.email || '').trim();
+    const contactPhone = (orderData.contactInfo.phone || '').trim();
+    const companyName = (orderData.contactInfo.company || '').trim();
+    const companyInfo = (orderData.companyInfo || '').trim();
+    const emailError = validateEmailValue(contactEmail);
+    const phoneError = validatePhoneValue(contactPhone);
+
+    switch (step) {
+      case 1:
+        return orderData.businessType
+          ? ''
+          : (language === 'DE' ? 'Bitte Anlass waehlen.' : 'Please select an event type.');
+      case 2:
+        return orderData.serviceType
+          ? ''
+          : (language === 'DE' ? 'Bitte eine Leistung waehlen.' : 'Please select a service type.');
+      case 3:
+        if (!orderData.eventDate) {
+          return language === 'DE' ? 'Bitte Datum waehlen.' : 'Please select an event date.';
+        }
+        if (!orderData.eventTime) {
+          return language === 'DE' ? 'Bitte Uhrzeit waehlen.' : 'Please select an event time.';
+        }
+        if (!hasValidGuestCount) {
+          return getGuestCountError();
+        }
+        if (!hasValidPostal) {
+          return language === 'DE'
+            ? 'Bitte 5-stellige deutsche PLZ eingeben.'
+            : 'Enter a 5-digit German postal code.';
+        }
+        return '';
+      case 4:
+        return orderData.selectedMenu
+          ? ''
+          : (language === 'DE' ? 'Bitte ein Menue waehlen.' : 'Please select a menu.');
+      case 10:
+        if (!hasValidGuestCount) {
+          return getGuestCountError();
+        }
+        if (totals.total < MIN_ORDER_TOTAL) {
+          return language === 'DE'
+            ? `Mindestbestellwert ${MIN_ORDER_TOTAL.toFixed(2)} erreicht nicht.`
+            : `Minimum order of ${MIN_ORDER_TOTAL.toFixed(2)} required.`;
+        }
+        return '';
+      case 11:
+        if (!orderData.contactInfo.firstName?.trim()) {
+          return language === 'DE' ? 'Vorname ist erforderlich.' : 'First name is required.';
+        }
+        if (!orderData.contactInfo.lastName?.trim()) {
+          return language === 'DE' ? 'Nachname ist erforderlich.' : 'Last name is required.';
+        }
+        if (orderData.businessType === 'business' && !companyName) {
+          return language === 'DE' ? 'Firmenname ist erforderlich.' : 'Company name is required.';
+        }
+        if (emailError) {
+          return emailError;
+        }
+        if (phoneError) {
+          return phoneError;
+        }
+        return '';
+      case 12:
+        if (totals.total < MIN_ORDER_TOTAL) {
+          return language === 'DE'
+            ? `Mindestbestellwert ${MIN_ORDER_TOTAL.toFixed(2)} erreicht nicht.`
+            : `Minimum order of ${MIN_ORDER_TOTAL.toFixed(2)} required.`;
+        }
+        if (!orderData.paymentMethod) {
+          return language === 'DE' ? 'Bitte Zahlungsmethode waehlen.' : 'Please select a payment method.';
+        }
+        if (!termsAccepted) {
+          return language === 'DE'
+            ? 'Bitte AGB und Datenschutz akzeptieren.'
+            : 'Please accept the terms and privacy policy.';
+        }
+        if (orderData.paymentMethod === 'credit-card') {
+          const { number, expiry, cvc, name } = orderData.cardDetails;
+          const digitsOnly = number.replace(/\s+/g, '');
+          const expiryValid = /^\d{2}\/\d{2}$/.test(expiry);
+          if (!digitsOnly || digitsOnly.length < 12 || !expiryValid || cvc.length < 3 || !name.trim()) {
+            return language === 'DE'
+              ? 'Bitte gueltige Kartendaten eingeben.'
+              : 'Please enter valid card details.';
+          }
+        }
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const applyValidationErrors = (step: number) => {
+    if (step === 3 || step === 10) {
+      const guestCount = parseInt(orderData.guestCount, 10) || 0;
+      setGuestCountError(guestCount >= MIN_GUESTS ? '' : getGuestCountError());
+      if (step === 3 && !/^\d{5}$/.test(orderData.postalCode || '')) {
+        setPostalLookupError(
+          language === 'DE'
+            ? 'Bitte 5-stellige deutsche PLZ eingeben.'
+            : 'Enter a 5-digit German postal code.'
+        );
+      }
+    }
+    if (step === 11) {
+      const contactEmail = (orderData.contactInfo.email || '').trim();
+      const contactPhone = (orderData.contactInfo.phone || '').trim();
+      setContactErrors({
+        email: validateEmailValue(contactEmail),
+        phone: validatePhoneValue(contactPhone)
+      });
+      if (orderData.businessType === 'business') {
+        setCompanyErrors({
+          name: validateCompanyName((orderData.contactInfo.company || '').trim()),
+          info: ''
+        });
+      } else {
+        setCompanyErrors({ name: '', info: '' });
+      }
+    }
+    if (step === 12 && !termsAccepted) {
+      setTermsError(
+        language === 'DE'
+          ? 'Bitte AGB und Datenschutz akzeptieren.'
+          : 'Please accept the terms and privacy policy.'
+      );
+    }
+  };
+
+  const getFirstInvalidStep = (maxStep: number) => {
+    for (let step = 1; step <= maxStep; step += 1) {
+      const error = getStepValidationError(step);
+      if (error) {
+        return { step, error };
+      }
+    }
+    return null;
+  };
+
+  const validateStepsUpTo = (maxStep: number) => {
+    const invalid = getFirstInvalidStep(maxStep);
+    if (invalid) {
+      applyValidationErrors(invalid.step);
+      showNotification('error', invalid.error, 3000);
+      if (invalid.step !== currentStep) {
+        setCurrentStep(invalid.step);
+      }
+      return false;
+    }
+    return true;
+  };
+
+  const handleStepChange = (targetStep: number) => {
+    if (targetStep <= currentStep) {
+      setCurrentStep(targetStep);
+      return;
+    }
+    if (shouldBlockProgress) {
+      showNotification('error', blockedMessage, 3000);
+      return;
+    }
+    if (!validateStepsUpTo(targetStep - 1)) {
+      return;
+    }
+    setCurrentStep(targetStep);
+  };
+
+  const canNavigateToStep = (targetStep: number) => {
+    if (targetStep <= currentStep) {
+      return true;
+    }
+    if (shouldBlockProgress) {
+      return false;
+    }
+    return !getFirstInvalidStep(targetStep - 1);
+  };
+
+  const canProceedToNext = !getFirstInvalidStep(currentStep);
 
   const stepsConfig = useMemo(() => [
     { key: 'eventType', label: language === 'DE' ? 'Anlass' : 'Event Type' },
@@ -586,30 +1160,21 @@ export default function OrderPage() {
           <input
             type="text"
             value={orderData.guestCount || ''}
-            onChange={(e) => updateOrderData('guestCount', e.target.value.replace(/[^0-9]/g, ''))}
+            onChange={(e) => handleGuestCountChange(e.target.value)}
             inputMode="numeric"
             pattern="[0-9]*"
             className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
-            placeholder="10"
+            placeholder="11"
             required
           />
           <p className="text-sm text-gray-600 mt-2">{t.eventInfo.minGuests}</p>
+          {guestCountError && (
+            <p className="text-sm text-red-600 mt-1">{guestCountError}</p>
+          )}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            {t.eventInfo.location} *
-          </label>
-          <input
-            type="text"
-            value={orderData.postalCode}
-            onChange={(e) => updateOrderData('postalCode', e.target.value)}
-            inputMode="numeric"
-            autoComplete="postal-code"
-            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500 shadow-sm"
-            placeholder="Enter postal code"
-            required
-          />
+          <PostalCodeFields {...postalFieldProps} label={t.eventInfo.location} required />
         </div>
       </div>
     </div>
@@ -769,7 +1334,9 @@ export default function OrderPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-700">{t.eventInfo.location}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.postalCode || 'Not set'}</span>
+                  <span className="font-semibold text-gray-900">
+                    {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                  </span>
                 </div>
               </div>
               
@@ -862,10 +1429,10 @@ export default function OrderPage() {
                   <span>€{total.toFixed(2)}</span>
                 </div>
                 
-                {total < 388.80 && (
+                {total < MIN_ORDER_TOTAL && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800 font-medium">
-                      Minimum order of €388.80 required. Add more items to continue.
+                      Minimum order of €{MIN_ORDER_TOTAL.toFixed(2)} required. Add more items to continue.
                     </p>
                   </div>
                 )}
@@ -880,7 +1447,7 @@ export default function OrderPage() {
                     return (
                       <button
                         key={idx}
-                        onClick={() => setCurrentStep(stepIndex)}
+                        onClick={() => handleStepChange(stepIndex)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           currentStep === stepIndex
                             ? 'bg-amber-600 text-white'
@@ -1058,7 +1625,7 @@ export default function OrderPage() {
     const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
     const currentSubtotal = subtotal + accessoriesSubtotal + flatServiceFee;
-    const minimumOrder = 388.80;
+    const minimumOrder = MIN_ORDER_TOTAL;
     const accessoriesList = Array.isArray(t.accessories?.items) ? t.accessories.items : [];
 
     return (
@@ -1081,7 +1648,9 @@ export default function OrderPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-700">{t.eventInfo.location}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.postalCode || 'Not set'}</span>
+                  <span className="font-semibold text-gray-900">
+                    {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                  </span>
                 </div>
               </div>
               
@@ -1289,21 +1858,7 @@ export default function OrderPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
-                      {t.accessories.postalCode}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={orderData.postalCode}
-                        onChange={(e) => updateOrderData('postalCode', e.target.value)}
-                        inputMode="numeric"
-                        autoComplete="postal-code"
-                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                        placeholder="Enter postal code"
-                      />
-                      <MapPinIcon className="absolute right-3 top-3.5 text-gray-400" size={20} />
-                    </div>
+                    <PostalCodeFields {...postalFieldProps} label={t.accessories.postalCode} />
                   </div>
                 </div>
                 
@@ -1315,22 +1870,25 @@ export default function OrderPage() {
                     <input
                       type="text"
                       value={orderData.guestCount || ''}
-                      onChange={(e) => updateOrderData('guestCount', e.target.value.replace(/[^0-9]/g, ''))}
+                      onChange={(e) => handleGuestCountChange(e.target.value)}
                       inputMode="numeric"
                       pattern="[0-9]*"
                       className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-gray-900 placeholder:text-gray-500 bg-amber-50/60"
-                      placeholder="10"
+                      placeholder="11"
                     />
                     <Users className="absolute right-3 top-3.5 text-gray-400" size={20} />
                   </div>
+                  {guestCountError && (
+                    <p className="text-sm text-red-600 mt-1">{guestCountError}</p>
+                  )}
                 </div>
               </div>
               
               <button
                 onClick={nextStep}
-                disabled={shouldBlockProgress}
+                disabled={shouldBlockProgress || !canProceedToNext}
                 className={`w-full mt-8 py-4 px-6 rounded-lg text-base font-semibold transition-colors ${
-                  shouldBlockProgress
+                  shouldBlockProgress || !canProceedToNext
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-gray-900 text-white hover:bg-black'
                 }`}
@@ -1431,21 +1989,39 @@ export default function OrderPage() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Company (Optional)
-          </label>
-          <input
-            type="text"
-            value={orderData.contactInfo.company}
-            onChange={(e) => updateOrderData('contactInfo', {
-              ...orderData.contactInfo,
-              company: e.target.value
-            })}
-            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-            placeholder="Company Name"
-          />
-        </div>
+        {orderData.businessType === 'business' && (
+          <>
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                {language === 'DE' ? 'Firmenname *' : 'Company Name *'}
+              </label>
+              <input
+                type="text"
+                value={orderData.contactInfo.company}
+                onChange={(e) => updateCompanyName(e.target.value)}
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                placeholder={language === 'DE' ? 'Firmenname' : 'Company name'}
+                required
+              />
+              {companyErrors.name && (
+                <p className="mt-2 text-sm text-red-600">{companyErrors.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                {language === 'DE' ? 'Firmeninformationen (optional)' : 'Company Information (optional)'}
+              </label>
+              <textarea
+                value={orderData.companyInfo}
+                onChange={(e) => updateCompanyInfo(e.target.value)}
+                rows="4"
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
+                placeholder={language === 'DE' ? 'z.B. Branche, Groesse, Standort' : 'e.g. industry, size, location'}
+              />
+            </div>
+          </>
+        )}
 
         <div>
           <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -1530,7 +2106,9 @@ export default function OrderPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-black">
                       <MapPinIcon size={16} className="text-gray-500" />
-                      <span className="font-medium">{orderData.postalCode || 'Not set'}</span>
+                      <span className="font-medium">
+                        {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1542,8 +2120,15 @@ export default function OrderPage() {
                     <p className="text-sm text-black font-medium">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
                     <p className="text-sm text-black font-medium">{orderData.contactInfo.email}</p>
                     <p className="text-sm text-black font-medium">{orderData.contactInfo.phone}</p>
-                    {orderData.contactInfo.company && (
-                      <p className="text-sm text-black font-medium">{orderData.contactInfo.company}</p>
+                    {orderData.businessType === 'business' && orderData.contactInfo.company && (
+                      <p className="text-sm text-black font-medium">
+                        {language === 'DE' ? 'Firma:' : 'Company:'} {orderData.contactInfo.company}
+                      </p>
+                    )}
+                    {orderData.businessType === 'business' && orderData.companyInfo && (
+                      <p className="text-sm text-black font-medium">
+                        {language === 'DE' ? 'Firmeninfo:' : 'Company Info:'} {orderData.companyInfo}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -1709,11 +2294,21 @@ export default function OrderPage() {
                       type="checkbox"
                       id="terms"
                       className="mt-1"
+                      checked={termsAccepted}
+                      onChange={(e) => {
+                        setTermsAccepted(e.target.checked);
+                        if (e.target.checked) {
+                          setTermsError('');
+                        }
+                      }}
                     />
                     <label htmlFor="terms" className="text-sm text-gray-700">
                       I agree to the Terms & Conditions and Privacy Policy. I understand that this order is subject to our cancellation policy (48 hours notice for full refund).
                     </label>
                   </div>
+                  {termsError && (
+                    <p className="mt-2 text-sm text-red-600">{termsError}</p>
+                  )}
                 </div>
 
                 {orderBlocked && (
@@ -1725,14 +2320,8 @@ export default function OrderPage() {
                 {/* Submit Button */}
                 <button
                   onClick={() => {
-                    if (orderData.paymentMethod === 'credit-card') {
-                      const { number, expiry, cvc, name } = orderData.cardDetails;
-                      const digitsOnly = number.replace(/\s+/g, '');
-                      const expiryValid = /^\d{2}\/\d{2}$/.test(expiry);
-                      if (!digitsOnly || digitsOnly.length < 12 || !expiryValid || cvc.length < 3 || !name.trim()) {
-                        showNotification('error', language === 'DE' ? 'Bitte gültige Kartendaten eingeben.' : 'Please enter valid card details.');
-                        return;
-                      }
+                    if (!validateStepsUpTo(stepsConfig.length)) {
+                      return;
                     }
                     handleSubmitOrder();
                   }}
@@ -1781,12 +2370,14 @@ export default function OrderPage() {
       showNotification('error', blockedMessage, 3000);
       return;
     }
-    if (currentStep === stepsConfig.length) {
-      // Handle final submission
-      handleSubmitOrder();
-    } else {
-      setCurrentStep(prev => Math.min(prev + 1, stepsConfig.length));
+    if (!validateStepsUpTo(currentStep)) {
+      return;
     }
+    if (currentStep === stepsConfig.length) {
+      handleSubmitOrder();
+      return;
+    }
+    setCurrentStep(prev => Math.min(prev + 1, stepsConfig.length));
   };
 
   const prevStep = () => {
@@ -1897,6 +2488,17 @@ export default function OrderPage() {
       return;
     }
 
+    const companyName = (orderData.contactInfo.company || '').trim();
+    const companyInfo = (orderData.companyInfo || '').trim();
+    const baseRequests = (orderData.specialRequests || '').trim();
+    const companyDetailParts = [];
+    if (orderData.businessType === 'business') {
+      if (companyName) companyDetailParts.push(`Company: ${companyName}`);
+      if (companyInfo) companyDetailParts.push(`Company Info: ${companyInfo}`);
+    }
+    const companyDetails = companyDetailParts.join('\n');
+    const mergedRequests = [companyDetails, baseRequests].filter(Boolean).join('\n\n');
+
     // Calculate totals
     const guestCount = parseInt(orderData.guestCount) || 0;
     const flatServiceFee = 48.90;
@@ -1940,7 +2542,7 @@ export default function OrderPage() {
         guests: guestCount,
         location: orderData.location || orderData.postalCode || '',
         menuTier: orderData.menuTier,
-        specialRequests: orderData.specialRequests,
+        specialRequests: mergedRequests,
         businessType: orderData.businessType,
         serviceType: orderData.serviceType,
         postalCode: orderData.postalCode,
@@ -2135,9 +2737,9 @@ export default function OrderPage() {
                 
                 <button
                   onClick={nextStep}
-                  disabled={shouldBlockProgress}
+                  disabled={shouldBlockProgress || !canProceedToNext}
                   className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center shadow-sm ${
-                    shouldBlockProgress
+                    shouldBlockProgress || !canProceedToNext
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-amber-600 text-white hover:bg-amber-700'
                   }`}
@@ -2155,12 +2757,16 @@ export default function OrderPage() {
                   const stepNumber = index + 1;
                   const isCurrent = stepNumber === currentStep;
                   const isCompleted = stepNumber < currentStep;
+                  const canNavigate = canNavigateToStep(stepNumber);
                   
                   return (
                     <React.Fragment key={step.key}>
                       <button
-                        onClick={() => setCurrentStep(stepNumber)}
-                        className="flex flex-col items-center min-w-[60px] transition-all duration-300"
+                        onClick={() => handleStepChange(stepNumber)}
+                        disabled={!canNavigate}
+                        className={`flex flex-col items-center min-w-[60px] transition-all duration-300 ${
+                          !canNavigate ? 'opacity-60 cursor-not-allowed' : ''
+                        }`}
                       >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center mb-1 transition-all duration-300 ${
                           isCompleted

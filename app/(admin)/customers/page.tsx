@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Menu, X, ChevronRight, Package, Calendar, DollarSign, 
+import {
+  Menu, X, ChevronRight, Package, Calendar, DollarSign,
   Users, TrendingUp, Clock, Plus, Edit, Archive, Trash2,
   Search, Filter, Save, XCircle, CheckCircle, AlertCircle,
   Utensils, Wine, Coffee, Dessert, Mail, Phone, MapPin,
-  Star, Crown, Gift, Send, MoreVertical, Eye, MessageCircle,
+  Star, Crown, Eye, MessageCircle,
   User // Added User icon
 } from 'lucide-react';
 
@@ -15,7 +15,6 @@ import { useTranslation } from '@/lib/hooks/useTranslation';
 import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import { customersApi, CustomerSummary } from '@/lib/api/customers';
 import { ordersApi, Order } from '@/lib/api/orders';
-import { promotionsApi } from '@/lib/api/promotions';
 
 type Customer = CustomerSummary & {
   avatar?: string;
@@ -35,7 +34,6 @@ export default function Customers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [showPromotionModal, setShowPromotionModal] = useState(false);
 
   const router = useRouter();
   const { language, toggleLanguage } = useTranslation('admin');
@@ -58,7 +56,7 @@ export default function Customers() {
       header: {
         title: 'Customer Management',
         sectionTitle: 'Customers',
-        subtitle: 'Manage customer profiles, view order history, and send promotions',
+        subtitle: 'Manage customer profiles and view order history',
       },
       tabs: {
         list: 'Customer List',
@@ -106,28 +104,10 @@ export default function Customers() {
         allergies: 'Allergies',
         additionalNotes: 'Additional Notes',
       },
-      promotion: {
-        title: 'Send Promotion',
-        promotionTitle: 'Promotion Title',
-        discountOffer: 'Discount Offer',
-        validUntil: 'Valid Until',
-        message: 'Message',
-        sendTo: 'Send To',
-        allCustomers: 'All Customers',
-        activeCustomersOnly: 'Active Customers Only',
-        vipCustomersOnly: 'VIP Customers Only',
-        send: 'Send Promotion',
-        cancel: 'Cancel',
-        placeholderTitle: 'Special Offer, Seasonal Discount...',
-        placeholderDiscount: '20% OFF, €25 discount, Free dessert...',
-        placeholderMessage: 'Write your promotion message here...',
-        sent: 'Promotion sent',
-        failed: 'Failed to send promotion',
-      },
     },
     DE: {
       nav: {
-        dashboard: 'Uebersicht',
+        dashboard: 'ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -141,7 +121,7 @@ export default function Customers() {
       header: {
         title: 'Kundenverwaltung',
         sectionTitle: 'Kunden',
-        subtitle: 'Kundenprofile verwalten, Bestellhistorie ansehen und Promotionen senden',
+        subtitle: 'Kundenprofile verwalten und Bestellhistorie ansehen',
       },
       tabs: {
         list: 'Kundenliste',
@@ -188,24 +168,6 @@ export default function Customers() {
         dietaryPreferences: 'Ernaehrungspraeferenzen',
         allergies: 'Allergien',
         additionalNotes: 'Zusaetzliche Notizen',
-      },
-      promotion: {
-        title: 'Promotion senden',
-        promotionTitle: 'Promotion Titel',
-        discountOffer: 'Rabattangebot',
-        validUntil: 'Gueltig bis',
-        message: 'Nachricht',
-        sendTo: 'Senden an',
-        allCustomers: 'Alle Kunden',
-        activeCustomersOnly: 'Nur aktive Kunden',
-        vipCustomersOnly: 'Nur VIP-Kunden',
-        send: 'Promotion senden',
-        cancel: 'Abbrechen',
-        placeholderTitle: 'Sonderangebot, Saisonrabatt...',
-        placeholderDiscount: '20% RABATT, 25 EUR Rabatt, Kostenloses Dessert...',
-        placeholderMessage: 'Schreiben Sie hier Ihre Promotion-Nachricht...',
-        sent: 'Promotion gesendet',
-        failed: 'Promotion konnte nicht gesendet werden',
       },
     },
   } as const;
@@ -257,23 +219,13 @@ export default function Customers() {
     loadData();
   }, []);
 
-  // Promotion state
-  const [promotion, setPromotion] = useState({
-    title: '',
-    message: '',
-    discount: '',
-    validUntil: '',
-    recipients: 'all', // 'all', 'active', 'vip', 'selected'
-    selectedCustomers: []
-  });
-
   const navigation = [
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
-    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
+    // { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
 
   const handleNavigation = (path: string) => {
@@ -320,32 +272,6 @@ export default function Customers() {
         return <Star size={16} />;
       default:
         return null;
-    }
-  };
-
-  const sendPromotion = async () => {
-    try {
-      await promotionsApi.sendPromotion({
-        title: promotion.title,
-        message: promotion.message,
-        discount: promotion.discount || undefined,
-        validUntil: promotion.validUntil || undefined,
-        recipients: promotion.recipients as any,
-        selectedCustomerIds: promotion.selectedCustomers
-      });
-      setShowPromotionModal(false);
-      setPromotion({
-        title: '',
-        message: '',
-        discount: '',
-        validUntil: '',
-        recipients: 'all',
-        selectedCustomers: []
-      });
-      alert(t.promotion.sent);
-    } catch (err: any) {
-      console.error('Failed to send promotion', err);
-      alert(err?.message || t.promotion.failed);
     }
   };
 
@@ -514,106 +440,6 @@ export default function Customers() {
     </div>
   );
 
-  const renderPromotionModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.promotion.title}</h2>
-            <button onClick={() => setShowPromotionModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-              <X size={24} />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.promotionTitle}</label>
-            <input
-              type="text"
-              value={promotion.title}
-              onChange={(e) => setPromotion(prev => ({ ...prev, title: e.target.value }))}
-              placeholder={t.promotion.placeholderTitle}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.discountOffer}</label>
-            <input
-              type="text"
-              value={promotion.discount}
-              onChange={(e) => setPromotion(prev => ({ ...prev, discount: e.target.value }))}
-              placeholder={t.promotion.placeholderDiscount}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.validUntil}</label>
-            <input
-              type="date"
-              value={promotion.validUntil}
-              onChange={(e) => setPromotion(prev => ({ ...prev, validUntil: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t.promotion.message}</label>
-            <textarea
-              value={promotion.message}
-              onChange={(e) => setPromotion(prev => ({ ...prev, message: e.target.value }))}
-              rows={4}
-              placeholder={t.promotion.placeholderMessage}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">{t.promotion.sendTo}</label>
-            <div className="space-y-2">
-              {['all', 'active', 'vip'].map(recipientType => (
-                <label key={recipientType} className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    name="recipients"
-                    value={recipientType}
-                    checked={promotion.recipients === recipientType}
-                    onChange={(e) => setPromotion(prev => ({ ...prev, recipients: e.target.value }))}
-                    className="text-amber-600 focus:ring-amber-500"
-                  />
-                  <span className="text-gray-700 capitalize">
-                    {recipientType === 'all' ? t.promotion.allCustomers :
-                     recipientType === 'active' ? t.promotion.activeCustomersOnly :
-                     t.promotion.vipCustomersOnly}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <button
-              onClick={sendPromotion}
-              disabled={!promotion.title || !promotion.discount}
-              className="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
-            >
-              <Send size={20} />
-              {t.promotion.send}
-            </button>
-            <button
-              onClick={() => setShowPromotionModal(false)}
-              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              {t.promotion.cancel}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100">
       <style jsx global>{`
@@ -703,13 +529,6 @@ export default function Customers() {
               <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.sectionTitle}</h2>
               <p className="text-gray-600">{t.header.subtitle}</p>
             </div>
-            <button
-              onClick={() => setShowPromotionModal(true)}
-              className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center gap-2"
-            >
-              <Gift size={20} />
-              {t.promotion.send}
-            </button>
           </div>
 
           {/* Tabs */}
@@ -965,8 +784,6 @@ export default function Customers() {
           onClose={() => setSelectedCustomer(null)}
         />
       )}
-
-      {showPromotionModal && renderPromotionModal()}
     </div>
   );
 }

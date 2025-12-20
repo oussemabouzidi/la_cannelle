@@ -1,25 +1,31 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Clock, Users, Leaf, Plus, Minus, Heart, Calendar, Users as UsersIcon, Utensils, Search } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Menu, X, Phone, Mail, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
 import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
 import { commonTranslations } from '@/lib/translations/common';
 import { DEFAULT_LANGUAGE, STORAGE_KEY, type Language } from '@/lib/hooks/useTranslation';
 
+type MenuHighlightItem = {
+  id: number;
+  name: string;
+  description?: string;
+  image?: string;
+};
+
+type MenuHighlight = ApiMenu & {
+  items: MenuHighlightItem[];
+  coverImage: string;
+};
+
 export default function MenusPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE);
-  const [activeCategory, setActiveCategory] = useState('all');
   const [isVisible, setIsVisible] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
-  const [quantity, setQuantity] = useState(20);
-  const [favorites, setFavorites] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showMenuPlanModal, setShowMenuPlanModal] = useState(false);
-  const [isModalClosing, setIsModalClosing] = useState(false);
-  const modalRef = useRef<HTMLDivElement | null>(null);
+  const [selectedMenu, setSelectedMenu] = useState<MenuHighlight | null>(null);
+  const [isMenuModalClosing, setIsMenuModalClosing] = useState(false);
   const [menus, setMenus] = useState<ApiMenu[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -29,6 +35,12 @@ export default function MenusPage() {
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  const router = useRouter();
+
+  const handleOrderClick = () => {
+    router.push('/order');
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -41,32 +53,13 @@ export default function MenusPage() {
     }
   }, []);
 
-  // Handle click outside modal
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        closeModal();
-      }
-    };
-
-    if (showMenuPlanModal) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.body.style.overflow = 'hidden';
-    }
-
+    if (!selectedMenu) return;
+    document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
       document.body.style.overflow = 'unset';
     };
-  }, [showMenuPlanModal]);
-
-  const closeModal = () => {
-    setIsModalClosing(true);
-    setTimeout(() => {
-      setShowMenuPlanModal(false);
-      setIsModalClosing(false);
-    }, 300);
-  };
+  }, [selectedMenu]);
 
   const toggleLanguage = () => {
     setLanguage((prev) => {
@@ -108,6 +101,14 @@ export default function MenusPage() {
       sampleDishes: {
         title: 'Signature Creations',
         subtitle: 'A glimpse of our culinary artistry'
+      },
+      menuHighlights: {
+        title: 'Menu Highlights',
+        subtitle: 'Explore our signature menus and view the details',
+        viewDetails: 'View details',
+        includes: 'Includes',
+        noItems: 'Menu details available upon request.',
+        priceLabel: 'Starting at'
       },
       menuBuilder: {
         title: 'Build Your Perfect Menu',
@@ -202,6 +203,14 @@ export default function MenusPage() {
         title: 'Signature Kreationen',
         subtitle: 'Ein Einblick in unsere kulinarische Kunst'
       },
+      menuHighlights: {
+        title: 'Menue Highlights',
+        subtitle: 'Entdecken Sie unsere Menues und sehen Sie die Details',
+        viewDetails: 'Details ansehen',
+        includes: 'Enthaelt',
+        noItems: 'Details auf Anfrage verfuegbar.',
+        priceLabel: 'Ab'
+      },
       menuBuilder: {
         title: 'Erstellen Sie Ihr perfektes Menü',
         subtitle: 'Kombinieren Sie aus unserer umfangreichen Auswahl',
@@ -277,20 +286,34 @@ export default function MenusPage() {
       try {
         setIsLoadingData(true);
         setFetchError(null);
-        const [fetchedMenus, fetchedProducts] = await Promise.all([
-          menusApi.getMenus({ isActive: true }),
+        const [menusResult, productsResult] = await Promise.allSettled([
+          menusApi.getMenus(),
           productsApi.getProducts({ available: true }),
         ]);
 
-        const normalizedMenus = (fetchedMenus || []).map((menu) => ({
-          ...menu,
-          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
-        }));
+        let nextMenus: ApiMenu[] = [];
+        let nextProducts: ApiProduct[] = [];
+        const hasMenuError = menusResult.status === 'rejected';
+        const hasProductsError = productsResult.status === 'rejected';
 
-        setMenus(normalizedMenus);
-        setProducts(fetchedProducts || []);
-      } catch (error) {
-        console.error('Failed to fetch menus/products', error);
+        if (menusResult.status === 'fulfilled') {
+          nextMenus = (menusResult.value || []).map((menu) => ({
+            ...menu,
+            products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+          }));
+        }
+
+        if (productsResult.status === 'fulfilled') {
+          nextProducts = productsResult.value || [];
+        }
+
+        if (hasMenuError && hasProductsError) {
+          setFetchError('Unable to load menus right now.');
+        }
+
+        setMenus(nextMenus);
+        setProducts(nextProducts);
+      } catch {
         setFetchError('Unable to load menus right now.');
       } finally {
         setIsLoadingData(false);
@@ -299,6 +322,20 @@ export default function MenusPage() {
 
     loadData();
   }, []);
+
+  const openMenuDetails = (menu: MenuHighlight) => {
+    setSelectedMenu(menu);
+    setIsMenuModalClosing(false);
+  };
+
+  const closeMenuDetails = () => {
+    if (!selectedMenu) return;
+    setIsMenuModalClosing(true);
+    setTimeout(() => {
+      setSelectedMenu(null);
+      setIsMenuModalClosing(false);
+    }, 200);
+  };
 
   const fallbackMenuItems = [
     {
@@ -378,414 +415,218 @@ export default function MenusPage() {
     }
   ];
 
-  const productItems = (products.length
-    ? products.map((product) => ({
-        id: product.id,
-        name: product.name,
-        category: product.menuCategory || product.category || 'general',
-        description: product.description,
-        price: product.price ?? 0,
-        organic: product.ingredients?.some((ing) => ing.toLowerCase().includes('organic')) || false,
-        preparation: product.preparationTime ? `${product.preparationTime} min` : 'Prep time varies',
-        image: product.image || '/images/home_image.jpeg',
-        popularity: product.popularity ?? 80,
-        dietary: product.allergens && product.allergens.length ? product.allergens : [],
-        chefNote: product.ingredients && product.ingredients.length
-          ? `Includes: ${product.ingredients.slice(0, 3).join(', ')}`
-          : 'Crafted by our chefs for your event.',
-      }))
-    : fallbackMenuItems);
+  const menuHighlights = useMemo(() => {
+    const toHighlightItem = (
+      item: { id: number; name: string; description?: string; image?: string } | null | undefined
+    ): MenuHighlightItem | null => {
+      if (!item || item.id == null || !item.name) {
+        return null;
+      }
+      return {
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        image: item.image,
+      };
+    };
 
-  const categoryOptions = menus.length
-    ? ['all', ...Array.from(new Set(menus.map((menu) => menu.category || menu.type).filter(Boolean)))]
-    : ['all', 'corporate', 'wedding', 'cocktail', 'seasonal', 'premium'];
-
-  const router = useRouter();
-
-  const handleOrderClick = (productIds?: number[]) => {
-    const ids = productIds && productIds.length ? productIds : selectedItems.map((item) => item.id);
-    const query = ids.length ? `?products=${ids.join(',')}` : '';
-    router.push(`/order${query}`);
-  };
-
-  const filteredItems = activeCategory === 'all'
-    ? productItems.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : productItems.filter(item =>
-        item.category === activeCategory &&
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
-  const addToMenuPlan = (item) => {
-    const existingItem = selectedItems.find(i => i.id === item.id);
-    if (existingItem) {
-      updateItemQuantity(item.id, existingItem.quantity + 1);
-    } else {
-      setSelectedItems(prev => [...prev, { ...item, quantity: 1 }]);
+    if (menus.length) {
+      const productMap = new Map(products.map((product) => [product.id, product]));
+      return (menus || []).map((menu) => {
+        let items: MenuHighlightItem[] = [];
+        if (menu.menuProducts && menu.menuProducts.length) {
+          items = menu.menuProducts
+            .map((menuProduct) => toHighlightItem(menuProduct.product))
+            .filter(Boolean) as MenuHighlightItem[];
+        } else if (menu.products && menu.products.length) {
+          items = menu.products
+            .map((id) => toHighlightItem(productMap.get(id)))
+            .filter(Boolean) as MenuHighlightItem[];
+        }
+        const coverImage = menu.image
+          || items.find((item) => item.image)?.image
+          || '/images/home_image.jpeg';
+        return {
+          ...menu,
+          items,
+          coverImage
+        };
+      });
     }
-  };
 
-  const removeFromMenuPlan = (itemId) => {
-    setSelectedItems(prev => prev.filter(item => item.id !== itemId));
-  };
+    const sourceItems = products.length
+      ? products.map((product) => ({
+          ...product,
+          category: product.menuCategory || product.category || 'general',
+        }))
+      : fallbackMenuItems;
 
-  const updateItemQuantity = (itemId, newQuantity) => {
-    if (newQuantity < 1) {
-      removeFromMenuPlan(itemId);
-      return;
-    }
-    setSelectedItems(prev => 
-      prev.map(item => 
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
+    const groupedItems = sourceItems.reduce((acc, item) => {
+      const category = item.category || 'general';
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      acc[category].push(item);
+      return acc;
+    }, {} as Record<string, Array<{ id: number; name: string; description?: string; image?: string; category?: string }>>);
 
-  const clearAllItems = () => {
-    setSelectedItems([]);
-  };
+    return Object.entries(groupedItems).map(([category, items], index) => {
+      const coverImage = items.find((item) => item.image)?.image || '/images/home_image.jpeg';
+      const description = items.length
+        ? items.slice(0, 3).map((item) => item.name).join(', ')
+        : '';
+      return {
+        id: -(index + 1),
+        name: t.categories[category] || category,
+        description,
+        category,
+        type: category,
+        isActive: true,
+        items: items
+          .map((item) => toHighlightItem(item))
+          .filter(Boolean) as MenuHighlightItem[],
+        coverImage
+      };
+    });
+  }, [menus, products, language]);
 
-  const toggleFavorite = (itemId) => {
-    setFavorites(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
-
-  const getTotalPrice = () => {
-    return selectedItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
-  const MenuItemCard = ({ item }) => (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-stone-100 overflow-hidden group">
-      {/* Image Section */}
-      <div className="relative h-48 overflow-hidden">
-        <img 
-          src={item.image} 
-          alt={item.name}
-          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-        
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1">
-          {item.organic && (
-            <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-              <Leaf size={12} />
-              Organic
-            </span>
-          )}
-        </div>
-
-        {/* Favorite Button */}
-        <button 
-          onClick={() => toggleFavorite(item.id)}
-          className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors duration-300"
-        >
-          <Heart 
-            size={18} 
-            className={favorites.includes(item.id) ? 'text-rose-500 fill-rose-500' : 'text-gray-600'} 
-          />
-        </button>
-
-        {/* Popularity Bar */}
-        <div className="absolute bottom-3 left-3 right-3">
-          <div className="flex items-center justify-between text-white text-xs mb-1">
-            <span>Popularity</span>
-            <span>{item.popularity}%</span>
-          </div>
-          <div className="w-full bg-white/30 rounded-full h-1.5">
-            <div 
-              className="bg-amber-400 h-1.5 rounded-full transition-all duration-1000"
-              style={{ width: `${item.popularity}%` }}
-            ></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-3">
-          <h4 className="text-xl font-semibold text-gray-900 font-elegant group-hover:text-amber-700 transition-colors flex-1">
-            {item.name}
-          </h4>
-          <span className="text-2xl font-bold text-amber-700 font-elegant ml-3">
-            €{item.price}
-          </span>
-        </div>
-        
-        <p className="text-gray-600 mb-4 font-light italic leading-relaxed text-sm">
-          {item.description}
-        </p>
-
-        {/* Dietary Tags */}
-        <div className="flex flex-wrap gap-1 mb-4">
-          {item.dietary.map((diet, index) => (
-            <span key={index} className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs">
-              {diet}
-            </span>
-          ))}
-        </div>
-
-        {/* Chef's Note */}
-        <div className="bg-amber-50 rounded-lg p-3 mb-4">
-          <p className="text-xs text-amber-800 italic">
-            <strong>Chef's Note:</strong> {item.chefNote}
-          </p>
-        </div>
-
-        {/* Action Button */}
-        <button 
-          onClick={() => addToMenuPlan(item)}
-          className="w-full bg-amber-600 text-white py-3 rounded-lg font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 text-sm"
-        >
-          <Plus size={16} />
-          {t.menuBuilder.addToPlan}
-        </button>
-      </div>
-    </div>
-  );
-
-  const MenuBuilderPanel = () => (
-    <div className="bg-white rounded-2xl shadow-lg border border-amber-100 p-6 sticky top-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-4 font-elegant">
-        {t.menuBuilder.title}
-      </h3>
-      
-      {/* Guest Count */}
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          {t.menuBuilder.guests}
-        </label>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setQuantity(prev => Math.max(20, prev - 1))}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={quantity <= 20}
-          >
-            <Minus size={16} />
-          </button>
-          <span className="text-lg font-semibold text-gray-900 min-w-8 text-center">
-            {quantity}
-          </span>
-          <button 
-            onClick={() => setQuantity(prev => prev + 1)}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Plus size={16} />
-          </button>
-          <UsersIcon className="text-amber-600 ml-2" size={20} />
-        </div>
-        <p className="text-xs text-gray-500 mt-1">Minimum 20 guests</p>
-      </div>
-
-      {/* Selected Items */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-sm font-semibold text-gray-700">
-            {t.menuBuilder.totalItems} ({selectedItems.length})
-          </span>
-          <span className="text-lg font-bold text-amber-700">
-            €{getTotalPrice()}
-          </span>
-        </div>
-        
-        <div className="space-y-2 max-h-60 overflow-y-auto">
-          {selectedItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">{item.name}</p>
-                <p className="text-xs text-gray-600">€{item.price} × {item.quantity}</p>
-              </div>
-              <button 
-                onClick={() => removeFromMenuPlan(item.id)}
-                className="text-red-600 hover:text-red-800 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          ))}
-          {selectedItems.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">
-              {t.menuBuilder.noItems}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="space-y-3">
-        <button 
-          onClick={() => setShowMenuPlanModal(true)}
-          disabled={selectedItems.length === 0}
-          className="w-full bg-amber-600 text-white py-3 rounded-lg font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          <Calendar size={16} />
-          {t.menuBuilder.viewPlan}
-        </button>
-        <button
-          onClick={() => handleOrderClick(selectedItems.map((item) => item.id))}
-          className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-all duration-300 transform hover:scale-105"
-        >
-          {t.nav.order}
-        </button>
-      </div>
-    </div>
-  );
-
-  const MenuPlanModal = () => (
-    <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${showMenuPlanModal ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-      {/* Backdrop */}
-      <div 
-        className={`absolute inset-0 bg-black transition-opacity duration-300 ${showMenuPlanModal && !isModalClosing ? 'opacity-50' : 'opacity-0'}`}
-        onClick={closeModal}
-      />
-      
-      {/* Modal Content */}
-      <div 
-        ref={modalRef}
-        className={`relative bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto transition-all duration-300 transform ${showMenuPlanModal && !isModalClosing ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
+  const MenuHighlightCard = ({ menu }: { menu: MenuHighlight }) => {
+    const tags = Array.from(new Set([menu.category, menu.type].filter(Boolean))) as string[];
+    const priceLabel = typeof menu.price === 'number' ? menu.price.toFixed(2) : '';
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => openMenuDetails(menu)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openMenuDetails(menu);
+          }
+        }}
+        aria-label={`${t.menuHighlights.viewDetails}: ${menu.name}`}
+        className="group relative overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
       >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-900 font-elegant">
-              {t.menuBuilder.menuPlan}
-            </h3>
-            <div className="flex items-center gap-4">
-              <span className="text-lg font-bold text-amber-700">
-                {t.menuBuilder.totalPrice}: €{getTotalPrice()}
-              </span>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Guest Count Display */}
-          <div className="bg-amber-50 rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-amber-800">{t.menuBuilder.guests}</p>
-                <p className="text-amber-700 font-bold text-lg">{quantity} {language === 'EN' ? 'guests' : 'Gäste'}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-amber-800">{t.menuBuilder.totalPrice}</p>
-                <p className="text-amber-700 font-bold text-lg">€{getTotalPrice() * quantity}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Menu Items */}
-          <div className="space-y-4 mb-6">
-            {selectedItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                <div className="flex items-center gap-4 flex-1">
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    className="w-16 h-16 object-cover rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">{item.name}</h4>
-                    <p className="text-sm text-gray-600">{item.description}</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {item.dietary.map((diet, index) => (
-                        <span key={index} className="bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs">
-                          {diet}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateItemQuantity(item.id, item.quantity - 1);
-                      }}
-                      className="p-1 border border-gray-300 rounded hover:bg-gray-100 transition-colors duration-200 active:scale-95"
-                      disabled={item.quantity <= 1}
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="text-lg font-semibold text-gray-900 min-w-8 text-center">
-                      {item.quantity}
-                    </span>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateItemQuantity(item.id, item.quantity + 1);
-                      }}
-                      className="p-1 border border-gray-300 rounded hover:bg-gray-100 transition-colors duration-200 active:scale-95"
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
-                  
-                  <span className="text-lg font-bold text-amber-700 min-w-20 text-right">
-                    €{item.price * item.quantity}
-                  </span>
-                  
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromMenuPlan(item.id);
-                    }}
-                    className="text-red-600 hover:text-red-800 transition-colors duration-200 p-2 active:scale-95"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {selectedItems.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500 text-lg">{t.menuBuilder.noItems}</p>
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url('${menu.coverImage}')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10" />
+        <div className="relative p-6 min-h-[220px] flex flex-col justify-end text-white">
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-amber-200 mb-3">
+              {tags.map((tag) => (
+                <span key={`${menu.id}-${tag}`} className="px-2 py-1 bg-white/10 rounded-full">
+                  {tag}
+                </span>
+              ))}
             </div>
           )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <h3 className="text-2xl font-bold font-elegant mb-2">{menu.name}</h3>
+          <p className="text-sm text-white/80 mb-4 max-h-16 overflow-hidden">{menu.description || ''}</p>
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-semibold text-amber-200">
+              {priceLabel ? `${t.menuHighlights.priceLabel} €${priceLabel}` : t.menuHighlights.viewDetails}
+            </span>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                clearAllItems();
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                openMenuDetails(menu);
               }}
-              disabled={selectedItems.length === 0}
-              className="flex-1 px-4 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="uppercase tracking-[0.2em] text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-full transition-colors"
+              aria-label={`${t.menuHighlights.viewDetails}: ${menu.name}`}
             >
-              {t.menuBuilder.clearAll}
-            </button>
-            <button
-              onClick={closeModal}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200 active:scale-95"
-            >
-              {t.menuBuilder.close}
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOrderClick(selectedItems.map((item) => item.id));
-              }}
-              disabled={selectedItems.length === 0}
-              className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t.nav.order}
+              {t.menuHighlights.viewDetails}
             </button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const MenuDetailsModal = () => {
+    const isOpen = !!selectedMenu;
+    const items = selectedMenu?.items ?? [];
+    const priceLabel = selectedMenu && typeof selectedMenu.price === 'number'
+      ? selectedMenu.price.toFixed(2)
+      : '';
+
+    return (
+      <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${isOpen && !isMenuModalClosing ? 'opacity-60' : 'opacity-0'}`}
+          onClick={closeMenuDetails}
+        />
+        <div
+          className={`relative bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-y-auto transition-all duration-300 transform ${isOpen && !isMenuModalClosing ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
+        >
+          <div
+            className="relative h-56 md:h-72 bg-cover bg-center"
+            style={{ backgroundImage: `url('${selectedMenu?.coverImage || '/images/home_image.jpeg'}')` }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none" />
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                closeMenuDetails();
+              }}
+              className="absolute top-4 right-4 z-10 bg-white/90 text-gray-700 hover:text-gray-900 rounded-full p-2 shadow-md transition-colors pointer-events-auto"
+              aria-label="Close menu details"
+            >
+              <X size={18} />
+            </button>
+            <div className="relative h-full flex flex-col justify-end p-6 text-white">
+              <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-amber-200 mb-3">
+                {selectedMenu?.category && (
+                  <span className="px-2 py-1 bg-white/10 rounded-full">{selectedMenu.category}</span>
+                )}
+                {selectedMenu?.type && (
+                  <span className="px-2 py-1 bg-white/10 rounded-full">{selectedMenu.type}</span>
+                )}
+              </div>
+              <h3 className="text-3xl font-bold font-elegant mb-2">{selectedMenu?.name}</h3>
+              {priceLabel && (
+                <p className="text-sm font-semibold text-amber-200">
+                  {t.menuHighlights.priceLabel} €{priceLabel}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="p-6">
+            {selectedMenu?.description && (
+              <p className="text-gray-700 text-sm leading-relaxed mb-6">{selectedMenu.description}</p>
+            )}
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">{t.menuHighlights.includes}</h4>
+              {items.length > 0 ? (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex gap-3 bg-stone-50 border border-stone-100 rounded-xl p-3">
+                      <img
+                        src={item.image || '/images/home_image.jpeg'}
+                        alt={item.name}
+                        className="w-12 h-12 rounded-lg object-cover"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+                        {item.description && (
+                          <p className="text-xs text-gray-600">{item.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">{t.menuHighlights.noItems}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -851,8 +692,7 @@ export default function MenusPage() {
         }
       `}</style>
 
-      {/* Menu Plan Modal - Always rendered, controlled by opacity */}
-      <MenuPlanModal />
+      <MenuDetailsModal />
 
       {/* Navbar */}
       <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 animate-fade-in-down">
@@ -885,9 +725,8 @@ export default function MenusPage() {
                   </>
                 )}
               </button>
- 
-              <button
-                onClick={() => handleOrderClick()}
+              <button 
+                onClick={handleOrderClick}
                 className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
               >
                 {t.nav.order}
@@ -914,11 +753,27 @@ export default function MenusPage() {
                 <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
+                  aria-label={language === 'EN' ? 'Switch to German' : 'Switch to English'}
+                  className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
-                  {language}
+                  {language === 'EN' ? (
+                    <img
+                      src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
+                      alt="English flag"
+                      className="h-5 w-auto"
+                    />
+                  ) : (
+                    <img
+                      src="/images/language/Flag_of_Germany-4096x2453.png"
+                      alt="German flag"
+                      className="h-5 w-auto"
+                    />
+                  )}
                 </button>
-                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105" onClick={() => handleOrderClick()}>
+                <button
+                  onClick={handleOrderClick}
+                  className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105"
+                >
                   {t.nav.order}
                 </button>
               </div>
@@ -947,84 +802,32 @@ export default function MenusPage() {
       {/* Main Content */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-4 gap-8">
-            {/* Menu Builder Panel */}
-            <div className="lg:col-span-1">
-              <MenuBuilderPanel />
+          {fetchError && menuHighlights.length === 0 && (
+            <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
+          )}
+          {isLoadingData && menuHighlights.length === 0 && (
+            <p className="text-center text-sm text-gray-500 mb-4">Loading menus...</p>
+          )}
+          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <div className="text-center mb-8">
+              <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">
+                {t.menuHighlights.title}
+              </p>
+              <h2 className="text-3xl font-bold text-gray-900 font-elegant mt-3">
+                {t.menuHighlights.subtitle}
+              </h2>
             </div>
-
-            {/* Menu Content */}
-            <div className="lg:col-span-3">
-
-              {/* Categories */}
-              <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-                <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center font-elegant">
-                  {t.categories.title}
-                </h2>
+            {menuHighlights.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No menus available right now.</p>
               </div>
-              
-              <div className="flex flex-wrap justify-center gap-3 mb-12">
-                {categoryOptions.map((category, index) => (
-                  <button
-                    key={category}
-                    onClick={() => setActiveCategory(category)}
-                    className={`px-5 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                      activeCategory === category
-                        ? 'bg-amber-700 text-white shadow-lg'
-                        : 'bg-stone-100 text-gray-700 hover:bg-amber-100 hover:text-amber-700'
-                    } ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
-                    style={{ animationDelay: `${index * 100 + 300}ms` }}
-                  >
-                    {t.categories[category] || category}
-                  </button>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-6">
+                {menuHighlights.map((menu) => (
+                  <MenuHighlightCard key={menu.id} menu={menu} />
                 ))}
               </div>
-
-              {/* Search Bar */}
-              <div className={`transition-all duration-1000 mb-8 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-                <div className="relative max-w-md mx-auto">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
-                  <input
-                    type="text"
-                    placeholder={t.menuBuilder.searchPlaceholder}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-black"
-                  />
-                </div>
-              </div>
-
-              {fetchError && (
-                <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
-              )}
-              {isLoadingData && !products.length && (
-                <p className="text-center text-sm text-gray-500 mb-4">Loading menus and products...</p>
-              )}
-
-              {/* Menu Items Grid */}
-              <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3 font-elegant italic">
-                    {t.sampleDishes.title}
-                  </h3>
-                  <p className="text-gray-600 font-light italic">
-                    {t.sampleDishes.subtitle}
-                  </p>
-                </div>
-
-                {filteredItems.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500 text-lg">No menu items found matching your search.</p>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {filteredItems.map((item, index) => (
-                      <MenuItemCard key={item.id} item={item} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>

@@ -11,7 +11,6 @@ import dashboardRoutes from './routes/dashboard';
 import reportsRoutes from './routes/reports';
 import systemRoutes from './routes/system';
 import favoriteRoutes from './routes/favorites';
-import promotionRoutes from './routes/promotions';
 import contactRoutes from './routes/contact';
 
 dotenv.config();
@@ -58,7 +57,6 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/favorites', favoriteRoutes);
-app.use('/api/promotions', promotionRoutes);
 app.use('/api/contact', contactRoutes);
 
 // Error handling

@@ -127,6 +127,8 @@ export default function SystemControl() {
         recurringBadge: 'Recurring',
         noneUpcoming: 'No upcoming closed dates',
         past: 'Past Closed Dates',
+        invalidPast: 'Choose today or a future date',
+        duplicate: 'This date is already closed',
       },
       capacity: {
         title: 'Capacity Settings',
@@ -154,7 +156,7 @@ export default function SystemControl() {
     },
     DE: {
       nav: {
-        dashboard: 'Uebersicht',
+        dashboard: 'ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -203,6 +205,8 @@ export default function SystemControl() {
         recurringBadge: 'Wiederkehrend',
         noneUpcoming: 'Keine bevorstehenden Schliesstage',
         past: 'Vergangene Schliesstage',
+        invalidPast: 'Waehle heute oder ein zukuenftiges Datum',
+        duplicate: 'Dieses Datum ist bereits gesperrt',
       },
       capacity: {
         title: 'Kapazitaetseinstellungen',
@@ -310,6 +314,7 @@ export default function SystemControl() {
 
   const addClosedDate = async () => {
     if (!newClosedDate.date || !newClosedDate.reason) return;
+    if (!isClosedDateValid) return;
     try {
       const created = await systemApi.createClosedDate(newClosedDate);
       setClosedDates(prev => [...prev, created]);
@@ -382,9 +387,50 @@ export default function SystemControl() {
     }
   };
 
-  const isDateInPast = (dateString: string) => {
-    return new Date(dateString).getTime() < new Date().setHours(0, 0, 0, 0);
+  const toDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
+
+  const parseDateValue = (dateString: string) => {
+    if (!dateString) return null;
+    const [yearStr, monthStr, dayStr] = dateString.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number((dayStr || '').slice(0, 2));
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+  };
+
+  const normalizeDateValue = (dateString: string) => {
+    const parsed = parseDateValue(dateString);
+    return parsed ? toDateInputValue(parsed) : '';
+  };
+
+  const isDateInPast = (dateString: string) => {
+    const date = parseDateValue(dateString);
+    if (!date) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date.getTime() < today.getTime();
+  };
+
+  const todayDateValue = toDateInputValue(new Date());
+  const normalizedNewClosedDate = normalizeDateValue(newClosedDate.date);
+  const isClosedDateDuplicate = !!normalizedNewClosedDate && closedDates.some((date) => (
+    normalizeDateValue(date.date) === normalizedNewClosedDate
+  ));
+  const isClosedDateInPast = !!newClosedDate.date && isDateInPast(newClosedDate.date);
+  const closedDateError = newClosedDate.date
+    ? (isClosedDateInPast
+        ? t.closedDates.invalidPast
+        : isClosedDateDuplicate
+          ? t.closedDates.duplicate
+          : '')
+    : '';
+  const isClosedDateValid = !!newClosedDate.date && !isClosedDateInPast && !isClosedDateDuplicate;
 
   const upcomingClosedDates = closedDates.filter(date => !isDateInPast(date.date));
   const pastClosedDates = closedDates.filter(date => isDateInPast(date.date));
@@ -400,6 +446,16 @@ export default function SystemControl() {
         
         .font-elegant {
           font-family: 'Playfair Display', serif;
+        }
+
+        .calendar-input {
+          color-scheme: light;
+          background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+        }
+
+        .calendar-input::-webkit-calendar-picker-indicator {
+          filter: invert(55%) sepia(47%) saturate(430%) hue-rotate(2deg) brightness(96%) contrast(90%);
+          opacity: 0.85;
         }
       `}</style>
 
@@ -621,8 +677,12 @@ export default function SystemControl() {
                           type="date"
                           value={newClosedDate.date}
                           onChange={(e) => setNewClosedDate(prev => ({ ...prev, date: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                          min={todayDateValue}
+                          className="w-full px-3 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-amber-900 bg-amber-50 calendar-input"
                         />
+                        {closedDateError && (
+                          <p className="text-sm text-red-600 mt-2">{closedDateError}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">{t.closedDates.reason}</label>
@@ -647,7 +707,7 @@ export default function SystemControl() {
                       </label>
                       <button
                         onClick={addClosedDate}
-                        disabled={!newClosedDate.date || !newClosedDate.reason}
+                        disabled={!newClosedDate.reason || !isClosedDateValid}
                         className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                       >
                         <Plus size={16} />
@@ -755,7 +815,8 @@ export default function SystemControl() {
                         <input
                           type="number"
                           value={capacitySettings.perHourLimit}
-                          onChange={(e) => updateCapacitySettings({ perHourLimit: parseInt(e.target.value) || 0 })}
+                          min={0}
+                          onChange={(e) => updateCapacitySettings({ perHourLimit: Math.max(0, parseInt(e.target.value) || 0) })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                         />
                         <p className="text-sm text-gray-600 mt-1">{t.capacity.perHourHelp}</p>

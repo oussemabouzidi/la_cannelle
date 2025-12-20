@@ -74,7 +74,6 @@ model User {
   // Relations
   orders        Order[]
   favorites     Favorite[]
-  promotions    Promotion[] @relation("UserPromotions")
 
   @@map("users")
 }
@@ -222,21 +221,6 @@ model CapacitySetting {
   updatedAt        DateTime @updatedAt
 
   @@map("capacity_settings")
-}
-
-model Promotion {
-  id          Int       @id @default(autoincrement())
-  title       String
-  message     String    @db.Text
-  discount    String?
-  validUntil  DateTime?
-  recipients  String    // all, active, vip, selected, tier names, etc.
-  userId      Int?      // specific customer when targeted
-  createdAt   DateTime  @default(now())
-
-  user        User?     @relation("UserPromotions", fields: [userId], references: [id], onDelete: SetNull)
-
-  @@map("promotions")
 }
 
 model ClosedDate {

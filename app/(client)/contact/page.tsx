@@ -49,6 +49,7 @@ export default function ContactPage() {
         eventType: 'Event Type',
         eventTypePlaceholder: 'Select Event Type',
         eventDate: 'Event Date',
+        invalidEventDate: 'Please choose today or a future date.',
         guests: 'Number of Guests',
         message: 'Your Message',
         eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other'],
@@ -96,6 +97,7 @@ export default function ContactPage() {
         eventType: 'Veranstaltungstyp',
         eventTypePlaceholder: 'Veranstaltungstyp waehlen',
         eventDate: 'Veranstaltungsdatum',
+        invalidEventDate: 'Bitte waehlen Sie heute oder ein zukuenftiges Datum.',
         guests: 'Anzahl der Gäste',
         message: 'Ihre Nachricht',
         eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere'],
@@ -157,6 +159,31 @@ export default function ContactPage() {
     updateFormValue(e.target.name, e.target.value);
   };
 
+  const toDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const parseDateInputValue = (value: string) => {
+    if (!value) return null;
+    const [yearStr, monthStr, dayStr] = value.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number((dayStr || '').slice(0, 2));
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day);
+  };
+
+  const isDateInPast = (value: string) => {
+    const parsed = parseDateInputValue(value);
+    if (!parsed) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return parsed.getTime() < today.getTime();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const emailValue = formData.email.trim();
@@ -167,6 +194,10 @@ export default function ContactPage() {
     const phoneValue = formData.phone.trim();
     if (phoneValue && !/^\+?[0-9\s-]{7,15}$/.test(phoneValue)) {
       alert(language === 'DE' ? 'Bitte geben Sie eine gültige Telefonnummer ein.' : 'Please enter a valid phone number.');
+      return;
+    }
+    if (formData.eventDate && isDateInPast(formData.eventDate)) {
+      alert(t.contactForm.invalidEventDate);
       return;
     }
 
@@ -189,6 +220,11 @@ export default function ContactPage() {
     });
     alert(t.success.message);
   };
+
+  const todayDateValue = toDateInputValue(new Date());
+  const eventDateError = formData.eventDate && isDateInPast(formData.eventDate)
+    ? t.contactForm.invalidEventDate
+    : '';
 
   // Translations moved to lib/translations/contact.ts
   const _removedContent = {
@@ -413,6 +449,16 @@ const handleOrderClick = () => {
         .font-elegant {
           font-family: 'Playfair Display', serif;
         }
+
+        .contact-date-input {
+          color-scheme: light;
+          background: linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+        }
+
+        .contact-date-input::-webkit-calendar-picker-indicator {
+          filter: invert(55%) sepia(47%) saturate(430%) hue-rotate(2deg) brightness(96%) contrast(90%);
+          opacity: 0.85;
+        }
         
         html {
           scroll-behavior: smooth;
@@ -479,9 +525,22 @@ const handleOrderClick = () => {
                 <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
+                  aria-label={language === 'EN' ? 'Switch to German' : 'Switch to English'}
+                  className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
-                  {language}
+                  {language === 'EN' ? (
+                    <img
+                      src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
+                      alt="English flag"
+                      className="h-5 w-auto"
+                    />
+                  ) : (
+                    <img
+                      src="/images/language/Flag_of_Germany-4096x2453.png"
+                      alt="German flag"
+                      className="h-5 w-auto"
+                    />
+                  )}
                 </button>
                 <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
                   {t.nav.order}
@@ -605,8 +664,12 @@ const handleOrderClick = () => {
                         name="eventDate"
                         value={formData.eventDate}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white"
+                        min={todayDateValue}
+                        className="w-full px-4 py-3 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-amber-50/60 contact-date-input"
                       />
+                      {eventDateError && (
+                        <p className="mt-2 text-sm text-red-600">{eventDateError}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -729,7 +792,8 @@ const handleOrderClick = () => {
                 <div className="flex gap-4">
                   <a 
                     href="https://www.instagram.com/lacannellecatering/" 
-                    className="flex-1 bg-gradient-to-br from-pink-500 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"
+                    className="flex-1 text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)' }}
                   >
                     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-white">
                       <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zM17.75 6a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.75 6z" />

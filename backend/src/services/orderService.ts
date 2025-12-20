@@ -55,11 +55,7 @@ export const orderService = {
         }
       },
       include: {
-        items: {
-          include: {
-            product: true
-          }
-        },
+        items: true,
         user: {
           select: {
             id: true,
@@ -108,11 +104,7 @@ export const orderService = {
     const orders = await prisma.order.findMany({
       where,
       include: {
-        items: {
-          include: {
-            product: true
-          }
-        },
+        items: true,
         user: {
           select: {
             id: true,
@@ -139,11 +131,7 @@ export const orderService = {
     const order = await prisma.order.findFirst({
       where,
       include: {
-        items: {
-          include: {
-            product: true
-          }
-        },
+        items: true,
         user: {
           select: {
             id: true,
@@ -173,11 +161,7 @@ export const orderService = {
         ...(safeStatus === 'CANCELLED' && { paymentStatus: 'REFUNDED' as PaymentStatus })
       },
       include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
+        items: true
       }
     });
 
@@ -189,11 +173,7 @@ export const orderService = {
       where: { id },
       data: { paymentStatus },
       include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
+        items: true
       }
     });
 

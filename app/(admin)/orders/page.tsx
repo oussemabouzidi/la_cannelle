@@ -97,7 +97,7 @@ export default function AdminOrders() {
     },
     DE: {
       nav: {
-        dashboard: 'Uebersicht',
+        dashboard: 'ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -267,7 +267,7 @@ export default function AdminOrders() {
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
-    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
+    // { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
 
 

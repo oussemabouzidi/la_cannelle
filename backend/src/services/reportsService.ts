@@ -15,13 +15,20 @@ export const reportsService = {
     const orders = await prisma.order.findMany({
       where,
       include: {
-        items: {
-          include: {
-            product: true
-          }
-        }
+        items: true
       }
     });
+
+    const productIds = Array.from(new Set(
+      orders.flatMap(order => order.items.map(item => item.productId))
+    ));
+    const products = productIds.length
+      ? await prisma.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, category: true }
+        })
+      : [];
+    const productCategoryMap = new Map(products.map(product => [product.id, product.category]));
 
     const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
     const totalOrders = orders.length;
@@ -46,7 +53,7 @@ export const reportsService = {
     const categoryMap = new Map<string, number>();
     orders.forEach(order => {
       order.items.forEach(item => {
-        const category = item.product.category;
+        const category = productCategoryMap.get(item.productId) ?? 'UNKNOWN';
         const existing = categoryMap.get(category) || 0;
         categoryMap.set(category, existing + (item.price * item.quantity));
       });
@@ -101,10 +108,18 @@ export const reportsService = {
     const orderItems = await prisma.orderItem.findMany({
       where,
       include: {
-        product: true,
         order: true
       }
     });
+
+    const popularProductIds = Array.from(new Set(orderItems.map(item => item.productId)));
+    const popularProducts = popularProductIds.length
+      ? await prisma.product.findMany({
+          where: { id: { in: popularProductIds } },
+          select: { id: true, name: true, category: true, popularity: true }
+        })
+      : [];
+    const productMap = new Map(popularProducts.map(product => [product.id, product]));
 
     const itemMap = new Map<number, {
       id: number;
@@ -116,13 +131,14 @@ export const reportsService = {
     }>();
 
     orderItems.forEach(item => {
+      const product = productMap.get(item.productId);
       const existing = itemMap.get(item.productId) || {
         id: item.productId,
-        name: item.product.name,
-        category: item.product.category,
+        name: product?.name || item.name,
+        category: product?.category || 'UNKNOWN',
         orders: 0,
         revenue: 0,
-        popularity: item.product.popularity
+        popularity: product?.popularity ?? 0
       };
       existing.orders += item.quantity;
       existing.revenue += item.price * item.quantity;

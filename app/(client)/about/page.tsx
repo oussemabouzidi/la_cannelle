@@ -620,9 +620,22 @@ export default function AboutPage() {
                 <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{commonNav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
+                  aria-label={language === 'EN' ? 'Switch to German' : 'Switch to English'}
+                  className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
-                  {language}
+                  {language === 'EN' ? (
+                    <img
+                      src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
+                      alt="English flag"
+                      className="h-5 w-auto"
+                    />
+                  ) : (
+                    <img
+                      src="/images/language/Flag_of_Germany-4096x2453.png"
+                      alt="German flag"
+                      className="h-5 w-auto"
+                    />
+                  )}
                 </button>
                 <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
                   {t.nav.order}
