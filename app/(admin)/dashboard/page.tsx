@@ -32,6 +32,7 @@ export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const router = useRouter();
   const { language, toggleLanguage } = useTranslation('admin');
   const locale = language === 'DE' ? 'de-DE' : 'en-US';
@@ -82,7 +83,7 @@ export default function AdminDashboard() {
     },
     DE: {
       nav: {
-        dashboard: 'Uebersicht',
+        dashboard: 'ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -94,7 +95,7 @@ export default function AdminDashboard() {
         role: 'Administrator',
       },
       header: {
-        title: 'Uebersicht',
+        title: 'ubersicht',
       },
       stats: {
         totalOrders: 'Gesamtbestellungen',
@@ -149,10 +150,12 @@ export default function AdminDashboard() {
     const loadDashboard = async () => {
       try {
         setIsLoading(true);
+        setLoadError(null);
         const data = await dashboardApi.getDashboard();
         setDashboardData(data);
       } catch (err) {
         console.error('Failed to load dashboard', err);
+        setLoadError('Unable to load dashboard data right now.');
       } finally {
         setIsLoading(false);
       }
@@ -166,14 +169,14 @@ export default function AdminDashboard() {
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
-    { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
+    // { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
   ];
-  const data: DashboardStats = dashboardData ?? {
-    orders: { total: 0, pending: 0, confirmed: 0, completed: 0 },
-    revenue: { today: 0, week: 0, month: 0, growth: 0 },
-    todaysEvents: [],
-    recentOrders: []
-  };
+  const data = dashboardData;
+  const formatNumber = (value?: number) => (
+    typeof value === 'number' ? value.toLocaleString(locale) : '--'
+  );
+  const todaysEvents = data?.todaysEvents ?? [];
+  const recentOrders = data?.recentOrders ?? [];
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -317,6 +320,21 @@ export default function AdminDashboard() {
 
         {/* Dashboard Content */}
         <main className="p-6">
+          {loadError && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {loadError}
+            </div>
+          )}
+          {isLoading && !loadError && (
+            <div className="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
+              Loading dashboard data...
+            </div>
+          )}
+          {!isLoading && !loadError && !data && (
+            <div className="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
+              No dashboard data available yet.
+            </div>
+          )}
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Total Orders */}
@@ -326,16 +344,16 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{t.stats.totalOrders}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{data.orders.total}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{formatNumber(data?.orders.total)}</p>
                 </div>
                 <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                   <Package className="text-amber-700" size={24} />
                 </div>
               </div>
               <div className="flex gap-4 mt-4 text-xs">
-                <span className="text-blue-600">{t.stats.pending}: {data.orders.pending}</span>
-                <span className="text-green-600">{t.stats.confirmed}: {data.orders.confirmed}</span>
-                <span className="text-gray-600">{t.stats.completed}: {data.orders.completed}</span>
+                <span className="text-blue-600">{t.stats.pending}: {formatNumber(data?.orders.pending)}</span>
+                <span className="text-green-600">{t.stats.confirmed}: {formatNumber(data?.orders.confirmed)}</span>
+                <span className="text-gray-600">{t.stats.completed}: {formatNumber(data?.orders.completed)}</span>
               </div>
             </div>
 
@@ -346,7 +364,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{t.stats.todayRevenue}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.today.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">€{formatNumber(data?.revenue.today)}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                   <DollarSign className="text-green-700" size={24} />
@@ -354,7 +372,11 @@ export default function AdminDashboard() {
               </div>
               <div className="flex items-center gap-2 mt-4 text-sm text-green-600">
                 <TrendingUp size={16} />
-                <span>+{data.revenue.growth}% {t.stats.growthLabel}</span>
+                <span>
+                  {typeof data?.revenue.growth === 'number'
+                    ? `+${data.revenue.growth}% ${t.stats.growthLabel}`
+                    : '--'}
+                </span>
               </div>
             </div>
 
@@ -365,7 +387,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{t.stats.weeklyRevenue}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.week.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">€{formatNumber(data?.revenue.week)}</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                   <TrendingUp className="text-blue-700" size={24} />
@@ -380,7 +402,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{t.stats.monthlyRevenue}</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">€{data.revenue.month.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">€{formatNumber(data?.revenue.month)}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
                   <DollarSign className="text-purple-700" size={24} />
@@ -400,26 +422,30 @@ export default function AdminDashboard() {
               </div>
               
               <div className="space-y-4">
-                {data.todaysEvents.map((event, index) => (
-                  <div key={event.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full ${
-                        event.status === 'confirmed' ? 'bg-green-500' : 'bg-amber-500'
-                      }`}></div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{event.client}</p>
-                        <p className="text-sm text-gray-600">{event.time} • {event.guests} {t.labels.guests}</p>
+                {todaysEvents.length === 0 ? (
+                  <p className="text-sm text-gray-500">No events scheduled for today.</p>
+                ) : (
+                  todaysEvents.map((event) => (
+                    <div key={event.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-3 h-3 rounded-full ${
+                          event.status === 'confirmed' ? 'bg-green-500' : 'bg-amber-500'
+                        }`}></div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{event.client}</p>
+                          <p className="text-sm text-gray-600">{event.time} - {event.guests} {t.labels.guests}</p>
+                        </div>
                       </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        event.status === 'confirmed' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {t.status[event.status as keyof typeof t.status] ?? event.status}
+                      </span>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      event.status === 'confirmed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {t.status[event.status as keyof typeof t.status] ?? event.status}
-                    </span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
@@ -433,31 +459,35 @@ export default function AdminDashboard() {
               </div>
               
               <div className="space-y-4">
-                {data.recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">
-                    <div>
-                      <p className="font-semibold text-gray-900">{order.id}</p>
-                      <p className="text-sm text-gray-600">{order.client}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">€{order.amount}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          order.status === 'completed' 
-                            ? 'bg-green-100 text-green-800'
-                            : order.status === 'confirmed'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}>
-                          {t.status[order.status as keyof typeof t.status] ?? order.status}
-                        </span>
-                        <button className="p-1 hover:bg-white rounded transition-colors">
-                          <Eye size={14} className="text-gray-400" />
-                        </button>
+                {recentOrders.length === 0 ? (
+                  <p className="text-sm text-gray-500">No recent orders yet.</p>
+                ) : (
+                  recentOrders.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">
+                      <div>
+                        <p className="font-semibold text-gray-900">{order.id}</p>
+                        <p className="text-sm text-gray-600">{order.client}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">€{formatNumber(order.amount)}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            order.status === 'completed' 
+                              ? 'bg-green-100 text-green-800'
+                              : order.status === 'confirmed'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {t.status[order.status as keyof typeof t.status] ?? order.status}
+                          </span>
+                          <button className="p-1 hover:bg-white rounded transition-colors">
+                            <Eye size={14} className="text-gray-400" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
               
               <button
