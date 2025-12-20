@@ -898,8 +898,9 @@ export default function CateringHomepage() {
                   }`}
                 style={{ animationDelay: `${index * 120 + 240}ms` }}
               >
-                <p className="text-gray-700 mb-3 text-sm leading-relaxed">"{testimonial.text}"</p>
-                <p className="text-gray-900 font-semibold font-elegant text-sm">- {testimonial.author}</p>
+                <p className="text-gray-700 mb-3 text-sm leading-relaxed">"{testimonial.quote}"</p>
+                <p className="text-gray-900 font-semibold font-elegant text-sm">- {testimonial.name}</p>
+                <p className="text-xs text-amber-700">{testimonial.role}</p>
               </div>
             ))}
           </div>
