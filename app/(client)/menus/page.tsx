@@ -885,10 +885,7 @@ export default function MenusPage() {
                   </>
                 )}
               </button>
-              
-<button onClick={() => {router.push('/connect')}}  className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 font-medium">
-                {t.nav.connect}
-              </button>
+ 
               <button
                 onClick={() => handleOrderClick()}
                 className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
@@ -920,9 +917,6 @@ export default function MenusPage() {
                   className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 w-full text-left font-medium transition-all duration-300"
                 >
                   {language}
-                </button>
-                <button className="px-4 py-2 text-sm border border-amber-700 text-amber-700 rounded-lg hover:bg-amber-50 font-medium transition-all duration-300">
-                  {t.nav.connect}
                 </button>
                 <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105" onClick={() => handleOrderClick()}>
                   {t.nav.order}

@@ -2077,7 +2077,7 @@ export default function OrderPage() {
       {/* Enhanced Top Navigation with Steps */}
       <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Language and Connect Row */}
+          {/* Language Row */}
           <div className="flex justify-between items-center py-2">
             <button
               onClick={handleBackToHome}
@@ -2094,12 +2094,6 @@ export default function OrderPage() {
               >
                 <Globe size={12} className="mr-1" />
                 {language === 'EN' ? 'EN' : 'DE'}
-              </button>
-              <button
-                onClick={() => router.push('/connect')}
-                className="px-3 py-1.5 text-xs font-medium border border-amber-700 text-amber-700 rounded-md hover:bg-amber-50 transition-colors"
-              >
-                {t.nav.connect}
               </button>
             </div>
           </div>
