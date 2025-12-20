@@ -75,6 +75,12 @@ export default function CateringHomepage() {
   ];
 
   const quickMenuIcons = [Star, Heart, Shield, Crown];
+  const quickMenuCategoryMeta = [
+    { gradient: 'from-amber-200 via-amber-100 to-stone-100', countEn: '12 dishes', countDe: '12 Gerichte' },
+    { gradient: 'from-rose-200 via-rose-100 to-stone-100', countEn: '8 menus', countDe: '8 Menues' },
+    { gradient: 'from-emerald-200 via-emerald-100 to-stone-100', countEn: '15 options', countDe: '15 Optionen' },
+    { gradient: 'from-sky-200 via-sky-100 to-stone-100', countEn: '10 highlights', countDe: '10 Highlights' },
+  ];
 
   const companyValues = [
     { icon: Target, ...t.company.values.mission },
@@ -443,6 +449,8 @@ export default function CateringHomepage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {t.quickMenu.categories.map((category, index) => {
               const Icon = quickMenuIcons[index];
+              const meta = quickMenuCategoryMeta[index];
+              const countLabel = meta ? (language === 'DE' ? meta.countDe : meta.countEn) : '';
               return (
                 <div
                   key={index}
@@ -451,7 +459,7 @@ export default function CateringHomepage() {
                   style={{ animationDelay: `${index * 150}ms` }}
                 >
                   {/* Hover Effect Background */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${meta?.gradient || 'from-amber-200 via-amber-100 to-stone-100'} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
 
                   {/* Icon */}
                   <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
@@ -459,9 +467,11 @@ export default function CateringHomepage() {
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">{category.name}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">{category.title}</h3>
                   <p className="text-gray-600 text-xs mb-2">{category.description}</p>
-                  <p className="text-amber-600 font-semibold text-xs">{category.count}</p>
+                  {countLabel && (
+                    <p className="text-amber-600 font-semibold text-xs">{countLabel}</p>
+                  )}
 
                   {/* Hover Arrow */}
                   <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
