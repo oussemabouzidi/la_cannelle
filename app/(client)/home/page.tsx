@@ -806,8 +806,8 @@ export default function CateringHomepage() {
                   <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
                     <milestone.icon className="text-amber-600" size={18} />
                   </div>
-                  <p className="text-md font-bold text-amber-600 mb-1">{milestone.year}</p>
-                  <p className="text-gray-700 font-medium text-xs">{milestone.event}</p>
+                  <p className="text-md font-bold text-amber-600 mb-1">{milestone.date}</p>
+                  <p className="text-gray-700 font-medium text-xs">{milestone.title}</p>
                 </div>
               ))}
             </div>
