@@ -832,10 +832,10 @@ export default function CateringHomepage() {
                 style={{ animationDelay: `${index * 120 + 200}ms` }}
               >
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-gray-900 font-elegant">{service.name}</h3>
+                  <h3 className="text-base font-semibold text-gray-900 font-elegant">{service.title}</h3>
                   <span className="text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-1 rounded-full">Premium</span>
                 </div>
-                <p className="text-gray-600 text-sm leading-snug">{service.desc}</p>
+                <p className="text-gray-600 text-sm leading-snug">{service.description}</p>
               </div>
             ))}
           </div>
