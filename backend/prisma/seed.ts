@@ -679,9 +679,12 @@ async function main() {
     }
   };
   for (const productData of products) {
-    const minOrderQuantity = Number.isFinite(productData.minOrderQuantity)
-      ? productData.minOrderQuantity
-      : getDefaultMinOrderQuantity(productData);
+    const minOrderQuantity =
+  "minOrderQuantity" in productData &&
+  Number.isFinite((productData as any).minOrderQuantity)
+    ? (productData as any).minOrderQuantity
+    : null;
+
     const product = await prisma.product.create({
       data: {
         ...productData,
