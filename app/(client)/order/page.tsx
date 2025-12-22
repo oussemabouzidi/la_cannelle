@@ -3388,10 +3388,3 @@ export default function OrderPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
