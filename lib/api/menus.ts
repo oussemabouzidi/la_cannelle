@@ -11,6 +11,11 @@ export interface Menu {
   endDate?: string;
   price?: number;
   image?: string;
+  minPeople?: number | null;
+  steps?: Array<{
+    label: string;
+    included: number;
+  }>;
   menuProducts?: Array<{
     id: number;
     menuId: number;

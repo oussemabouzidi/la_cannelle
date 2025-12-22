@@ -97,7 +97,7 @@ export default function AdminOrders() {
     },
     DE: {
       nav: {
-        dashboard: 'ubersicht',
+        dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -126,7 +126,7 @@ export default function AdminOrders() {
         client: 'Kunde',
         event: 'Event',
         dateTime: 'Datum & Uhrzeit',
-        guests: 'Gaeste',
+        guests: 'Gäste',
         total: 'Gesamt',
         status: 'Status',
         actions: 'Aktionen',
@@ -157,7 +157,7 @@ export default function AdminOrders() {
         cancelled: 'Storniert',
       },
       labels: {
-        guests: 'Gaeste',
+        guests: 'Gäste',
         emptyState: 'Keine Bestellungen gefunden, die den Kriterien entsprechen',
         viewDetails: 'Details ansehen',
         markComplete: 'Als abgeschlossen markieren',
@@ -465,7 +465,7 @@ export default function AdminOrders() {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b border-gray-300">
 <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" />
+              <img src="/images/logo-removebg-preview.png" alt="" />
             </div>            <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-200 text-gray-700">
               <X size={20} />
             </button>
@@ -647,13 +647,6 @@ export default function AdminOrders() {
                               title={t.labels.markComplete}
                             >
                               <CheckCircle size={16} />
-                            </button>
-                            <button
-                              onClick={() => cancelOrder(order.id, 'Admin action')}
-                              className="p-2 text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
-                              title={t.labels.cancelOrder}
-                            >
-                              <XCircle size={16} />
                             </button>
                           </div>
                         </td>

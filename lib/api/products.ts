@@ -9,6 +9,7 @@ export interface Product {
   price: number;
   cost: number;
   available: boolean;
+  minOrderQuantity?: number;
   tier: string[];
   preparationTime: number;
   ingredients: string[];

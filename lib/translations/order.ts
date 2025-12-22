@@ -15,8 +15,8 @@ type OrderTranslations = {
     title: string;
     subtitle: string;
     options: {
-      business: { key: string; title: string; description: string }[];
-      private: { key: string; title: string; description: string }[];
+      business: { key: string; title: string; description: string; image: string }[];
+      private: { key: string; title: string; description: string; image: string }[];
     };
   };
   eventInfo: {
@@ -27,6 +27,8 @@ type OrderTranslations = {
     guests: string;
     minGuests: string;
     location: string;
+    dateConstraint: string;
+    dateConstraintLarge: string;
   };
   menuSelection: { title: string; subtitle: string };
   productSelection: {
@@ -59,7 +61,7 @@ type OrderTranslations = {
       details?: string;
       price: number;
       unit: string;
-      minQuantity?: number;
+      minQuantity: number;
     }[];
   };
   delivery: {
@@ -97,14 +99,14 @@ const en: OrderTranslations = {
     subtitle: 'Pick the format that fits your event',
     options: {
       business: [
-        { key: 'buffet', title: 'Buffet', description: 'Flexible self-serve format.' },
-        { key: 'plated', title: 'Plated', description: 'Restaurant-style service.' },
-        { key: 'fingerfood', title: 'Finger Food', description: 'Light bites for networking.' },
+        { key: 'buffet', title: 'Buffet', description: 'Flexible self-serve format.', image: '/images/mediterranean-buffet.jpg' },
+        { key: 'plated', title: 'Plated', description: 'Restaurant-style service.', image: '/images/beef-wellington.jpg' },
+        { key: 'fingerfood', title: 'Finger Food', description: 'Light bites for networking.', image: '/images/truffle-arancini.jpg' },
       ],
       private: [
-        { key: 'family', title: 'Family Style', description: 'Shared dishes for lively tables.' },
-        { key: 'cocktail', title: 'Cocktail', description: 'Elegant canapés and drinks.' },
-        { key: 'bbq', title: 'BBQ', description: 'Outdoor and casual experiences.' },
+        { key: 'family', title: 'Family Style', description: 'Shared dishes for lively tables.', image: '/images/community-feast.jpg' },
+        { key: 'cocktail', title: 'Cocktail', description: 'Elegant canapes and drinks.', image: '/images/chocolate-sphere.jpg' },
+        { key: 'bbq', title: 'BBQ', description: 'Outdoor and casual experiences.', image: '/images/lamb.jpg' },
       ],
     },
   },
@@ -114,8 +116,10 @@ const en: OrderTranslations = {
     date: 'Event Date',
     time: 'Event Time',
     guests: 'Number of Guests',
-    minGuests: 'Minimum 11 guests',
+    minGuests: 'Minimum 10 guests',
     location: 'Postal Code / Location',
+    dateConstraint: 'Earliest selectable date is {date} (48h lead time).',
+    dateConstraintLarge: 'Earliest selectable date is {date} (72h lead time for groups of 100 or more guests).'
   },
   menuSelection: { title: 'Menu selection', subtitle: 'Pick a curated menu' },
   productSelection: {
@@ -149,6 +153,7 @@ const en: OrderTranslations = {
         details: 'Collected after the event.',
         price: 3.0,
         unit: '/ guest',
+        minQuantity: 10,
       },
       {
         id: 'eco-disposables',
@@ -157,6 +162,7 @@ const en: OrderTranslations = {
         details: 'Ideal for outdoor events.',
         price: 1.5,
         unit: '/ guest',
+        minQuantity: 10,
       },
       {
         id: 'glassware',
@@ -165,6 +171,7 @@ const en: OrderTranslations = {
         details: 'Includes wash and pickup.',
         price: 1.8,
         unit: '/ guest',
+        minQuantity: 10,
       },
       {
         id: 'table-linens',
@@ -173,6 +180,7 @@ const en: OrderTranslations = {
         details: 'Pressed and delivered with setup.',
         price: 1.2,
         unit: '/ guest',
+        minQuantity: 10,
       },
       {
         id: 'serving-utensils',
@@ -181,6 +189,7 @@ const en: OrderTranslations = {
         details: 'Included with menu orders.',
         price: 0,
         unit: '',
+        minQuantity: 1,
       },
     ],
   },
@@ -210,7 +219,7 @@ const de: OrderTranslations = {
     title: 'Anlass wählen',
     subtitle: 'Erzählen Sie uns von Ihrem Event',
     options: {
-      business: { title: 'Business', subtitle: 'Corporate, Meetings, Launches' },
+      business: { title: 'Business', subtitle: 'Firmenveranstaltungen, Besprechungen, Produkteinfuehrungen' },
       private: { title: 'Privat', subtitle: 'Hochzeiten, Feiern, Familie' },
     },
   },
@@ -219,14 +228,14 @@ const de: OrderTranslations = {
     subtitle: 'Wählen Sie das passende Format',
     options: {
       business: [
-        { key: 'buffet', title: 'Buffet', description: 'Flexibles Self-Service Konzept.' },
-        { key: 'plated', title: 'Gedecktes Menü', description: 'Service wie im Restaurant.' },
-        { key: 'fingerfood', title: 'Fingerfood', description: 'Snacks für Networking.' },
+        { key: 'buffet', title: 'Buffet', description: 'Flexibles Self-Service Konzept.', image: '/images/mediterranean-buffet.jpg' },
+        { key: 'plated', title: 'Gedecktes Menue', description: 'Service wie im Restaurant.', image: '/images/beef-wellington.jpg' },
+        { key: 'fingerfood', title: 'Fingerfood', description: 'Snacks fuer Networking.', image: '/images/truffle-arancini.jpg' },
       ],
       private: [
-        { key: 'family', title: 'Family Style', description: 'Geteilte Gerichte für große Tafeln.' },
-        { key: 'cocktail', title: 'Cocktail', description: 'Elegante Häppchen und Drinks.' },
-        { key: 'bbq', title: 'Grill', description: 'Locker und im Freien.' },
+        { key: 'family', title: 'Family Style', description: 'Geteilte Gerichte fuer grosse Tafeln.', image: '/images/community-feast.jpg' },
+        { key: 'cocktail', title: 'Cocktail', description: 'Elegante Haeppchen und Drinks.', image: '/images/chocolate-sphere.jpg' },
+        { key: 'bbq', title: 'Grill', description: 'Locker und im Freien.', image: '/images/lamb.jpg' },
       ],
     },
   },
@@ -236,8 +245,10 @@ const de: OrderTranslations = {
     date: 'Datum',
     time: 'Uhrzeit',
     guests: 'Anzahl Gäste',
-    minGuests: 'Mindestens 11 Gaeste',
+    minGuests: 'Mindestens 10 Gäste',
     location: 'Postleitzahl / Ort',
+    dateConstraint: 'Erstes auswählbares Datum ist {date} (48h Vorlaufzeit).',
+    dateConstraintLarge: 'Erstes auswählbares Datum ist {date} (72h Vorlaufzeit für Gruppen ab 100 Gästen).'
   },
   menuSelection: { title: 'Menüauswahl', subtitle: 'Wählen Sie ein kuratiertes Menü' },
   productSelection: {
@@ -251,7 +262,7 @@ const de: OrderTranslations = {
       starters: 'Starte mit leichten Vorspeisen.',
       mains: 'Waehle die Hauptgaenge.',
       sides: 'Ergaenze mit passenden Beilagen.',
-      desserts: 'Suesser Abschluss fuer deine Gaeste.',
+      desserts: 'Suesser Abschluss fuer deine Gäste.',
       drinks: 'Fuege Getraenke fuer alle hinzu.',
     },
   },
@@ -271,6 +282,7 @@ const de: OrderTranslations = {
         details: 'Wird nach dem Event abgeholt.',
         price: 3.0,
         unit: '/ Gast',
+        minQuantity: 10,
       },
       {
         id: 'eco-disposables',
@@ -279,6 +291,7 @@ const de: OrderTranslations = {
         details: 'Ideal fuer Outdoor-Events.',
         price: 1.5,
         unit: '/ Gast',
+        minQuantity: 10,
       },
       {
         id: 'glassware',
@@ -287,6 +300,7 @@ const de: OrderTranslations = {
         details: 'Inklusive Reinigung und Abholung.',
         price: 1.8,
         unit: '/ Gast',
+        minQuantity: 10,
       },
       {
         id: 'table-linens',
@@ -295,6 +309,7 @@ const de: OrderTranslations = {
         details: 'Gepresst und geliefert.',
         price: 1.2,
         unit: '/ Gast',
+        minQuantity: 10,
       },
       {
         id: 'serving-utensils',
@@ -303,6 +318,7 @@ const de: OrderTranslations = {
         details: 'Im Menue enthalten.',
         price: 0,
         unit: '',
+        minQuantity: 1,
       },
     ],
   },
@@ -329,3 +345,4 @@ export const orderTranslations: Record<Language, OrderTranslations> = {
   EN: en,
   DE: de,
 };
+

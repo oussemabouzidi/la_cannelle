@@ -470,7 +470,7 @@ const handleOrderClick = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
             </div>
             
             {/* Desktop Navigation */}

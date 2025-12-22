@@ -156,7 +156,7 @@ export default function SystemControl() {
     },
     DE: {
       nav: {
-        dashboard: 'ubersicht',
+        dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -466,7 +466,7 @@ export default function SystemControl() {
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
             </div>
             <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
               <X size={20} />

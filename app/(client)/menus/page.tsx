@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Menu, X, Phone, Mail, MapPin } from 'lucide-react';
+import { Menu, X, Phone, Mail, MapPin, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
 import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
@@ -131,7 +131,7 @@ export default function MenusPage() {
         subtitle: 'Flexible options to suit your needs',
         basic: {
           name: 'Essential',
-          price: '€45',
+          price: '£45',
           period: 'per person',
           features: [
             '3-course menu selection',
@@ -143,7 +143,7 @@ export default function MenusPage() {
         },
         premium: {
           name: 'Premium',
-          price: '€75',
+          price: '£75',
           period: 'per person',
           features: [
             '5-course gourmet menu',
@@ -157,7 +157,7 @@ export default function MenusPage() {
         },
         luxury: {
           name: 'Luxury',
-          price: '€120',
+          price: '£120',
           period: 'per person',
           features: [
             '7-course bespoke menu',
@@ -179,24 +179,24 @@ export default function MenusPage() {
     DE: {
       nav: {
         home: 'Startseite',
-        about: 'Über uns',
+        about: 'Ãœber uns',
         services: 'Dienstleistungen',
-        menus: 'Menüs',
+        menus: 'MenÃ¼s',
         contact: 'Kontakt',
         connect: 'Verbinden',
         order: 'Jetzt bestellen'
       },
       hero: {
-        title: 'Unsere Menüs',
-        subtitle: 'Sorgfältig zusammengestellte kulinarische Erlebnisse für jeden Anlass'
+        title: 'Unsere MenÃ¼s',
+        subtitle: 'SorgfÃ¤ltig zusammengestellte kulinarische Erlebnisse fÃ¼r jeden Anlass'
       },
       categories: {
-        title: 'Menükategorien',
-        all: 'Alle Menüs',
+        title: 'MenÃ¼kategorien',
+        all: 'Alle MenÃ¼s',
         corporate: 'Firmenveranstaltungen',
         wedding: 'Hochzeitsfeiern',
         cocktail: 'Cocktail-Partys',
-        seasonal: 'Saisonale Spezialitäten',
+        seasonal: 'Saisonale SpezialitÃ¤ten',
         premium: 'Premium-Auswahl'
       },
       sampleDishes: {
@@ -212,67 +212,67 @@ export default function MenusPage() {
         priceLabel: 'Ab'
       },
       menuBuilder: {
-        title: 'Erstellen Sie Ihr perfektes Menü',
+        title: 'Erstellen Sie Ihr perfektes MenÃ¼',
         subtitle: 'Kombinieren Sie aus unserer umfangreichen Auswahl',
-        guests: 'Anzahl der Gäste',
+        guests: 'Anzahl der GÃ¤ste',
         budget: 'Budgetbereich',
-        dietary: 'Diätvorlieben',
-        addToPlan: 'Zum Menüplan hinzufügen',
-        viewPlan: 'Menüplan ansehen',
-        totalItems: 'Ausgewählte Artikel',
-        searchPlaceholder: 'Menüpunkte suchen...',
-        menuPlan: 'Ihr Menüplan',
+        dietary: 'DiÃ¤tvorlieben',
+        addToPlan: 'Zum MenÃ¼plan hinzufÃ¼gen',
+        viewPlan: 'MenÃ¼plan ansehen',
+        totalItems: 'AusgewÃ¤hlte Artikel',
+        searchPlaceholder: 'MenÃ¼punkte suchen...',
+        menuPlan: 'Ihr MenÃ¼plan',
         totalPrice: 'Gesamtpreis',
-        clearAll: 'Alle löschen',
-        close: 'Schließen',
-        noItems: 'Noch keine Artikel zum Menüplan hinzugefügt.'
+        clearAll: 'Alle lÃ¶schen',
+        close: 'SchlieÃŸen',
+        noItems: 'Noch keine Artikel zum MenÃ¼plan hinzugefÃ¼gt.'
       },
       pricing: {
         title: 'Preisgestaltung',
-        subtitle: 'Flexible Optionen für Ihre Bedürfnisse',
+        subtitle: 'Flexible Optionen fÃ¼r Ihre BedÃ¼rfnisse',
         basic: {
           name: 'Essential',
-          price: '€45',
+          price: '£45',
           period: 'pro Person',
           features: [
-            '3-Gänge-Menüauswahl',
-            'Standard-Getränkepaket',
+            '3-GÃ¤nge-MenÃ¼auswahl',
+            'Standard-GetrÃ¤nkepaket',
             'Basis-Tischdekoration',
-            'Bis zu 50 Gäste',
+            'Bis zu 50 GÃ¤ste',
             '5-Stunden-Service'
           ]
         },
         premium: {
           name: 'Premium',
-          price: '€75',
+          price: '£75',
           period: 'pro Person',
           features: [
-            '5-Gänge-Gourmet-Menü',
-            'Premium-Getränkeauswahl',
+            '5-GÃ¤nge-Gourmet-MenÃ¼',
+            'Premium-GetrÃ¤nkeauswahl',
             'Elegante Tischdekoration',
-            'Bis zu 100 Gäste',
+            'Bis zu 100 GÃ¤ste',
             '7-Stunden-Service',
-            'Persönliche Menüberatung'
+            'PersÃ¶nliche MenÃ¼beratung'
           ],
           popular: true
         },
         luxury: {
           name: 'Luxus',
-          price: '€120',
+          price: '£120',
           period: 'pro Person',
           features: [
-            '7-Gänge-Individuelles Menü',
+            '7-GÃ¤nge-Individuelles MenÃ¼',
             'Premium-Open-Bar',
             'Blumendekoration',
-            'Unbegrenzte Gäste',
-            'Ganztägiger Service',
+            'Unbegrenzte GÃ¤ste',
+            'GanztÃ¤giger Service',
             'Dedizierter Eventplaner',
             'Live-Kochstationen'
           ]
         }
       },
       cta: {
-        title: 'Bereit für Ihr perfektes Menü?',
+        title: 'Bereit fÃ¼r Ihr perfektes MenÃ¼?',
         subtitle: 'Lassen Sie uns ein kulinarisches Erlebnis gestalten, das Ihren einzigartigen Stil widerspiegelt',
         button: 'Bestellung starten'
       }
@@ -391,7 +391,7 @@ export default function MenusPage() {
     },
     {
       id: 5,
-      name: 'Beef Wellington Canapés',
+      name: 'Beef Wellington CanapÃ©s',
       category: 'premium',
       description: 'Mini beef wellington with mushroom duxelles and puff pastry',
       price: 22,
@@ -491,8 +491,15 @@ export default function MenusPage() {
   }, [menus, products, language]);
 
   const MenuHighlightCard = ({ menu }: { menu: MenuHighlight }) => {
-    const tags = Array.from(new Set([menu.category, menu.type].filter(Boolean))) as string[];
     const priceLabel = typeof menu.price === 'number' ? menu.price.toFixed(2) : '';
+    const steps = Array.isArray(menu.steps) ? menu.steps : [];
+    const dishesAvailable = Array.isArray(menu.items)
+      ? menu.items.length
+      : Array.isArray(menu.products)
+      ? menu.products.length
+      : Array.isArray(menu.menuProducts)
+      ? menu.menuProducts.length
+      : 0;
     return (
       <div
         role="button"
@@ -505,47 +512,51 @@ export default function MenusPage() {
           }
         }}
         aria-label={`${t.menuHighlights.viewDetails}: ${menu.name}`}
-        className="group relative overflow-hidden rounded-3xl border border-amber-100 bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+        className="group overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('${menu.coverImage}')` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/10" />
-        <div className="relative p-6 min-h-[220px] flex flex-col justify-end text-white">
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-amber-200 mb-3">
-              {tags.map((tag) => (
-                <span key={`${menu.id}-${tag}`} className="px-2 py-1 bg-white/10 rounded-full">
-                  {tag}
+        <div className="relative h-44 bg-gray-100">
+          <img src={menu.coverImage} alt={menu.name} className="h-full w-full object-cover" />
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <h3 className="text-2xl font-bold font-elegant text-gray-900">{menu.name}</h3>
+            <p className="text-sm text-gray-500 mt-1">{menu.description || ''}</p>
+          </div>
+          <div className="space-y-2 text-sm text-gray-700">
+            {steps.map((step: any, index: number) => (
+              <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                  <Check size={12} />
                 </span>
-              ))}
+                <span>{step.included} {step.label}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                <Check size={12} />
+              </span>
+              <span>{dishesAvailable} dishes available</span>
             </div>
-          )}
-          <h3 className="text-2xl font-bold font-elegant mb-2">{menu.name}</h3>
-          <p className="text-sm text-white/80 mb-4 max-h-16 overflow-hidden">{menu.description || ''}</p>
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-amber-200">
-              {priceLabel ? `${t.menuHighlights.priceLabel} €${priceLabel}` : t.menuHighlights.viewDetails}
-            </span>
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                openMenuDetails(menu);
-              }}
-              className="uppercase tracking-[0.2em] text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-full transition-colors"
-              aria-label={`${t.menuHighlights.viewDetails}: ${menu.name}`}
-            >
-              {t.menuHighlights.viewDetails}
-            </button>
+          </div>
+          <div className="pt-4 border-t border-gray-200 space-y-1">
+            <div className="text-2xl font-bold text-gray-900">
+              {priceLabel ? `From EUR ${priceLabel}/person` : t.menuHighlights.viewDetails}
+            </div>
+            <div className="text-xs text-gray-500">Excl. VAT</div>
+            {menu.minPeople ? (
+              <div className="text-sm font-semibold text-gray-700">{menu.minPeople} Person Minimum</div>
+            ) : null}
+          </div>
+          <div className="pt-2">
+            <div className="w-full rounded-xl bg-amber-400/80 px-4 py-3 text-center text-sm font-semibold text-white">
+              Select Food
+            </div>
           </div>
         </div>
       </div>
     );
   };
-
-  const MenuDetailsModal = () => {
+const MenuDetailsModal = () => {
     const isOpen = !!selectedMenu;
     const items = selectedMenu?.items ?? [];
     const priceLabel = selectedMenu && typeof selectedMenu.price === 'number'
@@ -589,7 +600,7 @@ export default function MenusPage() {
               <h3 className="text-3xl font-bold font-elegant mb-2">{selectedMenu?.name}</h3>
               {priceLabel && (
                 <p className="text-sm font-semibold text-amber-200">
-                  {t.menuHighlights.priceLabel} €{priceLabel}
+                  {t.menuHighlights.priceLabel} £{priceLabel}
                 </p>
               )}
             </div>
@@ -699,7 +710,7 @@ export default function MenusPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
             </div>
             
             {/* Desktop Navigation */}
@@ -863,7 +874,7 @@ export default function MenusPage() {
                 </div>
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <MapPin size={18} />
-                  <span>Borsigstraße 2, 41541 Dormagen</span>
+                  <span>BorsigstraÃŸe 2, 41541 Dormagen</span>
                 </div>
               </div>
             </div>
@@ -883,3 +894,4 @@ export default function MenusPage() {
     </div>
   );
 }
+

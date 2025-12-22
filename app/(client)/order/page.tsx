@@ -1,6 +1,5 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 "use client";
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ordersApi } from '@/lib/api/orders';
@@ -20,7 +19,6 @@ import {
   Calendar as CalendarIcon, MapPin as MapPinIcon,
   FileText, Shield as ShieldIcon, Globe
 } from 'lucide-react';
-
 const GERMAN_STATES = [
   { code: 'BW', name: 'Baden-Wuerttemberg' },
   { code: 'BY', name: 'Bavaria' },
@@ -39,10 +37,8 @@ const GERMAN_STATES = [
   { code: 'SH', name: 'Schleswig-Holstein' },
   { code: 'TH', name: 'Thuringia' }
 ];
-
-const MIN_GUESTS = 11;
+const MIN_GUESTS = 10;
 const MIN_ORDER_TOTAL = 388.80;
-
 const normalizePlaces = (data: any) => {
   const defaultPostCode = data?.['post code'] || '';
   const defaultState = data?.['state'] || '';
@@ -54,26 +50,22 @@ const normalizePlaces = (data: any) => {
     stateCode: place?.['state abbreviation'] || defaultStateCode
   }));
 };
-
 const formatDateKey = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-
 const parseDateKey = (value: string) => {
   const [year, month, day] = value.split('-').map((part) => parseInt(part, 10));
   if (!year || !month || !day) return null;
   return new Date(year, month - 1, day);
 };
-
 const isSameDay = (a: Date, b: Date) => {
   return a.getFullYear() === b.getFullYear()
     && a.getMonth() === b.getMonth()
     && a.getDate() === b.getDate();
 };
-
 const DatePicker = ({
   value,
   onChange,
@@ -97,14 +89,12 @@ const DatePicker = ({
   const locale = language === 'DE' ? 'de-DE' : 'en-US';
   const minDateStart = new Date(minDate);
   minDateStart.setHours(0, 0, 0, 0);
-
   useEffect(() => {
     if (!value) return;
     const parsed = parseDateKey(value);
     if (!parsed) return;
     setCurrentMonth(new Date(parsed.getFullYear(), parsed.getMonth(), 1));
   }, [value]);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
@@ -114,7 +104,6 @@ const DatePicker = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
   const monthLabel = currentMonth.toLocaleDateString(locale, {
     month: 'long',
     year: 'numeric'
@@ -131,11 +120,9 @@ const DatePicker = ({
   const selectedDate = value ? parseDateKey(value) : null;
   const prevMonthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 0);
   const canGoPrev = prevMonthEnd >= minDateStart;
-
   const displayValue = selectedDate
     ? selectedDate.toLocaleDateString(locale)
     : '';
-
   return (
     <div className="relative" ref={pickerRef}>
       <button
@@ -146,7 +133,6 @@ const DatePicker = ({
         {displayValue || placeholder}
       </button>
       <Calendar className="absolute left-4 top-3.5 text-amber-500" size={20} />
-
       {isOpen && (
         <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-4 z-20">
           <div className="flex items-center justify-between mb-4">
@@ -169,7 +155,6 @@ const DatePicker = ({
               <ChevronRight size={16} />
             </button>
           </div>
-
           <div className="grid grid-cols-7 gap-1 text-xs text-gray-500 mb-2">
             {dayLabels.map((label) => (
               <div key={label} className="text-center font-medium">
@@ -177,19 +162,16 @@ const DatePicker = ({
               </div>
             ))}
           </div>
-
           <div className="grid grid-cols-7 gap-1 text-sm">
             {Array.from({ length: rows * 7 }).map((_, index) => {
               const dayNumber = index - startDayIndex + 1;
               if (dayNumber < 1 || dayNumber > daysInMonth) {
                 return <div key={`empty-${index}`} className="h-9" />;
               }
-
               const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayNumber);
               const isPast = date < minDateStart;
               const isSelected = selectedDate ? isSameDay(date, selectedDate) : false;
               const isToday = isSameDay(date, minDateStart);
-
               return (
                 <button
                   key={date.toISOString()}
@@ -217,10 +199,9 @@ const DatePicker = ({
           </div>
         </div>
       )}
-    </div>
-  );
+  </div>
+);
 };
-
 const buildTimeSlots = (intervalMinutes = 15) => {
   const slots: string[] = [];
   for (let total = 0; total < 24 * 60; total += intervalMinutes) {
@@ -230,7 +211,6 @@ const buildTimeSlots = (intervalMinutes = 15) => {
   }
   return slots;
 };
-
 const TimePicker = ({
   value,
   onChange,
@@ -245,7 +225,6 @@ const TimePicker = ({
   const [isOpen, setIsOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement | null>(null);
   const slots = useMemo(() => buildTimeSlots(15), []);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
@@ -255,7 +234,6 @@ const TimePicker = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
   return (
     <div className="relative" ref={pickerRef}>
       <button
@@ -266,7 +244,6 @@ const TimePicker = ({
         {value || placeholder}
       </button>
       <Clock className="absolute left-4 top-3.5 text-amber-500" size={20} />
-
       {isOpen && (
         <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-2 z-20">
           <div className="max-h-56 overflow-y-auto">
@@ -301,7 +278,6 @@ const TimePicker = ({
     </div>
   );
 };
-
 const PostalCodeFields = ({
   label,
   required,
@@ -373,7 +349,6 @@ const PostalCodeFields = ({
         )}
       </div>
     </div>
-
     {cityLookupOptions.length > 0 && (
       <div>
         <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -393,7 +368,6 @@ const PostalCodeFields = ({
         </select>
       </div>
     )}
-
     <div>
       <label className="block text-xs font-semibold text-gray-700 mb-1">
         {postalCopy.postalCode}
@@ -427,7 +401,6 @@ export default function OrderPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
   const [quantities, setQuantities] = useState({});
-  const [expandedInfo, setExpandedInfo] = useState({});
   const [selectedAccessories, setSelectedAccessories] = useState([]);
   const [orderSummaryVisible, setOrderSummaryVisible] = useState(true);
   const [menusData, setMenusData] = useState<any[]>([]);
@@ -437,7 +410,6 @@ export default function OrderPage() {
   const [closedDates, setClosedDates] = useState<ClosedDate[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
-
   // Load data from API
   useEffect(() => {
     const loadData = async () => {
@@ -449,7 +421,6 @@ export default function OrderPage() {
           systemApi.getSystemStatus(),
           systemApi.getClosedDates()
         ]);
-
         // Normalize shape so the client has product ids and menu ids available
         const normalizedMenus = (menus || []).map((menu: any) => ({
           ...menu,
@@ -457,14 +428,12 @@ export default function OrderPage() {
             ? menu.menuProducts.map((mp: any) => mp.productId)
             : menu?.products || []
         }));
-
         const normalizedProducts = (products || []).map((product: any) => ({
           ...product,
           menus: product?.menuProducts
             ? product.menuProducts.map((mp: any) => mp.menuId)
             : product?.menus || []
         }));
-
         setMenusData(normalizedMenus);
         setMenuItemsData(normalizedProducts);
         setSystemStatus(status);
@@ -477,7 +446,6 @@ export default function OrderPage() {
     };
     loadData();
   }, []);
-
   const [orderData, setOrderData] = useState({
     businessType: '',
     serviceType: '',
@@ -519,12 +487,18 @@ export default function OrderPage() {
   const [guestCountError, setGuestCountError] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState('');
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [bankDetailsOpen, setBankDetailsOpen] = useState(false);
+  const [productDetailsOpen, setProductDetailsOpen] = useState(false);
+  const [productDetailsItem, setProductDetailsItem] = useState(null);
+  const [extraNoticeOpen, setExtraNoticeOpen] = useState(false);
+  const [extraNoticeData, setExtraNoticeData] = useState({ label: '', extra: 0 });
+  const extraNoticeRef = useRef<Record<string, number>>({});
   const [postalLookupError, setPostalLookupError] = useState('');
   const [postalLookupLoading, setPostalLookupLoading] = useState(false);
   const [cityLookupOptions, setCityLookupOptions] = useState([]);
   const [cityLookupError, setCityLookupError] = useState('');
   const [cityLookupLoading, setCityLookupLoading] = useState(false);
-
   const validateEmailValue = (value: string) => {
     if (!value) {
       return language === 'DE' ? 'E-Mail ist erforderlich.' : 'Email is required.';
@@ -534,7 +508,6 @@ export default function OrderPage() {
     }
     return '';
   };
-
   const validatePhoneValue = (value: string) => {
     if (!value) {
       return language === 'DE' ? 'Telefonnummer ist erforderlich.' : 'Phone number is required.';
@@ -544,18 +517,15 @@ export default function OrderPage() {
     }
     return '';
   };
-
   const validateCompanyName = (value: string) => {
     if (orderData.businessType !== 'business') {
       return '';
     }
     return value ? '' : (language === 'DE' ? 'Firmenname ist erforderlich.' : 'Company name is required.');
   };
-
   const validateCompanyInfo = (value: string) => {
     return '';
   };
-
   const updateContactInfoField = (field: string, value: string) => {
     updateOrderData('contactInfo', {
       ...orderData.contactInfo,
@@ -568,7 +538,6 @@ export default function OrderPage() {
       setContactErrors((prev) => ({ ...prev, phone: validatePhoneValue(value.trim()) }));
     }
   };
-
   const updateCompanyName = (value: string) => {
     updateOrderData('contactInfo', {
       ...orderData.contactInfo,
@@ -576,12 +545,10 @@ export default function OrderPage() {
     });
     setCompanyErrors((prev) => ({ ...prev, name: validateCompanyName(value.trim()) }));
   };
-
   const updateCompanyInfo = (value: string) => {
     updateOrderData('companyInfo', value);
     setCompanyErrors((prev) => ({ ...prev, info: '' }));
   };
-
   const handleContactBlur = (field: 'email' | 'phone') => {
     const value = (orderData.contactInfo[field] || '').trim();
     if (field === 'email') {
@@ -591,19 +558,16 @@ export default function OrderPage() {
       setContactErrors((prev) => ({ ...prev, phone: validatePhoneValue(value) }));
     }
   };
-
   useEffect(() => {
     if (orderData.businessType !== 'business') {
       setCompanyErrors({ name: '', info: '' });
     }
   }, [orderData.businessType]);
-
   const getGuestCountError = () => (
     language === 'DE'
-      ? 'Anzahl der Gaeste muss groesser als 10 sein.'
-      : 'Guest count must be greater than 10.'
+      ? 'Anzahl der GÃ¤ste muss mindestens 10 sein.'
+      : 'Guest count must be 10 or more.'
   );
-
   const handleGuestCountChange = (value: string) => {
     const digitsOnly = value.replace(/[^0-9]/g, '');
     updateOrderData('guestCount', digitsOnly);
@@ -613,8 +577,17 @@ export default function OrderPage() {
     }
     const nextCount = parseInt(digitsOnly, 10) || 0;
     setGuestCountError(nextCount >= MIN_GUESTS ? '' : getGuestCountError());
+    if (orderData.eventDate) {
+      const leadTimeDays = nextCount >= 100 ? 3 : 2;
+      const earliestDate = new Date();
+      earliestDate.setDate(earliestDate.getDate() + leadTimeDays);
+      earliestDate.setHours(0, 0, 0, 0);
+      const selectedDate = parseDateKey(orderData.eventDate);
+      if (selectedDate && selectedDate < earliestDate) {
+        updateOrderData('eventDate', '');
+      }
+    }
   };
-
   const handlePostalCodeChange = (value: string) => {
     const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 5);
     updateOrderData('postalCode', digitsOnly);
@@ -622,25 +595,21 @@ export default function OrderPage() {
     setCityLookupError('');
     setCityLookupOptions([]);
   };
-
   const handlePostalCodeSelect = (value: string) => {
     const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 5);
     updateOrderData('postalCode', digitsOnly);
     setPostalLookupError('');
   };
-
   const handleCityChange = (value: string) => {
     updateOrderData('city', value);
     setCityLookupError('');
     setCityLookupOptions([]);
   };
-
   const handleStateChange = (value: string) => {
     updateOrderData('state', value);
     setCityLookupError('');
     setCityLookupOptions([]);
   };
-
   const lookupPostalCode = async () => {
     const postalCode = (orderData.postalCode || '').trim();
     if (!postalCode) {
@@ -655,7 +624,6 @@ export default function OrderPage() {
       );
       return;
     }
-
     setPostalLookupLoading(true);
     setPostalLookupError('');
     try {
@@ -681,7 +649,6 @@ export default function OrderPage() {
       setPostalLookupLoading(false);
     }
   };
-
   const lookupPostalCodesByCity = async () => {
     const stateCode = (orderData.state || '').trim();
     const city = (orderData.city || '').trim();
@@ -694,7 +661,6 @@ export default function OrderPage() {
       setCityLookupOptions([]);
       return;
     }
-
     setCityLookupLoading(true);
     setCityLookupError('');
     try {
@@ -728,39 +694,6 @@ export default function OrderPage() {
       setCityLookupLoading(false);
     }
   };
-
-  const getOrderTotals = () => {
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    const flatServiceFee = 48.90;
-    const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
-      return sum + (item.price * item.quantity * guestCount);
-    }, 0);
-
-    const selectedMenuObj = menusData.find(
-      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
-    );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
-
-    const foodItems = [
-      ...orderData.selectedStarters,
-      ...orderData.selectedMains,
-      ...orderData.selectedSides,
-      ...orderData.selectedDesserts,
-      ...orderData.selectedDrinks
-    ];
-    const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
-    const total = subtotal + accessoriesSubtotal + flatServiceFee;
-
-    return {
-      guestCount,
-      subtotal,
-      total,
-      menuSubtotal,
-      foodSubtotal
-    };
-  };
-
   const closedDateMap = useMemo(() => {
     const map = new Map<string, ClosedDate>();
     closedDates.forEach((d) => {
@@ -777,7 +710,6 @@ export default function OrderPage() {
   const isClosedDate = !!closedDateEntry;
   const isOrderingPaused = !!systemStatus?.orderingPaused;
   const orderBlocked = isClosedDate || isOrderingPaused;
-
   const blockedMessage = useMemo(() => {
     if (isOrderingPaused) {
       const reason = systemStatus?.pauseReason ? ` (${systemStatus.pauseReason})` : '';
@@ -793,8 +725,69 @@ export default function OrderPage() {
     }
     return '';
   }, [closedDateEntry, isClosedDate, isOrderingPaused, language, systemStatus?.pauseReason]);
-  const shouldBlockProgress = isOrderingPaused || (isClosedDate && currentStep >= 3);
-
+  const categoryOrder = ['starter', 'main', 'side', 'dessert', 'beverage'];
+  const stepCategoryKeys = [
+    'starter', 'main', 'side', 'dessert', 'beverage',
+    'fingerfood', 'canape', 'appetizer', 'salad', 'soup', 'pasta', 'seafood', 'meat',
+    'vegetarian', 'vegan', 'glutenfree', 'dairyfree', 'spicy', 'signature', 'seasonal',
+    'kidfriendly', 'chefspecial', 'tapas', 'bbq', 'breakfast', 'brunch'
+  ];
+  const normalizeCategoryValue = (value?: string) => (
+    value ? value.toLowerCase().replace(/[^a-z]/g, '') : ''
+  );
+  const normalizeMenuStepKey = (label?: string) => {
+    if (!label) return '';
+    const normalized = normalizeCategoryValue(label);
+    const aliases: Record<string, string> = {
+      starter: 'starter',
+      starters: 'starter',
+      main: 'main',
+      mains: 'main',
+      entree: 'main',
+      side: 'side',
+      sides: 'side',
+      dessert: 'dessert',
+      desserts: 'dessert',
+      drink: 'beverage',
+      drinks: 'beverage',
+      beverage: 'beverage',
+      beverages: 'beverage',
+      glutenfree: 'glutenfree',
+      dairyfree: 'dairyfree',
+      kidfriendly: 'kidfriendly',
+      chefspecial: 'chefspecial'
+    };
+    const resolved = aliases[normalized] || normalized;
+    return stepCategoryKeys.includes(resolved) ? resolved : '';
+  };
+  const categoryMeta = useMemo(() => ({
+    starter: { label: t.productSelection?.starters || 'Starters', icon: Utensils, color: 'text-green-600' },
+    main: { label: t.productSelection?.mains || 'Mains', icon: Coffee, color: 'text-red-600' },
+    side: { label: t.productSelection?.sides || 'Sides', icon: Utensils, color: 'text-amber-600' },
+    dessert: { label: t.productSelection?.desserts || 'Desserts', icon: Cookie, color: 'text-pink-600' },
+    beverage: { label: t.productSelection?.drinks || 'Drinks', icon: Wine, color: 'text-blue-600' },
+    fingerfood: { label: 'Fingerfood', icon: Utensils, color: 'text-amber-700' },
+    canape: { label: 'Canape', icon: Utensils, color: 'text-amber-700' },
+    appetizer: { label: 'Appetizer', icon: Utensils, color: 'text-amber-700' },
+    salad: { label: 'Salad', icon: Leaf, color: 'text-green-700' },
+    soup: { label: 'Soup', icon: Utensils, color: 'text-orange-600' },
+    pasta: { label: 'Pasta', icon: Utensils, color: 'text-orange-700' },
+    seafood: { label: 'Seafood', icon: Fish, color: 'text-sky-600' },
+    meat: { label: 'Meat', icon: Beef, color: 'text-red-700' },
+    vegetarian: { label: 'Vegetarian', icon: Leaf, color: 'text-green-700' },
+    vegan: { label: 'Vegan', icon: Leaf, color: 'text-emerald-700' },
+    glutenfree: { label: 'Gluten-Free', icon: Wheat, color: 'text-amber-700' },
+    dairyfree: { label: 'Dairy-Free', icon: Milk, color: 'text-indigo-600' },
+    spicy: { label: 'Spicy', icon: AlertCircle, color: 'text-red-600' },
+    signature: { label: 'Signature', icon: Award, color: 'text-amber-600' },
+    seasonal: { label: 'Seasonal', icon: Sparkles, color: 'text-amber-600' },
+    kidfriendly: { label: 'Kid-Friendly', icon: Heart, color: 'text-pink-600' },
+    chefspecial: { label: 'Chef-Special', icon: Star, color: 'text-amber-600' },
+    tapas: { label: 'Tapas', icon: Utensils, color: 'text-amber-700' },
+    bbq: { label: 'BBQ', icon: Utensils, color: 'text-red-700' },
+    breakfast: { label: 'Breakfast', icon: Egg, color: 'text-yellow-700' },
+    brunch: { label: 'Brunch', icon: Egg, color: 'text-yellow-700' }
+  }), [t]);
   const postalCopy = useMemo(() => ({
     state: language === 'DE' ? 'Bundesland' : 'State',
     statePlaceholder: language === 'DE' ? 'Bundesland waehlen' : 'Select state',
@@ -808,7 +801,6 @@ export default function OrderPage() {
     germanyOnly: language === 'DE' ? 'Nur Deutschland (5-stellig).' : 'Germany only (5 digits).',
     checking: language === 'DE' ? 'Pruefe...' : 'Checking...'
   }), [language]);
-
   const postalFieldProps = {
     orderData,
     postalCopy,
@@ -824,30 +816,214 @@ export default function OrderPage() {
     lookupPostalCodesByCity,
     lookupPostalCode
   };
-
+  const dynamicMenuSteps = useMemo(() => {
+    const selectedMenu = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
+    const rawSteps = Array.isArray(selectedMenu?.steps) ? selectedMenu.steps : [];
+    const mapped = rawSteps
+      .map((step: any, index: number) => {
+        const categoryKey = normalizeMenuStepKey(step?.label);
+        if (!categoryKey || !categoryMeta[categoryKey]) return null;
+        const rawLabel = (step?.label || '').trim();
+        const normalizedLabel = normalizeCategoryValue(rawLabel);
+        const label = rawLabel && normalizedLabel === categoryKey
+          ? categoryMeta[categoryKey].label
+          : rawLabel || categoryMeta[categoryKey].label;
+        return {
+          key: `menu-step-${index}`,
+          categoryKey,
+          label,
+          icon: categoryMeta[categoryKey].icon,
+          color: categoryMeta[categoryKey].color,
+          included: Number.isFinite(step?.included) ? step.included : 0
+        };
+      })
+      .filter(Boolean) as Array<{ key: string; categoryKey: string; label: string; icon: any; color: string; included: number }>;
+    if (mapped.length) return mapped;
+    return categoryOrder.map((key) => ({
+      key,
+      categoryKey: key,
+      label: categoryMeta[key].label,
+      icon: categoryMeta[key].icon,
+      color: categoryMeta[key].color,
+      included: 0
+    }));
+  }, [menusData, orderData.selectedMenu, categoryMeta, categoryOrder]);
+  const nonCoreStepCategories = useMemo(() => {
+    const set = new Set<string>();
+    dynamicMenuSteps.forEach((step) => {
+      const key = step.categoryKey || step.key;
+      if (!categoryOrder.includes(key)) {
+        set.add(key);
+      }
+    });
+    return set;
+  }, [dynamicMenuSteps, categoryOrder]);
+  const activeCategoryKeys = useMemo(() => {
+    const unique = new Set<string>();
+    dynamicMenuSteps.forEach(step => unique.add(step.categoryKey || step.key));
+    return Array.from(unique);
+  }, [dynamicMenuSteps]);
+  const stepLabelByKey = useMemo(() => {
+    const labels: Record<string, string> = {};
+    dynamicMenuSteps.forEach((step) => {
+      labels[step.categoryKey || step.key] = step.label;
+    });
+    return labels;
+  }, [dynamicMenuSteps]);
+  const stepsConfig = useMemo(() => ([
+    { key: 'event', label: language === 'DE' ? 'Eventdetails' : 'Event Details' },
+    { key: 'menu', label: language === 'DE' ? 'Menue' : 'Menu Selection' },
+    ...dynamicMenuSteps,
+    { key: 'accessories', label: language === 'DE' ? 'Zubehoer' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
+    { key: 'checkout', label: language === 'DE' ? 'Lieferung & Zahlung' : 'Delivery & Payment' }
+  ]), [language, dynamicMenuSteps]);
+  const firstProductStepIndex = stepsConfig.findIndex(
+    step => activeCategoryKeys.includes((step as any).categoryKey || '')
+  ) + 1;
+  const blockAfterStep = firstProductStepIndex > 0 ? firstProductStepIndex : stepsConfig.length;
+  const shouldBlockProgress = isOrderingPaused || (isClosedDate && currentStep >= blockAfterStep);
+  const selectionKeyByCategory: Record<string, string> = {
+    starter: 'selectedStarters',
+    main: 'selectedMains',
+    side: 'selectedSides',
+    dessert: 'selectedDesserts',
+    beverage: 'selectedDrinks'
+  };
+  const getAllSelectedItems = () => ([
+    ...orderData.selectedStarters,
+    ...orderData.selectedMains,
+    ...orderData.selectedSides,
+    ...orderData.selectedDesserts,
+    ...orderData.selectedDrinks
+  ]);
+  const matchesStepCategory = (item: any, categoryKey: string) => {
+    const normalizedCategory = normalizeCategoryValue(item.category);
+    const categoryTags = Array.isArray(item.productCategories)
+      ? item.productCategories.map(normalizeCategoryValue)
+      : [];
+    if (categoryOrder.includes(categoryKey)) {
+      if (normalizedCategory !== categoryKey) return false;
+      if (!nonCoreStepCategories.size) return true;
+      const hasTaggedStep = categoryTags.some(tag => nonCoreStepCategories.has(tag));
+      return !hasTaggedStep;
+    }
+    return categoryTags.includes(categoryKey);
+  };
+  const getItemsForStepCategory = (categoryKey: string) => {
+    const allItems = getAllSelectedItems();
+    return allItems.filter((item) => matchesStepCategory(item, categoryKey));
+  };
+  const includedByCategory = useMemo(() => {
+    const map: Record<string, number> = {};
+    dynamicMenuSteps.forEach((step) => {
+      const categoryKey = step.categoryKey || step.key;
+      map[categoryKey] = (map[categoryKey] || 0) + Math.max(0, Number(step.included) || 0);
+    });
+    return map;
+  }, [dynamicMenuSteps]);
+  const cumulativeIncludedByStep = useMemo(() => {
+    const running: Record<string, number> = {};
+    const cumulative: Record<string, number> = {};
+    stepsConfig.forEach((step) => {
+      const categoryKey = (step as any).categoryKey;
+      if (!categoryKey) return;
+      running[categoryKey] = (running[categoryKey] || 0) + Math.max(0, Number((step as any).included) || 0);
+      cumulative[step.key] = running[categoryKey];
+    });
+    return cumulative;
+  }, [stepsConfig]);
+  const getCategorySelectionCount = (categoryKey: string) => {
+    const items = getItemsForStepCategory(categoryKey);
+    return items.length;
+  };
+  const getCategoryExtrasSubtotal = (categoryKey: string) => {
+    const items = getItemsForStepCategory(categoryKey);
+    const included = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
+    let remaining = included;
+    const sorted = [...items].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    return sorted.reduce((sum, item) => {
+      if (remaining > 0) {
+        remaining -= 1;
+        return sum;
+      }
+      return sum + (Number(item.price) || 0) * (Number(item.quantity) || 0);
+    }, 0);
+  };
+  const getFoodExtrasSubtotal = () => {
+    return activeCategoryKeys.reduce((sum, key) => sum + getCategoryExtrasSubtotal(key), 0);
+  };
+  const getCategorySummaryRows = () => activeCategoryKeys.map((key) => {
+    const included = Math.max(0, Number(includedByCategory[key]) || 0);
+    const selected = getCategorySelectionCount(key);
+    const extra = Math.max(0, selected - included);
+    const extraCost = getCategoryExtrasSubtotal(key);
+    return {
+      key,
+      label: stepLabelByKey[key] || categoryMeta[key]?.label || key,
+      included,
+      selected,
+      extra,
+      extraCost
+    };
+  }).filter(row => row.included > 0 || row.selected > 0);
+  const getOrderTotals = () => {
+    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const flatServiceFee = 48.90;
+    const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
+      return sum + (item.price * item.quantity * guestCount);
+    }, 0);
+    const selectedMenuObj = menusData.find(
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+    );
+    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+    const foodExtrasSubtotal = getFoodExtrasSubtotal();
+    const subtotal = menuSubtotal + foodExtrasSubtotal;
+    const total = subtotal + accessoriesSubtotal + flatServiceFee;
+    return {
+      guestCount,
+      subtotal,
+      total,
+      menuSubtotal,
+      foodSubtotal: foodExtrasSubtotal
+    };
+  };
+  useEffect(() => {
+    setCurrentStep(prev => (prev > stepsConfig.length ? stepsConfig.length : prev));
+  }, [stepsConfig.length]);
   const getStepValidationError = (step: number) => {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
     const hasValidGuestCount = guestCount >= MIN_GUESTS;
     const hasValidPostal = /^\d{5}$/.test(orderData.postalCode || '');
     const totals = getOrderTotals();
-
     const contactEmail = (orderData.contactInfo.email || '').trim();
     const contactPhone = (orderData.contactInfo.phone || '').trim();
     const companyName = (orderData.contactInfo.company || '').trim();
-    const companyInfo = (orderData.companyInfo || '').trim();
     const emailError = validateEmailValue(contactEmail);
     const phoneError = validatePhoneValue(contactPhone);
-
-    switch (step) {
-      case 1:
-        return orderData.businessType
-          ? ''
-          : (language === 'DE' ? 'Bitte Anlass waehlen.' : 'Please select an event type.');
-      case 2:
-        return orderData.serviceType
-          ? ''
-          : (language === 'DE' ? 'Bitte eine Leistung waehlen.' : 'Please select a service type.');
-      case 3:
+    const stepKey = stepsConfig[step - 1]?.key;
+    const stepCategory = (stepsConfig[step - 1] as any)?.categoryKey || '';
+    if (activeCategoryKeys.includes(stepCategory)) {
+      const requiredCount = Math.max(0, Number(cumulativeIncludedByStep[stepKey]) || 0);
+      if (requiredCount > 0) {
+        const selectedCount = getCategorySelectionCount(stepCategory);
+        if (selectedCount < requiredCount) {
+          return language === 'DE'
+            ? `Bitte mindestens ${requiredCount} Gerichte in ${stepsConfig[step - 1]?.label} waehlen.`
+            : `Please select at least ${requiredCount} dishes for ${stepsConfig[step - 1]?.label}.`;
+        }
+      }
+      return '';
+    }
+    switch (stepKey) {
+      case 'event':
+        if (!orderData.businessType) {
+          return language === 'DE' ? 'Bitte Anlass waehlen.' : 'Please select an event type.';
+        }
+        if (!orderData.serviceType) {
+          return language === 'DE' ? 'Bitte eine Leistung waehlen.' : 'Please select a service type.';
+        }
         if (!orderData.eventDate) {
           return language === 'DE' ? 'Bitte Datum waehlen.' : 'Please select an event date.';
         }
@@ -863,11 +1039,11 @@ export default function OrderPage() {
             : 'Enter a 5-digit German postal code.';
         }
         return '';
-      case 4:
+      case 'menu':
         return orderData.selectedMenu
           ? ''
           : (language === 'DE' ? 'Bitte ein Menue waehlen.' : 'Please select a menu.');
-      case 10:
+      case 'accessories':
         if (!hasValidGuestCount) {
           return getGuestCountError();
         }
@@ -877,7 +1053,7 @@ export default function OrderPage() {
             : `Minimum order of ${MIN_ORDER_TOTAL.toFixed(2)} required.`;
         }
         return '';
-      case 11:
+      case 'checkout':
         if (!orderData.contactInfo.firstName?.trim()) {
           return language === 'DE' ? 'Vorname ist erforderlich.' : 'First name is required.';
         }
@@ -893,8 +1069,6 @@ export default function OrderPage() {
         if (phoneError) {
           return phoneError;
         }
-        return '';
-      case 12:
         if (totals.total < MIN_ORDER_TOTAL) {
           return language === 'DE'
             ? `Mindestbestellwert ${MIN_ORDER_TOTAL.toFixed(2)} erreicht nicht.`
@@ -923,12 +1097,12 @@ export default function OrderPage() {
         return '';
     }
   };
-
   const applyValidationErrors = (step: number) => {
-    if (step === 3 || step === 10) {
+    const stepKey = stepsConfig[step - 1]?.key;
+    if (stepKey === 'event' || stepKey === 'accessories') {
       const guestCount = parseInt(orderData.guestCount, 10) || 0;
       setGuestCountError(guestCount >= MIN_GUESTS ? '' : getGuestCountError());
-      if (step === 3 && !/^\d{5}$/.test(orderData.postalCode || '')) {
+      if (stepKey === 'event' && !/^\d{5}$/.test(orderData.postalCode || '')) {
         setPostalLookupError(
           language === 'DE'
             ? 'Bitte 5-stellige deutsche PLZ eingeben.'
@@ -936,7 +1110,7 @@ export default function OrderPage() {
         );
       }
     }
-    if (step === 11) {
+    if (stepKey === 'checkout') {
       const contactEmail = (orderData.contactInfo.email || '').trim();
       const contactPhone = (orderData.contactInfo.phone || '').trim();
       setContactErrors({
@@ -951,16 +1125,15 @@ export default function OrderPage() {
       } else {
         setCompanyErrors({ name: '', info: '' });
       }
-    }
-    if (step === 12 && !termsAccepted) {
-      setTermsError(
-        language === 'DE'
-          ? 'Bitte AGB und Datenschutz akzeptieren.'
-          : 'Please accept the terms and privacy policy.'
-      );
+      if (!termsAccepted) {
+        setTermsError(
+          language === 'DE'
+            ? 'Bitte AGB und Datenschutz akzeptieren.'
+            : 'Please accept the terms and privacy policy.'
+        );
+      }
     }
   };
-
   const getFirstInvalidStep = (maxStep: number) => {
     for (let step = 1; step <= maxStep; step += 1) {
       const error = getStepValidationError(step);
@@ -970,7 +1143,6 @@ export default function OrderPage() {
     }
     return null;
   };
-
   const validateStepsUpTo = (maxStep: number) => {
     const invalid = getFirstInvalidStep(maxStep);
     if (invalid) {
@@ -983,7 +1155,6 @@ export default function OrderPage() {
     }
     return true;
   };
-
   const handleStepChange = (targetStep: number) => {
     if (targetStep <= currentStep) {
       setCurrentStep(targetStep);
@@ -998,7 +1169,6 @@ export default function OrderPage() {
     }
     setCurrentStep(targetStep);
   };
-
   const canNavigateToStep = (targetStep: number) => {
     if (targetStep <= currentStep) {
       return true;
@@ -1008,142 +1178,154 @@ export default function OrderPage() {
     }
     return !getFirstInvalidStep(targetStep - 1);
   };
-
   const canProceedToNext = !getFirstInvalidStep(currentStep);
-
-  const stepsConfig = useMemo(() => [
-    { key: 'eventType', label: language === 'DE' ? 'Anlass' : 'Event Type' },
-    { key: 'service', label: language === 'DE' ? 'Leistung' : 'Service' },
-    { key: 'event', label: language === 'DE' ? 'Eventdaten' : 'Event Info' },
-    { key: 'menu', label: language === 'DE' ? 'Menü' : 'Menu Selection' },
-    { key: 'starters', label: t.productSelection?.starters || 'Starters', icon: Utensils, color: 'text-green-600' },
-    { key: 'mains', label: t.productSelection?.mains || 'Mains', icon: Coffee, color: 'text-red-600' },
-    { key: 'sides', label: t.productSelection?.sides || 'Sides', icon: Utensils, color: 'text-amber-600' },
-    { key: 'desserts', label: t.productSelection?.desserts || 'Desserts', icon: Cookie, color: 'text-pink-600' },
-    { key: 'drinks', label: t.productSelection?.drinks || 'Drinks', icon: Wine, color: 'text-blue-600' },
-    { key: 'accessories', label: language === 'DE' ? 'Zubehör' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
-    { key: 'details', label: language === 'DE' ? 'Lieferdetails' : 'Delivery Details' },
-    { key: 'payment', label: language === 'DE' ? 'Zahlung' : 'Payment' }
-  ], [language, t]);
-
-  // Step 1: Event Type
-  const Step1 = () => (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          {t.eventType?.title}
-        </h2>
-        <p className="text-gray-600 text-lg">
-          {t.eventType?.subtitle}
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        {['business', 'private'].map((type) => {
-          const option = t.eventType?.options?.[type] || {};
-          return (
-          <button
-            key={type}
-            onClick={() => {
-              updateOrderData('businessType', type);
-              updateOrderData('serviceType', '');
-              setCurrentStep(2);
-            }}
-            className={`p-8 rounded-xl border-2 transition-all duration-300 text-left hover:shadow-lg ${
-              orderData.businessType === type
-                ? 'border-amber-500 bg-amber-50 shadow-md'
-                : 'border-gray-300 hover:border-amber-400 bg-white'
-            }`}
-          >
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
-              {option.title}
-            </h3>
-            <p className="text-amber-600 font-semibold text-lg mb-6">
-              {option.subtitle}
-            </p>
-          </button>
-        )})}
-      </div>
+  const renderSummaryNav = () => (
+    <div className="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-amber-200">
+      <button
+        onClick={prevStep}
+        disabled={currentStep === 1}
+        className={`px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center transition-colors ${
+          currentStep === 1
+            ? 'text-gray-400 cursor-not-allowed'
+            : 'text-gray-700 hover:text-amber-700 hover:bg-amber-50'
+        }`}
+      >
+        <ChevronLeft size={16} className="mr-1" />
+        {t.buttons.back}
+      </button>
+      <button
+        onClick={nextStep}
+        disabled={shouldBlockProgress || !canProceedToNext}
+        className={`px-5 py-2 text-sm font-semibold rounded-lg inline-flex items-center shadow-sm transition-colors ${
+          shouldBlockProgress || !canProceedToNext
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-amber-600 text-white hover:bg-amber-700'
+        }`}
+      >
+        {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
+        <ChevronRight size={16} className="ml-1" />
+      </button>
     </div>
   );
 
-  // Step 2: Service Type
-  const Step2 = () => (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          {t.serviceType?.title}
-        </h2>
-        <p className="text-gray-600 text-lg">
-          {t.serviceType?.subtitle}
-        </p>
-      </div>
-
-      {orderData.businessType ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(t.serviceType?.options?.[orderData.businessType] || []).map((service) => (
-            <button
-              key={service.key}
-              onClick={() => {
-                updateOrderData('serviceType', service.key);
-                setCurrentStep(3);
-              }}
-              className={`p-6 rounded-xl border-2 transition-all duration-300 text-center hover:shadow-lg ${
-                orderData.serviceType === service.key
-                  ? 'border-amber-500 bg-amber-50 shadow-md'
-                  : 'border-gray-300 hover:border-amber-400 bg-white'
-              }`}
-            >
-              <div className="p-4 bg-amber-100 rounded-lg mb-4 inline-flex">
-                <Briefcase size={32} className="text-amber-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-3">
-                {service.title}
-              </h3>
-              <p className="text-gray-700 text-sm leading-relaxed">
-                {service.description}
-              </p>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center text-gray-600">
-          {language === 'DE'
-            ? 'Bitte wählen Sie zuerst einen Anlass.'
-            : 'Please choose an occasion first.'}
-        </div>
-      )}
-    </div>
-  );
-
-  // Step 3: Event Information
-  const Step3 = () => (
-    <div className="space-y-8">
+  // Step 1: Event Details
+  const Step1 = () => {
+    const guestCountNumeric = parseInt(orderData.guestCount, 10) || 0;
+    const leadTimeDays = guestCountNumeric >= 100 ? 3 : 2;
+    const earliestDate = new Date();
+    earliestDate.setDate(earliestDate.getDate() + leadTimeDays);
+    earliestDate.setHours(0, 0, 0, 0);
+    const locale = language === 'DE' ? 'de-DE' : 'en-US';
+    const earliestDateLabel = earliestDate.toLocaleDateString(locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    const constraintTemplate = leadTimeDays > 2 ? t.eventInfo.dateConstraintLarge : t.eventInfo.dateConstraint;
+    const constraintText = constraintTemplate.replace('{date}', earliestDateLabel);
+    const serviceOptions = t.serviceType?.options?.[orderData.businessType] || [];
+    return (
       <div className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                {t.eventInfo.date} *
-              </label>
-              <div className="relative group">
-                <DatePicker
-                  value={orderData.eventDate}
-                  onChange={(value) => updateOrderData('eventDate', value)}
-                  minDate={new Date()}
-                  language={language}
-                  placeholder={language === 'DE' ? 'Datum waehlen' : 'Select date'}
-                />
+        <div className="grid gap-4 lg:grid-cols-[1.05fr,1fr]">
+          <div className="rounded-2xl border border-amber-100 bg-white p-4 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{t.eventType?.title}</h2>
+                <p className="text-sm text-gray-500">{t.eventType?.subtitle}</p>
               </div>
-              {isClosedDate && (
-                <p className="mt-2 text-sm text-red-600">
-                  {blockedMessage}
-                </p>
+              <span className="text-[11px] uppercase tracking-[0.2em] text-amber-500">Step 1</span>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {['business', 'private'].map((type) => {
+                const option = t.eventType?.options?.[type] || {};
+                return (
+                <button
+                  key={type}
+                  onClick={() => {
+                    updateOrderData('businessType', type);
+                    updateOrderData('serviceType', '');
+                  }}
+                  className={`flex flex-col justify-between rounded-xl border-2 px-4 py-4 text-left transition-all duration-300 hover:-translate-y-0.5 ${
+                    orderData.businessType === type
+                      ? 'border-amber-500 bg-amber-50 shadow-md shadow-amber-100'
+                      : 'border-gray-200 bg-white'
+                  }`}
+                >
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900">{option.title}</h3>
+                    <p className="text-amber-600 font-semibold text-sm">{option.subtitle}</p>
+                  </div>
+                </button>
+              )})}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-gradient-to-b from-amber-50/60 to-white p-4 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">{t.serviceType?.title}</h2>
+                <p className="text-sm text-gray-500">{t.serviceType?.subtitle}</p>
+              </div>
+              {orderData.businessType && (
+                <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-amber-600">{orderData.businessType}</span>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                {t.eventInfo.time} *
-              </label>
+            {orderData.businessType ? (
+              <div className="grid gap-3">
+                {(serviceOptions || []).map((service) => (
+                  <button
+                    key={service.key}
+                    onClick={() => {
+                      updateOrderData('serviceType', service.key);
+                    }}
+                    className={`group flex items-center gap-4 rounded-xl border-2 px-4 py-3 text-left transition-all duration-300 hover:shadow-md ${
+                      orderData.serviceType === service.key
+                        ? 'border-amber-500 bg-white shadow-lg'
+                        : 'border-gray-200 bg-white'
+                    }`}
+                  >
+                    <div className="relative h-16 w-24 overflow-hidden rounded-lg border border-amber-100 bg-amber-50/60">
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">{service.title}</h3>
+                      <p className="text-sm text-gray-500">{service.description}</p>
+                    </div>
+                    <Briefcase size={24} className="text-amber-500" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-600">
+                {language === 'DE'
+                  ? 'Bitte wÃ¤hlen Sie zuerst einen Anlass.'
+                  : 'Please choose an occasion first.'}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-900">{t.eventInfo.date} *</label>
+              <DatePicker
+                value={orderData.eventDate}
+                onChange={(value) => updateOrderData('eventDate', value)}
+                minDate={earliestDate}
+                language={language}
+                placeholder={language === 'DE' ? 'Datum waehlen' : 'Select date'}
+              />
+              <p className="text-xs text-gray-500">{constraintText}</p>
+              {isClosedDate && (
+                <p className="text-sm text-red-600">{blockedMessage}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-900">{t.eventInfo.time} *</label>
               <TimePicker
                 value={orderData.eventTime}
                 onChange={(value) => updateOrderData('eventTime', value)}
@@ -1151,35 +1333,34 @@ export default function OrderPage() {
                 placeholder={language === 'DE' ? 'Uhrzeit waehlen' : 'Select time'}
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-900">{t.eventInfo.guests} *</label>
+              <input
+                type="text"
+                value={orderData.guestCount || ''}
+                onChange={(e) => handleGuestCountChange(e.target.value)}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
+                placeholder="10"
+                required
+              />
+              <p className="text-xs text-gray-600">{t.eventInfo.minGuests}</p>
+              {guestCountError && (
+                <p className="text-xs text-red-600">{guestCountError}</p>
+              )}
+            </div>
           </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            {t.eventInfo.guests} *
-          </label>
-          <input
-            type="text"
-            value={orderData.guestCount || ''}
-            onChange={(e) => handleGuestCountChange(e.target.value)}
-            inputMode="numeric"
-            pattern="[0-9]*"
-            className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
-            placeholder="11"
-            required
-          />
-          <p className="text-sm text-gray-600 mt-2">{t.eventInfo.minGuests}</p>
-          {guestCountError && (
-            <p className="text-sm text-red-600 mt-1">{guestCountError}</p>
-          )}
-        </div>
-
-        <div>
-          <PostalCodeFields {...postalFieldProps} label={t.eventInfo.location} required />
+          <div className="mt-4">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              {t.eventInfo.location} *
+            </label>
+            <PostalCodeFields {...postalFieldProps} label="" required />
+          </div>
         </div>
       </div>
-    </div>
-  );
-
+    );
+  };
   // Step 4: Menu Selection
   const Step4 = () => (
     <div className="space-y-8">
@@ -1191,102 +1372,125 @@ export default function OrderPage() {
           {t.menuSelection.subtitle}
         </p>
       </div>
-
-      <div className="grid md:grid-cols-3 gap-6">
-        {menusData.map((menu) => (
-          <button
-            key={menu.id}
-            onClick={() => menu.isActive && updateOrderData('selectedMenu', menu.id)}
-            className={`rounded-xl border-2 overflow-hidden transition-all duration-300 text-left hover:shadow-lg ${
-              orderData.selectedMenu === menu.id
-                ? 'border-amber-500 bg-amber-50 shadow-md'
-                : menu.isActive 
-                ? 'border-gray-300 hover:border-amber-400 bg-white'
-                : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-            }`}
-          >
-          <div className="relative h-48 bg-gray-200">
-              {menu.image ? (
-                <img
-                  src={menu.image}
-                  alt={menu.name || 'Menu image'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
-                  No image
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {menusData.map((menu) => {
+          const steps = Array.isArray(menu.steps) ? menu.steps : [];
+          const dishesAvailable = Array.isArray(menu.products)
+            ? menu.products.length
+            : Array.isArray(menu.menuProducts)
+            ? menu.menuProducts.length
+            : 0;
+          const cardClassName =
+            'rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 text-left bg-white shadow-sm hover:shadow-xl ' +
+            (orderData.selectedMenu === menu.id
+              ? 'border-amber-500 ring-2 ring-amber-200'
+              : menu.isActive
+              ? 'hover:border-amber-300'
+              : 'bg-gray-50 opacity-70 cursor-not-allowed');
+          return (
+            <button
+              key={menu.id}
+              onClick={() => menu.isActive && updateOrderData('selectedMenu', menu.id)}
+              className={cardClassName}
+            >
+              <div className="relative h-44 bg-gray-200">
+                {menu.image ? (
+                  <img
+                    src={menu.image}
+                    alt={menu.name || 'Menu image'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                    No image
+                  </div>
+                )}
+                {!menu.isActive && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <span className="text-white font-bold text-lg px-4 py-2 bg-red-600 rounded-lg">
+                      Currently Unavailable
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">{menu.name}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{menu.description}</p>
                 </div>
-              )}
-              {!menu.isActive && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg px-4 py-2 bg-red-600 rounded-lg">
-                    Currently Unavailable
-                  </span>
+                <div className="space-y-2 text-sm text-gray-700">
+                  {steps.map((step: any, index: number) => (
+                    <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                        <Check size={12} />
+                      </span>
+                      <span>{step.included} {step.label}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                      <Check size={12} />
+                    </span>
+                    <span>{dishesAvailable} dishes available</span>
+                  </div>
                 </div>
-              )}
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{menu.name}</h3>
-              <p className="text-gray-600 mb-4">{menu.description}</p>
-              <div className="flex items-center justify-between">
-                <div className="text-amber-600 font-bold text-xl">
-                  {menu.price ? `€${menu.price}` : 'Custom Pricing'}
+                <div className="pt-4 border-t border-gray-200 space-y-1">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {menu.price ? 'From £' + menu.price + '/person' : 'Custom Pricing'}
+                  </div>
+                  <div className="text-xs text-gray-500">Excl. VAT</div>
+                  {menu.minPeople ? (
+                    <div className="text-sm font-semibold text-gray-700">{menu.minPeople} Person Minimum</div>
+                  ) : null}
                 </div>
-                <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  menu.category === 'seasonal' ? 'bg-green-100 text-green-800' :
-                  menu.category === 'luxury' ? 'bg-purple-100 text-purple-800' :
-                  'bg-amber-100 text-amber-800'
-                }`}>
-                  {menu.category}
+                <div className="pt-2">
+                  <div className="w-full rounded-xl bg-amber-400/80 px-4 py-3 text-center text-sm font-semibold text-white">
+                    Select Food
+                  </div>
                 </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
-
   // Step 5-9: Product Selection by Category
   const Step5 = () => {
-    const menuStepMap = {
-      5: 'starters',
-      6: 'mains',
-      7: 'sides',
-      8: 'desserts',
-      9: 'drinks'
-    };
-    
-    const currentCategory = menuStepMap[currentStep];
+    const stepKey = stepsConfig[currentStep - 1]?.key;
+    const stepCategory = (stepsConfig[currentStep - 1] as any)?.categoryKey || '';
+    const currentCategory = activeCategoryKeys.includes(stepCategory) ? stepCategory : '';
+    if (!currentCategory) {
+      return null;
+    }
     
     const selectedMenu = menusData.find(
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
     const products = menuItemsData
-      .filter(item => item.menuCategory === currentCategory)
+      .filter(item => matchesStepCategory(item, currentCategory))
       .filter(item => {
         if (!selectedMenu) return true;
         const productIds = selectedMenu.products || [];
         return productIds.includes(item.id);
       });
-    
+    const includedTotal = Math.max(0, Number(includedByCategory[currentCategory]) || 0);
+    const stepIncluded = Math.max(0, Number((stepsConfig[currentStep - 1] as any)?.included) || 0);
+    const requiredCount = Math.max(0, Number(cumulativeIncludedByStep[stepKey]) || 0);
+    const selectedCount = getCategorySelectionCount(currentCategory);
+    const extraCount = Math.max(0, selectedCount - includedTotal);
+    const categoryTitle = stepsConfig[currentStep - 1]?.label
+      || categoryMeta[currentCategory]?.label
+      || currentCategory?.charAt(0).toUpperCase() + currentCategory?.slice(1);
+    const categorySubtitle = t.productSelection?.subtitles?.[currentCategory] || '';
     // Calculate totals for order overview
     const calculateSubtotal = () => {
       const menuPrice = selectedMenu?.price || 0;
       const guestCount = parseInt(orderData.guestCount) || 0;
-      
-      const foodItems = [
-        ...orderData.selectedStarters,
-        ...orderData.selectedMains,
-        ...orderData.selectedSides,
-        ...orderData.selectedDesserts,
-        ...orderData.selectedDrinks
-      ];
-      
-      const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const foodSubtotal = getFoodExtrasSubtotal();
       const menuSubtotal = menuPrice * guestCount;
       
-      return menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
+      return menuSubtotal + foodSubtotal;
     };
     
     const calculateAccessoriesSubtotal = () => {
@@ -1302,15 +1506,12 @@ export default function OrderPage() {
     const selectedMenuObj = menusData.find(
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const categoryTitle = t.productSelection?.[currentCategory]
-      || currentCategory?.charAt(0).toUpperCase() + currentCategory?.slice(1);
-    const categorySubtitle = t.productSelection?.subtitles?.[currentCategory] || '';
     
     return (
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Order Overview - Right Side */}
         <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">{t.productSelection.orderSummary}</h3>
               <button
@@ -1323,17 +1524,17 @@ export default function OrderPage() {
             
             <div className={`${orderSummaryVisible ? 'block' : 'hidden lg:block'} space-y-6`}>
               {/* Event Info Summary */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">{t.eventInfo.date}:</span>
+              <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/70 p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-800">{t.eventInfo.date}:</span>
                   <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">{t.eventInfo.guests}:</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
                   <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">{t.eventInfo.location}:</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
                   <span className="font-semibold text-gray-900">
                     {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
                   </span>
@@ -1345,14 +1546,14 @@ export default function OrderPage() {
                 <div className="pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-bold text-gray-900">{selectedMenuObj.name}</h4>
-                    <span className="text-amber-600 font-bold">€{selectedMenuObj.price}</span>
+                    <span className="text-amber-700 font-bold">£{selectedMenuObj.price}</span>
                   </div>
-                  <p className="text-gray-600 text-sm mb-3">{selectedMenuObj.description}</p>
-                  <div className="text-sm text-gray-700">
+                  <p className="text-gray-700 text-sm mb-3">{selectedMenuObj.description}</p>
+                  <div className="text-sm text-gray-800">
                     {subtotal > 0 && (
                       <div className="flex justify-between">
                         <span>Menu Total:</span>
-                        <span className="font-medium">€{subtotal.toFixed(2)}</span>
+                        <span className="font-semibold text-gray-900">£{subtotal.toFixed(2)}</span>
                       </div>
                     )}
                   </div>
@@ -1361,46 +1562,65 @@ export default function OrderPage() {
               
               {/* Items Summary */}
               <div className="pt-4 border-t border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3">Selected Items</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                  {[
-                    { title: 'Starters', items: orderData.selectedStarters },
-                    { title: 'Mains', items: orderData.selectedMains },
-                    { title: 'Sides', items: orderData.selectedSides },
-                    { title: 'Desserts', items: orderData.selectedDesserts },
-                    { title: 'Drinks', items: orderData.selectedDrinks }
-                  ].map((section, idx) => (
-                    section.items.length > 0 && (
-                      <div key={idx} className="mb-3">
-                        <h5 className="text-sm font-semibold text-gray-700 mb-2">{section.title}</h5>
+                  {activeCategoryKeys.map((key) => {
+                    const items = getItemsForStepCategory(key);
+                    const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
+                    if (!items.length) return null;
+                    return (
+                      <div key={key} className="mb-3">
+                        <h5 className="text-sm font-semibold text-gray-800 mb-2">{title}</h5>
                         <div className="space-y-2 pl-3">
-                          {section.items.map((item, itemIdx) => (
+                          {items.map((item, itemIdx) => (
                             <div key={itemIdx} className="flex justify-between items-center text-sm">
-                              <span className="text-gray-600 truncate max-w-[60%]">{item.name}</span>
+                              <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
                               <div className="flex items-center gap-2">
-                                <span className="text-gray-500">x{item.quantity}</span>
-                                <span className="font-medium">€{(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="text-gray-600">x{item.quantity}</span>
+                                <span className="font-semibold text-gray-900">£{(item.price * item.quantity).toFixed(2)}</span>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
-                    )
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               
+
+              {/* Included vs Extras */}
+              {getCategorySummaryRows().length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Included vs Extras</h4>
+                  <div className="space-y-3">
+                    {getCategorySummaryRows().map((row) => (
+                      <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-800">{row.label}</span>
+                          <span className="text-xs text-gray-500">Included {row.included}</span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                          <span>Selected: {row.selected}</span>
+                          <span>Extras: {row.extra}</span>
+                          <span className="text-right">Extras cost: £{row.extraCost.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Accessories Summary */}
               {selectedAccessories.length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">Accessories</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Accessories</h4>
                   <div className="space-y-2">
                     {selectedAccessories.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">{item.name}</span>
+                        <span className="text-gray-800">{item.name}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-500">x{item.quantity}</span>
-                          <span className="font-medium">€{(item.price * item.quantity * (parseInt(orderData.guestCount) || 0)).toFixed(2)}</span>
+                          <span className="text-gray-600">x{item.quantity}</span>
+                          <span className="font-semibold text-gray-900">£{(item.price * item.quantity * (parseInt(orderData.guestCount) || 0)).toFixed(2)}</span>
                         </div>
                       </div>
                     ))}
@@ -1409,44 +1629,50 @@ export default function OrderPage() {
               )}
               
               {/* Totals - Fixed to show all values in orange/black */}
-              <div className="pt-4 border-t border-gray-200 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-black font-medium">Menu/Items Subtotal:</span>
-                  <span className="font-bold text-orange-600">€{subtotal.toFixed(2)}</span>
-                </div>
-                {selectedAccessories.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-black font-medium">Accessories:</span>
-                    <span className="font-bold text-orange-600">€{accessoriesSubtotal.toFixed(2)}</span>
+                    <span className="text-gray-900 font-semibold">Menu + Extras Subtotal:</span>
+                    <span className="font-bold text-amber-700">£{subtotal.toFixed(2)}</span>
                   </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-black font-medium">Service Fee:</span>
-                  <span className="font-bold text-orange-600">€{flatServiceFee.toFixed(2)}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-900 font-semibold">Extras (paid):</span>
+                    <span className="font-bold text-amber-700">£{getFoodExtrasSubtotal().toFixed(2)}</span>
+                  </div>
+                  {selectedAccessories.length > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-900 font-semibold">Accessories:</span>
+                      <span className="font-bold text-amber-700">£{accessoriesSubtotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-900 font-semibold">Service Fee:</span>
+                    <span className="font-bold text-amber-700">£{flatServiceFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
+                    <span>Total:</span>
+                    <span>£{total.toFixed(2)}</span>
+                  </div>
+                  {renderSummaryNav()}
                 </div>
-                <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-300">
-                  <span>Total:</span>
-                  <span>€{total.toFixed(2)}</span>
-                </div>
-                
                 {total < MIN_ORDER_TOTAL && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800 font-medium">
-                      Minimum order of €{MIN_ORDER_TOTAL.toFixed(2)} required. Add more items to continue.
+                      Minimum order of £{MIN_ORDER_TOTAL.toFixed(2)} required. Add more items to continue.
                     </p>
                   </div>
                 )}
               </div>
-              
+              {/* Quick Navigation */}
               {/* Quick Navigation */}
               <div className="pt-4 border-t border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3">Quick Navigation</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Quick Navigation</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {['starters', 'mains', 'sides', 'desserts', 'drinks', 'accessories'].map((cat, idx) => {
-                    const stepIndex = stepsConfig.findIndex(s => s.key === cat) + 1;
+                  {dynamicMenuSteps.map((step) => {
+                    const stepIndex = stepsConfig.findIndex(s => s.key === step.key) + 1;
                     return (
                       <button
-                        key={idx}
+                        key={step.key}
                         onClick={() => handleStepChange(stepIndex)}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           currentStep === stepIndex
@@ -1454,7 +1680,7 @@ export default function OrderPage() {
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
-                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                        {step.label}
                       </button>
                     );
                   })}
@@ -1466,21 +1692,35 @@ export default function OrderPage() {
         
         {/* Product Selection - Left Side */}
         <div className="lg:col-span-2 lg:order-1">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">
-              {categoryTitle}
-            </h2>
-            {categorySubtitle && (
-              <p className="text-gray-600 text-lg">
-                {categorySubtitle}
-              </p>
-            )}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900">
+            {categoryTitle}
+          </h2>
+          {categorySubtitle && (
+            <p className="text-gray-600 text-lg">
+              {categorySubtitle}
+            </p>
+          )}
+          <div className="mt-4 inline-flex flex-wrap items-center justify-center gap-3 rounded-full border border-amber-100 bg-amber-50/70 px-4 py-2 text-sm text-amber-700">
+            <span className="font-semibold">Included (this step): {stepIncluded}</span>
+            <span className="text-amber-300">|</span>
+            <span className="font-semibold">Required so far: {requiredCount}</span>
+            <span className="text-amber-300">|</span>
+            <span className="font-semibold">Selected: {selectedCount}</span>
+            <span className="text-amber-300">|</span>
+            <span className={`font-semibold ${extraCount > 0 ? 'text-amber-900' : ''}`}>
+              Extra: {extraCount}
+            </span>
           </div>
-
+          {extraCount > 0 && (
+            <p className="mt-2 text-xs text-amber-700">Extras beyond the included count are charged.</p>
+          )}
+        </div>
           <div className="space-y-6">
             {products.map((product) => {
               const quantityKey = `${currentCategory}_${product.id}`;
-              const quantityInOrder = getProductQuantityInOrder(currentCategory, product.id);
+              const quantityInOrder = getProductQuantityInOrder(currentCategory, product);
+              const minQuantity = getMinOrderQuantity(product);
               const currentQuantity = quantities[quantityKey] || 0;
               
               return (
@@ -1515,7 +1755,8 @@ export default function OrderPage() {
                             <p className="text-gray-600 mb-4">{product.description}</p>
                             
                             <div className="flex flex-wrap items-center gap-4 mb-4">
-                              <div className="text-2xl font-bold text-gray-900">€{product.price}</div>
+                              <div className="text-2xl font-bold text-gray-900">£{product.price}</div>
+                              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Min {minQuantity}</div>
                               <div className="flex flex-wrap items-center gap-2">
                                 {product.allergens.map((allergen, idx) => (
                                   <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
@@ -1525,12 +1766,22 @@ export default function OrderPage() {
                               </div>
                             </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProductDetailsItem(product);
+                              setProductDetailsOpen(true);
+                            }}
+                            className="ml-4 shrink-0 px-4 py-2 text-sm font-semibold rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors"
+                          >
+                            More info
+                          </button>
                         </div>
                         
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
                             <button
-                              onClick={() => updateQuantity(currentCategory, product.id, Math.max(0, currentQuantity - 1))}
+                              onClick={() => updateQuantity(currentCategory, product.id, currentQuantity - 1, minQuantity)}
                               className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
                               disabled={!product.available}
                             >
@@ -1540,12 +1791,12 @@ export default function OrderPage() {
                               type="number"
                               min="0"
                               value={currentQuantity}
-                              onChange={(e) => updateQuantity(currentCategory, product.id, parseInt(e.target.value) || 0)}
+                              onChange={(e) => updateQuantity(currentCategory, product.id, parseInt(e.target.value, 10) || 0, minQuantity)}
                               className="w-16 text-center py-2 text-xl font-bold border-x border-gray-300 bg-white text-gray-900"
                               disabled={!product.available}
                             />
                             <button
-                              onClick={() => updateQuantity(currentCategory, product.id, currentQuantity + 1)}
+                              onClick={() => updateQuantity(currentCategory, product.id, currentQuantity + 1, minQuantity)}
                               className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
                               disabled={!product.available}
                             >
@@ -1574,13 +1825,13 @@ export default function OrderPage() {
                               </span>
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => updateProductQuantityInOrder(currentCategory, product.id, quantityInOrder - 1)}
+                                  onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder - 1)}
                                   className="w-8 h-8 flex items-center justify-center bg-red-100 text-red-800 rounded-full hover:bg-red-200"
                                 >
                                   <Minus size={16} strokeWidth={2.5} className="text-black" />
                                 </button>
                                 <button
-                                  onClick={() => updateProductQuantityInOrder(currentCategory, product.id, quantityInOrder + 1)}
+                                  onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder + 1)}
                                   className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-800 rounded-full hover:bg-green-200"
                                 >
                                   <Plus size={16} strokeWidth={2.5} className="text-black" />
@@ -1600,7 +1851,6 @@ export default function OrderPage() {
       </div>
     );
   };
-
   // Step 10: Accessories
   const Step10 = () => {
     const guestCount = parseInt(orderData.guestCount) || 0;
@@ -1613,41 +1863,32 @@ export default function OrderPage() {
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
-    
-    const foodItems = [
-      ...orderData.selectedStarters,
-      ...orderData.selectedMains,
-      ...orderData.selectedSides,
-      ...orderData.selectedDesserts,
-      ...orderData.selectedDrinks
-    ];
-    
-    const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
+
+    const foodSubtotal = getFoodExtrasSubtotal();
+    const subtotal = menuSubtotal + foodSubtotal;
     const currentSubtotal = subtotal + accessoriesSubtotal + flatServiceFee;
     const minimumOrder = MIN_ORDER_TOTAL;
     const accessoriesList = Array.isArray(t.accessories?.items) ? t.accessories.items : [];
-
     return (
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Order Overview - Right Side */}
         <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
             <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
             
             <div className="space-y-6">
               {/* Event Info Summary */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">{t.eventInfo.date}:</span>
+              <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/70 p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-800">{t.eventInfo.date}:</span>
                   <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">{t.eventInfo.guests}:</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
                   <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-700">{t.eventInfo.location}:</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
                   <span className="font-semibold text-gray-900">
                     {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
                   </span>
@@ -1656,46 +1897,65 @@ export default function OrderPage() {
               
               {/* Items Summary */}
               <div className="pt-4 border-t border-gray-200">
-                <h4 className="font-bold text-gray-900 mb-3">Selected Items</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                  {[
-                    { title: 'Starters', items: orderData.selectedStarters },
-                    { title: 'Mains', items: orderData.selectedMains },
-                    { title: 'Sides', items: orderData.selectedSides },
-                    { title: 'Desserts', items: orderData.selectedDesserts },
-                    { title: 'Drinks', items: orderData.selectedDrinks }
-                  ].map((section, idx) => (
-                    section.items.length > 0 && (
-                      <div key={idx} className="mb-3">
-                        <h5 className="text-sm font-semibold text-gray-700 mb-2">{section.title}</h5>
+                  {activeCategoryKeys.map((key) => {
+                    const items = getItemsForStepCategory(key);
+                    const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
+                    if (!items.length) return null;
+                    return (
+                      <div key={key} className="mb-3">
+                        <h5 className="text-sm font-semibold text-gray-800 mb-2">{title}</h5>
                         <div className="space-y-2 pl-3">
-                          {section.items.map((item, itemIdx) => (
+                          {items.map((item, itemIdx) => (
                             <div key={itemIdx} className="flex justify-between items-center text-sm">
-                              <span className="text-gray-600 truncate max-w-[60%]">{item.name}</span>
+                              <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
                               <div className="flex items-center gap-2">
-                                <span className="text-gray-500">x{item.quantity}</span>
-                                <span className="font-medium">€{(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="text-gray-600">x{item.quantity}</span>
+                                <span className="font-semibold text-gray-900">£{(item.price * item.quantity).toFixed(2)}</span>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
-                    )
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               
+
+              {/* Included vs Extras */}
+              {getCategorySummaryRows().length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Included vs Extras</h4>
+                  <div className="space-y-3">
+                    {getCategorySummaryRows().map((row) => (
+                      <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-800">{row.label}</span>
+                          <span className="text-xs text-gray-500">Included {row.included}</span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                          <span>Selected: {row.selected}</span>
+                          <span>Extras: {row.extra}</span>
+                          <span className="text-right">Extras cost: £{row.extraCost.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Accessories Summary */}
               {selectedAccessories.length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">Accessories</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Accessories</h4>
                   <div className="space-y-2">
                     {selectedAccessories.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">{item.name}</span>
+                        <span className="text-gray-800">{item.name}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-500">x{item.quantity}</span>
-                          <span className="font-medium">€{(item.price * item.quantity * guestCount).toFixed(2)}</span>
+                          <span className="text-gray-600">x{item.quantity}</span>
+                          <span className="font-semibold text-gray-900">£{(item.price * item.quantity * guestCount).toFixed(2)}</span>
                         </div>
                       </div>
                     ))}
@@ -1704,30 +1964,36 @@ export default function OrderPage() {
               )}
               
               {/* Totals - Fixed to show all values in orange/black */}
-              <div className="pt-4 border-t border-gray-200 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-black font-medium">Menu/Items Subtotal:</span>
-                  <span className="font-bold text-orange-600">€{subtotal.toFixed(2)}</span>
-                </div>
-                {selectedAccessories.length > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-black font-medium">Accessories:</span>
-                    <span className="font-bold text-orange-600">€{accessoriesSubtotal.toFixed(2)}</span>
+                    <span className="text-gray-900 font-semibold">Menu + Extras Subtotal:</span>
+                    <span className="font-bold text-amber-700">£{subtotal.toFixed(2)}</span>
                   </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span className="text-black font-medium">Service Fee:</span>
-                  <span className="font-bold text-orange-600">€{flatServiceFee.toFixed(2)}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-900 font-semibold">Extras (paid):</span>
+                    <span className="font-bold text-amber-700">£{getFoodExtrasSubtotal().toFixed(2)}</span>
+                  </div>
+                  {selectedAccessories.length > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-900 font-semibold">Accessories:</span>
+                      <span className="font-bold text-amber-700">£{accessoriesSubtotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-900 font-semibold">Service Fee:</span>
+                    <span className="font-bold text-amber-700">£{flatServiceFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
+                    <span>Total:</span>
+                    <span>£{currentSubtotal.toFixed(2)}</span>
+                  </div>
+                  {renderSummaryNav()}
                 </div>
-                <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-gray-300">
-                  <span>Total:</span>
-                  <span>€{currentSubtotal.toFixed(2)}</span>
-                </div>
-                
                 {currentSubtotal < minimumOrder && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800 font-medium">
-                      Minimum order of €{minimumOrder.toFixed(2)} required. Add more items to continue.
+                      Minimum order of £{minimumOrder.toFixed(2)} required. Add more items to continue.
                     </p>
                   </div>
                 )}
@@ -1735,7 +2001,6 @@ export default function OrderPage() {
             </div>
           </div>
         </div>
-
         {/* Accessories Selection - Left Side */}
         <div className="lg:col-span-2 lg:order-1">
           <div className="space-y-8">
@@ -1748,12 +2013,11 @@ export default function OrderPage() {
                 Select plates, cutlery, and other accessories for your event
               </h2>
             </div>
-
             <div className="space-y-6">
               {accessoriesList.map((accessory) => {
                 const isSelected = selectedAccessories.some(item => item.id === accessory.id);
                 const selectedItem = selectedAccessories.find(item => item.id === accessory.id);
-                
+                const minQuantity = getAccessoryMinQuantity(accessory);
                 return (
                   <div key={accessory.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
                     <div className="p-6">
@@ -1775,11 +2039,11 @@ export default function OrderPage() {
                           {accessory.price > 0 ? (
                             <div className="mt-3">
                               <div className="text-lg font-bold text-gray-900">
-                                €{accessory.price.toFixed(2)} {accessory.unit}
+                                £{accessory.price.toFixed(2)} {accessory.unit}
                               </div>
-                              {accessory.minQuantity && (
-                                <div className="text-gray-500 text-sm">(min {accessory.minQuantity})</div>
-                              )}
+                              <div className="text-xs font-semibold text-amber-700 mt-1">
+                                Min {minQuantity}
+                              </div>
                             </div>
                           ) : null}
                         </div>
@@ -1795,9 +2059,15 @@ export default function OrderPage() {
                               </button>
                               <input
                                 type="number"
-                                min="1"
+                                min={minQuantity}
                                 value={selectedItem.quantity}
-                                onChange={(e) => updateAccessoryQuantity(accessory.id, parseInt(e.target.value) || 1)}
+                                onChange={(e) => {
+                                  const nextValue = parseInt(e.target.value, 10);
+                                  updateAccessoryQuantity(
+                                    accessory.id,
+                                    Number.isFinite(nextValue) ? nextValue : minQuantity
+                                  );
+                                }}
                                 className="w-12 text-center py-2 text-base font-bold border-x border-gray-300 text-gray-900"
                               />
                               <button
@@ -1821,73 +2091,16 @@ export default function OrderPage() {
                           </button>
                         </div>
                       </div>
-                      
-                      <button
-                        onClick={() => toggleInfo(accessory.id)}
-                        className="mt-4 flex items-center gap-1 text-amber-600 hover:text-amber-700 text-sm font-medium"
-                      >
-                        {expandedInfo[accessory.id] ? 'Less information ▲' : 'More information ▼'}
-                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
-
-            {/* Delivery Details */}
-            <div className="mt-12 bg-white border border-gray-300 rounded-xl p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-8">
-                {t.accessories.orderOverview}
-              </h3>
-              
-              <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
-                      {t.accessories.deliveryDate}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        value={orderData.deliveryDate}
-                        onChange={(e) => updateOrderData('deliveryDate', e.target.value)}
-                        min={today}
-                        className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-gray-900 placeholder:text-gray-500 bg-amber-50/60"
-                      />
-                      <CalendarIcon className="absolute right-3 top-3.5 text-gray-400" size={20} />
-                    </div>
-                  </div>
-                  <div>
-                    <PostalCodeFields {...postalFieldProps} label={t.accessories.postalCode} />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Number of People
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={orderData.guestCount || ''}
-                      onChange={(e) => handleGuestCountChange(e.target.value)}
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      className="w-full px-4 py-3 text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 text-gray-900 placeholder:text-gray-500 bg-amber-50/60"
-                      placeholder="11"
-                    />
-                    <Users className="absolute right-3 top-3.5 text-gray-400" size={20} />
-                  </div>
-                  {guestCountError && (
-                    <p className="text-sm text-red-600 mt-1">{guestCountError}</p>
-                  )}
-                </div>
-              </div>
-              
+            <div className="mt-8">
               <button
                 onClick={nextStep}
                 disabled={shouldBlockProgress || !canProceedToNext}
-                className={`w-full mt-8 py-4 px-6 rounded-lg text-base font-semibold transition-colors ${
+                className={`w-full py-4 px-6 rounded-lg text-base font-semibold transition-colors ${
                   shouldBlockProgress || !canProceedToNext
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-gray-900 text-white hover:bg-black'
@@ -1901,144 +2114,196 @@ export default function OrderPage() {
       </div>
     );
   };
-
-  // Step 11: Delivery Details
+  // Step 11: Delivery + Payment
   const Step11 = () => (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          Delivery Details
+        <h2 className="text-3xl font-bold text-gray-900 mb-3">
+          Delivery & Payment
         </h2>
         <p className="text-gray-600 text-lg">
-          Finalize your order details
+          Confirm your delivery contact and complete payment
         </p>
       </div>
-
-      <div className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              First Name *
-            </label>
-            <input
-              type="text"
-              value={orderData.contactInfo.firstName}
-              onChange={(e) => updateOrderData('contactInfo', {
-                ...orderData.contactInfo,
-                firstName: e.target.value
-              })}
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-              placeholder="John"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Last Name *
-            </label>
-            <input
-              type="text"
-              value={orderData.contactInfo.lastName}
-              onChange={(e) => updateOrderData('contactInfo', {
-                ...orderData.contactInfo,
-                lastName: e.target.value
-              })}
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-              placeholder="Doe"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              value={orderData.contactInfo.email}
-              onChange={(e) => updateContactInfoField('email', e.target.value)}
-              onBlur={() => handleContactBlur('email')}
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-              placeholder="john@example.com"
-              required
-            />
-            {contactErrors.email && (
-              <p className="mt-2 text-sm text-red-600">{contactErrors.email}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Phone Number *
-            </label>
-            <input
-              type="tel"
-              value={orderData.contactInfo.phone}
-              onChange={(e) => updateContactInfoField('phone', e.target.value)}
-              onBlur={() => handleContactBlur('phone')}
-              inputMode="tel"
-              pattern="^\\+?[0-9\\s-]{7,15}$"
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-              placeholder="+49 123 456 789"
-              required
-            />
-            {contactErrors.phone && (
-              <p className="mt-2 text-sm text-red-600">{contactErrors.phone}</p>
-            )}
-          </div>
-        </div>
-
-        {orderData.businessType === 'business' && (
-          <>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                {language === 'DE' ? 'Firmenname *' : 'Company Name *'}
-              </label>
-              <input
-                type="text"
-                value={orderData.contactInfo.company}
-                onChange={(e) => updateCompanyName(e.target.value)}
-                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                placeholder={language === 'DE' ? 'Firmenname' : 'Company name'}
-                required
-              />
-              {companyErrors.name && (
-                <p className="mt-2 text-sm text-red-600">{companyErrors.name}</p>
+      <div className="grid lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-7 space-y-6">
+          <div className="rounded-2xl border border-amber-100 bg-white shadow-lg p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <TruckIcon size={20} className="text-amber-600" />
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Delivery Contact</h3>
+                <p className="text-sm text-gray-600">Who should we reach on delivery day?</p>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    First Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={orderData.contactInfo.firstName}
+                    onChange={(e) => updateOrderData('contactInfo', {
+                      ...orderData.contactInfo,
+                      firstName: e.target.value
+                    })}
+                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                    placeholder="John"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={orderData.contactInfo.lastName}
+                    onChange={(e) => updateOrderData('contactInfo', {
+                      ...orderData.contactInfo,
+                      lastName: e.target.value
+                    })}
+                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                    placeholder="Doe"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    value={orderData.contactInfo.email}
+                    onChange={(e) => updateContactInfoField('email', e.target.value)}
+                    onBlur={() => handleContactBlur('email')}
+                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                    placeholder="john@example.com"
+                    required
+                  />
+                  {contactErrors.email && (
+                    <p className="mt-2 text-sm text-red-600">{contactErrors.email}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    value={orderData.contactInfo.phone}
+                    onChange={(e) => updateContactInfoField('phone', e.target.value)}
+                    onBlur={() => handleContactBlur('phone')}
+                    inputMode="tel"
+                    pattern="^\\+?[0-9\\s-]{7,15}$"
+                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                    placeholder="+49 123 456 789"
+                    required
+                  />
+                  {contactErrors.phone && (
+                    <p className="mt-2 text-sm text-red-600">{contactErrors.phone}</p>
+                  )}
+                </div>
+              </div>
+              {orderData.businessType === 'business' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      {language === 'DE' ? 'Firmenname *' : 'Company Name *'}
+                    </label>
+                    <input
+                      type="text"
+                      value={orderData.contactInfo.company}
+                      onChange={(e) => updateCompanyName(e.target.value)}
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                      placeholder={language === 'DE' ? 'Firmenname' : 'Company name'}
+                      required
+                    />
+                    {companyErrors.name && (
+                      <p className="mt-2 text-sm text-red-600">{companyErrors.name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">
+                      {language === 'DE' ? 'Firmeninformationen (optional)' : 'Company Information (optional)'}
+                    </label>
+                    <textarea
+                      value={orderData.companyInfo}
+                      onChange={(e) => updateCompanyInfo(e.target.value)}
+                      rows="4"
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
+                      placeholder={language === 'DE' ? 'z.B. Branche, Groesse, Standort' : 'e.g. industry, size, location'}
+                    />
+                  </div>
+                </>
               )}
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                {language === 'DE' ? 'Firmeninformationen (optional)' : 'Company Information (optional)'}
-              </label>
-              <textarea
-                value={orderData.companyInfo}
-                onChange={(e) => updateCompanyInfo(e.target.value)}
-                rows="4"
-                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
-                placeholder={language === 'DE' ? 'z.B. Branche, Groesse, Standort' : 'e.g. industry, size, location'}
-              />
+          </div>
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <FileText size={18} className="text-gray-600" />
+              <h3 className="text-lg font-bold text-gray-900">Special Requests</h3>
             </div>
-          </>
-        )}
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">
-            Special Requests
-          </label>
-          <textarea
-            value={orderData.specialRequests}
-            onChange={(e) => updateOrderData('specialRequests', e.target.value)}
-            rows="4"
-            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
-            placeholder="Any dietary restrictions or special requirements..."
-          />
+            <p className="text-sm text-gray-600 mb-4">
+              Share dietary restrictions, setup notes, or timing details.
+            </p>
+            <textarea
+              value={orderData.specialRequests}
+              onChange={(e) => updateOrderData('specialRequests', e.target.value)}
+              rows="4"
+              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
+              placeholder="Any dietary restrictions or special requirements..."
+            />
+          </div>
         </div>
+        <div className="lg:col-span-5">
+          <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 md:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <MapPinIcon size={18} className="text-amber-600" />
+              <h3 className="text-lg font-bold text-gray-900">Delivery Overview</h3>
+            </div>
+            <div className="space-y-3 text-sm text-gray-700">
+              <div className="flex items-center gap-2">
+                <CalendarIcon size={16} className="text-gray-500" />
+                <span className="font-semibold">Date:</span>
+                <span>{orderData.eventDate || 'Not set'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ClockIcon size={16} className="text-gray-500" />
+                <span className="font-semibold">Time:</span>
+                <span>{orderData.eventTime || 'Not set'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-gray-500" />
+                <span className="font-semibold">Guests:</span>
+                <span>{orderData.guestCount || 0}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPinIcon size={16} className="text-gray-500" />
+                <span className="font-semibold">Location:</span>
+                <span>
+                  {orderData.postalCode || 'Not set'}
+                  {orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                </span>
+              </div>
+            </div>
+            <div className="mt-6 rounded-xl border border-amber-200 bg-white/70 p-4 text-xs text-gray-600">
+              <div className="flex items-center gap-2">
+                <Info size={14} className="text-amber-600" />
+                <span>Delivery windows are confirmed after payment.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="pt-10 border-t border-amber-100">
+        <Step12 />
       </div>
     </div>
   );
-
   // Step 12: Payment
   const Step12 = () => {
     // Calculate totals
@@ -2053,32 +2318,23 @@ export default function OrderPage() {
     );
     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
     
-    const foodItems = [
-      ...orderData.selectedStarters,
-      ...orderData.selectedMains,
-      ...orderData.selectedSides,
-      ...orderData.selectedDesserts,
-      ...orderData.selectedDrinks
-    ];
-    
-    const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
+    const foodSubtotal = getFoodExtrasSubtotal();
+    const subtotal = menuSubtotal + foodSubtotal;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
     const vatRate = orderData.businessType === 'business' ? 0.19 : 0.07;
     const vatAmount = total * vatRate;
     const grandTotal = total + vatAmount;
-
     return (
       <div className="space-y-8">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Payment Details
-          </h2>
-          <p className="text-gray-600 text-lg">
+        <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <Lock size={20} className="text-amber-600" />
+            <h2 className="text-2xl font-bold text-gray-900">Payment Details</h2>
+          </div>
+          <p className="text-gray-600">
             Secure payment with SSL encryption
           </p>
         </div>
-
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Order Summary - Right Side */}
           <div className="lg:col-span-1 lg:order-2">
@@ -2101,7 +2357,7 @@ export default function OrderPage() {
                     <div className="flex items-center gap-2 text-sm text-black">
                       <Users size={16} className="text-gray-500" />
                       <span className="font-medium">
-                        {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
+                        {orderData.guestCount || 0} {language === 'DE' ? 'GÃ¤ste' : 'guests'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-black">
@@ -2117,16 +2373,16 @@ export default function OrderPage() {
                 <div className="pt-4 border-t border-gray-200">
                   <h4 className="font-bold text-gray-900 mb-3">Contact Information</h4>
                   <div className="space-y-2">
-                    <p className="text-sm text-black font-medium">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
-                    <p className="text-sm text-black font-medium">{orderData.contactInfo.email}</p>
-                    <p className="text-sm text-black font-medium">{orderData.contactInfo.phone}</p>
+                    <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
+                    <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
+                    <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
                     {orderData.businessType === 'business' && orderData.contactInfo.company && (
-                      <p className="text-sm text-black font-medium">
+                      <p className="text-sm text-gray-900 font-semibold">
                         {language === 'DE' ? 'Firma:' : 'Company:'} {orderData.contactInfo.company}
                       </p>
                     )}
                     {orderData.businessType === 'business' && orderData.companyInfo && (
-                      <p className="text-sm text-black font-medium">
+                      <p className="text-sm text-gray-900 font-semibold">
                         {language === 'DE' ? 'Firmeninfo:' : 'Company Info:'} {orderData.companyInfo}
                       </p>
                     )}
@@ -2138,76 +2394,149 @@ export default function OrderPage() {
                   <h4 className="font-bold text-gray-900 mb-3">Price Breakdown</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-black font-medium">Menu/Items Subtotal:</span>
-                      <span className="font-bold text-orange-600">€{subtotal.toFixed(2)}</span>
+                      <span className="text-gray-900 font-semibold">Menu + Extras Subtotal:</span>
+                      <span className="font-bold text-amber-700">£{subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-900 font-semibold">Extras (paid):</span>
+                      <span className="font-bold text-amber-700">£{getFoodExtrasSubtotal().toFixed(2)}</span>
                     </div>
                     {selectedAccessories.length > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-black font-medium">Accessories:</span>
-                        <span className="font-bold text-orange-600">€{accessoriesSubtotal.toFixed(2)}</span>
+                        <span className="text-gray-900 font-semibold">Accessories:</span>
+                        <span className="font-bold text-amber-700">£{accessoriesSubtotal.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-black font-medium">Service Fee:</span>
-                      <span className="font-bold text-orange-600">€{flatServiceFee.toFixed(2)}</span>
+                      <span className="text-gray-900 font-semibold">Service Fee:</span>
+                      <span className="font-bold text-amber-700">£{flatServiceFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-black font-medium">VAT ({vatRate * 100}%):</span>
-                      <span className="font-bold text-orange-600">€{vatAmount.toFixed(2)}</span>
+                      <span className="text-gray-900 font-semibold">VAT ({(vatRate * 100).toFixed(2)}%):</span>
+                      <span className="font-bold text-amber-700">£{vatAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
                       <span>Total:</span>
-                      <span>€{grandTotal.toFixed(2)}</span>
+                      <span>£{grandTotal.toFixed(2)}</span>
                     </div>
+                    {renderSummaryNav()}
                   </div>
                 </div>
-                
+
+                {/* Included vs Extras */}
+                {getCategorySummaryRows().length > 0 && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Included vs Extras</h4>
+                    <div className="space-y-3">
+                      {getCategorySummaryRows().map((row) => (
+                        <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-800">{row.label}</span>
+                            <span className="text-xs text-gray-500">Included {row.included}</span>
+                          </div>
+                          <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                            <span>Selected: {row.selected}</span>
+                            <span>Extras: {row.extra}</span>
+                            <span className="text-right">Extras cost: £{row.extraCost.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {/* Security Badge */}
                 <div className="pt-4 border-t border-gray-200">
                   <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                     <Shield size={20} className="text-green-600" />
                     <div>
                       <p className="text-sm font-medium text-green-800">Secure Payment</p>
-                      <p className="text-xs text-green-600">SSL Encrypted • GDPR Compliant</p>
+                      <p className="text-xs text-green-600">SSL Encrypted â€¢ GDPR Compliant</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
           {/* Payment Form - Left Side */}
           <div className="lg:col-span-2 lg:order-1">
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
               <div className="space-y-6">
                 {/* Payment Method Selection - Fixed text color */}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Select Payment Method</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900">Select Payment Method</h3>
+                    <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">Step 3</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {[
-                      { id: 'credit-card', label: 'Credit Card', icon: CreditCard },
-                      { id: 'invoice', label: 'Invoice', icon: FileText },
-                      { id: 'paypal', label: 'PayPal', icon: null },
-                      { id: 'bank-transfer', label: 'Bank Transfer', icon: Building2 }
-                    ].map((method) => (
-                      <button
-                        key={method.id}
-                        onClick={() => updateOrderData('paymentMethod', method.id)}
-                        className={`p-4 rounded-xl border-2 text-left transition-all duration-300 ${
-                          orderData.paymentMethod === method.id
-                            ? 'border-amber-500 bg-amber-50'
-                            : 'border-gray-300 hover:border-amber-400'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {method.icon && <method.icon size={24} className="text-gray-600" />}
-                          <span className="font-medium text-black">{method.label}</span>
-                        </div>
-                      </button>
-                    ))}
+                      {
+                        id: 'credit-card',
+                        label: 'Credit Card',
+                        description: 'Instant confirmation and secure checkout.',
+                        icon: CreditCard,
+                        badge: 'Fast'
+                      },
+                      {
+                        id: 'paypal',
+                        label: 'PayPal',
+                        description: 'Use your PayPal balance or linked card.',
+                        icon: null,
+                        badge: 'Popular'
+                      },
+                      {
+                        id: 'bank-transfer',
+                        label: 'Bank Transfer',
+                        description: 'We will display our bank details.',
+                        icon: Building2,
+                        badge: 'Manual'
+                      }
+                    ].map((method) => {
+                      const isSelected = orderData.paymentMethod === method.id;
+                      return (
+                        <button
+                          key={method.id}
+                          onClick={() => {
+                            updateOrderData('paymentMethod', method.id);
+                            if (method.id === 'bank-transfer') {
+                              setBankDetailsOpen(true);
+                            }
+                          }}
+                          className={`group rounded-2xl border-2 p-5 text-left transition-all duration-300 ${
+                            isSelected
+                              ? 'border-amber-500 bg-amber-50 shadow-md shadow-amber-100'
+                              : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <span className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${
+                                isSelected ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {method.icon ? <method.icon size={22} /> : <span className="text-sm font-bold">PP</span>}
+                              </span>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-base font-semibold text-gray-900">{method.label}</span>
+                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                    {method.badge}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600">{method.description}</p>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle size={20} className="text-amber-600" />
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between text-xs font-medium text-gray-500">
+                            <span>{isSelected ? 'Selected' : 'Tap to select'}</span>
+                            <span className="text-amber-600 group-hover:text-amber-700">Details</span>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
-
                 {/* Credit Card Form */}
                 {orderData.paymentMethod === 'credit-card' && (
                   <div className="space-y-6">
@@ -2230,7 +2559,6 @@ export default function OrderPage() {
                         />
                       </div>
                     </div>
-
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-semibold text-gray-900 mb-2">
@@ -2268,7 +2596,6 @@ export default function OrderPage() {
                         </div>
                       </div>
                     </div>
-
                     <div>
                       <label className="block text-sm font-semibold text-gray-900 mb-2">
                         Name on Card *
@@ -2286,10 +2613,9 @@ export default function OrderPage() {
                     </div>
                   </div>
                 )}
-
                 {/* Terms and Conditions */}
                 <div className="pt-6 border-t border-gray-200">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/70 p-4">
                     <input
                       type="checkbox"
                       id="terms"
@@ -2302,21 +2628,28 @@ export default function OrderPage() {
                         }
                       }}
                     />
-                    <label htmlFor="terms" className="text-sm text-gray-700">
-                      I agree to the Terms & Conditions and Privacy Policy. I understand that this order is subject to our cancellation policy (48 hours notice for full refund).
-                    </label>
+                    <div>
+                      <label htmlFor="terms" className="text-sm text-gray-900 leading-relaxed">
+                        I agree to the Terms & Conditions and Privacy Policy. I understand that this order is subject to our cancellation policy (48 hours notice for full refund).
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setTermsModalOpen(true)}
+                        className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
+                      >
+                        Read full Terms and Conditions
+                      </button>
+                    </div>
                   </div>
                   {termsError && (
                     <p className="mt-2 text-sm text-red-600">{termsError}</p>
                   )}
                 </div>
-
                 {orderBlocked && (
                   <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                     {blockedMessage}
                   </div>
                 )}
-
                 {/* Submit Button */}
                 <button
                   onClick={() => {
@@ -2329,9 +2662,8 @@ export default function OrderPage() {
                   className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Lock size={20} />
-                  Pay €{grandTotal.toFixed(2)} Securely
+                  Pay £{grandTotal.toFixed(2)} Securely
                 </button>
-
                 {/* Security Assurance */}
                 <div className="text-center pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
@@ -2356,7 +2688,6 @@ export default function OrderPage() {
       </div>
     );
   };
-
   // Helper functions
   const updateOrderData = (field, value) => {
     setOrderData(prev => ({
@@ -2364,7 +2695,6 @@ export default function OrderPage() {
       [field]: value
     }));
   };
-
   const nextStep = () => {
     if (shouldBlockProgress) {
       showNotification('error', blockedMessage, 3000);
@@ -2379,87 +2709,90 @@ export default function OrderPage() {
     }
     setCurrentStep(prev => Math.min(prev + 1, stepsConfig.length));
   };
-
   const prevStep = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
-
-  const updateQuantity = (category, productId, quantity) => {
+  const getMinOrderQuantity = (product) => {
+    const minValue = Number(product?.minOrderQuantity);
+    return Number.isFinite(minValue) && minValue > 0 ? minValue : 5;
+  };
+  const getAccessoryMinQuantity = (accessory) => Math.max(1, Number(accessory?.minQuantity) || 1);
+  const updateQuantity = (category, productId, quantity, minQuantity = 1) => {
+    const parsedQuantity = Number.isFinite(quantity) ? quantity : 0;
+    const clamped = parsedQuantity <= 0 ? 0 : Math.max(minQuantity, parsedQuantity);
     setQuantities(prev => ({
       ...prev,
-      [`${category}_${productId}`]: Math.max(0, quantity)
+      [`${category}_${productId}`]: clamped
     }));
   };
-
   const showNotification = (type: 'success' | 'error', message: string, duration = 2500) => {
     setNotification({ type, message });
     if (duration > 0) {
       setTimeout(() => setNotification(null), duration);
     }
   };
-
+  const getSelectionKey = (categoryKey: string, product?: any) => {
+    const normalizedProductCategory = normalizeCategoryValue(product?.category);
+    return selectionKeyByCategory[normalizedProductCategory]
+      || selectionKeyByCategory[categoryKey]
+      || '';
+  };
   const addProductToOrder = (category, product) => {
     const quantityKey = `${category}_${product.id}`;
-    const quantity = quantities[quantityKey] || 1;
-    
-    if (quantity <= 0) return;
-
+    const minQuantity = getMinOrderQuantity(product);
+    const requestedQuantity = quantities[quantityKey] || 0;
+    const quantity = requestedQuantity <= 0 ? minQuantity : Math.max(minQuantity, requestedQuantity);
     const productWithQuantity = { ...product, quantity, category };
     
-    const categoryKey = `selected${category.charAt(0).toUpperCase() + category.slice(1)}`;
+    const categoryKey = getSelectionKey(category, product);
+    if (!categoryKey) return;
     const updatedSelection = orderData[categoryKey]?.filter(p => p.id !== product.id) || [];
     updateOrderData(categoryKey, [...updatedSelection, productWithQuantity]);
     setQuantities(prev => ({ ...prev, [quantityKey]: 0 }));
   };
-
-  const getProductQuantityInOrder = (category, productId) => {
-    const categoryKey = `selected${category.charAt(0).toUpperCase() + category.slice(1)}`;
-    const product = orderData[categoryKey]?.find(p => p.id === productId);
-    return product ? product.quantity : 0;
+  const getProductQuantityInOrder = (category, product) => {
+    const categoryKey = getSelectionKey(category, product);
+    if (!categoryKey) return 0;
+    const selected = orderData[categoryKey]?.find(p => p.id === product.id);
+    return selected ? selected.quantity : 0;
   };
-
-  const updateProductQuantityInOrder = (category, productId, newQuantity) => {
-    const categoryKey = `selected${category.charAt(0).toUpperCase() + category.slice(1)}`;
-    if (newQuantity <= 0) {
-      const updatedSelection = orderData[categoryKey]?.filter(p => p.id !== productId) || [];
+  const updateProductQuantityInOrder = (category, product, newQuantity) => {
+    const categoryKey = getSelectionKey(category, product);
+    if (!categoryKey) return;
+    const selectedProduct = orderData[categoryKey]?.find(p => p.id === product.id);
+    const minQuantity = getMinOrderQuantity(selectedProduct);
+    if (newQuantity <= 0 || newQuantity < minQuantity) {
+      const updatedSelection = orderData[categoryKey]?.filter(p => p.id !== product.id) || [];
       updateOrderData(categoryKey, updatedSelection);
       return;
     }
-
-    const updatedSelection = orderData[categoryKey]?.map(product => 
-      product.id === productId ? { ...product, quantity: newQuantity } : product
+    const updatedSelection = orderData[categoryKey]?.map(item =>
+      item.id === product.id ? { ...item, quantity: newQuantity } : item
     ) || [];
     
     updateOrderData(categoryKey, updatedSelection);
   };
-
-  const toggleInfo = (id) => {
-    setExpandedInfo(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
-
   const toggleAccessory = (accessory) => {
+    const minQuantity = getAccessoryMinQuantity(accessory);
     setSelectedAccessories(prev => {
       if (prev.some(item => item.id === accessory.id)) {
         return prev.filter(item => item.id !== accessory.id);
-      } else {
-        return [...prev, { ...accessory, quantity: 1 }];
       }
+      return [...prev, { ...accessory, quantity: minQuantity }];
     });
   };
-
   const updateAccessoryQuantity = (id, quantity) => {
-    if (quantity < 1) {
-      setSelectedAccessories(prev => prev.filter(item => item.id !== id));
-      return;
-    }
-    setSelectedAccessories(prev => 
-      prev.map(item => item.id === id ? { ...item, quantity } : item)
-    );
+    setSelectedAccessories(prev => {
+      const current = prev.find(item => item.id === id);
+      const minQuantity = getAccessoryMinQuantity(current);
+      const parsedQuantity = Number.isFinite(quantity) ? quantity : minQuantity;
+      if (parsedQuantity <= 0) {
+        return prev.filter(item => item.id !== id);
+      }
+      const clamped = Math.max(minQuantity, parsedQuantity);
+      return prev.map(item => item.id === id ? { ...item, quantity: clamped } : item);
+    });
   };
-
   const handleSubmitOrder = async () => {
     // Check if ordering is paused
     if (systemStatus?.orderingPaused) {
@@ -2468,14 +2801,12 @@ export default function OrderPage() {
         : 'Ordering is currently paused. Please try again later.', 3000);
       return;
     }
-
     if (isClosedDate) {
       showNotification('error', language === 'DE'
         ? 'Das ausgewaehlte Datum ist geschlossen. Bitte waehlen Sie ein anderes Datum.'
         : 'The selected date is closed. Please choose another date.', 3000);
       return;
     }
-
     const contactEmail = (orderData.contactInfo.email || '').trim();
     const contactPhone = (orderData.contactInfo.phone || '').trim();
     const emailError = validateEmailValue(contactEmail);
@@ -2487,7 +2818,6 @@ export default function OrderPage() {
         : 'Please provide valid contact details.', 3000);
       return;
     }
-
     const companyName = (orderData.contactInfo.company || '').trim();
     const companyInfo = (orderData.companyInfo || '').trim();
     const baseRequests = (orderData.specialRequests || '').trim();
@@ -2498,7 +2828,6 @@ export default function OrderPage() {
     }
     const companyDetails = companyDetailParts.join('\n');
     const mergedRequests = [companyDetails, baseRequests].filter(Boolean).join('\n\n');
-
     // Calculate totals
     const guestCount = parseInt(orderData.guestCount) || 0;
     const flatServiceFee = 48.90;
@@ -2519,8 +2848,8 @@ export default function OrderPage() {
       ...orderData.selectedDrinks
     ];
     
-    const foodSubtotal = foodItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const subtotal = menuSubtotal > 0 ? menuSubtotal : foodSubtotal;
+    const foodSubtotal = getFoodExtrasSubtotal();
+    const subtotal = menuSubtotal + foodSubtotal;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
     
     // Prepare order items
@@ -2530,7 +2859,6 @@ export default function OrderPage() {
       price: item.price,
       name: item.name
     }));
-
     try {
       const order = await ordersApi.createOrder({
         clientName: `${orderData.contactInfo.firstName || ''} ${orderData.contactInfo.lastName || ''}`.trim() || 'Guest',
@@ -2560,42 +2888,298 @@ export default function OrderPage() {
       showNotification('error', 'Failed to place order: ' + (error.message || 'Unknown error'), 3500);
     }
   };
-
   useEffect(() => {
     setIsVisible(true);
   }, []);
-
   const handleBackToHome = () => {
     window.location.href = '/home';
   };
-
-
   const getStepComponent = () => {
-    const stepComponents = {
-      1: Step1,
-      2: Step2,
-      3: Step3,
-      4: Step4,
-      5: Step5,
-      6: Step5,
-      7: Step5,
-      8: Step5,
-      9: Step5,
-      10: Step10,
-      11: Step11,
-      12: Step12
-    };
-    return stepComponents[currentStep] || Step1;
+    const stepKey = stepsConfig[currentStep - 1]?.key;
+    const stepCategory = (stepsConfig[currentStep - 1] as any)?.categoryKey || '';
+    if (stepKey === 'event') return Step1;
+    if (stepKey === 'menu') return Step4;
+    if (stepKey === 'accessories') return Step10;
+    if (stepKey === 'checkout') return Step11;
+    if (activeCategoryKeys.includes(stepCategory)) return Step5;
+    return Step1;
   };
-
   const renderCurrentStep = getStepComponent();
-
+  const currentStepKey = stepsConfig[currentStep - 1]?.key;
+  const currentStepCategory = (stepsConfig[currentStep - 1] as any)?.categoryKey || '';
+  useEffect(() => {
+    if (!currentStepCategory || !activeCategoryKeys.includes(currentStepCategory)) return;
+    const includedTotal = Math.max(0, Number(includedByCategory[currentStepCategory]) || 0);
+    const selectedCount = getCategorySelectionCount(currentStepCategory);
+    const extraCount = Math.max(0, selectedCount - includedTotal);
+    const previous = extraNoticeRef.current[currentStepCategory] || 0;
+    if (includedTotal > 0 && previous === 0 && extraCount > 0) {
+      const label = stepsConfig[currentStep - 1]?.label
+        || categoryMeta[currentStepCategory]?.label
+        || currentStepCategory?.charAt(0).toUpperCase() + currentStepCategory?.slice(1);
+      setExtraNoticeData({ label, extra: extraCount });
+      setExtraNoticeOpen(true);
+    }
+    extraNoticeRef.current[currentStepCategory] = extraCount;
+  }, [
+    currentStepCategory,
+    activeCategoryKeys,
+    includedByCategory,
+    stepsConfig,
+    categoryMeta,
+    orderData.selectedStarters,
+    orderData.selectedMains,
+    orderData.selectedSides,
+    orderData.selectedDesserts,
+    orderData.selectedDrinks
+  ]);
+  const showHeaderNav = !currentStepKey
+    || currentStepKey === 'event'
+    || currentStepKey === 'menu'
+    || (activeCategoryKeys.includes(currentStepCategory) && !orderSummaryVisible);
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {notification && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
             {notification.message}
+          </div>
+        </div>
+      )}
+      {termsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Terms and Conditions</h3>
+              <button
+                type="button"
+                onClick={() => setTermsModalOpen(false)}
+                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5 max-h-[65vh] overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
+              <p>
+                Please review the full terms below. These terms are provided for convenience and should be updated to match your official policy.
+              </p>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Booking and Payment</h4>
+                <p>
+                  Orders are confirmed once payment is received. Prices include the selected items and services listed in your order summary.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Cancellations</h4>
+                <p>
+                  Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Late cancellations may be subject to fees.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Delivery</h4>
+                <p>
+                  Delivery windows are confirmed after payment and may vary based on scheduling availability and location.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Privacy</h4>
+                <p>
+                  We only use your information to fulfill your order and communicate about your event. Please contact us for data requests.
+                </p>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setTermsModalOpen(false)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {bankDetailsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Bank Transfer Details</h3>
+              <button
+                type="button"
+                onClick={() => setBankDetailsOpen(false)}
+                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4 text-sm text-gray-700">
+              <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
+                <p className="font-semibold text-gray-900">Please use these details for your transfer:</p>
+                <p className="mt-2 text-xs text-gray-600">Use your order ID as the payment reference.</p>
+              </div>
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                  <span className="text-gray-500">Account Name</span>
+                  <span className="font-semibold text-gray-900">La Cannelle Catering</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                  <span className="text-gray-500">IBAN</span>
+                  <span className="font-semibold text-gray-900">DE00 0000 0000 0000 0000 00</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                  <span className="text-gray-500">BIC/SWIFT</span>
+                  <span className="font-semibold text-gray-900">DEUTDEFFXXX</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                  <span className="text-gray-500">Bank</span>
+                  <span className="font-semibold text-gray-900">Your Bank Name</span>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setBankDetailsOpen(false)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {productDetailsOpen && productDetailsItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Product details</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setProductDetailsOpen(false);
+                  setProductDetailsItem(null);
+                }}
+                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-5 py-5">
+              <div className="grid gap-5 md:grid-cols-[180px,1fr]">
+                <div className="w-full h-40 rounded-xl bg-gray-100 overflow-hidden">
+                  {productDetailsItem.image ? (
+                    <img
+                      src={productDetailsItem.image}
+                      alt={productDetailsItem.name || 'Product image'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                      No image
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-xl font-bold text-gray-900">{productDetailsItem.name}</h4>
+                    <p className="text-gray-600 mt-2">{productDetailsItem.description || 'No description available.'}</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <p className="text-gray-500">Price</p>
+                      <p className="text-base font-semibold text-gray-900">£{productDetailsItem.price}</p>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <p className="text-gray-500">Minimum order</p>
+                      <p className="text-base font-semibold text-gray-900">{getMinOrderQuantity(productDetailsItem)}</p>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <p className="text-gray-500">Preparation time</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {productDetailsItem.preparationTime ? `${productDetailsItem.preparationTime} min` : 'Not specified'}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-gray-200 p-3">
+                      <p className="text-gray-500">Availability</p>
+                      <p className="text-base font-semibold text-gray-900">
+                        {productDetailsItem.available ? 'Available' : 'Not available'}
+                      </p>
+                    </div>
+                  </div>
+                  {Array.isArray(productDetailsItem.ingredients) && productDetailsItem.ingredients.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 mb-2">Ingredients</p>
+                      <div className="flex flex-wrap gap-2">
+                        {productDetailsItem.ingredients.map((ingredient, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                            {ingredient}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {Array.isArray(productDetailsItem.allergens) && productDetailsItem.allergens.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 mb-2">Allergens</p>
+                      <div className="flex flex-wrap gap-2">
+                        {productDetailsItem.allergens.map((allergen, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-red-50 text-red-700 text-xs font-medium rounded">
+                            {allergen}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setProductDetailsOpen(false);
+                  setProductDetailsItem(null);
+                }}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {extraNoticeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">Extras notice</h3>
+              <button
+                type="button"
+                onClick={() => setExtraNoticeOpen(false)}
+                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5 text-sm text-gray-700 space-y-3">
+              <p>
+                You have selected more dishes than the included amount for <span className="font-semibold">{extraNoticeData.label}</span>.
+              </p>
+              <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
+                <p className="text-sm text-amber-800 font-semibold">Extra dishes: {extraNoticeData.extra}</p>
+                <p className="text-xs text-amber-700 mt-1">Extras will be added to your total.</p>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setExtraNoticeOpen(false)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+              >
+                Ok, got it
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2655,16 +3239,13 @@ export default function OrderPage() {
         ::-webkit-scrollbar-thumb:hover {
           background: #b45309;
         }
-
         /* Ensure input text is visible */
         input, textarea {
           color: #111827 !important;
         }
-
         input::placeholder, textarea::placeholder {
           color: #6b7280 !important;
         }
-
         /* Make all minus and plus buttons black */
         button .text-black, svg.text-black {
           color: #000 !important;
@@ -2675,9 +3256,8 @@ export default function OrderPage() {
           color: #000 !important;
         }
       `}</style>
-
       {/* Enhanced Top Navigation with Steps */}
-      <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-50">
+      <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Language Row */}
           <div className="flex justify-between items-center py-2">
@@ -2702,105 +3282,88 @@ export default function OrderPage() {
           
           {/* Steps Progress Bar */}
           <div className="border-t border-gray-100 pt-2 pb-3">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold text-gray-900">
                 {stepsConfig[currentStep - 1]?.label}
               </span>
-              
-              <div className="text-center">
-                <span className="text-xs text-gray-700 font-semibold">
-                  {language === 'DE'
-                    ? `Schritt ${currentStep} von ${stepsConfig.length}`
-                    : `Step ${currentStep} of ${stepsConfig.length}`}
-                </span>
-                <div className="w-32 bg-gray-200 rounded-full h-1 mt-1">
-                  <div 
-                    className="bg-amber-600 h-1 rounded-full transition-all duration-500"
-                    style={{ width: `${(currentStep / stepsConfig.length) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={prevStep}
-                  disabled={currentStep === 1}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md inline-flex items-center transition-colors ${
-                    currentStep === 1
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
-                  }`}
-                >
-                  <ChevronLeft size={14} className="mr-1" />
-                  {t.buttons.back}
-                </button>
-                
-                <button
-                  onClick={nextStep}
-                  disabled={shouldBlockProgress || !canProceedToNext}
-                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center shadow-sm ${
-                    shouldBlockProgress || !canProceedToNext
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-amber-600 text-white hover:bg-amber-700'
-                  }`}
-                >
-                  {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
-                  <ChevronRight size={14} className="ml-1" />
-                </button>
-              </div>
-            </div>
-            
-            {/* Steps Navigation */}
-            <div className="flex items-center justify-center overflow-x-auto">
-              <div className="flex items-center space-x-1">
-                {stepsConfig.map((step, index) => {
-                  const stepNumber = index + 1;
-                  const isCurrent = stepNumber === currentStep;
-                  const isCompleted = stepNumber < currentStep;
-                  const canNavigate = canNavigateToStep(stepNumber);
+              {showHeaderNav && (
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={prevStep}
+                    disabled={currentStep === 1}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md inline-flex items-center transition-colors ${
+                      currentStep === 1
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
+                    }`}
+                  >
+                    <ChevronLeft size={14} className="mr-1" />
+                    {t.buttons.back}
+                  </button>
                   
-                  return (
-                    <React.Fragment key={step.key}>
-                      <button
-                        onClick={() => handleStepChange(stepNumber)}
-                        disabled={!canNavigate}
-                        className={`flex flex-col items-center min-w-[60px] transition-all duration-300 ${
-                          !canNavigate ? 'opacity-60 cursor-not-allowed' : ''
+                  <button
+                    onClick={nextStep}
+                    disabled={shouldBlockProgress || !canProceedToNext}
+                    className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center shadow-sm ${
+                      shouldBlockProgress || !canProceedToNext
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-amber-600 text-white hover:bg-amber-700'
+                    }`}
+                  >
+                    {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
+                    <ChevronRight size={14} className="ml-1" />
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* Steps Navigation */}
+            <div className="flex items-center justify-center gap-2 px-2 flex-nowrap overflow-hidden">
+              {stepsConfig.map((step, index) => {
+                const stepNumber = index + 1;
+                const isCurrent = stepNumber === currentStep;
+                const isCompleted = stepNumber < currentStep;
+                const canNavigate = canNavigateToStep(stepNumber);
+                return (
+                  <React.Fragment key={step.key}>
+                    <button
+                      type="button"
+                      onClick={() => handleStepChange(stepNumber)}
+                      disabled={!canNavigate}
+                      className={`flex flex-col items-center min-w-0 px-1 transition-all duration-300 ${
+                        !canNavigate ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-colors ${
+                          isCompleted
+                            ? 'border-amber-500 bg-amber-500'
+                            : 'border-amber-500 bg-white'
                         }`}
                       >
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center mb-1 transition-all duration-300 ${
-                          isCompleted
-                            ? 'bg-amber-500 text-white'
-                            : isCurrent
-                            ? 'bg-amber-600 text-white border-2 border-amber-600'
-                            : 'bg-gray-200 text-gray-500'
-                        }`}>
-                          {isCompleted ? (
-                            <Check size={12} />
-                          ) : (
-                            <span className="font-bold text-xs">{stepNumber}</span>
-                          )}
-                        </div>
-                        <span className={`text-xs font-medium text-center truncate max-w-[60px] ${
-                          isCurrent ? 'text-amber-600 font-semibold' : 'text-gray-600'
-                        }`}>
-                          {step.label}
-                        </span>
-                      </button>
-                      {index < stepsConfig.length - 1 && (
-                        <div className={`w-4 h-0.5 ${
-                          isCompleted ? 'bg-amber-500' : 'bg-gray-300'
-                        }`} />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+                        <span className="w-2 h-2 rounded-full bg-white" />
+                      </div>
+                      <span
+                        className={`hidden sm:block text-[11px] font-semibold text-center whitespace-nowrap ${
+                          isCurrent || isCompleted ? 'text-amber-600' : 'text-gray-500'
+                        }`}
+                      >
+                        {step.label}
+                      </span>
+                    </button>
+                    {index < stepsConfig.length - 1 && (
+                      <div
+                        className={`h-0.5 flex-1 min-w-[50px] max-w-[130px] rounded-full transition-colors duration-300 ${
+                          stepNumber < currentStep ? 'bg-amber-500' : 'bg-gray-200'
+                        }`}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
-
       {/* Main Content */}
       <main className="flex-1">
         <div className="pt-48 pb-16 px-4 sm:px-6 lg:px-8">
@@ -2811,12 +3374,11 @@ export default function OrderPage() {
               </div>
             )}
             <div className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              {renderCurrentStep()}
+              {renderCurrentStep ? renderCurrentStep() : null}
             </div>
           </div>
         </div>
       </main>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
@@ -2826,3 +3388,10 @@ export default function OrderPage() {
     </div>
   );
 }
+
+
+
+
+
+
+

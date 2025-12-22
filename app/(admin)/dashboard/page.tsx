@@ -8,7 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Menu, X, ChevronRight, Package, Calendar, DollarSign, 
   Users, TrendingUp, Clock, CheckCircle, AlertCircle,
-  Plus, MoreVertical, Eye, Edit, Archive,
+  Plus, MoreVertical, Edit, Archive,
   Settings,
   LayoutGrid,
   Tag,
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
     },
     DE: {
       nav: {
-        dashboard: 'ubersicht',
+        dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
         role: 'Administrator',
       },
       header: {
-        title: 'ubersicht',
+        title: 'Ubersicht',
       },
       stats: {
         totalOrders: 'Gesamtbestellungen',
@@ -112,7 +112,7 @@ export default function AdminDashboard() {
         recentOrders: 'Letzte Bestellungen',
       },
       labels: {
-        guests: 'Gaeste',
+        guests: 'Gäste',
         viewAllOrders: 'Alle Bestellungen ansehen',
       },
       status: {
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
           {/* Logo */}
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
             </div>
             <button 
               onClick={() => setIsSidebarOpen(false)}
@@ -480,9 +480,6 @@ export default function AdminDashboard() {
                           }`}>
                             {t.status[order.status as keyof typeof t.status] ?? order.status}
                           </span>
-                          <button className="p-1 hover:bg-white rounded transition-colors">
-                            <Eye size={14} className="text-gray-400" />
-                          </button>
                         </div>
                       </div>
                     </div>

@@ -106,6 +106,7 @@ export const productService = {
     price: number;
     cost: number;
     available?: boolean;
+    minOrderQuantity?: number;
     tier: MenuTier[];
     preparationTime: number;
     ingredients: string[];
@@ -125,6 +126,7 @@ export const productService = {
         price: normalizedData.price,
         cost: normalizedData.cost,
         available: normalizedData.available ?? true,
+        minOrderQuantity: normalizedData.minOrderQuantity,
         tier: normalizedData.tier as MenuTier[],
         preparationTime: normalizedData.preparationTime,
         ingredients: normalizedData.ingredients,
@@ -155,6 +157,7 @@ export const productService = {
     price: number;
     cost: number;
     available: boolean;
+    minOrderQuantity: number;
     tier: MenuTier[];
     preparationTime: number;
     ingredients: string[];

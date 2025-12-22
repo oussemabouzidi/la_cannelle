@@ -23,8 +23,13 @@ export const menuController = {
   },
 
   async createMenu(req: AuthRequest, res: Response) {
+    const minPeopleValue = req.body.minPeople;
+    const minPeople = minPeopleValue === '' || minPeopleValue === null || minPeopleValue === undefined
+      ? null
+      : parseInt(minPeopleValue, 10);
     const menu = await menuService.createMenu({
       ...req.body,
+      minPeople: Number.isFinite(minPeople) ? minPeople : null,
       startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
       endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
     });
@@ -45,6 +50,13 @@ export const menuController = {
     } else if (updateData.price !== undefined) {
       const parsedPrice = parseFloat(updateData.price);
       updateData.price = Number.isFinite(parsedPrice) ? parsedPrice : null;
+    }
+
+    if (updateData.minPeople === '' || updateData.minPeople === null) {
+      updateData.minPeople = null;
+    } else if (updateData.minPeople !== undefined) {
+      const parsedMinPeople = parseInt(updateData.minPeople, 10);
+      updateData.minPeople = Number.isFinite(parsedMinPeople) ? parsedMinPeople : null;
     }
     // Remove client-only fields that Prisma doesn't accept
     delete updateData.products;

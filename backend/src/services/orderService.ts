@@ -24,6 +24,26 @@ export const orderService = {
     serviceFee: number;
     total: number;
   }) {
+    if (data.items.some(item => item.quantity < 0)) {
+      throw new AppError('Item quantity cannot be negative', 400);
+    }
+
+    const productIds = data.items.map(item => item.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, minOrderQuantity: true }
+    });
+    const minMap = new Map(products.map(product => [product.id, product.minOrderQuantity]));
+    for (const item of data.items) {
+      const minQuantity = minMap.get(item.productId);
+      if (minQuantity === undefined) {
+        throw new AppError(`Product not found: ${item.productId}`, 404);
+      }
+      if (item.quantity > 0 && item.quantity < minQuantity) {
+        throw new AppError(`Minimum quantity for product ${item.productId} is ${minQuantity}`, 400);
+      }
+    }
+
     const order = await prisma.order.create({
       data: {
         userId: data.userId,

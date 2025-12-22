@@ -27,6 +27,13 @@ type MenuType = {
   price?: number;
   products: number[];
   image: string;
+  minPeople?: number | null;
+  steps?: MenuStep[];
+};
+
+type MenuStep = {
+  label: string;
+  included: number;
 };
 
 type MenuItem = {
@@ -107,6 +114,7 @@ export default function AdminMenuManagement() {
         editItem: 'Edit Menu Item',
         addItem: 'Add New Menu Item',
         dishImage: 'Dish Image',
+        menuImage: 'Menu Image',
         uploadImage: 'Upload image',
         imageUrl: 'Or Enter Image URL',
         name: 'Name',
@@ -121,6 +129,13 @@ export default function AdminMenuManagement() {
         includeMenus: 'Include in Menus',
         assignMenus: 'Assign to Menus',
         menuTiers: 'Menu Tiers',
+        menuSteps: 'Menu steps',
+        stepLabel: 'Step name',
+        includedDishes: 'Included dishes',
+        addStep: 'Add step',
+        minPeople: 'Minimum people',
+        minPeopleLabel: 'Minimum people',
+        dishesAvailable: 'Dishes available',
         ingredients: 'Ingredients',
         noMenusYet: 'No menus created yet',
         createMenu: 'Create Menu',
@@ -189,11 +204,12 @@ export default function AdminMenuManagement() {
         menuCategory: 'e.g., seasonal, luxury',
         menuType: 'fixed, tasting, themed',
         menuDescription: 'Describe this menu',
+        stepLabel: 'e.g., Starters',
       },
     },
     DE: {
       nav: {
-        dashboard: 'ubersicht',
+        dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
         system: 'Systemsteuerung',
@@ -218,6 +234,7 @@ export default function AdminMenuManagement() {
         editItem: 'Menuepunkt bearbeiten',
         addItem: 'Neuen Menuepunkt hinzufuegen',
         dishImage: 'Gerichtebild',
+        menuImage: 'Menuebild',
         uploadImage: 'Bild hochladen',
         imageUrl: 'Oder Bild-URL eingeben',
         name: 'Name',
@@ -232,6 +249,13 @@ export default function AdminMenuManagement() {
         includeMenus: 'In Menues aufnehmen',
         assignMenus: 'Menues zuordnen',
         menuTiers: 'Menue-Stufen',
+        menuSteps: 'Menue-Schritte',
+        stepLabel: 'Schrittname',
+        includedDishes: 'Enthaltene Gerichte',
+        addStep: 'Schritt hinzufuegen',
+        minPeople: 'Mindestpersonen',
+        minPeopleLabel: 'Mindestpersonen',
+        dishesAvailable: 'Verfuegbare Gerichte',
         ingredients: 'Zutaten',
         noMenusYet: 'Noch keine Menues erstellt',
         createMenu: 'Menue erstellen',
@@ -300,6 +324,7 @@ export default function AdminMenuManagement() {
         menuCategory: 'z.B. saisonal, luxus',
         menuType: 'fest, tasting, thematisch',
         menuDescription: 'Dieses Menue beschreiben',
+        stepLabel: 'z.B. Vorspeisen',
       },
     },
   } as const;
@@ -326,12 +351,50 @@ export default function AdminMenuManagement() {
   const menuCategories = [
     'starters', 'mains', 'sides', 'desserts', 'drinks', 'accessories'
   ];
+  const menuStepCategories = [
+    { value: 'starter', label: 'Starter' },
+    { value: 'main', label: 'Main' },
+    { value: 'side', label: 'Side' },
+    { value: 'dessert', label: 'Dessert' },
+    { value: 'beverage', label: 'Beverage' },
+    { value: 'fingerfood', label: 'Fingerfood' },
+    { value: 'canape', label: 'Canape' },
+    { value: 'appetizer', label: 'Appetizer' },
+    { value: 'salad', label: 'Salad' },
+    { value: 'soup', label: 'Soup' },
+    { value: 'pasta', label: 'Pasta' },
+    { value: 'seafood', label: 'Seafood' },
+    { value: 'meat', label: 'Meat' },
+    { value: 'vegetarian', label: 'Vegetarian' },
+    { value: 'vegan', label: 'Vegan' },
+    { value: 'gluten-free', label: 'Gluten-Free' },
+    { value: 'dairy-free', label: 'Dairy-Free' },
+    { value: 'spicy', label: 'Spicy' },
+    { value: 'signature', label: 'Signature' },
+    { value: 'seasonal', label: 'Seasonal' },
+    { value: 'kid-friendly', label: 'Kid-Friendly' },
+    { value: 'chef-special', label: 'Chef-Special' },
+    { value: 'tapas', label: 'Tapas' },
+    { value: 'bbq', label: 'BBQ' },
+    { value: 'breakfast', label: 'Breakfast' },
+    { value: 'brunch', label: 'Brunch' }
+  ];
+
+  const defaultMenuSteps: MenuStep[] = [
+    { label: 'fingerfood', included: 0 },
+    { label: 'starter', included: 0 },
+    { label: 'main', included: 0 },
+    { label: 'side', included: 0 },
+    { label: 'dessert', included: 0 }
+  ];
+
+  const buildDefaultMenuSteps = () => defaultMenuSteps.map(step => ({ ...step }));
 
   // Product categories
   const productCategories = [
-    'appetizer', 'salad', 'soup', 'pasta', 'seafood', 'meat',
-    'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'spicy',
-    'signature', 'seasonal', 'kid-friendly', 'chef-special'
+    'fingerfood', 'canape', 'appetizer', 'salad', 'soup', 'pasta', 'seafood', 'meat',
+    'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'spicy', 'signature', 'seasonal',
+    'kid-friendly', 'chef-special', 'tapas', 'bbq', 'breakfast', 'brunch'
   ];
   const tiers = ['ESSENTIAL', 'PREMIUM', 'LUXURY'];
 
@@ -352,7 +415,14 @@ export default function AdminMenuManagement() {
     products: menu.menuProducts
       ? menu.menuProducts.map((mp: any) => mp.productId)
       : menu.products || [],
-    image: menu.image || ''
+    image: menu.image || '',
+    minPeople: menu.minPeople ?? null,
+    steps: Array.isArray(menu.steps)
+      ? menu.steps.map((step: any) => ({
+          label: typeof step?.label === 'string' ? step.label : '',
+          included: Number.isFinite(step?.included) ? step.included : 0
+        })).filter((step: MenuStep) => step.label)
+      : []
   });
 
   const MenuDetailModal = ({ menu, onClose }: { menu: MenuType; onClose: () => void }) => (
@@ -379,10 +449,29 @@ export default function AdminMenuManagement() {
               </span>
               {menu.price !== undefined && (
                 <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full font-semibold">
-                  ƒ'ª{menu.price}
+                  £{menu.price}
                 </span>
               )}
             </div>
+            {menu.minPeople ? (
+              <div className="text-sm text-gray-600">{t.menu.minPeopleLabel}: {menu.minPeople}</div>
+            ) : null}
+            {menu.steps && menu.steps.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">{t.menu.menuSteps}</p>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  {menu.steps.map((step, index) => (
+                    <li key={`step-${index}`} className="flex items-center justify-between">
+                      <span>{step.label}</span>
+                      <span className="font-semibold text-gray-900">{step.included}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-gray-500 mt-3">
+                  {t.menu.dishesAvailable}: {menu.products?.length ?? 0}
+                </p>
+              </div>
+            )}
             <div className="text-sm text-gray-600 space-y-1">
               {menu.startDate && <p>{t.menu.starts}: {new Date(menu.startDate).toLocaleDateString(locale)}</p>}
               {menu.endDate && <p>{t.menu.ends}: {new Date(menu.endDate).toLocaleDateString(locale)}</p>}
@@ -495,7 +584,9 @@ const [newItem, setNewItem] = useState<NewItemState>({
     endDate: '',
     price: 0,
     products: [],
-    image: ''
+    image: '',
+    minPeople: null,
+    steps: buildDefaultMenuSteps()
   });
 
   // Filter menu items
@@ -783,7 +874,9 @@ const toggleMenuActive = async (menuId: number) => {
       endDate: '',
       price: 0,
       products: [],
-      image: ''
+      image: '',
+      minPeople: null,
+      steps: buildDefaultMenuSteps()
     });
   };
 
@@ -1072,6 +1165,37 @@ const toggleMenuActive = async (menuId: number) => {
                         <p className="text-sm text-gray-500 text-center py-2">{t.menu.noMenusYet}</p>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuSteps}</label>
+                  <div className="space-y-3 rounded-lg border border-gray-200 p-3 bg-gray-50">
+                    {localItem.menus.length === 0 && (
+                      <p className="text-sm text-gray-500">{t.filters.unassigned}</p>
+                    )}
+                    {localItem.menus.map((menuId: number) => {
+                      const menu = menus.find(m => m.id === menuId);
+                      if (!menu) return null;
+                      const steps = Array.isArray(menu.steps) ? menu.steps : [];
+                      return (
+                        <div key={menuId} className="rounded-lg border border-gray-200 bg-white p-3">
+                          <p className="text-sm font-semibold text-gray-900 mb-2">{menu.name}</p>
+                          {steps.length > 0 ? (
+                            <div className="space-y-1 text-sm text-gray-700">
+                              {steps.map((step: MenuStep, index: number) => (
+                                <div key={`menu-${menuId}-step-${index}`} className="flex items-center justify-between">
+                                  <span>{step.label}</span>
+                                  <span className="font-semibold text-gray-900">{step.included}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">{t.menu.noMenusYet}</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1425,10 +1549,47 @@ const AddFormModal = () => {
 
 const AddMenuFormModal = () => {
   const [localMenuState, setLocalMenuState] = useState<NewMenuState>(newMenu);
+  const [localMenuImagePreview, setLocalMenuImagePreview] = useState(localMenuState.image);
 
   useEffect(() => {
     setLocalMenuState(newMenu);
   }, [newMenu]);
+
+  useEffect(() => {
+    setLocalMenuImagePreview(localMenuState.image || '');
+  }, [localMenuState.image]);
+
+  const handleMenuImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = typeof reader.result === 'string' ? reader.result : '';
+        setLocalMenuImagePreview(base64String);
+        setLocalMenuState({ ...localMenuState, image: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const updateMenuStep = (index: number, updates: Partial<MenuStep>) => {
+    const nextSteps = [...(localMenuState.steps || [])];
+    nextSteps[index] = { ...nextSteps[index], ...updates };
+    setLocalMenuState({ ...localMenuState, steps: nextSteps });
+  };
+
+  const addMenuStep = () => {
+    setLocalMenuState({
+      ...localMenuState,
+      steps: [...(localMenuState.steps || []), { label: '', included: 0 }]
+    });
+  };
+
+  const removeMenuStep = (index: number) => {
+    const nextSteps = [...(localMenuState.steps || [])];
+    nextSteps.splice(index, 1);
+    setLocalMenuState({ ...localMenuState, steps: nextSteps });
+  };
 
   const handleSaveMenu = () => {
     addMenu(localMenuState);
@@ -1445,90 +1606,191 @@ const AddMenuFormModal = () => {
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
-              <input
-                type="text"
-                value={localMenuState.name}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.menuName}
-              />
+          <div className="grid lg:grid-cols-[260px_1fr] gap-6 items-start">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuImage}</label>
+              <div className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-white border border-gray-200">
+                {localMenuImagePreview ? (
+                  <img src={localMenuImagePreview} alt="Menu preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Camera className="w-10 h-10 text-gray-300" />
+                  </div>
+                )}
+              </div>
+              <label className="block mt-3">
+                <span className="sr-only">{t.menu.uploadImage}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMenuImageUpload}
+                  className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                />
+              </label>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
-              <input
-                type="text"
-                value={localMenuState.category}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.menuCategory}
-              />
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.imageUrl}</label>
+                <input
+                  type="text"
+                  value={localMenuState.image}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, image: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.imageUrl}
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                  <input
+                    type="text"
+                    value={localMenuState.name}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuName}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
+                  <input
+                    type="text"
+                    value={localMenuState.category}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuCategory}
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
+                  <input
+                    type="text"
+                    value={localMenuState.type}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuType}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
+                  <input
+                    type="number"
+                    value={localMenuState.price ?? 0}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.price}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.minPeople}</label>
+                  <input
+                    type="number"
+                    value={localMenuState.minPeople ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setLocalMenuState({
+                        ...localMenuState,
+                        minPeople: value === '' ? null : parseInt(value, 10)
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
+                <textarea
+                  value={localMenuState.description}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.menuDescription}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSteps}</label>
+                <div className="space-y-3">
+                  {(localMenuState.steps || []).map((step, index) => (
+                    <div key={`step-${index}`} className="grid grid-cols-12 gap-3 items-center">
+                      <select
+                        value={step.label}
+                        onChange={(e) => updateMenuStep(index, { label: e.target.value })}
+                        className="col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                      >
+                        <option value="">{t.placeholders.stepLabel}</option>
+                        {menuStepCategories.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        value={step.included}
+                        onChange={(e) => updateMenuStep(index, { included: parseInt(e.target.value, 10) || 0 })}
+                        className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        min="0"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeMenuStep(index)}
+                        className="col-span-2 p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        aria-label={t.actions.deleteItemTitle}
+                      >
+                        <XCircle size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addMenuStep}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 hover:text-amber-800"
+                  >
+                    <Plus size={16} />
+                    {t.menu.addStep}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {t.menu.dishesAvailable}: {localMenuState.products?.length ?? 0}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+                <input
+                  type="checkbox"
+                  id="menu-active"
+                  checked={localMenuState.isActive}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
+                  className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                />
+                <label htmlFor="menu-active" className="text-sm text-gray-700">{t.menu.menuActive}</label>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleSaveMenu}
+                  className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <Save size={20} />
+                  {t.actions.saveMenu}
+                </button>
+                <button
+                  onClick={() => setShowAddMenuForm(false)}
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  {t.actions.cancel}
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
-              <input
-                type="text"
-                value={localMenuState.type}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.menuType}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
-              <input
-                type="number"
-                value={localMenuState.price ?? 0}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.price}
-                min="0"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
-            <textarea
-              value={localMenuState.description}
-              onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-              placeholder={t.placeholders.menuDescription}
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="menu-active"
-              checked={localMenuState.isActive}
-              onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
-              className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-            />
-            <label htmlFor="menu-active" className="text-sm text-gray-700">{t.menu.menuActive}</label>
-          </div>
-
-          <div className="flex gap-4">
-            <button
-              onClick={handleSaveMenu}
-              className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
-            >
-              <Save size={20} />
-              {t.actions.saveMenu}
-            </button>
-            <button
-              onClick={() => setShowAddMenuForm(false)}
-              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              {t.actions.cancel}
-            </button>
           </div>
         </div>
       </div>
@@ -1538,10 +1800,50 @@ const AddMenuFormModal = () => {
 
 const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
   const [localMenuState, setLocalMenuState] = useState<MenuType>(menu);
+  const [localMenuImagePreview, setLocalMenuImagePreview] = useState(menu.image || '');
 
   useEffect(() => {
-    setLocalMenuState(menu);
+    setLocalMenuState({
+      ...menu,
+      steps: menu.steps && menu.steps.length > 0 ? menu.steps : buildDefaultMenuSteps()
+    });
   }, [menu]);
+
+  useEffect(() => {
+    setLocalMenuImagePreview(localMenuState.image || '');
+  }, [localMenuState.image]);
+
+  const handleMenuImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = typeof reader.result === 'string' ? reader.result : '';
+        setLocalMenuImagePreview(base64String);
+        setLocalMenuState({ ...localMenuState, image: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const updateMenuStep = (index: number, updates: Partial<MenuStep>) => {
+    const nextSteps = [...(localMenuState.steps || [])];
+    nextSteps[index] = { ...nextSteps[index], ...updates };
+    setLocalMenuState({ ...localMenuState, steps: nextSteps });
+  };
+
+  const addMenuStep = () => {
+    setLocalMenuState({
+      ...localMenuState,
+      steps: [...(localMenuState.steps || []), { label: '', included: 0 }]
+    });
+  };
+
+  const removeMenuStep = (index: number) => {
+    const nextSteps = [...(localMenuState.steps || [])];
+    nextSteps.splice(index, 1);
+    setLocalMenuState({ ...localMenuState, steps: nextSteps });
+  };
 
   const handleSaveMenu = async () => {
     await updateMenu({ ...localMenuState });
@@ -1559,90 +1861,191 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
-              <input
-                type="text"
-                value={localMenuState.name}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.menuName}
-              />
+          <div className="grid lg:grid-cols-[260px_1fr] gap-6 items-start">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuImage}</label>
+              <div className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-white border border-gray-200">
+                {localMenuImagePreview ? (
+                  <img src={localMenuImagePreview} alt="Menu preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Camera className="w-10 h-10 text-gray-300" />
+                  </div>
+                )}
+              </div>
+              <label className="block mt-3">
+                <span className="sr-only">{t.menu.uploadImage}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMenuImageUpload}
+                  className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                />
+              </label>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
-              <input
-                type="text"
-                value={localMenuState.category}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.menuCategory}
-              />
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.imageUrl}</label>
+                <input
+                  type="text"
+                  value={localMenuState.image}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, image: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.imageUrl}
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                  <input
+                    type="text"
+                    value={localMenuState.name}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuName}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
+                  <input
+                    type="text"
+                    value={localMenuState.category}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuCategory}
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
+                  <input
+                    type="text"
+                    value={localMenuState.type}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuType}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
+                  <input
+                    type="number"
+                    value={localMenuState.price ?? 0}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.price}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.minPeople}</label>
+                  <input
+                    type="number"
+                    value={localMenuState.minPeople ?? ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setLocalMenuState({
+                        ...localMenuState,
+                        minPeople: value === '' ? null : parseInt(value, 10)
+                      });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
+                <textarea
+                  value={localMenuState.description}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.menuDescription}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSteps}</label>
+                <div className="space-y-3">
+                  {(localMenuState.steps || []).map((step, index) => (
+                    <div key={`step-${index}`} className="grid grid-cols-12 gap-3 items-center">
+                      <select
+                        value={step.label}
+                        onChange={(e) => updateMenuStep(index, { label: e.target.value })}
+                        className="col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                      >
+                        <option value="">{t.placeholders.stepLabel}</option>
+                        {menuStepCategories.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        value={step.included}
+                        onChange={(e) => updateMenuStep(index, { included: parseInt(e.target.value, 10) || 0 })}
+                        className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        min="0"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeMenuStep(index)}
+                        className="col-span-2 p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        aria-label={t.actions.deleteItemTitle}
+                      >
+                        <XCircle size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addMenuStep}
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 hover:text-amber-800"
+                  >
+                    <Plus size={16} />
+                    {t.menu.addStep}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {t.menu.dishesAvailable}: {localMenuState.products?.length ?? 0}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+                <input
+                  type="checkbox"
+                  id="menu-active-edit"
+                  checked={localMenuState.isActive}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
+                  className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                />
+                <label htmlFor="menu-active-edit" className="text-sm text-gray-700">{t.menu.menuActive}</label>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleSaveMenu}
+                  className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <Save size={20} />
+                  {t.actions.saveMenu}
+                </button>
+                <button
+                  onClick={() => setEditingMenu(null)}
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                >
+                  {t.actions.cancel}
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
-              <input
-                type="text"
-                value={localMenuState.type}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.menuType}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
-              <input
-                type="number"
-                value={localMenuState.price ?? 0}
-                onChange={(e) => setLocalMenuState({ ...localMenuState, price: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                placeholder={t.placeholders.price}
-                min="0"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
-            <textarea
-              value={localMenuState.description}
-              onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-              placeholder={t.placeholders.menuDescription}
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="menu-active-edit"
-              checked={localMenuState.isActive}
-              onChange={(e) => setLocalMenuState({ ...localMenuState, isActive: e.target.checked })}
-              className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-            />
-            <label htmlFor="menu-active-edit" className="text-sm text-gray-700">{t.menu.menuActive}</label>
-          </div>
-
-          <div className="flex gap-4">
-            <button
-              onClick={handleSaveMenu}
-              className="flex-1 bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center justify-center gap-2"
-            >
-              <Save size={20} />
-              {t.actions.saveMenu}
-            </button>
-            <button
-              onClick={() => setEditingMenu(null)}
-              className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-            >
-              {t.actions.cancel}
-            </button>
           </div>
         </div>
       </div>
@@ -1654,10 +2057,10 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
   <div
     role="button"
     tabIndex={0}
-    onClick={() => setSelectedMenu(menu)}
+    onClick={() => setSelectedMenu(isSelected ? null : menu)}
     onKeyDown={(e) => {
       if (e.key === 'Enter' || e.key === ' ') {
-        setSelectedMenu(menu);
+        setSelectedMenu(isSelected ? null : menu);
       }
     }}
     className={`w-full text-left p-4 rounded-xl border transition-all duration-300 cursor-pointer ${
@@ -1946,7 +2349,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
             </div>
             <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
               <X size={20} />

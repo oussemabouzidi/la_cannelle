@@ -83,6 +83,8 @@ export const menuService = {
     endDate?: Date;
     price?: number;
     image?: string;
+    minPeople?: number | null;
+    steps?: any;
     productIds?: number[];
   }) {
     const menu = await prisma.menu.create({
@@ -96,6 +98,8 @@ export const menuService = {
         endDate: data.endDate,
         price: data.price,
         image: data.image,
+        minPeople: data.minPeople ?? null,
+        steps: data.steps ?? undefined,
         menuProducts: data.productIds ? {
           create: data.productIds.map(productId => ({ productId }))
         } : undefined
@@ -125,6 +129,8 @@ export const menuService = {
     endDate: Date;
     price: number;
     image: string;
+    minPeople: number | null;
+    steps: any;
     productIds: number[];
     products: number[];
   }>) {
