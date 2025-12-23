@@ -712,25 +712,21 @@ async function main() {
   console.log('✅ Created system status');
 
   // Create closed dates
-  await prisma.closedDate.createMany({
-    data: [
-      {
-        date: new Date('2024-12-25'),
-        reason: 'Christmas Day',
-        recurring: true
-      },
-      {
-        date: new Date('2024-12-31'),
-        reason: 'New Years Eve',
-        recurring: true
-      }
-    ],
-    skipDuplicates: true
-  });
-  console.log('✅ Created closed dates');
+const closedDates = [
+  { date: new Date('2024-12-25'), reason: 'Christmas Day', recurring: true },
+  { date: new Date('2024-12-31'), reason: 'New Years Eve', recurring: true }
+];
 
-  console.log('🎉 Seeding completed!');
+for (const cd of closedDates) {
+  await prisma.closedDate.upsert({
+    where: { date: cd.date },
+    update: {},
+    create: cd
+  });
 }
+
+console.log('✅ Created closed dates');
+
 
 main()
   .catch((e) => {
