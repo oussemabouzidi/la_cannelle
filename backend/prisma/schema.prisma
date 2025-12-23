@@ -51,29 +51,29 @@ enum MenuTier {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  email         String    @unique
-  password      String
-  firstName     String
-  lastName      String
-  phone         String?
-  role          UserRole  @default(CLIENT)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Client-specific fields
-  company       String?
-  position      String?
-  location      String?
-  preferences   Json?
-  allergies     Json?
-  notes         String?
-  tier          CustomerTier @default(REGULAR)
-  status        String    @default("active") // active, inactive
+  company     String?
+  position    String?
+  location    String?
+  preferences Json?
+  allergies   Json?
+  notes       String?
+  tier        CustomerTier @default(REGULAR)
+  status      String       @default("active") // active, inactive
 
   // Relations
-  orders        Order[]
-  favorites     Favorite[]
+  orders    Order[]
+  favorites Favorite[]
 
   @@map("users")
 }
@@ -83,25 +83,25 @@ model Product {
   name              String
   description       String          @db.Text
   category          ProductCategory
-  menuCategory      String          // starters, mains, sides, desserts, drinks
+  menuCategory      String // starters, mains, sides, desserts, drinks
   price             Float
   cost              Float
   available         Boolean         @default(true)
-  minOrderQuantity  Int             @default(5)
+  minOrderQuantity  Int //@default(5)
   tier              Json?
-  preparationTime   Int             // in minutes
+  preparationTime   Int // in minutes
   ingredients       Json?
   allergens         Json?
-  productCategories Json?        // vegetarian, vegan, gluten-free, etc.
+  productCategories Json? // vegetarian, vegan, gluten-free, etc.
   image             String?
   popularity        Int             @default(0)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
   // Relations
-  menuProducts      MenuProduct[]
-  orderItems        OrderItem[]
-  favorites         Favorite[]
+  menuProducts MenuProduct[]
+  orderItems   OrderItem[]
+  favorites    Favorite[]
 
   @@map("products")
 }
@@ -110,8 +110,8 @@ model Menu {
   id          Int       @id @default(autoincrement())
   name        String
   description String    @db.Text
-  category    String    // seasonal, luxury, vegetarian, etc.
-  type        String    // fixed, tasting, themed
+  category    String // seasonal, luxury, vegetarian, etc.
+  type        String // fixed, tasting, themed
   isActive    Boolean   @default(true)
   startDate   DateTime?
   endDate     DateTime?
@@ -133,105 +133,105 @@ model MenuProduct {
   menuId    Int
   productId Int
 
-  menu      Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  menu    Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([menuId, productId])
   @@map("menu_products")
 }
 
 model Order {
-  id              String        @id @default(uuid())
-  userId          Int?
-  clientName      String
-  contactEmail    String
-  phone           String
-  eventType       String
-  eventDate       DateTime
-  eventTime       String
-  guests          Int
-  location        String        @db.Text
-  menuTier        MenuTier?
-  total           Float
-  subtotal        Float
-  serviceFee      Float         @default(0)
-  status          OrderStatus   @default(PENDING)
-  paymentStatus   PaymentStatus @default(PENDING)
-  specialRequests String?       @db.Text
-  cancellationReason String?    @db.Text
-  businessType    String?       // B2B, B2C
-  serviceType     String?       // office, event, wedding, corporate
-  postalCode      String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                 String        @id @default(uuid())
+  userId             Int?
+  clientName         String
+  contactEmail       String
+  phone              String
+  eventType          String
+  eventDate          DateTime
+  eventTime          String
+  guests             Int
+  location           String        @db.Text
+  menuTier           MenuTier?
+  total              Float
+  subtotal           Float
+  serviceFee         Float         @default(0)
+  status             OrderStatus   @default(PENDING)
+  paymentStatus      PaymentStatus @default(PENDING)
+  specialRequests    String?       @db.Text
+  cancellationReason String?       @db.Text
+  businessType       String? // B2B, B2C
+  serviceType        String? // office, event, wedding, corporate
+  postalCode         String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   // Relations
-  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  items           OrderItem[]
+  user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items OrderItem[]
 
   @@map("orders")
 }
 
 model OrderItem {
-  id        Int     @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   orderId   String
   productId Int
   quantity  Int
-  price     Float   // Price at time of order
-  name      String  // Product name at time of order
+  price     Float // Price at time of order
+  name      String // Product name at time of order
 
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
 }
 
 model Favorite {
-  id        Int     @id @default(autoincrement())
+  id        Int @id @default(autoincrement())
   userId    Int
   productId Int
 
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
   @@map("favorites")
 }
 
 model SystemStatus {
-  id                Int       @id @default(autoincrement())
-  orderingPaused    Boolean   @default(false)
-  pauseReason       String?   @db.Text
-  pauseUntil        DateTime?
-  capacityLimit     Int       @default(100)
-  currentReservations Int     @default(0)
-  dailyLimit       Int       @default(100)
-  perHourLimit     Int       @default(25)
-  weekendMultiplier Float     @default(1.5)
-  enableAutoPause  Boolean   @default(true)
-  updatedAt         DateTime  @updatedAt
+  id                  Int       @id @default(autoincrement())
+  orderingPaused      Boolean   @default(false)
+  pauseReason         String?   @db.Text
+  pauseUntil          DateTime?
+  capacityLimit       Int       @default(100)
+  currentReservations Int       @default(0)
+  dailyLimit          Int       @default(100)
+  perHourLimit        Int       @default(25)
+  weekendMultiplier   Float     @default(1.5)
+  enableAutoPause     Boolean   @default(true)
+  updatedAt           DateTime  @updatedAt
 
   @@map("system_status")
 }
 
 model CapacitySetting {
-  id               Int      @id @default(autoincrement())
-  dailyLimit       Int      @default(100)
-  perHourLimit     Int      @default(25)
-  weekendMultiplier Float   @default(1.5)
-  enableAutoPause  Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                Int      @id @default(autoincrement())
+  dailyLimit        Int      @default(100)
+  perHourLimit      Int      @default(25)
+  weekendMultiplier Float    @default(1.5)
+  enableAutoPause   Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("capacity_settings")
 }
 
 model ClosedDate {
-  id        Int       @id @default(autoincrement())
-  date      DateTime  @unique
+  id        Int      @id @default(autoincrement())
+  date      DateTime @unique
   reason    String
-  recurring Boolean   @default(false)
-  createdAt DateTime  @default(now())
+  recurring Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   @@map("closed_dates")
 }

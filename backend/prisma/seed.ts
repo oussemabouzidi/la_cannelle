@@ -680,10 +680,10 @@ async function main() {
   };
   for (const productData of products) {
     const minOrderQuantity =
-  "minOrderQuantity" in productData &&
   Number.isFinite((productData as any).minOrderQuantity)
     ? (productData as any).minOrderQuantity
-    : null;
+    : getDefaultMinOrderQuantity(productData);
+
 
     const product = await prisma.product.create({
       data: {
@@ -724,7 +724,8 @@ async function main() {
         reason: 'New Years Eve',
         recurring: true
       }
-    ]
+    ],
+    skipDuplicates: true
   });
   console.log('✅ Created closed dates');
 
