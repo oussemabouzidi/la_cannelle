@@ -126,7 +126,7 @@ export const productService = {
         price: normalizedData.price,
         cost: normalizedData.cost,
         available: normalizedData.available ?? true,
-        minOrderQuantity: normalizedData.minOrderQuantity,
+        minOrderQuantity: normalizedData.minOrderQuantity ?? 1,
         tier: normalizedData.tier as MenuTier[],
         preparationTime: normalizedData.preparationTime,
         ingredients: normalizedData.ingredients,

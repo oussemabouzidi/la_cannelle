@@ -5,23 +5,11 @@ import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Users, Heart, Target,
 import { useRouter } from 'next/navigation';
 import { Crown, Building } from 'lucide-react';
 import { commonTranslations } from '@/lib/translations/common';
-import { DEFAULT_LANGUAGE, STORAGE_KEY, type Language } from '@/lib/hooks/useTranslation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
 
 export default function AboutPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE);
-  const toggleLanguage = () => {
-    setLanguage((prev) => {
-      const next = prev === 'EN' ? 'DE' : 'EN';
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, next);
-      }
-      if (typeof document !== 'undefined') {
-        document.documentElement.lang = next.toLowerCase();
-      }
-      return next;
-    });
-  };
+  const { language, toggleLanguage } = useTranslation('about');
   const [isVisible, setIsVisible] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
@@ -106,17 +94,6 @@ export default function AboutPage() {
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const next = stored === 'DE' || stored === 'EN' ? (stored as Language) : DEFAULT_LANGUAGE;
-    setLanguage(next);
-    localStorage.setItem(STORAGE_KEY, next);
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = next.toLowerCase();
-    }
   }, []);
 
     type AboutContent = {

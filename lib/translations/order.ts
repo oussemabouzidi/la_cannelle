@@ -229,7 +229,7 @@ const de: OrderTranslations = {
     options: {
       business: [
         { key: 'buffet', title: 'Buffet', description: 'Flexibles Self-Service Konzept.', image: '/images/mediterranean-buffet.jpg' },
-        { key: 'plated', title: 'Gedecktes Menue', description: 'Service wie im Restaurant.', image: '/images/beef-wellington.jpg' },
+        { key: 'plated', title: 'Gedecktes Men?', description: 'Service wie im Restaurant.', image: '/images/beef-wellington.jpg' },
         { key: 'fingerfood', title: 'Fingerfood', description: 'Snacks fuer Networking.', image: '/images/truffle-arancini.jpg' },
       ],
       private: [
@@ -315,7 +315,7 @@ const de: OrderTranslations = {
         id: 'serving-utensils',
         name: 'Servierbesteck',
         description: 'Servierloeffel und Zangen fuer Buffets.',
-        details: 'Im Menue enthalten.',
+        details: 'Im Men? enthalten.',
         price: 0,
         unit: '',
         minQuantity: 1,

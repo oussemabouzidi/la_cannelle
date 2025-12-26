@@ -7,12 +7,15 @@ import {
   Search, Filter, Save, XCircle, CheckCircle, AlertCircle,
   Utensils, Wine, Coffee, Dessert, Mail, Phone, MapPin,
   Star, Crown, Eye, MessageCircle,
-  User // Added User icon
+  User, // Added User icon
+  ShoppingBag,
+  BarChart3
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import AdminLanguageToggle from '../components/AdminLanguageToggle';
+import AdminLayout from '../components/AdminLayout';
 import { customersApi, CustomerSummary } from '@/lib/api/customers';
 import { ordersApi, Order } from '@/lib/api/orders';
 
@@ -27,9 +30,7 @@ type Customer = CustomerSummary & {
 };
 
 export default function Customers() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [activeSection, setActiveSection] = useState('customers');
   const [activeTab, setActiveTab] = useState('list');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -45,6 +46,7 @@ export default function Customers() {
         dashboard: 'Dashboard',
         orders: 'Orders',
         menu: 'Menu Management',
+        accessories: 'Accessories',
         system: 'System Control',
         customers: 'Customers',
         reports: 'Reports',
@@ -110,6 +112,7 @@ export default function Customers() {
         dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
+        accessories: 'Zubehoer',
         system: 'Systemsteuerung',
         customers: 'Kunden',
         reports: 'Berichte',
@@ -177,20 +180,6 @@ export default function Customers() {
     setIsVisible(true);
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setIsSidebarOpen(window.innerWidth >= 1024);
-  }, []);
-
-  // Get current active section from pathname (optional, for styling)
-  const getActiveSection = () => {
-    if (typeof window === 'undefined') return activeSection;
-    // This would depend on your current route structure
-    // You might need to use usePathname() from 'next/navigation'
-    const pathname = window.location.pathname;
-    return navigation.find(item => pathname.includes(item.id))?.id || 'dashboard';
-  };
-
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -223,14 +212,11 @@ export default function Customers() {
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'accessories', name: t.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
-    // { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
+    { id: 'reports', name: t.nav.reports, icon: BarChart3, path: '/reports' }
   ];
-
-  const handleNavigation = (path: string) => {
-    router.push(path);
-  };
 
   const fallbackAvatar =
     'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjZjVmNWY1Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
@@ -441,88 +427,14 @@ export default function Customers() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body {
-          font-family: 'Inter', sans-serif;
-        }
-        
-        .font-elegant {
-          font-family: 'Playfair Display', serif;
-        }
-      `}</style>
-
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-lg border-r border-gray-100 transition-transform duration-300 ${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
-            </div>
-            <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
-              <X size={20} />
-            </button>
-          </div>
-
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              {navigation.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                    getActiveSection() === item.id
-                      ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon size={20} />
-                  <span className="font-medium">{item.name}</span>
-                </button>
-              ))}
-            </div>
-          </nav>
-
-          <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <Users className="text-amber-700" size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900">{t.admin.user}</p>
-                <p className="text-sm text-gray-600">{t.admin.role}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
-        <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
-                <Menu size={20} />
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h1>
-            </div>
-            <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
-          </div>
-        </header>
-
-        <main className="p-6">
+    <AdminLayout
+      navigation={navigation}
+      title={t.header.title}
+      adminUserLabel={t.admin.user}
+      adminRoleLabel={t.admin.role}
+      languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
+      locale={locale}
+    >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -774,8 +686,6 @@ export default function Customers() {
               )}
             </div>
           </div>
-        </main>
-      </div>
 
       {/* Modals */}
       {selectedCustomer && (
@@ -784,6 +694,6 @@ export default function Customers() {
           onClose={() => setSelectedCustomer(null)}
         />
       )}
-    </div>
+    </AdminLayout>
   );
 }

@@ -235,3 +235,23 @@ model ClosedDate {
 
   @@map("closed_dates")
 }
+
+model Accessory {
+  id            Int      @id @default(autoincrement())
+  nameEn        String
+  nameDe        String?
+  descriptionEn String   @db.Text
+  descriptionDe String?  @db.Text
+  detailsEn     String?  @db.Text
+  detailsDe     String?  @db.Text
+  unitEn        String?
+  unitDe        String?
+  price         Float
+  minQuantity   Int      @default(1)
+  image         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("accessories")
+}

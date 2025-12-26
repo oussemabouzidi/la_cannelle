@@ -5,31 +5,38 @@ import { verifyToken } from '@/lib/auth'
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // ✅ Allow public routes
-  if (
-    pathname === '/login' ||
-    pathname.startsWith('/api') ||
-    !pathname.startsWith('/admin')
-  ) {
+  if (pathname === '/login' || pathname.startsWith('/api/admin')) {
     return NextResponse.next()
   }
 
-  // 🔒 Protect admin routes only
   const token = req.cookies.get('admin_token')?.value
-
   if (!token) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    const url = req.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('next', `${req.nextUrl.pathname}${req.nextUrl.search}`)
+    return NextResponse.redirect(url)
   }
 
   try {
     const payload = await verifyToken(token)
-    if (payload.role !== 'admin') throw new Error()
+    if (payload.role !== 'admin') throw new Error('not admin')
     return NextResponse.next()
   } catch {
-    return NextResponse.redirect(new URL('/login', req.url))
+    const url = req.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('next', `${req.nextUrl.pathname}${req.nextUrl.search}`)
+    return NextResponse.redirect(url)
   }
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/orders/:path*',
+    '/menu_management/:path*',
+    '/accessories/:path*',
+    '/system_control/:path*',
+    '/customers/:path*',
+    '/reports/:path*',
+  ],
 }

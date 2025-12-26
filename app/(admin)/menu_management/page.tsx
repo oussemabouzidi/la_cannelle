@@ -6,12 +6,13 @@ import {
   Users, TrendingUp, Clock, Plus, Edit, Archive, Trash2,
   Search, Filter, Save, XCircle, CheckCircle, AlertCircle,
   Utensils, Wine, Coffee, Dessert, Camera, FolderPlus,
-  ChevronDown, Layers, Tag, Grid, Eye, List, LayoutGrid
+  ChevronDown, Layers, Tag, Grid, Eye, List, LayoutGrid, ShoppingBag, BarChart3
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import AdminLanguageToggle from '../components/AdminLanguageToggle';
+import AdminLayout from '../components/AdminLayout';
 import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
 
@@ -67,9 +68,7 @@ type NewMenuState = Omit<MenuType, 'id' | 'products'> & {
 
 export default function AdminMenuManagement() {
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [activeSection, setActiveSection] = useState('menu');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [menuFilter, setMenuFilter] = useState('all');
@@ -92,6 +91,7 @@ export default function AdminMenuManagement() {
         dashboard: 'Dashboard',
         orders: 'Orders',
         menu: 'Menu Management',
+        accessories: 'Accessories',
         system: 'System Control',
         customers: 'Customers',
         reports: 'Reports',
@@ -212,6 +212,7 @@ export default function AdminMenuManagement() {
         dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
+        accessories: 'Zubehoer',
         system: 'Systemsteuerung',
         customers: 'Kunden',
         reports: 'Berichte',
@@ -334,18 +335,14 @@ export default function AdminMenuManagement() {
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'accessories', name: t.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
-    // { id: 'reports', name: t.nav.reports, icon: DollarSign, path: '/reports' }
+    { id: 'reports', name: t.nav.reports, icon: BarChart3, path: '/reports' }
   ];
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setIsSidebarOpen(window.innerWidth >= 1024);
   }, []);
 
   const menuCategories = [
@@ -449,7 +446,7 @@ export default function AdminMenuManagement() {
               </span>
               {menu.price !== undefined && (
                 <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full font-semibold">
-                  £{menu.price}
+                  €{menu.price}
                 </span>
               )}
             </div>
@@ -781,11 +778,6 @@ const toggleMenuActive = async (menuId: number) => {
         ? prev.tier.filter(t => t !== tier)
         : [...prev.tier, tier]
     }));
-  };
-
-  const handleNavigation = (path: string) => {
-    setActiveSection(path.replace('/', '') || 'menu');
-    router.push(path);
   };
 
   const toggleProductCategory = (category: string) => {
@@ -2300,25 +2292,35 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100">
+    <AdminLayout
+      navigation={navigation}
+      title={t.header.title}
+      adminUserLabel={t.admin.user}
+      adminRoleLabel={t.admin.role}
+      languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
+      locale={locale}
+      headerMeta={
+        <div className="flex items-center gap-4">
+          <ViewModeToggle />
+          <span className="hidden md:inline text-sm text-gray-600">
+            {t.header.totalProducts}: {menuItems.length} | {t.header.totalMenus}: {menus.length}
+          </span>
+        </div>
+      }
+    >
       {notification && (
         <div className="fixed top-6 right-6 z-50">
-          <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
+          <div
+            className={`px-4 py-3 rounded-lg shadow-lg text-white ${
+              notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
+            }`}
+          >
             {notification.message}
           </div>
         </div>
       )}
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body {
-          font-family: 'Inter', sans-serif;
-        }
-        
-        .font-elegant {
-          font-family: 'Playfair Display', serif;
-        }
 
+      <style jsx global>{`
         @keyframes fade-in-up {
           from {
             opacity: 0;
@@ -2341,82 +2343,6 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           overflow: hidden;
         }
       `}</style>
-
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-lg border-r border-gray-100 transition-transform duration-300 ${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-gray-100">
-            <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
-            </div>
-            <button onClick={() => setIsSidebarOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
-              <X size={20} />
-            </button>
-          </div>
-
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              {navigation.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                    activeSection === item.id
-                      ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon size={20} />
-                  <span className="font-medium">{item.name}</span>
-                </button>
-              ))}
-            </div>
-          </nav>
-
-          <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <Users className="text-amber-700" size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900">{t.admin.user}</p>
-                <p className="text-sm text-gray-600">{t.admin.role}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
-        <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100">
-          <div className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg hover:bg-gray-100">
-                <Menu size={20} />
-              </button>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 font-elegant">{t.header.title}</h1>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:justify-end lg:gap-4">
-              <ViewModeToggle />
-              <AdminLanguageToggle language={language} onToggle={toggleLanguage} />
-              <span className="text-sm text-gray-600">
-                {t.header.totalProducts}: {menuItems.length} | {t.header.totalMenus}: {menus.length}
-              </span>
-            </div>
-          </div>
-        </header>
-
-        <main className="p-6">
           {/* Header with Add Buttons */}
           <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -2608,8 +2534,6 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
               </div>
             )}
           </div>
-        </main>
-      </div>
 
       {/* Modals */}
       {editingItem && (
@@ -2631,6 +2555,6 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           onClose={() => setSelectedMenuForDetail(null)}
         />
       )}
-    </div>
+    </AdminLayout>
   );
 }

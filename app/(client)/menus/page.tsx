@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
 import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
 import { commonTranslations } from '@/lib/translations/common';
-import { DEFAULT_LANGUAGE, STORAGE_KEY, type Language } from '@/lib/hooks/useTranslation';
+import { useTranslation } from '@/lib/hooks/useTranslation';
 
 type MenuHighlightItem = {
   id: number;
@@ -22,7 +22,7 @@ type MenuHighlight = ApiMenu & {
 
 export default function MenusPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState<Language>(DEFAULT_LANGUAGE);
+  const { language, toggleLanguage } = useTranslation('menus');
   const [isVisible, setIsVisible] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState<MenuHighlight | null>(null);
   const [isMenuModalClosing, setIsMenuModalClosing] = useState(false);
@@ -43,36 +43,12 @@ export default function MenusPage() {
   };
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const next = stored === 'DE' || stored === 'EN' ? (stored as Language) : DEFAULT_LANGUAGE;
-    setLanguage(next);
-    localStorage.setItem(STORAGE_KEY, next);
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = next.toLowerCase();
-    }
-  }, []);
-
-  useEffect(() => {
     if (!selectedMenu) return;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [selectedMenu]);
-
-  const toggleLanguage = () => {
-    setLanguage((prev) => {
-      const next = prev === 'EN' ? 'DE' : 'EN';
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, next);
-      }
-      if (typeof document !== 'undefined') {
-        document.documentElement.lang = next.toLowerCase();
-      }
-      return next;
-    });
-  };
 
   const content: Record<string, any> = {
     EN: {
@@ -131,7 +107,7 @@ export default function MenusPage() {
         subtitle: 'Flexible options to suit your needs',
         basic: {
           name: 'Essential',
-          price: '£45',
+          price: '€45',
           period: 'per person',
           features: [
             '3-course menu selection',
@@ -143,7 +119,7 @@ export default function MenusPage() {
         },
         premium: {
           name: 'Premium',
-          price: '£75',
+          price: '€75',
           period: 'per person',
           features: [
             '5-course gourmet menu',
@@ -157,7 +133,7 @@ export default function MenusPage() {
         },
         luxury: {
           name: 'Luxury',
-          price: '£120',
+          price: '€120',
           period: 'per person',
           features: [
             '7-course bespoke menu',
@@ -232,7 +208,7 @@ export default function MenusPage() {
         subtitle: 'Flexible Optionen fÃ¼r Ihre BedÃ¼rfnisse',
         basic: {
           name: 'Essential',
-          price: '£45',
+          price: '€45',
           period: 'pro Person',
           features: [
             '3-GÃ¤nge-MenÃ¼auswahl',
@@ -244,7 +220,7 @@ export default function MenusPage() {
         },
         premium: {
           name: 'Premium',
-          price: '£75',
+          price: '€75',
           period: 'pro Person',
           features: [
             '5-GÃ¤nge-Gourmet-MenÃ¼',
@@ -258,7 +234,7 @@ export default function MenusPage() {
         },
         luxury: {
           name: 'Luxus',
-          price: '£120',
+          price: '€120',
           period: 'pro Person',
           features: [
             '7-GÃ¤nge-Individuelles MenÃ¼',
@@ -299,7 +275,7 @@ export default function MenusPage() {
         if (menusResult.status === 'fulfilled') {
           nextMenus = (menusResult.value || []).map((menu) => ({
             ...menu,
-            products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+            products: menu?.menuProducts ?menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
           }));
         }
 
@@ -455,7 +431,7 @@ export default function MenusPage() {
     }
 
     const sourceItems = products.length
-      ? products.map((product) => ({
+      ?products.map((product) => ({
           ...product,
           category: product.menuCategory || product.category || 'general',
         }))
@@ -473,7 +449,7 @@ export default function MenusPage() {
     return Object.entries(groupedItems).map(([category, items], index) => {
       const coverImage = items.find((item) => item.image)?.image || '/images/home_image.jpeg';
       const description = items.length
-        ? items.slice(0, 3).map((item) => item.name).join(', ')
+        ?items.slice(0, 3).map((item) => item.name).join(', ')
         : '';
       return {
         id: -(index + 1),
@@ -491,14 +467,14 @@ export default function MenusPage() {
   }, [menus, products, language]);
 
   const MenuHighlightCard = ({ menu }: { menu: MenuHighlight }) => {
-    const priceLabel = typeof menu.price === 'number' ? menu.price.toFixed(2) : '';
-    const steps = Array.isArray(menu.steps) ? menu.steps : [];
+    const priceLabel = typeof menu.price === 'number' ?menu.price.toFixed(2) : '';
+    const steps = Array.isArray(menu.steps) ?menu.steps : [];
     const dishesAvailable = Array.isArray(menu.items)
-      ? menu.items.length
+      ?menu.items.length
       : Array.isArray(menu.products)
-      ? menu.products.length
+      ?menu.products.length
       : Array.isArray(menu.menuProducts)
-      ? menu.menuProducts.length
+      ?menu.menuProducts.length
       : 0;
     return (
       <div
@@ -540,23 +516,29 @@ export default function MenusPage() {
           </div>
           <div className="pt-4 border-t border-gray-200 space-y-1">
             <div className="text-2xl font-bold text-gray-900">
-              {priceLabel ? `From EUR ${priceLabel}/person` : t.menuHighlights.viewDetails}
+              {priceLabel
+                ? (language === 'DE'
+                  ? `Ab EUR ${priceLabel}/Person`
+                  : `From EUR ${priceLabel}/person`)
+                : t.menuHighlights.viewDetails}
             </div>
-            <div className="text-xs text-gray-500">Excl. VAT</div>
-            {menu.minPeople ? (
-              <div className="text-sm font-semibold text-gray-700">{menu.minPeople} Person Minimum</div>
+            <div className="text-xs text-gray-500">{language === 'DE' ? 'zzgl. MwSt.' : 'Excl. VAT'}</div>
+            {menu.minPeople ?(
+              <div className="text-sm font-semibold text-gray-700">
+                {language === 'DE' ? `${menu.minPeople} Personen Minimum` : `${menu.minPeople} Person Minimum`}
+              </div>
             ) : null}
           </div>
           <div className="pt-2">
             <div className="w-full rounded-xl bg-amber-400/80 px-4 py-3 text-center text-sm font-semibold text-white">
-              Select Food
+              {language === 'DE' ? 'Speisen auswählen' : 'Select Food'}
             </div>
           </div>
         </div>
       </div>
     );
   };
-const MenuDetailsModal = () => {
+  const MenuDetailsModal = () => {
     const isOpen = !!selectedMenu;
     const items = selectedMenu?.items ?? [];
     const priceLabel = selectedMenu && typeof selectedMenu.price === 'number'
@@ -564,13 +546,13 @@ const MenuDetailsModal = () => {
       : '';
 
     return (
-      <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ?'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div
-          className={`absolute inset-0 bg-black transition-opacity duration-300 ${isOpen && !isMenuModalClosing ? 'opacity-60' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${isOpen && !isMenuModalClosing ?'opacity-60' : 'opacity-0'}`}
           onClick={closeMenuDetails}
         />
         <div
-          className={`relative bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-y-auto transition-all duration-300 transform ${isOpen && !isMenuModalClosing ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
+          className={`relative bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-y-auto transition-all duration-300 transform ${isOpen && !isMenuModalClosing ?'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
         >
           <div
             className="relative h-56 md:h-72 bg-cover bg-center"
@@ -600,7 +582,7 @@ const MenuDetailsModal = () => {
               <h3 className="text-3xl font-bold font-elegant mb-2">{selectedMenu?.name}</h3>
               {priceLabel && (
                 <p className="text-sm font-semibold text-amber-200">
-                  {t.menuHighlights.priceLabel} £{priceLabel}
+                  {t.menuHighlights.priceLabel} €{priceLabel}
                 </p>
               )}
             </div>
@@ -611,7 +593,7 @@ const MenuDetailsModal = () => {
             )}
             <div>
               <h4 className="text-lg font-semibold text-gray-900 mb-3">{t.menuHighlights.includes}</h4>
-              {items.length > 0 ? (
+              {items.length > 0 ?(
                 <div className="grid sm:grid-cols-2 gap-4">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-3 bg-stone-50 border border-stone-100 rounded-xl p-3">
@@ -724,7 +706,7 @@ const MenuDetailsModal = () => {
                 onClick={toggleLanguage}
                 className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
               >
-                {language === 'EN' ? (
+                {language === 'EN' ?(
                   <>
                     <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
                     English
@@ -749,7 +731,7 @@ const MenuDetailsModal = () => {
               className="md:hidden transition-transform duration-300 hover:scale-110"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMenuOpen ?<X size={24} /> : <Menu size={24} />}
             </button>
           </div>
 
@@ -764,10 +746,10 @@ const MenuDetailsModal = () => {
                 <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  aria-label={language === 'EN' ? 'Switch to German' : 'Switch to English'}
+                  aria-label={language === 'EN' ?'Switch to German' : 'Switch to English'}
                   className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
-                  {language === 'EN' ? (
+                  {language === 'EN' ?(
                     <img
                       src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
                       alt="English flag"
@@ -797,12 +779,12 @@ const MenuDetailsModal = () => {
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-stone-100 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/5"></div>
         <div className="max-w-7xl mx-auto text-center relative z-10">
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className={`transition-all duration-1000 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
             <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-4 font-elegant italic">
               {t.hero.title}
             </h1>
           </div>
-          <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className={`transition-all duration-1000 delay-300 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
             <p className="text-xl text-gray-600 font-light italic max-w-2xl mx-auto">
               {t.hero.subtitle}
             </p>
@@ -819,7 +801,7 @@ const MenuDetailsModal = () => {
           {isLoadingData && menuHighlights.length === 0 && (
             <p className="text-center text-sm text-gray-500 mb-4">Loading menus...</p>
           )}
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className={`transition-all duration-1000 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
             <div className="text-center mb-8">
               <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">
                 {t.menuHighlights.title}
@@ -828,7 +810,7 @@ const MenuDetailsModal = () => {
                 {t.menuHighlights.subtitle}
               </h2>
             </div>
-            {menuHighlights.length === 0 ? (
+            {menuHighlights.length === 0 ?(
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No menus available right now.</p>
               </div>
@@ -847,11 +829,11 @@ const MenuDetailsModal = () => {
       <footer className="bg-gray-900 text-white py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+            <div className={`transition-all duration-1000 ${isVisible ?'animate-fade-in-left' : 'opacity-0'}`}>
               <h3 className="text-2xl font-bold mb-4 font-elegant italic">La Cannelle</h3>
               <p className="text-gray-400 italic">Creating unforgettable culinary experiences</p>
             </div>
-            <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <div className={`transition-all duration-1000 delay-100 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{commonFooter.quickLinks}</h4>
               <div className="flex flex-col gap-2">
                 <a href="/home" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.home}</a>
@@ -861,7 +843,7 @@ const MenuDetailsModal = () => {
                 <a href="/contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.contact}</a>
               </div>
             </div>
-            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <div className={`transition-all duration-1000 delay-200 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{commonFooter.contact}</h4>
               <div className="flex flex-col gap-3 text-gray-400">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
@@ -878,7 +860,7 @@ const MenuDetailsModal = () => {
                 </div>
               </div>
             </div>
-            <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+            <div className={`transition-all duration-1000 delay-300 ${isVisible ?'animate-fade-in-right' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{commonFooter.followUs}</h4>
               <div className="flex flex-col gap-2 text-gray-400">
                 <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">Instagram</a>
