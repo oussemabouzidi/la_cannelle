@@ -35,10 +35,11 @@ export const orderService = {
     });
     const minMap = new Map(products.map(product => [product.id, product.minOrderQuantity]));
     for (const item of data.items) {
-      const minQuantity = minMap.get(item.productId);
-      if (minQuantity === undefined) {
+      const minQuantityRaw = minMap.get(item.productId);
+      if (minQuantityRaw === undefined) {
         throw new AppError(`Product not found: ${item.productId}`, 404);
       }
+      const minQuantity = Math.max(1, minQuantityRaw ?? 1);
       if (item.quantity > 0 && item.quantity < minQuantity) {
         throw new AppError(`Minimum quantity for product ${item.productId} is ${minQuantity}`, 400);
       }
