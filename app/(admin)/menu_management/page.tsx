@@ -78,7 +78,6 @@ export default function AdminMenuManagement() {
   const [editingItem, setEditingItem] = useState<MenuItem | MenuType | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAddMenuForm, setShowAddMenuForm] = useState(false);
-  const [imagePreview, setImagePreview] = useState('');
   const [selectedMenu, setSelectedMenu] = useState<MenuType | null>(null);
   const [viewMode, setViewMode] = useState('split'); // 'split', 'menus', 'products'
   const [expandedMenu, setExpandedMenu] = useState<number | null>(null);
@@ -886,23 +885,6 @@ const toggleMenuActive = async (menuId: number) => {
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = typeof reader.result === 'string' ? reader.result : '';
-        setImagePreview(base64String);
-        if (editingItem) {
-          setEditingItem({ ...editingItem, image: base64String });
-        } else {
-          setNewItem({ ...newItem, image: base64String });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const resetNewItemForm = () => {
     setNewItem({
       name: '',
@@ -920,7 +902,6 @@ const toggleMenuActive = async (menuId: number) => {
       menus: [],
       image: ''
     });
-    setImagePreview('');
   };
 
   const resetNewMenuForm = () => {
@@ -1285,14 +1266,21 @@ const toggleMenuActive = async (menuId: number) => {
 const AddFormModal = () => {
   const [localItem, setLocalItem] = useState<NewItemState>(newItem);
 
-  useEffect(() => {
-    setLocalItem(newItem);
-  }, [newItem]);
-
   const updateLocalIngredient = (index: number, value: string) => {
     const next = [...localItem.ingredients];
     next[index] = value;
     setLocalItem({ ...localItem, ingredients: next });
+  };
+
+  const handleImageUploadLocal = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = typeof reader.result === 'string' ? reader.result : '';
+      setLocalItem((prev) => ({ ...prev, image: base64String }));
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -1314,8 +1302,8 @@ const AddFormModal = () => {
               <div className="space-y-4">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   <div className="aspect-square w-full overflow-hidden rounded-lg mb-4">
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    {localItem.image ? (
+                      <img src={localItem.image} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-lg">
                         <Camera className="w-12 h-12 text-gray-400" />
@@ -1328,7 +1316,7 @@ const AddFormModal = () => {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleImageUpload}
+                        onChange={handleImageUploadLocal}
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
                       />
                     </label>
@@ -1338,7 +1326,7 @@ const AddFormModal = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.imageUrl}</label>
                   <input
                     type="text"
-                    value={localItem.image}
+                    value={localItem.image.startsWith('data:') ? '' : localItem.image}
                     onChange={(e) => setLocalItem({ ...localItem, image: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder={t.placeholders.imageUrl}

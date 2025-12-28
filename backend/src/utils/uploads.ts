@@ -12,6 +12,9 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/webp': 'webp',
   'image/gif': 'gif',
   'image/avif': 'avif',
+  'image/svg+xml': 'svg',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
 };
 
 const resolveUploadsDir = () => {
@@ -37,14 +40,14 @@ export const isBase64ImageDataUrl = (value: string) => DATA_URL_PREFIX.test(valu
 
 const getMaxUploadBytes = () => {
   const raw = process.env.UPLOAD_MAX_BYTES?.trim();
-  if (!raw) return 10 * 1024 * 1024;
+  if (!raw) return 15 * 1024 * 1024;
 
   const parsed = Number(raw);
   if (Number.isFinite(parsed) && parsed > 0) {
     return parsed;
   }
 
-  return 10 * 1024 * 1024;
+  return 15 * 1024 * 1024;
 };
 
 export const storeBase64ImageDataUrl = async (

@@ -29,16 +29,20 @@ const forward = async (req: NextRequest, context: { params: Promise<{ path: stri
   for (const headerName of HOP_BY_HOP_HEADERS) headers.delete(headerName);
 
   const method = req.method.toUpperCase();
-  const body = method === 'GET' || method === 'HEAD' ? undefined : await req.arrayBuffer();
+  const maybeBody = method === 'GET' || method === 'HEAD' ? null : req.body;
+  const body = maybeBody ?? undefined;
 
   try {
-    const backendResponse = await fetch(backendUrl, {
+    const init: RequestInit = {
       method,
       headers,
       body,
       redirect: 'manual',
       cache: 'no-store',
-    });
+    };
+    if (body) (init as any).duplex = 'half';
+
+    const backendResponse = await fetch(backendUrl, init);
 
     const responseHeaders = new Headers(backendResponse.headers);
     for (const headerName of HOP_BY_HOP_HEADERS) responseHeaders.delete(headerName);
