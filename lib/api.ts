@@ -60,14 +60,6 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // Add language preference (used by backend for on-demand translations)
-    if (typeof window !== 'undefined') {
-      const storedLanguage = localStorage.getItem('lacannelle_language');
-      if ((storedLanguage === 'DE' || storedLanguage === 'EN') && !headers['X-Language'] && !headers['x-language']) {
-        headers['X-Language'] = storedLanguage;
-      }
-    }
-
     try {
       const response = await fetch(url, {
         ...options,

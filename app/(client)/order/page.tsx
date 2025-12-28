@@ -546,7 +546,7 @@ export default function OrderPage() {
       }
     };
     loadData();
-  }, [language]);
+  }, []);
 
   useEffect(() => {
     if (!hasLoadedInitialMenus.current) return;
@@ -579,7 +579,7 @@ export default function OrderPage() {
     };
 
     fetchMenusForService();
-  }, [orderData.serviceId, language]);
+  }, [orderData.serviceId]);
   const [contactErrors, setContactErrors] = useState({ email: '', phone: '' });
   const [companyErrors, setCompanyErrors] = useState({ name: '', info: '' });
   const [guestCountError, setGuestCountError] = useState('');

@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { accessoryService } from '../services/accessoryService';
-import { fillAccessoryTranslations, parseAppLanguage } from '../services/translationService';
 
 export const accessoryController = {
   async getAccessories(req: AuthRequest, res: Response) {
@@ -10,20 +9,12 @@ export const accessoryController = {
     if (isActive !== undefined) filters.isActive = isActive === 'true';
     if (search) filters.search = String(search);
     const accessories = await accessoryService.getAccessories(filters);
-    const language = parseAppLanguage(req.header('x-language') ?? req.query.lang ?? req.query.language);
-    if (language) {
-      await fillAccessoryTranslations(accessories as any, language);
-    }
     res.json(accessories);
   },
 
   async getAccessoryById(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const accessory = await accessoryService.getAccessoryById(parseInt(id, 10));
-    const language = parseAppLanguage(req.header('x-language') ?? req.query.lang ?? req.query.language);
-    if (language) {
-      await fillAccessoryTranslations(accessory as any, language);
-    }
     res.json(accessory);
   },
 
