@@ -1,6 +1,8 @@
 import './env';
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
 import orderRoutes from './routes/orders';
@@ -41,11 +43,16 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+const BODY_LIMIT = process.env.BODY_LIMIT || '25mb';
+app.use(express.json({ limit: BODY_LIMIT }));
+app.use(express.urlencoded({ limit: BODY_LIMIT, extended: true }));
 
 const uploadsDir = ensureUploadsDir();
 app.use('/api/uploads', express.static(uploadsDir));
+const legacyUploadsDir = path.join(__dirname, 'uploads');
+if (legacyUploadsDir !== uploadsDir && fs.existsSync(legacyUploadsDir)) {
+  app.use('/api/uploads', express.static(legacyUploadsDir));
+}
 
 // Health check
 app.get('/health', (req, res) => {

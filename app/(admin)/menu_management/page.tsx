@@ -228,6 +228,8 @@ export default function AdminMenuManagement() {
         stepLabel: 'e.g., Starters',
       },
       notifications: {
+        productCreated: 'Product created.',
+        productCreateFailed: 'Unable to create product.',
         productUpdated: 'Product updated.',
         productUpdateFailed: 'Unable to update product.',
         productDeleted: 'Product deleted.',
@@ -373,6 +375,8 @@ export default function AdminMenuManagement() {
         stepLabel: 'z.B. Vorspeisen',
       },
       notifications: {
+        productCreated: 'Produkt erstellt.',
+        productCreateFailed: 'Produkt konnte nicht erstellt werden.',
         productUpdated: 'Produkt aktualisiert.',
         productUpdateFailed: 'Produkt konnte nicht aktualisiert werden.',
         productDeleted: 'Produkt geloescht.',
@@ -694,8 +698,11 @@ const [newItem, setNewItem] = useState<NewItemState>({
 
       resetNewItemForm();
       setShowAddForm(false);
-    } catch (err) {
+      showNotification('success', t.notifications.productCreated);
+    } catch (err: unknown) {
       console.error('Failed to create product', err);
+      const message = err instanceof Error ? err.message : t.notifications.productCreateFailed;
+      showNotification('error', message);
     }
   };
 

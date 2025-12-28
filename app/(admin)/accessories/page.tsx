@@ -254,9 +254,10 @@ export default function AdminAccessories() {
         setAccessories((prev) => [created, ...prev]);
       }
       closeModal();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setLoadError(copy.toast.failedSave);
+      const message = err instanceof Error ? err.message : copy.toast.failedSave;
+      setLoadError(message || copy.toast.failedSave);
     } finally {
       setSaving(false);
     }
@@ -266,9 +267,10 @@ export default function AdminAccessories() {
     try {
       await accessoriesApi.deleteAccessory(id);
       setAccessories((prev) => prev.filter((a) => a.id !== id));
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      setLoadError(copy.toast.failedDelete);
+      const message = err instanceof Error ? err.message : copy.toast.failedDelete;
+      setLoadError(message || copy.toast.failedDelete);
     }
   };
 

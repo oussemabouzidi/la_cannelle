@@ -1,4 +1,4 @@
-type ApiResponse<T> = { data?: T; error?: string };
+import { apiClient } from '../api';
 
 export interface Accessory {
   id: number;
@@ -18,90 +18,39 @@ export interface Accessory {
   updatedAt: string;
 }
 
-const getAuthToken = () => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('auth_token');
-};
-
-const request = async <T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
-
-  const token = getAuthToken();
-  if (token) {
-    (headers as any)['Authorization'] = `Bearer ${token}`;
-  }
-
-  try {
-    const response = await fetch(endpoint, {
-      ...options,
-      headers,
-      credentials: 'include'
-    });
-
-    const text = await response.text();
-    let data: any = undefined;
-    if (text) {
-      try {
-        data = JSON.parse(text);
-      } catch (parseError) {
-        return {
-          error: parseError instanceof Error ? parseError.message : 'Invalid response format'
-        };
-      }
-    }
-
-    if (!response.ok) {
-      return { error: (data && data.error) || text || `HTTP error! status: ${response.status}` };
-    }
-
-    return { data };
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : 'Network error' };
-  }
-};
-
 export const accessoriesApi = {
   async getAccessories(filters?: { isActive?: boolean; search?: string }): Promise<Accessory[]> {
     const params = new URLSearchParams();
     if (filters?.isActive !== undefined) params.append('isActive', String(filters.isActive));
     if (filters?.search) params.append('search', filters.search);
     const query = params.toString();
-    const endpoint = query ? `/api/accessories?${query}` : '/api/accessories';
+    const endpoint = query ? `/accessories?${query}` : '/accessories';
 
-    const response = await request<Accessory[]>(endpoint, { method: 'GET' });
+    const response = await apiClient.get<Accessory[]>(endpoint);
     if (response.data) return response.data;
     throw new Error(response.error || 'Failed to get accessories');
   },
 
   async getAccessoryById(id: number): Promise<Accessory> {
-    const response = await request<Accessory>(`/api/accessories/${id}`, { method: 'GET' });
+    const response = await apiClient.get<Accessory>(`/accessories/${id}`);
     if (response.data) return response.data;
     throw new Error(response.error || 'Failed to get accessory');
   },
 
   async createAccessory(data: Partial<Accessory>): Promise<Accessory> {
-    const response = await request<Accessory>('/api/accessories', {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
+    const response = await apiClient.post<Accessory>('/accessories', data);
     if (response.data) return response.data;
     throw new Error(response.error || 'Failed to create accessory');
   },
 
   async updateAccessory(id: number, data: Partial<Accessory>): Promise<Accessory> {
-    const response = await request<Accessory>(`/api/accessories/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+    const response = await apiClient.put<Accessory>(`/accessories/${id}`, data);
     if (response.data) return response.data;
     throw new Error(response.error || 'Failed to update accessory');
   },
 
   async deleteAccessory(id: number): Promise<{ deleted?: boolean }> {
-    const response = await request<{ deleted?: boolean }>(`/api/accessories/${id}`, { method: 'DELETE' });
+    const response = await apiClient.delete<{ deleted?: boolean }>(`/accessories/${id}`);
     if (response.error) throw new Error(response.error);
     return response.data || {};
   }

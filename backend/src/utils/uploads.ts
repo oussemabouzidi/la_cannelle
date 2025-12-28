@@ -11,20 +11,41 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
   'image/gif': 'gif',
+  'image/avif': 'avif',
 };
 
-const getBackendRootDir = () => {
-  const parentDir = path.basename(path.resolve(__dirname, '..'));
-  return parentDir === 'dist' ? path.resolve(__dirname, '..', '..') : path.resolve(__dirname, '..');
+const resolveUploadsDir = () => {
+  const configuredUploadsDir = process.env.UPLOAD_DIR?.trim();
+  if (configuredUploadsDir) {
+    return path.isAbsolute(configuredUploadsDir)
+      ? configuredUploadsDir
+      : path.resolve(process.cwd(), configuredUploadsDir);
+  }
+
+  const isDistBuild = __dirname.split(path.sep).includes('dist');
+  const backendRootDir = isDistBuild ? path.resolve(__dirname, '../../..') : path.resolve(__dirname, '../..');
+  return path.join(backendRootDir, 'uploads');
 };
 
 export const ensureUploadsDir = () => {
-  const uploadsDir = path.join(getBackendRootDir(), 'uploads');
+  const uploadsDir = resolveUploadsDir();
   fs.mkdirSync(uploadsDir, { recursive: true });
   return uploadsDir;
 };
 
 export const isBase64ImageDataUrl = (value: string) => DATA_URL_PREFIX.test(value);
+
+const getMaxUploadBytes = () => {
+  const raw = process.env.UPLOAD_MAX_BYTES?.trim();
+  if (!raw) return 10 * 1024 * 1024;
+
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+
+  return 10 * 1024 * 1024;
+};
 
 export const storeBase64ImageDataUrl = async (
   dataUrl: string,
@@ -49,7 +70,7 @@ export const storeBase64ImageDataUrl = async (
     throw new AppError('Invalid image payload', 400);
   }
 
-  const maxBytes = options.maxBytes ?? 5 * 1024 * 1024;
+  const maxBytes = options.maxBytes ?? getMaxUploadBytes();
   if (buffer.length > maxBytes) {
     throw new AppError('Image too large', 413);
   }
@@ -77,4 +98,3 @@ export const normalizeImageValue = async (
   if (!isBase64ImageDataUrl(trimmed)) return trimmed;
   return (await storeBase64ImageDataUrl(trimmed, options)).url;
 };
-
