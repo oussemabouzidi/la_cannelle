@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { menuService } from '../services/menuService';
+import { DEFAULT_TRANSLATABLE_KEYS, parseAppLanguage, translateJsonByKeys } from '../services/translationService';
 
 export const menuController = {
   async getMenus(req: AuthRequest, res: Response) {
@@ -15,12 +16,22 @@ export const menuController = {
     }
 
     const menus = await menuService.getMenus(filters);
+    const language = parseAppLanguage(req.header('x-language') ?? req.query.lang ?? req.query.language);
+    const dataDefaultLanguage = parseAppLanguage(process.env.DATA_DEFAULT_LANGUAGE) ?? 'DE';
+    if (language && language !== dataDefaultLanguage) {
+      await translateJsonByKeys(menus, language, DEFAULT_TRANSLATABLE_KEYS);
+    }
     res.json(menus);
   },
 
   async getMenuById(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const menu = await menuService.getMenuById(parseInt(id));
+    const language = parseAppLanguage(req.header('x-language') ?? req.query.lang ?? req.query.language);
+    const dataDefaultLanguage = parseAppLanguage(process.env.DATA_DEFAULT_LANGUAGE) ?? 'DE';
+    if (language && language !== dataDefaultLanguage) {
+      await translateJsonByKeys(menu, language, DEFAULT_TRANSLATABLE_KEYS);
+    }
     res.json(menu);
   },
 

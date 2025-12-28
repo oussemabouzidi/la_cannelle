@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { productService } from '../services/productService';
 import { AppError } from '../middleware/errorHandler';
+import { DEFAULT_TRANSLATABLE_KEYS, parseAppLanguage, translateJsonByKeys } from '../services/translationService';
 
 export const productController = {
   async getProducts(req: AuthRequest, res: Response) {
@@ -15,12 +16,22 @@ export const productController = {
     if (menuId) filters.menuId = parseInt(menuId as string);
 
     const products = await productService.getProducts(filters);
+    const language = parseAppLanguage(req.header('x-language') ?? req.query.lang ?? req.query.language);
+    const dataDefaultLanguage = parseAppLanguage(process.env.DATA_DEFAULT_LANGUAGE) ?? 'DE';
+    if (language && language !== dataDefaultLanguage) {
+      await translateJsonByKeys(products, language, DEFAULT_TRANSLATABLE_KEYS);
+    }
     res.json(products);
   },
 
   async getProductById(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const product = await productService.getProductById(parseInt(id));
+    const language = parseAppLanguage(req.header('x-language') ?? req.query.lang ?? req.query.language);
+    const dataDefaultLanguage = parseAppLanguage(process.env.DATA_DEFAULT_LANGUAGE) ?? 'DE';
+    if (language && language !== dataDefaultLanguage) {
+      await translateJsonByKeys(product, language, DEFAULT_TRANSLATABLE_KEYS);
+    }
     res.json(product);
   },
 

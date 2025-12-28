@@ -75,7 +75,7 @@ export default function AdminAccessories() {
         dashboard: isDE ? 'Ubersicht' : 'Dashboard',
         orders: isDE ? 'Bestellungen' : 'Orders',
         menu: isDE ? 'Menueverwaltung' : 'Menu Management',
-        services: isDE ? 'Services' : 'Services',
+        services: isDE ? 'Dienstleistungen' : 'Services',
         accessories: isDE ? 'Zubehoer' : 'Accessories',
         system: isDE ? 'Systemsteuerung' : 'System Control',
         customers: isDE ? 'Kunden' : 'Customers',

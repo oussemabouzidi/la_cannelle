@@ -28,19 +28,10 @@ export const menuService = {
     const menus = await prisma.menu.findMany({
       where,
       include: {
-        menuProducts: {
-          where: {
-            product: { is: {} }
-          },
-          include: {
-            product: true
-          }
-        },
-        menuServices: {
-          include: {
-            service: true
-          }
-        }
+        // Keep list endpoints lightweight: clients already fetch products/services separately.
+        // Returning nested products (including base64 images) can create huge payloads and timeouts on mobile.
+        menuProducts: { select: { productId: true } },
+        menuServices: { select: { serviceId: true } }
       },
       orderBy: {
         createdAt: 'desc'
@@ -54,19 +45,8 @@ export const menuService = {
     const menu = await prisma.menu.findUnique({
       where: { id },
       include: {
-        menuProducts: {
-          where: {
-            product: { is: {} }
-          },
-          include: {
-            product: true
-          }
-        },
-        menuServices: {
-          include: {
-            service: true
-          }
-        }
+        menuProducts: { select: { productId: true } },
+        menuServices: { select: { serviceId: true } }
       }
     });
 

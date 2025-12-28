@@ -427,7 +427,7 @@ export default function MenusPage() {
         let items: MenuHighlightItem[] = [];
         if (menu.menuProducts && menu.menuProducts.length) {
           items = menu.menuProducts
-            .map((menuProduct) => toHighlightItem(menuProduct.product))
+            .map((menuProduct: any) => toHighlightItem(menuProduct.product || productMap.get(menuProduct.productId)))
             .filter(Boolean) as MenuHighlightItem[];
         } else if (menu.products && menu.products.length) {
           items = menu.products
