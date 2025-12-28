@@ -1,6 +1,7 @@
 import { ServiceOccasion } from '@prisma/client';
 import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
+import { normalizeImageValue } from '../utils/uploads';
 
 function normalizeOccasion(value: unknown): ServiceOccasion | undefined {
   if (!value) return undefined;
@@ -62,12 +63,14 @@ export const serviceService = {
     const occasion = normalizeOccasion(data.occasion);
     if (!occasion) throw new AppError('Occasion is required', 400);
 
+    const image = await normalizeImageValue(data.image, { prefix: 'service' });
+
     return await prisma.service.create({
       data: {
         name,
         occasion,
         description: data.description || null,
-        image: data.image || null,
+        image: image || null,
         isActive: data.isActive ?? true
       }
     });
@@ -86,6 +89,9 @@ export const serviceService = {
       const occasion = normalizeOccasion(updateData.occasion);
       if (!occasion) throw new AppError('Invalid occasion', 400);
       updateData.occasion = occasion;
+    }
+    if (updateData.image !== undefined) {
+      updateData.image = await normalizeImageValue(updateData.image, { prefix: 'service' });
     }
 
     return await prisma.service.update({

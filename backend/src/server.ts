@@ -14,6 +14,7 @@ import favoriteRoutes from './routes/favorites';
 import contactRoutes from './routes/contact';
 import accessoryRoutes from './routes/accessories';
 import serviceRoutes from './routes/services';
+import { ensureUploadsDir } from './utils/uploads';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -40,8 +41,11 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ limit: '5mb', extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+const uploadsDir = ensureUploadsDir();
+app.use('/api/uploads', express.static(uploadsDir));
 
 // Health check
 app.get('/health', (req, res) => {

@@ -128,7 +128,9 @@ export default function AdminAccessories() {
         details: isDE ? 'Details' : 'Details',
         price: isDE ? 'Preis' : 'Price',
         minQuantity: isDE ? 'Mindestmenge' : 'Minimum quantity',
-        image: isDE ? 'Bild URL' : 'Image URL',
+        image: isDE ? 'Bild (URL oder Upload)' : 'Image (URL or upload)',
+        imageUrl: isDE ? 'Bild URL' : 'Image URL',
+        upload: isDE ? 'Bild hochladen' : 'Upload image',
         isActive: isDE ? 'Aktiv' : 'Active'
       },
       toast: {
@@ -201,6 +203,16 @@ export default function AdminAccessories() {
       isActive: Boolean(accessory.isActive)
     });
     setModalOpen(true);
+  };
+
+  const handleImageUpload = (file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const value = typeof reader.result === 'string' ? reader.result : '';
+      setForm((prev) => ({ ...prev, image: value }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const closeModal = () => {
@@ -518,11 +530,22 @@ export default function AdminAccessories() {
 
                 <div className="md:col-span-2">
                   <label className="text-sm font-semibold text-gray-800">{copy.fields.image}</label>
+
+                  <label className="mt-3 block text-xs font-semibold text-gray-700">{copy.fields.imageUrl}</label>
                   <input
                     value={form.image}
                     onChange={(e) => setForm((p) => ({ ...p, image: e.target.value }))}
                     className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
                   />
+
+                  <label className="mt-4 block text-xs font-semibold text-gray-700">{copy.fields.upload}</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e.target.files?.[0])}
+                    className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                  />
+
                   {form.image.trim() && (
                     <div className="mt-3 h-44 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

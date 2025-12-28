@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
+import { normalizeImageValue } from '../utils/uploads';
 
 export const menuService = {
   async getMenus(filters?: {
@@ -90,6 +91,8 @@ export const menuService = {
     serviceIds?: number[];
     services?: number[];
   }) {
+    const image = await normalizeImageValue(data.image, { prefix: 'menu' });
+
     const menu = await prisma.menu.create({
       data: {
         name: data.name,
@@ -98,7 +101,7 @@ export const menuService = {
         startDate: data.startDate,
         endDate: data.endDate,
         price: data.price,
-        image: data.image,
+        image,
         minPeople: data.minPeople ?? null,
         steps: data.steps ?? undefined,
         menuProducts: data.productIds ? {
@@ -153,6 +156,10 @@ export const menuService = {
     delete updateData.updatedAt;
     delete updateData.menuProducts;
     delete updateData.menuServices;
+
+    if (updateData.image !== undefined) {
+      updateData.image = await normalizeImageValue(updateData.image, { prefix: 'menu' });
+    }
 
     const menu = await prisma.menu.update({
       where: { id },
