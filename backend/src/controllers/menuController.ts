@@ -5,7 +5,7 @@ import { DEFAULT_TRANSLATABLE_KEYS, parseAppLanguage, translateJsonByKeys } from
 
 export const menuController = {
   async getMenus(req: AuthRequest, res: Response) {
-    const { isActive, search, serviceId } = req.query;
+    const { isActive, search, serviceId, includeImages } = req.query;
 
     const filters: any = {};
     if (isActive !== undefined) filters.isActive = isActive === 'true';
@@ -13,6 +13,9 @@ export const menuController = {
     if (serviceId !== undefined) {
       const parsed = parseInt(String(serviceId), 10);
       if (Number.isFinite(parsed)) filters.serviceId = parsed;
+    }
+    if (includeImages !== undefined) {
+      filters.includeImages = String(includeImages) === 'true' || String(includeImages) === '1';
     }
 
     const menus = await menuService.getMenus(filters);
@@ -26,7 +29,8 @@ export const menuController = {
 
   async getMenuById(req: AuthRequest, res: Response) {
     const { id } = req.params;
-    const menu = await menuService.getMenuById(parseInt(id));
+    const includeImages = String(req.query.includeImages ?? '') === 'true' || String(req.query.includeImages ?? '') === '1';
+    const menu = await menuService.getMenuById(parseInt(id), { includeImages });
     const language = parseAppLanguage(req.header('x-language') ?? req.query.lang ?? req.query.language);
     const dataDefaultLanguage = parseAppLanguage(process.env.DATA_DEFAULT_LANGUAGE) ?? 'DE';
     if (language && language !== dataDefaultLanguage) {

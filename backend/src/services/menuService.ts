@@ -7,6 +7,7 @@ export const menuService = {
     isActive?: boolean;
     search?: string;
     serviceId?: number;
+    includeImages?: boolean;
   }) {
     const where: any = {};
 
@@ -25,14 +26,30 @@ export const menuService = {
       where.menuServices = { some: { serviceId: filters.serviceId } };
     }
 
+    const includeImages = Boolean(filters?.includeImages);
+
+    const select: any = {
+      id: true,
+      name: true,
+      description: true,
+      isActive: true,
+      startDate: true,
+      endDate: true,
+      price: true,
+      minPeople: true,
+      steps: true,
+      createdAt: true,
+      updatedAt: true,
+      menuProducts: { select: { productId: true } },
+      menuServices: { select: { serviceId: true } }
+    };
+    if (includeImages) {
+      select.image = true;
+    }
+
     const menus = await prisma.menu.findMany({
       where,
-      include: {
-        // Keep list endpoints lightweight: clients already fetch products/services separately.
-        // Returning nested products (including base64 images) can create huge payloads and timeouts on mobile.
-        menuProducts: { select: { productId: true } },
-        menuServices: { select: { serviceId: true } }
-      },
+      select,
       orderBy: {
         createdAt: 'desc'
       }
@@ -41,13 +58,29 @@ export const menuService = {
     return menus;
   },
 
-  async getMenuById(id: number) {
+  async getMenuById(id: number, options?: { includeImages?: boolean }) {
+    const select: any = {
+      id: true,
+      name: true,
+      description: true,
+      isActive: true,
+      startDate: true,
+      endDate: true,
+      price: true,
+      minPeople: true,
+      steps: true,
+      createdAt: true,
+      updatedAt: true,
+      menuProducts: { select: { productId: true } },
+      menuServices: { select: { serviceId: true } }
+    };
+    if (options?.includeImages) {
+      select.image = true;
+    }
+
     const menu = await prisma.menu.findUnique({
       where: { id },
-      include: {
-        menuProducts: { select: { productId: true } },
-        menuServices: { select: { serviceId: true } }
-      }
+      select
     });
 
     if (!menu) {
@@ -92,19 +125,8 @@ export const menuService = {
         } : undefined
       },
       include: {
-        menuProducts: {
-          where: {
-            product: { is: {} }
-          },
-          include: {
-            product: true
-          }
-        },
-        menuServices: {
-          include: {
-            service: true
-          }
-        }
+        menuProducts: { select: { productId: true } },
+        menuServices: { select: { serviceId: true } }
       }
     });
 
@@ -145,19 +167,8 @@ export const menuService = {
       where: { id },
       data: updateData,
       include: {
-        menuProducts: {
-          where: {
-            product: { is: {} }
-          },
-          include: {
-            product: true
-          }
-        },
-        menuServices: {
-          include: {
-            service: true
-          }
-        }
+        menuProducts: { select: { productId: true } },
+        menuServices: { select: { serviceId: true } }
       }
     });
 
@@ -176,7 +187,7 @@ export const menuService = {
       }
 
       // Fetch updated menu
-      return this.getMenuById(id);
+      return this.getMenuById(id, { includeImages: true });
     }
 
     const serviceIds = data.serviceIds ?? data.services;
@@ -191,7 +202,7 @@ export const menuService = {
         });
       }
 
-      return this.getMenuById(id);
+      return this.getMenuById(id, { includeImages: true });
     }
 
     return menu;
