@@ -6,27 +6,29 @@ import {
   Users, TrendingUp, Clock, Plus, Edit, Archive, Trash2,
   Search, Filter, Save, XCircle, CheckCircle, AlertCircle,
   Utensils, Wine, Coffee, Dessert, Camera, FolderPlus,
-  ChevronDown, Layers, Tag, Grid, Eye, List, LayoutGrid, ShoppingBag, BarChart3
+  ChevronDown, Layers, Tag, Grid, Eye, List, LayoutGrid, ShoppingBag, BarChart3, Briefcase
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import AdminLayout from '../components/AdminLayout';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { useBodyScrollLock } from '../components/useBodyScrollLock';
 import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
+import { servicesApi, type Service } from '@/lib/api/services';
 
 type MenuType = {
   id: number;
   name: string;
   description: string;
-  category: string;
-  type: string;
   isActive: boolean;
   startDate?: string;
   endDate?: string;
   price?: number;
   products: number[];
+  services: number[];
   image: string;
   minPeople?: number | null;
   steps?: MenuStep[];
@@ -83,6 +85,8 @@ export default function AdminMenuManagement() {
   const [selectedMenuForDetail, setSelectedMenuForDetail] = useState<MenuType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmDeleteMenuId, setConfirmDeleteMenuId] = useState<number | null>(null);
   const { language, toggleLanguage } = useTranslation('admin');
   const locale = language === 'DE' ? 'de-DE' : 'en-US';
   const copy = {
@@ -91,6 +95,7 @@ export default function AdminMenuManagement() {
         dashboard: 'Dashboard',
         orders: 'Orders',
         menu: 'Menu Management',
+        services: 'Services',
         accessories: 'Accessories',
         system: 'System Control',
         customers: 'Customers',
@@ -106,11 +111,26 @@ export default function AdminMenuManagement() {
         totalProducts: 'Total Products',
         totalMenus: 'Menus',
       },
+      productsPanel: {
+        showingInMenu: (count: number) => `Showing ${count} products in this menu`,
+        showingAll: (count: number) => `Showing ${count} products`,
+        noProductsInMenu: 'No products in this menu yet',
+        noProductsMatching: 'No products found matching your criteria',
+      },
       menu: {
         starts: 'Starts',
         ends: 'Ends',
         noImage: 'No image',
         noImageAvailable: 'No Image Available',
+        untitledMenu: 'Untitled menu',
+        noDescription: 'No description',
+        noDescriptionProvided: 'No description provided.',
+        noServices: 'No services',
+        noServicesYet: 'No services created yet.',
+        servicesCount: (count: number) => `${count} services`,
+        priceCurrency: 'EUR',
+        confirmDeleteMenuTitle: 'Delete menu',
+        confirmDeleteMenuBody: 'Do you really want to delete this menu?',
         editItem: 'Edit Menu Item',
         addItem: 'Add New Menu Item',
         dishImage: 'Dish Image',
@@ -138,6 +158,7 @@ export default function AdminMenuManagement() {
         dishesAvailable: 'Dishes available',
         ingredients: 'Ingredients',
         noMenusYet: 'No menus created yet',
+        createFirstMenu: 'Create Your First Menu',
         createMenu: 'Create Menu',
         editMenu: 'Edit Menu',
         priceOptional: 'Price (optional)',
@@ -206,12 +227,20 @@ export default function AdminMenuManagement() {
         menuDescription: 'Describe this menu',
         stepLabel: 'e.g., Starters',
       },
+      notifications: {
+        productUpdated: 'Product updated.',
+        productUpdateFailed: 'Unable to update product.',
+        productDeleted: 'Product deleted.',
+        productArchived: 'Product archived (already in orders).',
+        productDeleteFailed: 'Unable to delete product right now.',
+      },
     },
     DE: {
       nav: {
         dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
+        services: 'Dienstleistungen',
         accessories: 'Zubehoer',
         system: 'Systemsteuerung',
         customers: 'Kunden',
@@ -227,11 +256,26 @@ export default function AdminMenuManagement() {
         totalProducts: 'Produkte gesamt',
         totalMenus: 'Menues',
       },
+      productsPanel: {
+        showingInMenu: (count: number) => `${count} Produkte in diesem Menue`,
+        showingAll: (count: number) => `${count} Produkte`,
+        noProductsInMenu: 'Noch keine Produkte in diesem Menue',
+        noProductsMatching: 'Keine Produkte passend zu Ihren Filtern gefunden',
+      },
       menu: {
         starts: 'Startet',
         ends: 'Endet',
         noImage: 'Kein Bild',
         noImageAvailable: 'Kein Bild verfuegbar',
+        untitledMenu: 'Unbenanntes Menue',
+        noDescription: 'Keine Beschreibung',
+        noDescriptionProvided: 'Keine Beschreibung vorhanden.',
+        noServices: 'Keine Services',
+        noServicesYet: 'Noch keine Services vorhanden.',
+        servicesCount: (count: number) => `${count} Services`,
+        priceCurrency: 'EUR',
+        confirmDeleteMenuTitle: 'Menue loeschen',
+        confirmDeleteMenuBody: 'Moechten Sie dieses Menue wirklich loeschen?',
         editItem: 'Menuepunkt bearbeiten',
         addItem: 'Neuen Menuepunkt hinzufuegen',
         dishImage: 'Gerichtebild',
@@ -259,6 +303,7 @@ export default function AdminMenuManagement() {
         dishesAvailable: 'Verfuegbare Gerichte',
         ingredients: 'Zutaten',
         noMenusYet: 'Noch keine Menues erstellt',
+        createFirstMenu: 'Erstellen Sie Ihr erstes Menue',
         createMenu: 'Menue erstellen',
         editMenu: 'Menue bearbeiten',
         priceOptional: 'Preis (optional)',
@@ -327,6 +372,13 @@ export default function AdminMenuManagement() {
         menuDescription: 'Dieses Menue beschreiben',
         stepLabel: 'z.B. Vorspeisen',
       },
+      notifications: {
+        productUpdated: 'Produkt aktualisiert.',
+        productUpdateFailed: 'Produkt konnte nicht aktualisiert werden.',
+        productDeleted: 'Produkt geloescht.',
+        productArchived: 'Produkt archiviert (bereits in Bestellungen).',
+        productDeleteFailed: 'Produkt konnte gerade nicht geloescht werden.',
+      },
     },
   } as const;
   const t = copy[language] ?? copy.EN;
@@ -335,6 +387,7 @@ export default function AdminMenuManagement() {
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'services', name: t.nav.services, icon: Briefcase, path: '/services_management' },
     { id: 'accessories', name: t.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
@@ -349,32 +402,32 @@ export default function AdminMenuManagement() {
     'starters', 'mains', 'sides', 'desserts', 'drinks', 'accessories'
   ];
   const menuStepCategories = [
-    { value: 'starter', label: 'Starter' },
-    { value: 'main', label: 'Main' },
-    { value: 'side', label: 'Side' },
-    { value: 'dessert', label: 'Dessert' },
-    { value: 'beverage', label: 'Beverage' },
-    { value: 'fingerfood', label: 'Fingerfood' },
-    { value: 'canape', label: 'Canape' },
-    { value: 'appetizer', label: 'Appetizer' },
-    { value: 'salad', label: 'Salad' },
-    { value: 'soup', label: 'Soup' },
-    { value: 'pasta', label: 'Pasta' },
-    { value: 'seafood', label: 'Seafood' },
-    { value: 'meat', label: 'Meat' },
-    { value: 'vegetarian', label: 'Vegetarian' },
-    { value: 'vegan', label: 'Vegan' },
-    { value: 'gluten-free', label: 'Gluten-Free' },
-    { value: 'dairy-free', label: 'Dairy-Free' },
-    { value: 'spicy', label: 'Spicy' },
-    { value: 'signature', label: 'Signature' },
-    { value: 'seasonal', label: 'Seasonal' },
-    { value: 'kid-friendly', label: 'Kid-Friendly' },
-    { value: 'chef-special', label: 'Chef-Special' },
-    { value: 'tapas', label: 'Tapas' },
-    { value: 'bbq', label: 'BBQ' },
-    { value: 'breakfast', label: 'Breakfast' },
-    { value: 'brunch', label: 'Brunch' }
+    { value: 'starter', label: language === 'DE' ? 'Vorspeise' : 'Starter' },
+    { value: 'main', label: language === 'DE' ? 'Hauptgang' : 'Main' },
+    { value: 'side', label: language === 'DE' ? 'Beilage' : 'Side' },
+    { value: 'dessert', label: language === 'DE' ? 'Dessert' : 'Dessert' },
+    { value: 'beverage', label: language === 'DE' ? 'Getraenk' : 'Beverage' },
+    { value: 'fingerfood', label: language === 'DE' ? 'Fingerfood' : 'Fingerfood' },
+    { value: 'canape', label: language === 'DE' ? 'Canape' : 'Canape' },
+    { value: 'appetizer', label: language === 'DE' ? 'Appetizer' : 'Appetizer' },
+    { value: 'salad', label: language === 'DE' ? 'Salat' : 'Salad' },
+    { value: 'soup', label: language === 'DE' ? 'Suppe' : 'Soup' },
+    { value: 'pasta', label: language === 'DE' ? 'Pasta' : 'Pasta' },
+    { value: 'seafood', label: language === 'DE' ? 'Meeresfruechte' : 'Seafood' },
+    { value: 'meat', label: language === 'DE' ? 'Fleisch' : 'Meat' },
+    { value: 'vegetarian', label: language === 'DE' ? 'Vegetarisch' : 'Vegetarian' },
+    { value: 'vegan', label: language === 'DE' ? 'Vegan' : 'Vegan' },
+    { value: 'gluten-free', label: language === 'DE' ? 'Glutenfrei' : 'Gluten-Free' },
+    { value: 'dairy-free', label: language === 'DE' ? 'Laktosefrei' : 'Dairy-Free' },
+    { value: 'spicy', label: language === 'DE' ? 'Scharf' : 'Spicy' },
+    { value: 'signature', label: language === 'DE' ? 'Signature' : 'Signature' },
+    { value: 'seasonal', label: language === 'DE' ? 'Saisonal' : 'Seasonal' },
+    { value: 'kid-friendly', label: language === 'DE' ? 'Kinderfreundlich' : 'Kid-Friendly' },
+    { value: 'chef-special', label: language === 'DE' ? 'Chef-Special' : 'Chef-Special' },
+    { value: 'tapas', label: language === 'DE' ? 'Tapas' : 'Tapas' },
+    { value: 'bbq', label: language === 'DE' ? 'BBQ' : 'BBQ' },
+    { value: 'breakfast', label: language === 'DE' ? 'Fruehstueck' : 'Breakfast' },
+    { value: 'brunch', label: language === 'DE' ? 'Brunch' : 'Brunch' }
   ];
 
   const defaultMenuSteps: MenuStep[] = [
@@ -397,14 +450,15 @@ export default function AdminMenuManagement() {
 
   const [menus, setMenus] = useState<MenuType[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [servicesCatalog, setServicesCatalog] = useState<Service[]>([]);
   const [editingMenu, setEditingMenu] = useState<MenuType | null>(null);
+
+  useBodyScrollLock(Boolean(editingItem || showAddForm || showAddMenuForm || selectedMenuForDetail || editingMenu));
 
   const normalizeMenu = (menu: any): MenuType => ({
     id: menu.id,
     name: menu.name,
     description: menu.description || '',
-    category: (menu.category || '').toLowerCase(),
-    type: menu.type || '',
     isActive: !!menu.isActive,
     startDate: menu.startDate || undefined,
     endDate: menu.endDate || undefined,
@@ -412,41 +466,46 @@ export default function AdminMenuManagement() {
     products: menu.menuProducts
       ? menu.menuProducts.map((mp: any) => mp.productId)
       : menu.products || [],
+    services: menu.menuServices
+      ? menu.menuServices.map((ms: any) => ms.serviceId)
+      : menu.serviceIds || [],
     image: menu.image || '',
     minPeople: menu.minPeople ?? null,
     steps: Array.isArray(menu.steps)
       ? menu.steps.map((step: any) => ({
-          label: typeof step?.label === 'string' ? step.label : '',
-          included: Number.isFinite(step?.included) ? step.included : 0
-        })).filter((step: MenuStep) => step.label)
+           label: typeof step?.label === 'string' ? step.label : '',
+           included: Number.isFinite(step?.included) ? step.included : 0
+         })).filter((step: MenuStep) => step.label)
       : []
   });
 
   const MenuDetailModal = ({ menu, onClose }: { menu: MenuType; onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full overflow-hidden">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center px-4 sm:px-6 py-4 border-b border-gray-200">
           <div>
-            <p className="text-xs uppercase text-amber-600 font-semibold">{menu.category}</p>
             <h2 className="text-2xl font-bold text-gray-900">{menu.name}</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
             <X size={20} />
           </button>
         </div>
-        <div className="grid md:grid-cols-2 gap-0">
-          <div className="p-6 space-y-3">
-            <p className="text-gray-700 leading-relaxed">{menu.description || 'No description provided.'}</p>
+        <div className="grid md:grid-cols-2 gap-0 flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-6 space-y-3">
+            <p className="text-gray-700 leading-relaxed">{menu.description || t.menu.noDescriptionProvided}</p>
             <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-              <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full font-semibold">
-                {menu.type || 'Unspecified'}
-              </span>
               <span className={`px-3 py-1 rounded-full font-semibold ${menu.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                 {menu.isActive ? t.actions.active : t.actions.inactive}
               </span>
               {menu.price !== undefined && (
                 <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full font-semibold">
-                  €{menu.price}
+                  {t.menu.priceCurrency} {menu.price}
                 </span>
               )}
             </div>
@@ -474,7 +533,7 @@ export default function AdminMenuManagement() {
               {menu.endDate && <p>{t.menu.ends}: {new Date(menu.endDate).toLocaleDateString(locale)}</p>}
             </div>
           </div>
-          <div className="p-6 bg-gray-50">
+          <div className="p-4 sm:p-6 bg-gray-50">
             <div className="aspect-video w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
               {menu.image ? (
                 <img src={menu.image} alt={menu.name} className="w-full h-full object-cover" />
@@ -533,14 +592,16 @@ export default function AdminMenuManagement() {
   const loadMenusAndProducts = async () => {
     try {
       setIsLoading(true);
-      const [menuResponse, productResponse] = await Promise.all([
+      const [menuResponse, productResponse, serviceResponse] = await Promise.all([
         menusApi.getMenus(),
-        productsApi.getProducts()
+        productsApi.getProducts(),
+        servicesApi.getServices()
       ]);
 
       const normalizedMenus = menuResponse.map(normalizeMenu);
       setMenus(normalizedMenus);
       setMenuItems(productResponse.map(normalizeProduct));
+      setServicesCatalog(serviceResponse);
       syncSelectedMenus(normalizedMenus);
     } catch (err) {
       console.error('Failed to load menus/products', err);
@@ -574,13 +635,12 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const [newMenu, setNewMenu] = useState<NewMenuState>({
     name: '',
     description: '',
-    category: 'seasonal',
-    type: 'fixed',
     isActive: true,
     startDate: '',
     endDate: '',
     price: 0,
     products: [],
+    services: [],
     image: '',
     minPeople: null,
     steps: buildDefaultMenuSteps()
@@ -666,11 +726,11 @@ const [newItem, setNewItem] = useState<NewItemState>({
       }
 
       setEditingItem(null);
-      showNotification('success', language === 'DE' ? 'Produkt aktualisiert.' : 'Product updated.');
+      showNotification('success', t.notifications.productUpdated);
     } catch (err) {
       console.error('Failed to update product', err);
-      const message = err instanceof Error ? err.message : 'Unable to update product.';
-      showNotification('error', language === 'DE' ? 'Produkt konnte nicht aktualisiert werden.' : message);
+      const message = err instanceof Error ? err.message : t.notifications.productUpdateFailed;
+      showNotification('error', message);
     }
   };
 
@@ -678,7 +738,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const addMenu = async (menuData?: NewMenuState | MenuType) => {
     try {
       const payload = menuData || newMenu;
-      const created = await menusApi.createMenu(payload as any);
+      const created = await menusApi.createMenu({ ...(payload as any), serviceIds: (payload as any).services } as any);
       await loadMenusAndProducts();
       setShowAddMenuForm(false);
       if (!menuData) {
@@ -691,7 +751,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
 
   const updateMenu = async (updatedMenu: MenuType) => {
     try {
-      const saved = await menusApi.updateMenu(updatedMenu.id, updatedMenu as any);
+      const saved = await menusApi.updateMenu(updatedMenu.id, { ...(updatedMenu as any), serviceIds: updatedMenu.services } as any);
       const normalized = normalizeMenu(saved);
       setMenus(menus.map(menu =>
         menu.id === normalized.id ? normalized : menu
@@ -729,6 +789,11 @@ const toggleMenuActive = async (menuId: number) => {
     }
   };
 
+  const requestDeleteMenu = (menuId: number) => {
+    setConfirmDeleteMenuId(menuId);
+    setConfirmOpen(true);
+  };
+
   const archiveMenuItem = (id: number) => {
     setMenuItems(menuItems.map(item => 
       item.id === id ? { ...item, available: false } : item
@@ -749,18 +814,14 @@ const toggleMenuActive = async (menuId: number) => {
       // Then delete the item locally
       setMenuItems(menuItems.filter(item => item.id !== id));
       if (result.archived) {
-        showNotification('success', language === 'DE'
-          ? 'Produkt archiviert (bereits in Bestellungen).'
-          : 'Product archived (already in orders).');
+        showNotification('success', t.notifications.productArchived);
       } else {
-        showNotification('success', language === 'DE'
-          ? 'Produkt geloescht.'
-          : 'Product deleted.');
+        showNotification('success', t.notifications.productDeleted);
       }
     } catch (err) {
       console.error('Failed to delete product', err);
-      const message = err instanceof Error ? err.message : 'Unable to delete product right now.';
-      showNotification('error', language === 'DE' ? 'Produkt konnte nicht geloescht werden.' : message);
+      const message = err instanceof Error ? err.message : t.notifications.productDeleteFailed;
+      showNotification('error', message);
     }
   };
 
@@ -859,13 +920,12 @@ const toggleMenuActive = async (menuId: number) => {
     setNewMenu({
       name: '',
       description: '',
-      category: 'seasonal',
-      type: 'fixed',
       isActive: true,
       startDate: '',
       endDate: '',
       price: 0,
       products: [],
+      services: [],
       image: '',
       minPeople: null,
       steps: buildDefaultMenuSteps()
@@ -957,7 +1017,7 @@ const toggleMenuActive = async (menuId: number) => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
         <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -1191,30 +1251,6 @@ const toggleMenuActive = async (menuId: number) => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuTiers}</label>
-                  <div className="flex gap-3">
-                    {tiers.map(tier => (
-                      <button
-                        key={tier}
-                        onClick={() => handleLocalSave({
-                          ...localItem,
-                          tier: localItem.tier.includes(tier) 
-                            ? localItem.tier.filter(t => t !== tier)
-                            : [...localItem.tier, tier]
-                        })}
-                        className={`px-4 py-2 rounded-lg font-medium capitalize ${
-                          localItem.tier.includes(tier)
-                            ? 'bg-amber-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {tier}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="flex gap-4">
                   <button
                     onClick={() => onSave(localItem)}
@@ -1253,7 +1289,7 @@ const AddFormModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddForm(false)}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto" onClick={() => setShowAddForm(false)}>
       <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -1588,7 +1624,7 @@ const AddMenuFormModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAddMenuForm(false)}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto" onClick={() => setShowAddMenuForm(false)}>
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.createMenu}</h2>
@@ -1644,29 +1680,9 @@ const AddMenuFormModal = () => {
                     placeholder={t.placeholders.menuName}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
-                  <input
-                    type="text"
-                    value={localMenuState.category}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuCategory}
-                  />
-                </div>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
-                  <input
-                    type="text"
-                    value={localMenuState.type}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuType}
-                  />
-                </div>
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
                   <input
@@ -1698,6 +1714,52 @@ const AddMenuFormModal = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'DE' ? 'Services (für Kundenwahl)' : 'Services (for client selection)'}
+                </label>
+                {servicesCatalog.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    {t.menu.noServicesYet}
+                  </p>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {servicesCatalog.map((service) => {
+                      const checked = (localMenuState.services || []).includes(service.id);
+                      return (
+                        <label
+                          key={service.id}
+                          className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                            checked ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              const next = checked
+                                ? (localMenuState.services || []).filter((id) => id !== service.id)
+                                : [...(localMenuState.services || []), service.id];
+                              setLocalMenuState({ ...localMenuState, services: next });
+                            }}
+                            className="h-4 w-4 accent-amber-600"
+                          />
+                          <div className="h-10 w-10 rounded-md bg-gray-100 overflow-hidden shrink-0">
+                            {service.image ? (
+                              <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+                            ) : null}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-gray-900 truncate">{service.name}</div>
+                            <div className="text-xs text-gray-600">{service.occasion}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
                 <textarea
                   value={localMenuState.description}
@@ -1712,11 +1774,11 @@ const AddMenuFormModal = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSteps}</label>
                 <div className="space-y-3">
                   {(localMenuState.steps || []).map((step, index) => (
-                    <div key={`step-${index}`} className="grid grid-cols-12 gap-3 items-center">
+                    <div key={`step-${index}`} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                       <select
                         value={step.label}
                         onChange={(e) => updateMenuStep(index, { label: e.target.value })}
-                        className="col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                        className="col-span-12 sm:col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                       >
                         <option value="">{t.placeholders.stepLabel}</option>
                         {menuStepCategories.map((option) => (
@@ -1729,13 +1791,13 @@ const AddMenuFormModal = () => {
                         type="number"
                         value={step.included}
                         onChange={(e) => updateMenuStep(index, { included: parseInt(e.target.value, 10) || 0 })}
-                        className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        className="col-span-12 sm:col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                         min="0"
                       />
                       <button
                         type="button"
                         onClick={() => removeMenuStep(index)}
-                        className="col-span-2 p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="col-span-12 sm:col-span-2 w-fit justify-self-end sm:justify-self-auto p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         aria-label={t.actions.deleteItemTitle}
                       >
                         <XCircle size={18} />
@@ -1843,7 +1905,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setEditingMenu(null)}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto" onClick={() => setEditingMenu(null)}>
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.editMenu}</h2>
@@ -1899,29 +1961,9 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                     placeholder={t.placeholders.menuName}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
-                  <input
-                    type="text"
-                    value={localMenuState.category}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuCategory}
-                  />
-                </div>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.type}</label>
-                  <input
-                    type="text"
-                    value={localMenuState.type}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuType}
-                  />
-                </div>
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.priceOptional}</label>
                   <input
@@ -1953,6 +1995,52 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {language === 'DE' ? 'Services (für Kundenwahl)' : 'Services (for client selection)'}
+                </label>
+                {servicesCatalog.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    {t.menu.noServicesYet}
+                  </p>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {servicesCatalog.map((service) => {
+                      const checked = (localMenuState.services || []).includes(service.id);
+                      return (
+                        <label
+                          key={service.id}
+                          className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                            checked ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              const next = checked
+                                ? (localMenuState.services || []).filter((id) => id !== service.id)
+                                : [...(localMenuState.services || []), service.id];
+                              setLocalMenuState({ ...localMenuState, services: next });
+                            }}
+                            className="h-4 w-4 accent-amber-600"
+                          />
+                          <div className="h-10 w-10 rounded-md bg-gray-100 overflow-hidden shrink-0">
+                            {service.image ? (
+                              <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+                            ) : null}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-gray-900 truncate">{service.name}</div>
+                            <div className="text-xs text-gray-600">{service.occasion}</div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
                 <textarea
                   value={localMenuState.description}
@@ -1967,11 +2055,11 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSteps}</label>
                 <div className="space-y-3">
                   {(localMenuState.steps || []).map((step, index) => (
-                    <div key={`step-${index}`} className="grid grid-cols-12 gap-3 items-center">
+                    <div key={`step-${index}`} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                       <select
                         value={step.label}
                         onChange={(e) => updateMenuStep(index, { label: e.target.value })}
-                        className="col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                        className="col-span-12 sm:col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                       >
                         <option value="">{t.placeholders.stepLabel}</option>
                         {menuStepCategories.map((option) => (
@@ -1984,13 +2072,13 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                         type="number"
                         value={step.included}
                         onChange={(e) => updateMenuStep(index, { included: parseInt(e.target.value, 10) || 0 })}
-                        className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        className="col-span-12 sm:col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                         min="0"
                       />
                       <button
                         type="button"
                         onClick={() => removeMenuStep(index)}
-                        className="col-span-2 p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="col-span-12 sm:col-span-2 w-fit justify-self-end sm:justify-self-auto p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         aria-label={t.actions.deleteItemTitle}
                       >
                         <XCircle size={18} />
@@ -2059,40 +2147,55 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
       isSelected ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-gray-200 hover-border-amber-300 hover:bg-amber-50'
     }`}
   >
-    <div className="flex items-center justify-between mb-2">
-      <h4 className="text-lg font-semibold text-gray-900">{menu.name || 'Untitled menu'}</h4>
-      <div className="flex items-center gap-2">
-        <span className={`px-2 py-1 text-xs rounded-full ${
-          menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
-          {menu.isActive ? t.actions.active : t.actions.inactive}
-        </span>
+    <div className="flex items-start gap-3">
+      <div className="h-14 w-14 rounded-xl overflow-hidden border border-gray-200 bg-white flex-shrink-0">
+        <ImageWithFallback src={menu.image} alt={menu.name || t.menu.untitledMenu} className="h-14 w-14" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <h4 className="text-lg font-semibold text-gray-900 truncate">{menu.name || t.menu.untitledMenu}</h4>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className={`px-2 py-1 text-xs rounded-full ${
+              menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {menu.isActive ? t.actions.active : t.actions.inactive}
+            </span>
         <button
           onClick={(e) => {
             e.stopPropagation();
-            deleteMenu(menu.id);
+            requestDeleteMenu(menu.id);
           }}
           className="p-2 rounded-full hover:bg-red-50 text-red-600 border border-red-200 shadow-sm"
           title={t.actions.deleteMenuTitle}
         >
           <Trash2 size={16} />
         </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setEditingMenu(menu);
-          }}
-          className="p-2 rounded-full hover:bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
-          title={t.actions.editMenuTitle}
-        >
-          <Edit size={16} />
-        </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingMenu(menu);
+              }}
+              className="p-2 rounded-full hover:bg-amber-50 text-amber-700 border border-amber-200 shadow-sm"
+              title={t.actions.editMenuTitle}
+            >
+              <Edit size={16} />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-600 line-clamp-2">{menu.description || t.menu.noDescription}</p>
+        <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+          <span>
+            {menu.services?.length
+              ? t.menu.servicesCount(menu.services.length)
+              : t.menu.noServices}
+          </span>
+          {menu.price !== undefined
+            ? <span>{t.menu.priceCurrency} {menu.price}</span>
+            : <span>{t.menu.custom}</span>}
+        </div>
       </div>
-    </div>
-    <p className="text-sm text-gray-600 line-clamp-2">{menu.description || 'No description'}</p>
-    <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-      <span className="capitalize">{menu.category || 'uncategorized'}</span>
-      {menu.price !== undefined ? <span>${menu.price}</span> : <span>{t.menu.custom}</span>}
     </div>
   </div>
 );
@@ -2459,7 +2562,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                           className="mt-4 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2 mx-auto"
                         >
                           <FolderPlus size={20} />
-                          Create Your First Menu
+                          {t.menu.createFirstMenu}
                         </button>
                       </div>
                     )}
@@ -2494,10 +2597,10 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm mt-1">
-                    {selectedMenu 
-                      ? `Showing ${getProductsForSelectedMenu().length} products in this menu`
-                      : `Showing ${filteredItems.length} products`
+                <p className="text-gray-600 text-sm mt-1">
+                    {selectedMenu
+                      ? t.productsPanel.showingInMenu(getProductsForSelectedMenu().length)
+                      : t.productsPanel.showingAll(filteredItems.length)
                     }
                   </p>
                 </div>
@@ -2513,8 +2616,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                         <Utensils size={48} className="mx-auto text-gray-400 mb-4" />
                         <p className="text-gray-500 text-lg">
                           {selectedMenu 
-                            ? 'No products in this menu yet' 
-                            : 'No products found matching your criteria'
+                            ? t.productsPanel.noProductsInMenu
+                            : t.productsPanel.noProductsMatching
                           }
                         </p>
                         <button
@@ -2548,6 +2651,26 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       {showAddMenuForm && <AddMenuFormModal />}
       {editingMenu && <EditMenuFormModal menu={editingMenu} />}
       
+      <ConfirmDialog
+        open={confirmOpen}
+        title={t.menu.confirmDeleteMenuTitle}
+        description={t.menu.confirmDeleteMenuBody}
+        confirmText={t.actions.deleteMenuTitle}
+        cancelText={t.actions.cancel}
+        isDanger
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmDeleteMenuId(null);
+        }}
+        onConfirm={async () => {
+          if (confirmDeleteMenuId == null) return;
+          const targetId = confirmDeleteMenuId;
+          setConfirmOpen(false);
+          setConfirmDeleteMenuId(null);
+          await deleteMenu(targetId);
+        }}
+      />
+
       {/* Menu Detail Modal */}
       {selectedMenuForDetail && (
         <MenuDetailModal 

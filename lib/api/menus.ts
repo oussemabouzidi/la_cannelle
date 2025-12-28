@@ -1,11 +1,10 @@
 import { apiClient } from '../api';
+import type { Service } from './services';
 
 export interface Menu {
   id: number;
   name: string;
   description: string;
-  category: string;
-  type: string;
   isActive: boolean;
   startDate?: string;
   endDate?: string;
@@ -22,21 +21,26 @@ export interface Menu {
     productId: number;
     product: any;
   }>;
+  menuServices?: Array<{
+    id: number;
+    menuId: number;
+    serviceId: number;
+    service: Service;
+  }>;
   products?: number[];
+  serviceIds?: number[];
 }
 
 export const menusApi = {
   async getMenus(filters?: {
     isActive?: boolean;
-    category?: string;
-    type?: string;
     search?: string;
+    serviceId?: number;
   }): Promise<Menu[]> {
     const params = new URLSearchParams();
     if (filters?.isActive !== undefined) params.append('isActive', String(filters.isActive));
-    if (filters?.category) params.append('category', filters.category);
-    if (filters?.type) params.append('type', filters.type);
     if (filters?.search) params.append('search', filters.search);
+    if (filters?.serviceId !== undefined) params.append('serviceId', String(filters.serviceId));
 
     const query = params.toString();
     const endpoint = query ? `/menus?${query}` : '/menus';

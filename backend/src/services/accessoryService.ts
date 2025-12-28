@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
 
 const toOptionalString = (value: unknown) => {
   if (value === null || value === undefined) return undefined;
@@ -148,4 +146,3 @@ export const accessoryService = {
     return { deleted: true };
   }
 };
-

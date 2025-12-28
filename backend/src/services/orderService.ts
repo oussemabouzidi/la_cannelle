@@ -1,11 +1,11 @@
-import { PrismaClient, OrderStatus, PaymentStatus } from '@prisma/client';
+import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
 
 export const orderService = {
   async createOrder(data: {
     userId?: number;
+    serviceId?: number;
     clientName: string;
     contactEmail: string;
     phone: string;
@@ -45,9 +45,23 @@ export const orderService = {
       }
     }
 
+    if (data.serviceId !== undefined && data.serviceId !== null) {
+      const service = await prisma.service.findUnique({
+        where: { id: data.serviceId },
+        select: { id: true, isActive: true }
+      });
+      if (!service) {
+        throw new AppError('Service not found', 404);
+      }
+      if (!service.isActive) {
+        throw new AppError('Service is not active', 400);
+      }
+    }
+
     const order = await prisma.order.create({
       data: {
         userId: data.userId,
+        serviceId: data.serviceId ?? null,
         clientName: data.clientName,
         contactEmail: data.contactEmail,
         phone: data.phone,
@@ -77,6 +91,7 @@ export const orderService = {
       },
       include: {
         items: true,
+        service: true,
         user: {
           select: {
             id: true,
@@ -126,6 +141,7 @@ export const orderService = {
       where,
       include: {
         items: true,
+        service: true,
         user: {
           select: {
             id: true,
@@ -153,6 +169,7 @@ export const orderService = {
       where,
       include: {
         items: true,
+        service: true,
         user: {
           select: {
             id: true,

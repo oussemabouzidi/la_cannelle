@@ -50,6 +50,12 @@ enum MenuTier {
   LUXURY
 }
 
+enum ServiceOccasion {
+  BUSINESS
+  PRIVATE
+  BOTH
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -110,13 +116,11 @@ model Menu {
   id          Int       @id @default(autoincrement())
   name        String
   description String    @db.Text
-  category    String // seasonal, luxury, vegetarian, etc.
-  type        String // fixed, tasting, themed
   isActive    Boolean   @default(true)
   startDate   DateTime?
   endDate     DateTime?
   price       Float?
-  image       String?
+  image       String?   @db.LongText
   minPeople   Int?
   steps       Json?
   createdAt   DateTime  @default(now())
@@ -124,8 +128,37 @@ model Menu {
 
   // Relations
   menuProducts MenuProduct[]
+  menuServices MenuService[]
 
   @@map("menus")
+}
+
+model Service {
+  id        Int            @id @default(autoincrement())
+  name      String
+  occasion  ServiceOccasion
+  description String?      @db.Text
+  image     String?        @db.LongText
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  menuServices MenuService[]
+  orders       Order[]
+
+  @@map("services")
+}
+
+model MenuService {
+  id        Int     @id @default(autoincrement())
+  menuId    Int
+  serviceId Int
+
+  menu    Menu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([menuId, serviceId])
+  @@map("menu_services")
 }
 
 model MenuProduct {
@@ -143,6 +176,7 @@ model MenuProduct {
 model Order {
   id                 String        @id @default(uuid())
   userId             Int?
+  serviceId          Int?
   clientName         String
   contactEmail       String
   phone              String
@@ -167,6 +201,7 @@ model Order {
 
   // Relations
   user  User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  service Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   items OrderItem[]
 
   @@map("orders")

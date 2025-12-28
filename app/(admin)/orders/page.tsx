@@ -5,7 +5,7 @@ import {
   Menu, X, ChevronRight, Package, Calendar, DollarSign, 
   Users, TrendingUp, Clock, CheckCircle, AlertCircle, XCircle,
   Search, Filter, Eye, Edit, Archive, RefreshCw, Truck,
-  MessageCircle, Phone, Mail, MapPin, User, ShoppingBag, BarChart3
+  MessageCircle, Phone, Mail, MapPin, User, ShoppingBag, BarChart3, Briefcase
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,7 @@ import { useTranslation } from '@/lib/hooks/useTranslation';
 import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import AdminLayout from '../components/AdminLayout';
 import { ordersApi, Order } from '@/lib/api/orders';
+import { useBodyScrollLock } from '../components/useBodyScrollLock';
 
 
 export default function AdminOrders() {
@@ -24,12 +25,15 @@ export default function AdminOrders() {
   const [dateFilter, setDateFilter] = useState('all');
   const { language, toggleLanguage } = useTranslation('admin');
 
+  useBodyScrollLock(Boolean(selectedOrder));
+
   const copy = {
     EN: {
       nav: {
         dashboard: 'Dashboard',
         orders: 'Orders',
         menu: 'Menu Management',
+        services: 'Services',
         accessories: 'Accessories',
         system: 'System Control',
         customers: 'Customers',
@@ -100,6 +104,7 @@ export default function AdminOrders() {
         dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
+        services: 'Dienstleistungen',
         accessories: 'Zubehoer',
         system: 'Systemsteuerung',
         customers: 'Kunden',
@@ -248,6 +253,7 @@ export default function AdminOrders() {
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'services', name: t.nav.services, icon: Briefcase, path: '/services_management' },
     { id: 'accessories', name: t.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
@@ -286,7 +292,7 @@ export default function AdminOrders() {
   };
 
   const OrderDetailsModal = ({ order, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6 border-b border-gray-300 bg-gray-50">
           <div className="flex items-center justify-between">

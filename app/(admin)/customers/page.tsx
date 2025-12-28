@@ -9,7 +9,8 @@ import {
   Star, Crown, Eye, MessageCircle,
   User, // Added User icon
   ShoppingBag,
-  BarChart3
+  BarChart3,
+  Briefcase
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -18,6 +19,7 @@ import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import AdminLayout from '../components/AdminLayout';
 import { customersApi, CustomerSummary } from '@/lib/api/customers';
 import { ordersApi, Order } from '@/lib/api/orders';
+import { useBodyScrollLock } from '../components/useBodyScrollLock';
 
 type Customer = CustomerSummary & {
   avatar?: string;
@@ -36,6 +38,8 @@ export default function Customers() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
+  useBodyScrollLock(Boolean(selectedCustomer));
+
   const router = useRouter();
   const { language, toggleLanguage } = useTranslation('admin');
   const locale = language === 'DE' ? 'de-DE' : 'en-US';
@@ -46,6 +50,7 @@ export default function Customers() {
         dashboard: 'Dashboard',
         orders: 'Orders',
         menu: 'Menu Management',
+        services: 'Services',
         accessories: 'Accessories',
         system: 'System Control',
         customers: 'Customers',
@@ -112,6 +117,7 @@ export default function Customers() {
         dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
+        services: 'Dienstleistungen',
         accessories: 'Zubehoer',
         system: 'Systemsteuerung',
         customers: 'Kunden',
@@ -212,6 +218,7 @@ export default function Customers() {
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'services', name: t.nav.services, icon: Briefcase, path: '/services_management' },
     { id: 'accessories', name: t.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
@@ -262,7 +269,7 @@ export default function Customers() {
   };
 
   const CustomerDetailModal = ({ customer, onClose }: { customer: Customer; onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">

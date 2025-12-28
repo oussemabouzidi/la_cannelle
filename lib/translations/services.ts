@@ -1,6 +1,9 @@
 import type { Language } from '../hooks/useTranslation';
 
 const en = {
+  labels: {
+    whatWeOffer: 'What We Offer:',
+  },
   nav: {
     home: 'Home',
     about: 'About',
@@ -93,11 +96,14 @@ const en = {
 };
 
 const de: typeof en = {
+  labels: {
+    whatWeOffer: 'Was wir bieten:',
+  },
   nav: {
     home: 'Startseite',
-    about: 'Über uns',
+    about: 'Ueber uns',
     services: 'Dienstleistungen',
-    menus: 'Menüs',
+    menus: 'Menues',
     contact: 'Kontakt',
     connect: 'Verbinden',
     order: 'Jetzt bestellen',
@@ -119,33 +125,33 @@ const de: typeof en = {
   },
   hero: {
     title: 'Unsere Dienstleistungen',
-    subtitle: 'Maßgeschneiderte Catering-Lösungen für jeden Anlass',
+    subtitle: 'Massgeschneiderte Catering-Loesungen fuer jeden Anlass',
   },
   officeCatering: {
-    title: 'Büro-Catering',
-    subtitle: 'Energie für Ihr Team durch Exzellenz',
+    title: 'Buero-Catering',
+    subtitle: 'Energie fuer Ihr Team durch Exzellenz',
     description:
-      'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Büro-Catering-Dienstleistungen. Von täglichen Mittagslieferungen bis hin zu Frühstücksmeetings und Nachmittagserfrischungen bieten wir frische, köstliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
+      'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Buero-Catering-Dienstleistungen. Von taeglichen Mittagslieferungen bis hin zu Fruehstuecksmeetings und Nachmittagserfrischungen bieten wir frische, koestliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
     features: [
-      'Tägliche Essenslieferprogramme',
-      'Frühstücksmeetings und Kaffeeservice',
+      'Taegliche Essenslieferprogramme',
+      'Fruehstuecksmeetings und Kaffeeservice',
       'Gesunde Mittagsoptionen',
-      'Individuelle Ernährungsanpassungen',
+      'Individuelle Ernaehrungsanpassungen',
       'Flexible Planung und Bestellung',
-      'Professionelle Präsentation',
+      'Professionelle Praesentation',
     ],
   },
   eventCatering: {
     title: 'Event-Catering',
-    subtitle: 'Unvergessliche Momente, außergewöhnliches Essen',
+    subtitle: 'Unvergessliche Momente, aussergewoehnliches Essen',
     description:
-      'Machen Sie Ihr besonderes Ereignis unvergesslich mit unseren umfassenden Catering-Dienstleistungen. Ob Geburtstag, Jubiläum oder ein anderer Meilenstein – wir schaffen kulinarische Erlebnisse, die in Erinnerung bleiben.',
+      'Machen Sie Ihr besonderes Ereignis unvergesslich mit unseren umfassenden Catering-Dienstleistungen. Ob Geburtstag, Jubilaeum oder ein anderer Meilenstein - wir schaffen kulinarische Erlebnisse, die in Erinnerung bleiben.',
     features: [
-      'Individuelle Menüs für jeden Anlass',
+      'Individuelle Menues fuer jeden Anlass',
       'Umfassende Event-Koordination',
       'Professionelles Personal und Service',
-      'Elegante Präsentation und Aufbau',
-      'Für alle Gruppengrößen geeignet',
+      'Elegante Praesentation und Aufbau',
+      'Fuer alle Gruppengroessen geeignet',
       'Thematische Catering-Optionen',
     ],
   },
@@ -153,12 +159,12 @@ const de: typeof en = {
     title: 'Hochzeiten',
     subtitle: 'Ihr perfekter Tag, perfekt bekocht',
     description:
-      'Ihr Hochzeitstag verdient Perfektion. Unser engagiertes Team arbeitet eng mit Ihnen zusammen, um ein maßgeschneidertes kulinarisches Erlebnis zu gestalten, das Ihren Stil widerspiegelt und jeden Gast begeistert.',
+      'Ihr Hochzeitstag verdient Perfektion. Unser engagiertes Team arbeitet eng mit Ihnen zusammen, um ein massgeschneidertes kulinarisches Erlebnis zu gestalten, das Ihren Stil widerspiegelt und jeden Gast begeistert.',
     features: [
-      'Personalisierte Menüberatung',
-      'Verkostung für das Paar',
-      'Voller Barservice verfügbar',
-      'Elegantes Anrichten und Präsentation',
+      'Personalisierte Menueberatung',
+      'Verkostung fuer das Paar',
+      'Voller Barservice verfuegbar',
+      'Elegantes Anrichten und Praesentation',
       'Erfahrenes Hochzeitspersonal',
       'Koordination mit Location und Dienstleistern',
     ],
@@ -167,14 +173,14 @@ const de: typeof en = {
     title: 'Firmenevents',
     subtitle: 'Beeindrucken Sie Kunden und Team',
     description:
-      'Werten Sie Ihre Geschäftstreffen mit unserem professionellen Catering auf. Von Besprechungen im kleinen Kreis bis zu großen Konferenzen liefern wir anspruchsvolle kulinarische Erlebnisse, die Ihre Unternehmensqualität widerspiegeln.',
+      'Werten Sie Ihre Geschaeftstreffen mit unserem professionellen Catering auf. Von Besprechungen im kleinen Kreis bis zu grossen Konferenzen liefern wir anspruchsvolle kulinarische Erlebnisse, die Ihre Unternehmensqualitaet widerspiegeln.',
     features: [
       'Exklusiver Mittag- und Abendservice',
       'Konferenz- und Seminar-Catering',
       'Produktlaunches und Feiern',
-      'Networking-Events und Empfänge',
-      'Professionelle Präsentation',
-      'Berücksichtigung von Ernährungswünschen',
+      'Networking-Events und Empfaenge',
+      'Professionelle Praesentation',
+      'Beruecksichtigung von Ernaehrungswuenschen',
     ],
   },
   cta: {

@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Briefcase, Users, Heart, Building2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { servicesTranslations } from '@/lib/translations/services';
+import { commonTranslations } from '@/lib/translations/common';
 
 
 export default function ServicesPage() {
@@ -12,9 +13,22 @@ export default function ServicesPage() {
   const translation = useTranslation('services');
   const t = translation.t as typeof servicesTranslations.EN;
   const { language, toggleLanguage } = translation;
+  const commonA11y = commonTranslations[language].accessibility;
   const [isVisible, setIsVisible] = useState(false);
 
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isActiveHref = (href: string) => {
+    if (href === '/home') return pathname === '/' || pathname === '/home';
+    return pathname === href;
+  };
+
+  const desktopLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:scale-105`;
+
+  const mobileLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:translate-x-2`;
 
   const handleOrderClick = () => {
     router.push('/order');
@@ -24,154 +38,9 @@ export default function ServicesPage() {
     setIsVisible(true);
   }, []);
 
-  // Translations moved to lib/translations/services.ts
-  const _removedContent = {
-    EN: {
-      nav: {
-        about: 'About',
-        services: 'Services',
-        menus: 'Menus',
-        contact: 'Contact',
-        connect: 'Connect',
-        order: 'Order Now'
-      },
-      hero: {
-        title: 'Our Services',
-        subtitle: 'Tailored catering solutions for every occasion'
-      },
-      officeCatering: {
-        title: 'Office Catering',
-        subtitle: 'Fuel Your Team with Excellence',
-        description: 'Keep your team energized and productive with our professional office catering services. From daily lunch deliveries to breakfast meetings and afternoon refreshments, we provide fresh, delicious meals that fit seamlessly into your workday.',
-        features: [
-          'Daily meal delivery programs',
-          'Breakfast meetings and coffee service',
-          'Healthy lunch options',
-          'Custom dietary accommodations',
-          'Flexible scheduling and ordering',
-          'Professional presentation'
-        ]
-      },
-      eventCatering: {
-        title: 'Event Catering',
-        subtitle: 'Memorable Moments, Exceptional Food',
-        description: 'Make your special event unforgettable with our comprehensive event catering services. Whether it\'s a birthday celebration, anniversary, or any milestone, we create culinary experiences that leave lasting impressions.',
-        features: [
-          'Customized menus for any occasion',
-          'Full-service event coordination',
-          'Professional staff and service',
-          'Elegant presentation and setup',
-          'Accommodates all group sizes',
-          'Themed catering options'
-        ]
-      },
-      weddings: {
-        title: 'Weddings',
-        subtitle: 'Your Perfect Day, Perfectly Catered',
-        description: 'Your wedding day deserves nothing but perfection. Our dedicated wedding catering team works closely with you to create a bespoke dining experience that reflects your style and taste, ensuring every guest is delighted.',
-        features: [
-          'Personalized menu consultations',
-          'Tasting sessions for the couple',
-          'Full bar service available',
-          'Elegant plating and presentation',
-          'Experienced wedding staff',
-          'Coordination with venue and vendors'
-        ]
-      },
-      corporateEvents: {
-        title: 'Corporate Events',
-        subtitle: 'Impress Your Clients and Team',
-        description: 'Elevate your corporate gatherings with our professional catering services. From intimate board meetings to large-scale conferences, we deliver sophisticated dining experiences that reflect your company\'s excellence.',
-        features: [
-          'Executive lunch and dinner service',
-          'Conference and seminar catering',
-          'Product launches and celebrations',
-          'Networking events and receptions',
-          'Professional presentation',
-          'Dietary restrictions accommodated'
-        ]
-      },
-      cta: {
-        title: 'Ready to Get Started?',
-        subtitle: 'Let us bring your vision to life with exceptional catering',
-        button: 'Order Now'
-      }
-    },
-    DE: {
-      nav: {
-        about: 'Über uns',
-        services: 'Dienstleistungen',
-        menus: 'Menüs',
-        contact: 'Kontakt',
-        connect: 'Verbinden',
-        order: 'Jetzt bestellen'
-      },
-      hero: {
-        title: 'Unsere Dienstleistungen',
-        subtitle: 'Maßgeschneiderte Catering-Lösungen für jeden Anlass'
-      },
-      officeCatering: {
-        title: 'Büro-Catering',
-        subtitle: 'Energie für Ihr Team durch Exzellenz',
-        description: 'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Büro-Catering-Dienstleistungen. Von täglichen Mittagslieferungen bis hin zu Frühstücksmeetings und Nachmittagserfrischungen bieten wir frische, köstliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
-        features: [
-          'Tägliche Essenslieferprogramme',
-          'Frühstücksmeetings und Kaffeeservice',
-          'Gesunde Mittagsoptionen',
-          'Individuelle Ernährungsanpassungen',
-          'Flexible Planung und Bestellung',
-          'Professionelle Präsentation'
-        ]
-      },
-      eventCatering: {
-        title: 'Event-Catering',
-        subtitle: 'Unvergessliche Momente, Außergewöhnliches Essen',
-        description: 'Machen Sie Ihre besondere Veranstaltung unvergesslich mit unseren umfassenden Event-Catering-Dienstleistungen. Ob Geburtstagsfeier, Jubiläum oder ein anderer Meilenstein, wir schaffen kulinarische Erlebnisse, die bleibende Eindrücke hinterlassen.',
-        features: [
-          'Individuelle Menüs für jeden Anlass',
-          'Full-Service-Event-Koordination',
-          'Professionelles Personal und Service',
-          'Elegante Präsentation und Aufbau',
-          'Für alle Gruppengrößen geeignet',
-          'Thematische Catering-Optionen'
-        ]
-      },
-      weddings: {
-        title: 'Hochzeiten',
-        subtitle: 'Ihr perfekter Tag, perfekt bewirtet',
-        description: 'Ihr Hochzeitstag verdient nichts als Perfektion. Unser engagiertes Hochzeits-Catering-Team arbeitet eng mit Ihnen zusammen, um ein maßgeschneidertes kulinarisches Erlebnis zu schaffen, das Ihren Stil und Geschmack widerspiegelt und jeden Gast begeistert.',
-        features: [
-          'Personalisierte Menüberatungen',
-          'Verkostungen für das Paar',
-          'Full-Bar-Service verfügbar',
-          'Elegante Anrichtung und Präsentation',
-          'Erfahrenes Hochzeitspersonal',
-          'Koordination mit Location und Anbietern'
-        ]
-      },
-      corporateEvents: {
-        title: 'Firmenveranstaltungen',
-        subtitle: 'Beeindrucken Sie Ihre Kunden und Ihr Team',
-        description: 'Werten Sie Ihre Firmenveranstaltungen mit unseren professionellen Catering-Dienstleistungen auf. Von intimen Vorstandssitzungen bis hin zu großen Konferenzen bieten wir anspruchsvolle kulinarische Erlebnisse, die die Exzellenz Ihres Unternehmens widerspiegeln.',
-        features: [
-          'Executive-Lunch- und Dinner-Service',
-          'Konferenz- und Seminar-Catering',
-          'Produkteinführungen und Feiern',
-          'Networking-Events und Empfänge',
-          'Professionelle Präsentation',
-          'Ernährungseinschränkungen berücksichtigt'
-        ]
-      },
-      cta: {
-        title: 'Bereit anzufangen?',
-        subtitle: 'Lassen Sie uns Ihre Vision mit außergewöhnlichem Catering zum Leben erwecken',
-        button: 'Jetzt bestellen'
-      }
-    }
-  };
-
+  // Translations are in lib/translations/services.ts
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Add animations and fonts */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -247,28 +116,33 @@ export default function ServicesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo.png" alt="" className="w-50 h-auto" />
+              <img
+                src="/images/logo-removebg-preview.png"
+                alt="La Cannelle"
+                className="h-10 sm:h-12 w-auto object-contain"
+              />
             </div>
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.home}</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.about}</a>
-              <a href="/services" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
-              <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
-              <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
+              <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
+              <a href="/about" className={desktopLinkClass('/about')}>{t.nav.about}</a>
+              <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
+              <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
+              <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>
               <button 
   onClick={toggleLanguage}
+  aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
   className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
 >
   {language === 'EN' ? (
     <>
-      <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
+      <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} alt={commonA11y.englishFlagAlt} /></span>
       English
     </>
   ) : (
     <>
-      <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} /></span>
+      <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} alt={commonA11y.germanFlagAlt} /></span>
       Deutsch
     </>
   )}
@@ -295,31 +169,31 @@ export default function ServicesPage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.home}</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.about}</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
-                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
+                <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
+                <a href="/about" className={mobileLinkClass('/about')}>{t.nav.about}</a>
+                <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
+                <a href="/menus" className={mobileLinkClass('/menus')}>{t.nav.menus}</a>
+                <a href="/contact" className={mobileLinkClass('/contact')}>{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  aria-label={language === 'EN' ? 'Switch to German' : 'Switch to English'}
+                  aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
                   className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
                   {language === 'EN' ? (
                     <img
                       src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
-                      alt="English flag"
+                      alt={commonA11y.englishFlagAlt}
                       className="h-5 w-auto"
                     />
                   ) : (
                     <img
                       src="/images/language/Flag_of_Germany-4096x2453.png"
-                      alt="German flag"
+                      alt={commonA11y.germanFlagAlt}
                       className="h-5 w-auto"
                     />
                   )}
                 </button>
-                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
+                <button onClick={handleOrderClick} className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
                   {t.nav.order}
                 </button>
               </div>
@@ -375,7 +249,7 @@ export default function ServicesPage() {
             
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
               <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">{t.labels.whatWeOffer}</h3>
                 <ul className="space-y-3">
                   {t.officeCatering.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3 group">
@@ -402,7 +276,7 @@ export default function ServicesPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className={`order-2 md:order-1 transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
               <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">{t.labels.whatWeOffer}</h3>
                 <ul className="space-y-3">
                   {t.eventCatering.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3 group">
@@ -461,7 +335,7 @@ export default function ServicesPage() {
             
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
               <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">{t.labels.whatWeOffer}</h3>
                 <ul className="space-y-3">
                   {t.weddings.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3 group">
@@ -488,7 +362,7 @@ export default function ServicesPage() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className={`order-2 md:order-1 transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
               <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-amber-100">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">What We Offer:</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 font-elegant italic">{t.labels.whatWeOffer}</h3>
                 <ul className="space-y-3">
                   {t.corporateEvents.features.map((feature, index) => (
                     <li key={index} className="flex items-start gap-3 group">
@@ -526,7 +400,10 @@ export default function ServicesPage() {
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl font-bold text-white mb-4 font-elegant italic">{t.cta.title}</h2>
             <p className="text-xl text-amber-100 mb-8 font-light italic">{t.cta.subtitle}</p>
-            <button onClick={()=> handleOrderClick()} className="px-10 py-4 bg-white text-amber-700 rounded-lg text-lg font-semibold hover:bg-amber-50 transition-all transform hover:scale-105 inline-flex items-center gap-2 shadow-xl hover:shadow-2xl duration-300">
+            <button
+              onClick={()=> handleOrderClick()}
+              className="group w-full sm:w-auto justify-center px-6 sm:px-10 py-4 bg-white text-amber-700 rounded-lg text-lg font-semibold hover:bg-amber-50 transition-all transform hover:scale-105 inline-flex items-center gap-2 shadow-xl hover:shadow-2xl duration-300"
+            >
               {t.cta.button}
               <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>

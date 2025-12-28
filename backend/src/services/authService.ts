@@ -1,9 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';

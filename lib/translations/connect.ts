@@ -99,8 +99,17 @@ const en: ConnectTranslations = {
 };
 
 const de: ConnectTranslations = {
-  nav: { services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
-  hero: { title: 'Willkommen zurück', subtitle: 'Verwalten Sie Ihre Einstellungen, Bestellungen und Zahlungsmethoden' },
+  nav: {
+    services: 'Dienstleistungen',
+    menus: 'Menues',
+    contact: 'Kontakt',
+    connect: 'Verbinden',
+    order: 'Bestellen',
+  },
+  hero: {
+    title: 'Willkommen zurueck',
+    subtitle: 'Verwalten Sie Ihre Einstellungen, Bestellungen und Zahlungsmethoden',
+  },
   tabs: {
     profile: 'Profil',
     orders: 'Bestellungen',
@@ -110,7 +119,7 @@ const de: ConnectTranslations = {
   },
   profile: {
     personal: {
-      title: 'Persönliche Daten',
+      title: 'Persoenliche Daten',
       subtitle: 'Halten Sie Ihre Informationen aktuell',
       firstName: 'Vorname',
       lastName: 'Nachname',
@@ -124,15 +133,15 @@ const de: ConnectTranslations = {
       newsletter: 'Newsletter abonnieren',
       sms: 'SMS-Benachrichtigungen',
       reminders: 'Event-Erinnerungen',
-      dietary: 'Ernährungspräferenzen',
+      dietary: 'Ernaehrungspraeferenzen',
       allergies: 'Allergien',
     },
-    save: 'Änderungen speichern',
+    save: 'Aenderungen speichern',
     edit: 'Profil bearbeiten',
   },
   orders: {
     title: 'Letzte Bestellungen',
-    status: { pending: 'Ausstehend', confirmed: 'Bestätigt', completed: 'Abgeschlossen' },
+    status: { pending: 'Ausstehend', confirmed: 'Bestaetigt', completed: 'Abgeschlossen' },
     viewDetails: 'Details ansehen',
   },
   favorites: { title: 'Favoriten' },
@@ -141,7 +150,7 @@ const de: ConnectTranslations = {
     default: 'Standard',
     setDefault: 'Als Standard setzen',
     remove: 'Entfernen',
-    addCard: 'Neue Karte hinzufügen',
+    addCard: 'Neue Karte hinzufuegen',
   },
   settings: {
     title: 'Einstellungen',
@@ -149,7 +158,7 @@ const de: ConnectTranslations = {
     notifications: 'Benachrichtigungen',
     privacy: 'Datenschutz',
     language: 'Sprache',
-    delete: 'Konto löschen',
+    delete: 'Konto loeschen',
   },
 };
 
@@ -157,3 +166,4 @@ export const connectTranslations: Record<Language, ConnectTranslations> = {
   EN: en,
   DE: de,
 };
+

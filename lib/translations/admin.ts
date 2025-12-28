@@ -9,6 +9,15 @@ type AdminTranslations = {
     reports: string;
     system: string;
   };
+  auth: {
+    title: string;
+    subtitle: string;
+    loginLabel: string;
+    passwordLabel: string;
+    submit: string;
+    signingIn: string;
+    invalidCredentials: string;
+  };
   labels: {
     viewAllOrders: string;
   };
@@ -24,18 +33,36 @@ export const adminTranslations: Record<Language, AdminTranslations> = {
       reports: 'Reports',
       system: 'System Control',
     },
+    auth: {
+      title: 'Admin Login',
+      subtitle: 'Sign in to access the admin area.',
+      loginLabel: 'Login',
+      passwordLabel: 'Password',
+      submit: 'Login',
+      signingIn: 'Signing in...',
+      invalidCredentials: 'Invalid credentials',
+    },
     labels: {
       viewAllOrders: 'View All Orders',
     },
   },
   DE: {
     nav: {
-      dashboard: 'Übersicht',
+      dashboard: 'Uebersicht',
       orders: 'Bestellungen',
-      menu: 'Menüverwaltung',
+      menu: 'Menueverwaltung',
       customers: 'Kunden',
       reports: 'Berichte',
       system: 'Systemsteuerung',
+    },
+    auth: {
+      title: 'Admin Anmeldung',
+      subtitle: 'Melden Sie sich an, um den Adminbereich zu nutzen.',
+      loginLabel: 'Login',
+      passwordLabel: 'Passwort',
+      submit: 'Anmelden',
+      signingIn: 'Anmeldung...',
+      invalidCredentials: 'Ungueltige Zugangsdaten',
     },
     labels: {
       viewAllOrders: 'Alle Bestellungen ansehen',

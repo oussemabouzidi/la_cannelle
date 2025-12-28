@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Package,
   Menu,
+  Briefcase,
   Clock,
   Users,
   DollarSign,
@@ -54,6 +55,7 @@ export default function AdminReports() {
       { id: 'dashboard', name: isDE ? 'Ubersicht' : 'Dashboard', icon: TrendingUp, path: '/dashboard' },
       { id: 'orders', name: isDE ? 'Bestellungen' : 'Orders', icon: Package, path: '/orders' },
       { id: 'menu', name: isDE ? 'Menueverwaltung' : 'Menu Management', icon: Menu, path: '/menu_management' },
+      { id: 'services', name: isDE ? 'Services' : 'Services', icon: Briefcase, path: '/services_management' },
       { id: 'accessories', name: isDE ? 'Zubehoer' : 'Accessories', icon: ShoppingBag, path: '/accessories' },
       { id: 'system', name: isDE ? 'Systemsteuerung' : 'System Control', icon: Clock, path: '/system_control' },
       { id: 'customers', name: isDE ? 'Kunden' : 'Customers', icon: Users, path: '/customers' },
@@ -287,4 +289,3 @@ export default function AdminReports() {
     </AdminLayout>
   );
 }
-

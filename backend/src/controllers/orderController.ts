@@ -19,6 +19,7 @@ export const orderController = {
       specialRequests,
       businessType,
       serviceType,
+      serviceId,
       postalCode,
       items,
       subtotal,
@@ -50,6 +51,7 @@ export const orderController = {
 
     const order = await orderService.createOrder({
       userId: req.user?.id,
+      serviceId: serviceId === '' || serviceId === null || serviceId === undefined ? undefined : parseInt(serviceId, 10),
       clientName: clientName || 'Guest',
       contactEmail,
       phone,

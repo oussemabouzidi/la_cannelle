@@ -1,6 +1,6 @@
+import './env';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
 import orderRoutes from './routes/orders';
@@ -13,8 +13,7 @@ import systemRoutes from './routes/system';
 import favoriteRoutes from './routes/favorites';
 import contactRoutes from './routes/contact';
 import accessoryRoutes from './routes/accessories';
-
-dotenv.config();
+import serviceRoutes from './routes/services';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -61,6 +60,7 @@ app.use('/api/system', systemRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/accessories', accessoryRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Error handling
 app.use(errorHandler);

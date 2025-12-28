@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
 // Temporary any-cast to allow compilation before regenerating Prisma client after schema changes.
 const capacityRepo = (prisma as any).capacitySetting;
 

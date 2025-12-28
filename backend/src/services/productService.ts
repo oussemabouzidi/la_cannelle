@@ -1,7 +1,6 @@
-import { PrismaClient, ProductCategory, MenuTier } from '@prisma/client';
+import { ProductCategory, MenuTier } from '@prisma/client';
+import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
 
 const normalizeCategory = (category?: string | ProductCategory): ProductCategory | undefined => {
   if (!category) return undefined;
@@ -83,11 +82,7 @@ export const productService = {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        menuProducts: {
-          include: {
-            menu: true
-          }
-        }
+        menuProducts: true
       }
     });
 
@@ -138,11 +133,7 @@ export const productService = {
         } : undefined
       },
       include: {
-        menuProducts: {
-          include: {
-            menu: true
-          }
-        }
+        menuProducts: true
       }
     });
 
@@ -184,11 +175,7 @@ export const productService = {
       where: { id },
       data: updateData,
       include: {
-        menuProducts: {
-          include: {
-            menu: true
-          }
-        }
+        menuProducts: true
       }
     });
 

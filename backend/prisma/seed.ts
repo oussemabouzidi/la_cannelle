@@ -910,6 +910,55 @@ async function main() {
   }
   console.log(`バ. Seeded accessories (created ${createdAccessories})`);
 
+  // Seed services (used for business/private occasion selection)
+  const services = [
+    {
+      name: 'Office Catering',
+      occasion: 'BUSINESS',
+      description: 'Breakfast meetings, lunch delivery, and ongoing office catering.',
+      image: 'https://images.unsplash.com/photo-1555992336-03a23c7b20a6?w=800&fit=crop',
+      isActive: true
+    },
+    {
+      name: 'Corporate Events',
+      occasion: 'BUSINESS',
+      description: 'Professional catering for meetings, conferences, and launches.',
+      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&fit=crop',
+      isActive: true
+    },
+    {
+      name: 'Event Catering',
+      occasion: 'PRIVATE',
+      description: 'Birthdays, anniversaries, and private celebrations.',
+      image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&fit=crop',
+      isActive: true
+    },
+    {
+      name: 'Weddings',
+      occasion: 'PRIVATE',
+      description: 'Bespoke wedding menus, service, and coordination.',
+      image: 'https://images.unsplash.com/photo-1523438097201-fb5f1f6b227b?w=800&fit=crop',
+      isActive: true
+    }
+  ] as const;
+
+  let createdServices = 0;
+  for (const service of services) {
+    const existing = await prisma.service.findFirst({
+      where: {
+        name: service.name,
+        occasion: service.occasion,
+      },
+    });
+    if (existing) {
+      await prisma.service.update({ where: { id: existing.id }, data: service as any });
+    } else {
+      await prisma.service.create({ data: service as any });
+      createdServices += 1;
+    }
+  }
+  console.log(`茻?. Seeded services (created ${createdServices})`);
+
   // Create closed dates
 const closedDates = [
   { date: new Date('2024-12-25'), reason: 'Christmas Day', recurring: true },

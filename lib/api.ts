@@ -1,6 +1,13 @@
 // API Configuration and Client
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+function getDefaultApiBaseUrl() {
+  if (typeof window === 'undefined') {
+    return process.env.BACKEND_API_URL || 'http://localhost:3001/api';
+  }
+  return '/api';
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || getDefaultApiBaseUrl();
 
 export interface ApiResponse<T> {
   data?: T;

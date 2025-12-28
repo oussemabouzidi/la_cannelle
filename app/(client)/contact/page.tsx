@@ -2,115 +2,34 @@
 
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { commonTranslations } from '@/lib/translations/common';
+import { contactTranslations } from '@/lib/translations/contact';
 
 export default function ContactPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { language, toggleLanguage } = useTranslation('contact');
-  const translations = {
-    EN: {
-      nav: { home: 'Home', about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order Now' },
-      hero: { title: 'Get in Touch', subtitle: "Let's create something extraordinary together" },
-      quickOrder: {
-        title: 'Quick Order',
-        subtitle: 'Need immediate assistance? Place a quick order',
-        button: 'Quick Order Now',
-      },
-      social: {
-        title: 'Follow Us',
-        instagram: 'Instagram',
-        tiktok: 'TikTok',
-      },
-      location: {
-        title: 'Our Location',
-        loading: 'Loading Google Maps...',
-        openMap: 'Open in Google Maps',
-      },
-      contactForm: {
-        title: 'Send Us a Message',
-        name: 'Full Name',
-        email: 'Email Address',
-        phone: 'Phone Number',
-        eventType: 'Event Type',
-        eventTypePlaceholder: 'Select Event Type',
-        eventDate: 'Event Date',
-        invalidEventDate: 'Please choose today or a future date.',
-        guests: 'Number of Guests',
-        message: 'Your Message',
-        eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other'],
-        button: 'Send Message',
-        submit: 'Send Message',
-      },
-      contactInfo: {
-        title: 'Contact Information',
-        phone: '02133 978 2992',
-        mobile: '0163 599 7062',
-        email: 'booking@la-cannelle.com',
-        address: 'Borsigstraße 2, 41541 Dormagen',
-        hours: {
-          title: 'Business Hours',
-          weekdays: 'Monday - Friday: 9:00 AM - 6:00 PM',
-          saturday: 'Saturday: 10:00 AM - 4:00 PM',
-          sunday: 'Sunday: Closed',
-        },
-      },
-      success: { message: 'Thank you for reaching out!' },
-    },
-    DE: {
-      nav: { home: 'Startseite', about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Jetzt bestellen' },
-      hero: { title: 'Kontaktieren Sie uns', subtitle: 'Lassen Sie uns gemeinsam etwas Besonderes schaffen' },
-      quickOrder: {
-        title: 'Schnellbestellung',
-        subtitle: 'Brauchen Sie sofort Hilfe? Geben Sie eine Schnellbestellung auf',
-        button: 'Jetzt Schnellbestellen',
-      },
-      social: {
-        title: 'Folgen Sie uns',
-        instagram: 'Instagram',
-        tiktok: 'TikTok',
-      },
-      location: {
-        title: 'Unser Standort',
-        loading: 'Google Maps wird geladen...',
-        openMap: 'In Google Maps oeffnen',
-      },
-      contactForm: {
-        title: 'Senden Sie uns eine Nachricht',
-        name: 'Vollständiger Name',
-        email: 'E-Mail-Adresse',
-        phone: 'Telefonnummer',
-        eventType: 'Veranstaltungstyp',
-        eventTypePlaceholder: 'Veranstaltungstyp waehlen',
-        eventDate: 'Veranstaltungsdatum',
-        invalidEventDate: 'Bitte waehlen Sie heute oder ein zukuenftiges Datum.',
-        guests: 'Anzahl der Gäste',
-        message: 'Ihre Nachricht',
-        eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere'],
-        button: 'Nachricht senden',
-        submit: 'Nachricht senden',
-      },
-      contactInfo: {
-        title: 'Kontaktinformationen',
-        phone: '+49 2133 978 2992',
-        mobile: '+49 163 599 7062',
-        email: 'booking@la-cannelle.com',
-        address: 'Borsigstraße 2, 41541 Dormagen',
-        hours: {
-          title: 'Geschäftszeiten',
-          weekdays: 'Montag - Freitag: 9:00 - 18:00',
-          saturday: 'Samstag: 10:00 - 16:00',
-          sunday: 'Sonntag: Geschlossen',
-        },
-      },
-      success: { message: 'Danke für Ihre Nachricht!' },
-    },
-  } as const;
-  const t = translations[language] || translations.EN;
+  const { t: rawT, language, toggleLanguage } = useTranslation('contact');
+
+  // Translations moved to lib/translations/contact.ts
+  const t = rawT as typeof contactTranslations.EN;
+  const commonNav = commonTranslations[language].nav;
   const commonFooter = commonTranslations[language].footer;
+  const commonA11y = commonTranslations[language].accessibility;
   const [isVisible, setIsVisible] = useState(false);
+  const pathname = usePathname();
+
+  const isActiveHref = (href: string) => {
+    if (href === '/home') return pathname === '/' || pathname === '/home';
+    return pathname === href;
+  };
+
+  const desktopLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:scale-105`;
+
+  const mobileLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:translate-x-2`;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -165,12 +84,12 @@ export default function ContactPage() {
     e.preventDefault();
     const emailValue = formData.email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-      alert(language === 'DE' ? 'Bitte geben Sie eine gueltige E-Mail-Adresse ein.' : 'Please enter a valid email address.');
+      alert(t.alerts.invalidEmail);
       return;
     }
     const phoneValue = formData.phone.trim();
     if (phoneValue && !/^\+?[0-9\s-]{7,15}$/.test(phoneValue)) {
-      alert(language === 'DE' ? 'Bitte geben Sie eine gültige Telefonnummer ein.' : 'Please enter a valid phone number.');
+      alert(t.alerts.invalidPhone);
       return;
     }
     if (formData.eventDate && isDateInPast(formData.eventDate)) {
@@ -183,7 +102,7 @@ export default function ContactPage() {
       language
     });
     if (response.error) {
-      alert(language === 'DE' ? 'Senden fehlgeschlagen. Bitte versuchen Sie es erneut.' : 'Failed to send. Please try again.');
+      alert(t.alerts.failedToSend);
       return;
     }
     setFormData({
@@ -327,7 +246,7 @@ const handleOrderClick = () => {
 };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Add animations and fonts */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -447,16 +366,20 @@ const handleOrderClick = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
+              <img
+                src="/images/logo-removebg-preview.png"
+                alt="La Cannelle"
+                className="h-10 sm:h-12 w-auto object-contain"
+              />
             </div>
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.home}</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.about}</a>
-              <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
-              <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
-              <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
+              <a href="/home" className={desktopLinkClass('/home')}>{commonNav.home}</a>
+              <a href="/about" className={desktopLinkClass('/about')}>{commonNav.about}</a>
+              <a href="/services" className={desktopLinkClass('/services')}>{commonNav.services}</a>
+              <a href="/menus" className={desktopLinkClass('/menus')}>{commonNav.menus}</a>
+              <a href="/contact" className={desktopLinkClass('/contact')}>{commonNav.contact}</a>
               <button 
   onClick={toggleLanguage}
   className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
@@ -495,14 +418,14 @@ const handleOrderClick = () => {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.home}</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.about}</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
-                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
+                <a href="/home" className={mobileLinkClass('/home')}>{commonNav.home}</a>
+                <a href="/about" className={mobileLinkClass('/about')}>{commonNav.about}</a>
+                <a href="/services" className={mobileLinkClass('/services')}>{commonNav.services}</a>
+                <a href="/menus" className={mobileLinkClass('/menus')}>{commonNav.menus}</a>
+                <a href="/contact" className={mobileLinkClass('/contact')}>{commonNav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  aria-label={language === 'EN' ? 'Switch to German' : 'Switch to English'}
+                  aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
                   className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
                   {language === 'EN' ? (
@@ -842,15 +765,15 @@ const handleOrderClick = () => {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
               <h3 className="text-2xl font-bold mb-4 font-elegant italic">La Cannelle</h3>
-              <p className="text-gray-400 italic">Crafting unforgettable culinary experiences since 2010</p>
+              <p className="text-gray-400 italic">{commonFooter.brandTagline}</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{commonFooter.quickLinks}</h4>
               <div className="flex flex-col gap-2">
-                <a href="/" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.home}</a>
-                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.about}</a>
-                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.services}</a>
-                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{t.nav.menus}</a>
+                <a href="/" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.home}</a>
+                <a href="/about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.about}</a>
+                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.services}</a>
+                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.menus}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
@@ -877,13 +800,13 @@ const handleOrderClick = () => {
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
                     <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zM17.75 6a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.75 6z" />
                   </svg>
-                  Instagram
+                  {commonFooter.social.instagram}
                 </a>
               </div>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 La Cannelle Catering. All rights reserved.</p>
+            <p>{commonFooter.copyright}</p>
           </div>
         </div>
       </footer>

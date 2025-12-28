@@ -6,7 +6,7 @@ import {
   Users, TrendingUp, Clock, Plus, Edit, Archive, Trash2,
   Search, Filter, Save, XCircle, CheckCircle, AlertCircle,
   Utensils, Wine, Coffee, Dessert, Pause, Play, Calendar as CalendarIcon,
-  Users as UsersIcon, Settings, AlertTriangle, Check, ShoppingBag
+  Users as UsersIcon, Settings, AlertTriangle, Check, ShoppingBag, Briefcase
 } from 'lucide-react';
 
 import { useTranslation } from '@/lib/hooks/useTranslation';
@@ -60,6 +60,7 @@ export default function SystemControl() {
         dashboard: 'Dashboard',
         orders: 'Orders',
         menu: 'Menu Management',
+        services: 'Services',
         accessories: 'Accessories',
         system: 'System Control',
         customers: 'Customers',
@@ -133,12 +134,19 @@ export default function SystemControl() {
         weekendSame: 'Same as weekdays',
         weekendIncrease: 'increase on weekends',
       },
+      messages: {
+        capacitySaved: 'Capacity settings saved',
+        capacitySaveFailed: 'Failed to save capacity settings',
+        orderingSaved: 'Ordering settings saved',
+        orderingSaveFailed: 'Failed to save ordering settings',
+      },
     },
     DE: {
       nav: {
         dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
+        services: 'Dienstleistungen',
         accessories: 'Zubehoer',
         system: 'Systemsteuerung',
         customers: 'Kunden',
@@ -212,6 +220,12 @@ export default function SystemControl() {
         weekendSame: 'Wie an Werktagen',
         weekendIncrease: 'Erhoehung am Wochenende',
       },
+      messages: {
+        capacitySaved: 'Kapazitaetseinstellungen gespeichert',
+        capacitySaveFailed: 'Kapazitaetseinstellungen konnten nicht gespeichert werden',
+        orderingSaved: 'Bestelleinstellungen gespeichert',
+        orderingSaveFailed: 'Bestelleinstellungen konnten nicht gespeichert werden',
+      },
     },
   } as const;
   const t = copy[language] ?? copy.EN;
@@ -220,6 +234,7 @@ export default function SystemControl() {
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'services', name: t.nav.services, icon: Briefcase, path: '/services_management' },
     { id: 'accessories', name: t.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
@@ -336,10 +351,10 @@ export default function SystemControl() {
         weekendMultiplier: updated.weekendMultiplier,
         enableAutoPause: updated.enableAutoPause
       });
-      setCapacityMessage('Capacity settings saved');
+      setCapacityMessage(t.messages.capacitySaved);
     } catch (err) {
       console.error('Failed to save capacity settings', err);
-      setCapacityMessage('Failed to save capacity settings');
+      setCapacityMessage(t.messages.capacitySaveFailed);
     } finally {
       setIsSavingCapacity(false);
     }
@@ -360,10 +375,10 @@ export default function SystemControl() {
         pauseReason: updated.pauseReason ?? '',
         pauseUntil: updated.pauseUntil ?? ''
       });
-      setOrderingMessage('Ordering settings saved');
+      setOrderingMessage(t.messages.orderingSaved);
     } catch (err) {
       console.error('Failed to save ordering settings', err);
-      setOrderingMessage('Failed to save ordering settings');
+      setOrderingMessage(t.messages.orderingSaveFailed);
     } finally {
       setIsSavingOrdering(false);
     }

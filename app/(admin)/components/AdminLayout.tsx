@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Users } from 'lucide-react';
+import { useBodyScrollLock } from './useBodyScrollLock';
 
 export type AdminNavItem = {
   id: string;
@@ -34,33 +35,40 @@ export default function AdminLayout({
 }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [formattedDate, setFormattedDate] = useState('');
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setIsSidebarOpen(window.innerWidth >= 1024);
-  }, []);
+  useBodyScrollLock(mobileSidebarOpen);
+
+  function navigateTo(path: string) {
+    router.push(path);
+    setMobileSidebarOpen(false);
+  }
 
   const activeId = useMemo(() => {
     const match = navigation.find((item) => pathname?.startsWith(item.path));
     return match?.id || navigation[0]?.id || '';
   }, [navigation, pathname]);
 
-  const formattedDate = useMemo(() => {
+  useEffect(() => {
     try {
-      return new Date().toLocaleDateString(locale, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      setFormattedDate(
+        new Date().toLocaleDateString(locale, {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      );
     } catch {
-      return new Date().toDateString();
+      setFormattedDate(new Date().toDateString());
     }
   }, [locale]);
 
+  const sidebarTransformClass = mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 overflow-x-hidden">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -75,20 +83,23 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/95 backdrop-blur-lg border-r border-gray-100 transition-transform duration-300 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white/95 backdrop-blur-lg border-r border-gray-100 transition-transform duration-300 ${sidebarTransformClass}`}
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
+              <img
+                src="/images/logo-removebg-preview.png"
+                alt=""
+                className="h-auto max-w-[180px]"
+              />
             </div>
             <button
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={() => setMobileSidebarOpen(false)}
               className="p-2 rounded-lg hover:bg-gray-100 lg:hidden"
               type="button"
+              aria-label="Close menu"
             >
               <X size={20} />
             </button>
@@ -102,7 +113,7 @@ export default function AdminLayout({
                 return (
                   <button
                     key={item.id}
-                    onClick={() => router.push(item.path)}
+                    onClick={() => navigateTo(item.path)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                       isActive
                         ? 'bg-amber-100 text-amber-700 border border-amber-200'
@@ -132,38 +143,40 @@ export default function AdminLayout({
         </div>
       </div>
 
-      {isSidebarOpen && (
+      {mobileSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
         />
       )}
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
+      <div className="min-w-0 transition-all duration-300 ml-0 lg:ml-72">
         <header className="bg-white/80 backdrop-blur-lg border-b border-gray-100 sticky top-0 z-30">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-4">
+          <div className="flex items-start sm:items-center justify-between gap-3 p-3 sm:p-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               <button
-                onClick={() => setIsSidebarOpen(true)}
+                onClick={() => setMobileSidebarOpen(true)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
                 type="button"
+                aria-label="Open menu"
               >
                 <Menu size={20} />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 font-elegant">{title}</h1>
+              <h1 className="min-w-0 text-xl sm:text-2xl font-bold text-gray-900 font-elegant truncate">
+                {title}
+              </h1>
             </div>
 
-            <div className="flex items-center gap-4">
-              {headerMeta ?? <div className="text-sm text-gray-600">{formattedDate}</div>}
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-4">
+              {headerMeta ?? <div className="hidden md:block text-sm text-gray-600">{formattedDate}</div>}
               {languageToggle}
             </div>
           </div>
         </header>
 
-        <main className="p-6">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8 min-w-0">{children}</main>
       </div>
     </div>
   );
 }
-

@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Menu, X, Phone, Mail, MapPin, Check } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
 import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
 import { commonTranslations } from '@/lib/translations/common';
+import { menusTranslations } from '@/lib/translations/menus';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 
 type MenuHighlightItem = {
@@ -31,12 +32,26 @@ export default function MenusPage() {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const commonFooter = commonTranslations[language].footer;
+  const commonA11y = commonTranslations[language].accessibility;
+  const t = menusTranslations[language];
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isActiveHref = (href: string) => {
+    if (href === '/home') return pathname === '/' || pathname === '/home';
+    return pathname === href;
+  };
+
+  const desktopLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:scale-105`;
+
+  const mobileLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:translate-x-2`;
 
   const handleOrderClick = () => {
     router.push('/order');
@@ -255,7 +270,7 @@ export default function MenusPage() {
     }
   };
 
-  const t = content[language];
+  // Legacy inline translations are unused (kept for now).
 
   useEffect(() => {
     const loadData = async () => {
@@ -284,20 +299,20 @@ export default function MenusPage() {
         }
 
         if (hasMenuError && hasProductsError) {
-          setFetchError('Unable to load menus right now.');
+          setFetchError(t.labels.menusLoadFailed);
         }
 
         setMenus(nextMenus);
         setProducts(nextProducts);
       } catch {
-        setFetchError('Unable to load menus right now.');
+        setFetchError(t.labels.menusLoadFailed);
       } finally {
         setIsLoadingData(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [language]);
 
   const openMenuDetails = (menu: MenuHighlight) => {
     setSelectedMenu(menu);
@@ -488,50 +503,52 @@ export default function MenusPage() {
           }
         }}
         aria-label={`${t.menuHighlights.viewDetails}: ${menu.name}`}
-        className="group overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+        className="group flex h-full min-h-[420px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl text-left focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
       >
-        <div className="relative h-44 bg-gray-100">
+        <div className="relative h-36 shrink-0 bg-gray-100">
           <img src={menu.coverImage} alt={menu.name} className="h-full w-full object-cover" />
         </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <h3 className="text-2xl font-bold font-elegant text-gray-900">{menu.name}</h3>
-            <p className="text-sm text-gray-500 mt-1">{menu.description || ''}</p>
-          </div>
-          <div className="space-y-2 text-sm text-gray-700">
-            {steps.map((step: any, index: number) => (
-              <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
+        <div className="flex flex-1 flex-col p-5">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-xl font-bold font-elegant text-gray-900">{menu.name}</h3>
+              <p className="mt-1 line-clamp-2 text-sm text-gray-500">{menu.description || ''}</p>
+            </div>
+            <div className="max-h-28 space-y-2 overflow-hidden text-sm text-gray-700">
+              {steps.map((step: any, index: number) => (
+                <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                    <Check size={12} />
+                  </span>
+                  <span>{step.included} {step.label}</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
                   <Check size={12} />
                 </span>
-                <span>{step.included} {step.label}</span>
+                <span>
+                  {dishesAvailable} {t.labels.dishesAvailable}
+                </span>
               </div>
-            ))}
-            <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
-                <Check size={12} />
-              </span>
-              <span>{dishesAvailable} dishes available</span>
             </div>
           </div>
-          <div className="pt-4 border-t border-gray-200 space-y-1">
-            <div className="text-2xl font-bold text-gray-900">
+          <div className="mt-auto pt-4 border-t border-gray-200 space-y-1">
+            <div className="text-xl font-bold text-gray-900">
               {priceLabel
-                ? (language === 'DE'
-                  ? `Ab EUR ${priceLabel}/Person`
-                  : `From EUR ${priceLabel}/person`)
+                ? t.labels.fromPerPerson(priceLabel)
                 : t.menuHighlights.viewDetails}
             </div>
-            <div className="text-xs text-gray-500">{language === 'DE' ? 'zzgl. MwSt.' : 'Excl. VAT'}</div>
+            <div className="text-xs text-gray-500">{t.labels.exclVat}</div>
             {menu.minPeople ?(
               <div className="text-sm font-semibold text-gray-700">
-                {language === 'DE' ? `${menu.minPeople} Personen Minimum` : `${menu.minPeople} Person Minimum`}
+                {t.labels.minPeople(menu.minPeople)}
               </div>
             ) : null}
           </div>
           <div className="pt-2">
-            <div className="w-full rounded-xl bg-amber-400/80 px-4 py-3 text-center text-sm font-semibold text-white">
-              {language === 'DE' ? 'Speisen auswählen' : 'Select Food'}
+            <div className="w-full rounded-xl bg-amber-400/80 px-4 py-2.5 text-center text-xs font-semibold text-white">
+              {t.labels.selectFood}
             </div>
           </div>
         </div>
@@ -570,15 +587,9 @@ export default function MenusPage() {
             >
               <X size={18} />
             </button>
-            <div className="relative h-full flex flex-col justify-end p-6 text-white">
-              <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-amber-200 mb-3">
-                {selectedMenu?.category && (
-                  <span className="px-2 py-1 bg-white/10 rounded-full">{selectedMenu.category}</span>
-                )}
-                {selectedMenu?.type && (
-                  <span className="px-2 py-1 bg-white/10 rounded-full">{selectedMenu.type}</span>
-                )}
-              </div>
+            <div className="relative h-full flex flex-col justify-end p-4 sm:p-6 text-white">
+
+
               <h3 className="text-3xl font-bold font-elegant mb-2">{selectedMenu?.name}</h3>
               {priceLabel && (
                 <p className="text-sm font-semibold text-amber-200">
@@ -587,7 +598,7 @@ export default function MenusPage() {
               )}
             </div>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {selectedMenu?.description && (
               <p className="text-gray-700 text-sm leading-relaxed mb-6">{selectedMenu.description}</p>
             )}
@@ -622,7 +633,7 @@ export default function MenusPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Add animations and fonts */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -683,6 +694,13 @@ export default function MenusPage() {
         html {
           scroll-behavior: smooth;
         }
+
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
       `}</style>
 
       <MenuDetailsModal />
@@ -692,28 +710,45 @@ export default function MenusPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
+              <img
+                src="/images/logo-removebg-preview.png"
+                alt="La Cannelle"
+                className="h-10 sm:h-12 w-auto object-contain"
+              />
             </div>
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.home}</a>
-              <a href="/about" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.about}</a>
-              <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
-              <a href="/menus" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
-              <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
+              <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
+              <a href="/about" className={desktopLinkClass('/about')}>{t.nav.about}</a>
+              <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
+              <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
+              <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>
               <button 
                 onClick={toggleLanguage}
+                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
                 className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
               >
                 {language === 'EN' ?(
                   <>
-                    <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
+                    <span className="text-lg">
+                      <img
+                        src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
+                        width={27}
+                        alt={commonA11y.englishFlagAlt}
+                      />
+                    </span>
                     English
                   </>
                 ) : (
                   <>
-                    <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} /></span>
+                    <span className="text-lg">
+                      <img
+                        src="/images/language/Flag_of_Germany-4096x2453.png"
+                        width={25}
+                        alt={commonA11y.germanFlagAlt}
+                      />
+                    </span>
                     Deutsch
                   </>
                 )}
@@ -739,26 +774,26 @@ export default function MenusPage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.home}</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.about}</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.services}</a>
-                <a href="/menus" className="text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{t.nav.menus}</a>
-                <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{t.nav.contact}</a>
+                <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
+                <a href="/about" className={mobileLinkClass('/about')}>{t.nav.about}</a>
+                <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
+                <a href="/menus" className={mobileLinkClass('/menus')}>{t.nav.menus}</a>
+                <a href="/contact" className={mobileLinkClass('/contact')}>{t.nav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  aria-label={language === 'EN' ?'Switch to German' : 'Switch to English'}
+                  aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
                   className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
                   {language === 'EN' ?(
                     <img
                       src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
-                      alt="English flag"
+                      alt={commonA11y.englishFlagAlt}
                       className="h-5 w-auto"
                     />
                   ) : (
                     <img
                       src="/images/language/Flag_of_Germany-4096x2453.png"
-                      alt="German flag"
+                      alt={commonA11y.germanFlagAlt}
                       className="h-5 w-auto"
                     />
                   )}
@@ -799,7 +834,7 @@ export default function MenusPage() {
             <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
           )}
           {isLoadingData && menuHighlights.length === 0 && (
-            <p className="text-center text-sm text-gray-500 mb-4">Loading menus...</p>
+            <p className="text-center text-sm text-gray-500 mb-4">{t.labels.loadingMenus}</p>
           )}
           <div className={`transition-all duration-1000 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
             <div className="text-center mb-8">
@@ -812,10 +847,10 @@ export default function MenusPage() {
             </div>
             {menuHighlights.length === 0 ?(
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No menus available right now.</p>
+                <p className="text-gray-500 text-lg">{t.labels.noMenusAvailable}</p>
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
                 {menuHighlights.map((menu) => (
                   <MenuHighlightCard key={menu.id} menu={menu} />
                 ))}
@@ -831,7 +866,7 @@ export default function MenusPage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className={`transition-all duration-1000 ${isVisible ?'animate-fade-in-left' : 'opacity-0'}`}>
               <h3 className="text-2xl font-bold mb-4 font-elegant italic">La Cannelle</h3>
-              <p className="text-gray-400 italic">Creating unforgettable culinary experiences</p>
+              <p className="text-gray-400 italic">{commonFooter.brandTagline}</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{commonFooter.quickLinks}</h4>
@@ -848,32 +883,33 @@ export default function MenusPage() {
               <div className="flex flex-col gap-3 text-gray-400">
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Phone size={18} />
-                  <span>02133 978 2992</span>
+                  <span>{commonFooter.contactPhone}</span>
                 </div>
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <Mail size={18} />
-                  <span>booking@la-cannelle.com</span>
+                  <span>{commonFooter.contactEmail}</span>
                 </div>
                 <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
                   <MapPin size={18} />
-                  <span>BorsigstraÃŸe 2, 41541 Dormagen</span>
+                  <span>{commonFooter.contactAddress}</span>
                 </div>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ?'animate-fade-in-right' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{commonFooter.followUs}</h4>
               <div className="flex flex-col gap-2 text-gray-400">
-                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">Instagram</a>
-                <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-white transition-colors duration-300">TikTok</a>
+                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">{commonFooter.social.instagram}</a>
+                <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-white transition-colors duration-300">{commonFooter.social.tiktok}</a>
               </div>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 La Cannelle Catering. All rights reserved.</p>
+            <p>{commonFooter.copyright}</p>
           </div>
         </div>
       </footer>
     </div>
   );
 }
+
 

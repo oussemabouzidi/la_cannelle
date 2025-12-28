@@ -24,7 +24,8 @@ import {
   Zap,
   LogOut,
   BarChart3,
-  ShoppingBag
+  ShoppingBag,
+  Briefcase
 } from 'lucide-react';
 import { dashboardApi, DashboardStats } from '@/lib/api/dashboard';
 
@@ -43,6 +44,7 @@ export default function AdminDashboard() {
         dashboard: 'Dashboard',
         orders: 'Orders',
         menu: 'Menu Management',
+        services: 'Services',
         accessories: 'Accessories',
         system: 'System Control',
         customers: 'Customers',
@@ -73,6 +75,10 @@ export default function AdminDashboard() {
         guests: 'guests',
         viewAllOrders: 'View All Orders',
       },
+      messages: {
+        loading: 'Loading dashboard data...',
+        noData: 'No dashboard data available yet.',
+      },
       status: {
         confirmed: 'Confirmed',
         pending: 'Pending',
@@ -87,6 +93,7 @@ export default function AdminDashboard() {
         dashboard: 'Ubersicht',
         orders: 'Bestellungen',
         menu: 'Menueverwaltung',
+        services: 'Dienstleistungen',
         accessories: 'Zubehoer',
         system: 'Systemsteuerung',
         customers: 'Kunden',
@@ -114,8 +121,12 @@ export default function AdminDashboard() {
         recentOrders: 'Letzte Bestellungen',
       },
       labels: {
-        guests: 'Gäste',
+        guests: 'Gaeste',
         viewAllOrders: 'Alle Bestellungen ansehen',
+      },
+      messages: {
+        loading: 'Dashboard-Daten werden geladen...',
+        noData: 'Noch keine Dashboard-Daten verfuegbar.',
       },
       status: {
         confirmed: 'Bestaetigt',
@@ -142,7 +153,7 @@ export default function AdminDashboard() {
         setDashboardData(data);
       } catch (err) {
         console.error('Failed to load dashboard', err);
-        setLoadError('Unable to load dashboard data right now.');
+        setLoadError(language === 'DE' ? 'Dashboard-Daten konnten nicht geladen werden.' : 'Unable to load dashboard data right now.');
       } finally {
         setIsLoading(false);
       }
@@ -154,6 +165,7 @@ export default function AdminDashboard() {
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: t.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: t.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'services', name: t.nav.services, icon: Briefcase, path: '/services_management' },
     { id: 'accessories', name: t.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: t.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: t.nav.customers, icon: Users, path: '/customers' },
@@ -214,12 +226,12 @@ export default function AdminDashboard() {
           )}
           {isLoading && !loadError && (
             <div className="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
-              Loading dashboard data...
+              {t.messages.loading}
             </div>
           )}
           {!isLoading && !loadError && !data && (
             <div className="mb-6 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600">
-              No dashboard data available yet.
+              {t.messages.noData}
             </div>
           )}
           {/* Stats Overview */}

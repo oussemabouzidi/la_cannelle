@@ -3,6 +3,7 @@ import type { Language } from '../hooks/useTranslation';
 type HomeTranslations = {
   nav: { home: string; about: string; services: string; menus: string; contact: string; connect: string; order: string };
   hero: { title: string; subtitle: string; cta: string };
+  errors: { menusLoadFailed: string };
   quickMenu: {
     title: string;
     description: string;
@@ -31,7 +32,15 @@ type HomeTranslations = {
   menuShowcase: {
     title: string;
     description: string;
-    items: { name: string; category: string; price: string; description: string; image?: string; popular?: boolean; featured?: boolean }[];
+    items: {
+      name: string;
+      category: string;
+      price: string;
+      description: string;
+      image?: string;
+      popular?: boolean;
+      featured?: boolean;
+    }[];
     badges: { popular: string; featured: string };
     viewDetails: string;
     exploreFull: string;
@@ -61,12 +70,19 @@ type HomeTranslations = {
 
 const en: HomeTranslations = {
   nav: { home: 'Home', about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order' },
-  hero: { title: 'Culinary excellence for unforgettable events', subtitle: 'Tailored catering, thoughtful service, and bold flavors for every occasion.', cta: 'Plan your event' },
+  hero: {
+    title: 'Culinary excellence for unforgettable events',
+    subtitle: 'Tailored catering, thoughtful service, and bold flavors for every occasion.',
+    cta: 'Plan your event',
+  },
+  errors: {
+    menusLoadFailed: 'Unable to load menus right now.',
+  },
   quickMenu: {
     title: 'Popular picks',
     description: 'Choose a starting point or build your own experience.',
     categories: [
-      { title: 'Chef’s tasting', description: 'Seasonal highlights' },
+      { title: "Chef's tasting", description: 'Seasonal highlights' },
       { title: 'Private dining', description: 'Intimate gatherings' },
       { title: 'Business events', description: 'Polished service' },
       { title: 'Celebrations', description: 'Make it memorable' },
@@ -86,9 +102,9 @@ const en: HomeTranslations = {
   company: {
     subtitle: 'Crafted for you',
     title: 'Hospitality-first mindset',
-    text: 'We combine fine dining techniques with warm, attentive service for guests that feel cared for.',
+    text: 'We combine fine dining techniques with warm, attentive service so guests feel cared for.',
     badge: { title: 'Premium service', subtitle: 'Discreet & reliable' },
-    review: { ratingLabel: 'Client feedback', quote: '“Flawless execution and beautiful cuisine.”', author: 'Event Partner' },
+    review: { ratingLabel: 'Client feedback', quote: '"Flawless execution and beautiful cuisine."', author: 'Event partner' },
     values: {
       mission: { title: 'Mission', subtitle: 'Delight every guest', description: 'Designing experiences that bring people together.' },
       vision: { title: 'Vision', subtitle: 'Raise the bar', description: 'Setting new standards for modern catering.' },
@@ -100,21 +116,39 @@ const en: HomeTranslations = {
     title: 'Featured menus',
     description: 'Curated selections that guests love.',
     items: [
-      { name: 'Seasonal Signature', category: 'Chef’s pick', price: '€65', description: 'Five-course tasting with seasonal highlights.', popular: true, featured: true },
-      { name: 'Garden Fresh', category: 'Vegetarian', price: '€48', description: 'Vibrant vegetarian dishes packed with flavor.', featured: true },
-      { name: 'Business Classic', category: 'Corporate', price: '€55', description: 'Elegant options for meetings and receptions.' },
+      {
+        name: 'Seasonal Signature',
+        category: "Chef's pick",
+        price: 'from 65 EUR',
+        description: 'Five-course tasting with seasonal highlights.',
+        popular: true,
+        featured: true,
+      },
+      {
+        name: 'Garden Fresh',
+        category: 'Vegetarian',
+        price: 'from 48 EUR',
+        description: 'Vibrant vegetarian dishes packed with flavor.',
+        featured: true,
+      },
+      {
+        name: 'Business Classic',
+        category: 'Corporate',
+        price: 'from 55 EUR',
+        description: 'Elegant options for meetings and receptions.',
+      },
     ],
     badges: { popular: 'Popular', featured: 'Featured' },
     viewDetails: 'View details',
     exploreFull: 'Explore all menus',
   },
   passion: {
-    subtitle: 'Made by chefs',
-    title: 'Modern techniques, generous hospitality',
-    text: 'Our kitchen team balances innovation with comfort, delivering plates that photograph beautifully and taste even better.',
+    subtitle: 'Chef-led',
+    title: 'Modern technique, generous hospitality',
+    text: 'Our kitchen team blends innovation with comfort - beautiful and delicious.',
     skills: [
-      { title: 'Menu design', description: 'Tailored to your theme and guests.' },
-      { title: 'Dietary care', description: 'Thoughtful options for every requirement.' },
+      { title: 'Menu design', description: 'Aligned with your theme and guests.' },
+      { title: 'Dietary needs', description: 'Thoughtful options for every requirement.' },
       { title: 'Logistics', description: 'On-time delivery and coordinated service.' },
     ],
     cta: 'Meet the team',
@@ -122,152 +156,185 @@ const en: HomeTranslations = {
   journey: {
     title: 'How we work',
     milestones: [
-      { title: 'Discovery', date: 'Step 1', description: 'We learn about your event goals and guests.' },
-      { title: 'Design', date: 'Step 2', description: 'Menus and experiences tailored to your needs.' },
-      { title: 'Taste', date: 'Step 3', description: 'Optional tastings and adjustments.' },
-      { title: 'Deliver', date: 'Step 4', description: 'Flawless execution on the day.' },
+      { title: 'Discovery', date: 'Step 1', description: 'We understand your goals and guests.' },
+      { title: 'Concept', date: 'Step 2', description: 'Menus and experience tailored to you.' },
+      { title: 'Tasting', date: 'Step 3', description: 'Optional tasting and refinements.' },
+      { title: 'Execution', date: 'Step 4', description: 'Seamless delivery on event day.' },
     ],
   },
   services: {
     title: 'Service formats',
     items: [
-      { title: 'Full-service catering', description: 'Staffed events with on-site coordination.' },
-      { title: 'Drop-off', description: 'Beautifully packed dishes ready to serve.' },
-      { title: 'Bar & beverages', description: 'Curated drinks, wine pairings, and cocktails.' },
+      { title: 'Full-service catering', description: 'Events with staff on site.' },
+      { title: 'Drop-off', description: 'Beautifully packaged and ready to serve.' },
+      { title: 'Bar & drinks', description: 'Wine, cocktails, and pairings.' },
     ],
-    cta: 'See all services',
+    cta: 'View all services',
   },
   menus: {
     title: 'Menu snapshots',
     items: [
-      { name: 'Brunch Social', desc: 'Morning spreads with pastries, fruit, and hot dishes.' },
-      { name: 'Evening Soirée', desc: 'Passed canapés and elegant mains.' },
-      { name: 'Family Style', desc: 'Shared plates for a lively table.' },
+      { name: 'Brunch Social', desc: 'Breakfast favorites and warm dishes.' },
+      { name: 'Evening Soiree', desc: 'Finger food and elegant mains.' },
+      { name: 'Family Style', desc: 'Shared platters for lively tables.' },
     ],
-    cta: 'View menu plans',
+    cta: 'Browse menus',
   },
   testimonials: {
     title: 'What clients say',
     items: [
       { quote: 'Professional, responsive, and delicious.', name: 'Laura M.', role: 'Corporate client' },
-      { quote: 'Guests still talk about the food weeks later.', name: 'David K.', role: 'Event host' },
+      { quote: 'Guests talked about it for weeks.', name: 'David K.', role: 'Host' },
     ],
   },
   brandBanner: { title: 'Trusted by leading brands', subtitle: 'Events, offsites, launches, and celebrations.' },
   footer: {
-    tagline: 'Crafting unforgettable culinary experiences.',
-    quickLinksTitle: 'Quick links',
+    tagline: 'Unforgettable culinary experiences.',
+    quickLinksTitle: 'Quick Links',
     contactTitle: 'Contact',
     contact: { phone: '+49 2133 978 2992', email: 'booking@la-cannelle.com', location: 'Dormagen, Germany' },
     hoursTitle: 'Hours',
     hours: { weekdays: 'Mon - Fri: 9:00 - 18:00', saturday: 'Sat: 10:00 - 16:00', sunday: 'Sun: Closed' },
-    copyright: '© 2025 La Cannelle Catering. All rights reserved.',
+    copyright: '(c) 2025 La Cannelle Catering. All rights reserved.',
   },
 };
 
 const de: HomeTranslations = {
-  nav: { home: 'Startseite', about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
-  hero: { title: 'Kulinarische Exzellenz für unvergessliche Events', subtitle: 'Maßgeschneidertes Catering, aufmerksamer Service und mutige Aromen für jeden Anlass.', cta: 'Event planen' },
+  nav: {
+    home: 'Startseite',
+    about: 'Ueber uns',
+    services: 'Dienstleistungen',
+    menus: 'Menues',
+    contact: 'Kontakt',
+    connect: 'Verbinden',
+    order: 'Bestellen',
+  },
+  hero: {
+    title: 'Kulinarische Exzellenz fuer unvergessliche Events',
+    subtitle: 'Massgeschneidertes Catering, aufmerksamer Service und starke Aromen fuer jeden Anlass.',
+    cta: 'Event planen',
+  },
+  errors: {
+    menusLoadFailed: 'Menues konnten gerade nicht geladen werden.',
+  },
   quickMenu: {
-    title: 'Beliebte Optionen',
-    description: 'Wählen Sie einen Startpunkt oder stellen Sie Ihr Erlebnis selbst zusammen.',
+    title: 'Beliebte Auswahl',
+    description: 'Waehlen Sie einen Einstieg oder stellen Sie Ihr Erlebnis individuell zusammen.',
     categories: [
-      { title: 'Chef Degustation', description: 'Saisonale Highlights' },
-      { title: 'Private Dining', description: 'Für kleine Runden' },
-      { title: 'Business Events', description: 'Polierter Service' },
+      { title: 'Chef-Tasting', description: 'Saisonale Highlights' },
+      { title: 'Private Dining', description: 'Intime Runden' },
+      { title: 'Business Events', description: 'Professioneller Service' },
       { title: 'Feiern', description: 'Unvergessliche Momente' },
     ],
   },
   exclusivity: {
     subtitle: 'Signature Ansatz',
     title: 'Catering ohne Kompromisse',
-    text: 'Von der Menügestaltung bis zur Umsetzung kümmern wir uns um jedes Detail, damit Sie den Moment genießen können.',
+    text: 'Von der Menuegestaltung bis zur Umsetzung kuemmern wir uns um jedes Detail, damit Sie den Moment geniessen koennen.',
     stats: [
       { number: '500+', label: 'Betreute Events' },
       { number: '4,9/5', label: 'Kundenzufriedenheit' },
       { number: '30+', label: 'Teammitglieder' },
     ],
-    badge: { title: 'Verlässlicher Partner', subtitle: 'Rundum-Betreuung' },
+    badge: { title: 'Verlaesslicher Partner', subtitle: 'Rundum-Betreuung' },
   },
   company: {
-    subtitle: 'Für Sie gemacht',
+    subtitle: 'Fuer Sie gemacht',
     title: 'Gastfreundschaft zuerst',
-    text: 'Wir verbinden Fine-Dining-Technik mit herzlichem Service, damit sich Gäste umsorgt fühlen.',
-    badge: { title: 'Premium-Service', subtitle: 'Diskret & zuverlässig' },
-    review: { ratingLabel: 'Kundenstimme', quote: '„Makellose Umsetzung und wunderschöne Küche.“', author: 'Eventpartner' },
+    text: 'Wir verbinden Fine-Dining-Technik mit herzlichem Service, damit sich Gaeste umsorgt fuehlen.',
+    badge: { title: 'Premium-Service', subtitle: 'Diskret & zuverlaessig' },
+    review: { ratingLabel: 'Kundenstimme', quote: '"Makellose Umsetzung und wunderschoene Kueche."', author: 'Eventpartner' },
     values: {
       mission: { title: 'Mission', subtitle: 'Jeden Gast begeistern', description: 'Erlebnisse gestalten, die Menschen verbinden.' },
-      vision: { title: 'Vision', subtitle: 'Neue Maßstäbe', description: 'Wir setzen Standards für modernes Catering.' },
-      excellence: { title: 'Exzellenz', subtitle: 'Präzision & Sorgfalt', description: 'Beste Zutaten, erfahrene Köche, perfektes Timing.' },
+      vision: { title: 'Vision', subtitle: 'Neue Massstaebe', description: 'Wir setzen Standards fuer modernes Catering.' },
+      excellence: { title: 'Exzellenz', subtitle: 'Praezision & Sorgfalt', description: 'Beste Zutaten, erfahrene Koeche, perfektes Timing.' },
       community: { title: 'Gemeinschaft', subtitle: 'Menschen im Fokus', description: 'Langfristige Beziehungen zu Kunden und Teams.' },
     },
   },
   menuShowcase: {
-    title: 'Ausgewählte Menüs',
-    description: 'Kuratiert und bei Gästen beliebt.',
+    title: 'Ausgewaehlte Menues',
+    description: 'Kuratiert und bei Gaesten beliebt.',
     items: [
-      { name: 'Saisonale Signatures', category: 'Chef-Auswahl', price: '65 €', description: 'Fünf Gänge mit saisonalen Highlights.', popular: true, featured: true },
-      { name: 'Garden Fresh', category: 'Vegetarisch', price: '48 €', description: 'Bunte vegetarische Gerichte voller Geschmack.', featured: true },
-      { name: 'Business Classic', category: 'Business', price: '55 €', description: 'Elegante Optionen für Meetings und Empfänge.' },
+      {
+        name: 'Saisonale Signature',
+        category: 'Chef-Auswahl',
+        price: 'ab 65 EUR',
+        description: 'Fuenf Gaenge mit saisonalen Highlights.',
+        popular: true,
+        featured: true,
+      },
+      {
+        name: 'Garden Fresh',
+        category: 'Vegetarisch',
+        price: 'ab 48 EUR',
+        description: 'Bunte vegetarische Gerichte voller Geschmack.',
+        featured: true,
+      },
+      {
+        name: 'Business Classic',
+        category: 'Business',
+        price: 'ab 55 EUR',
+        description: 'Elegante Optionen fuer Meetings und Empfaenge.',
+      },
     ],
     badges: { popular: 'Beliebt', featured: 'Empfohlen' },
     viewDetails: 'Details ansehen',
-    exploreFull: 'Alle Menüs ansehen',
+    exploreFull: 'Alle Menues ansehen',
   },
   passion: {
-    subtitle: 'Von Köchen gemacht',
-    title: 'Moderne Technik, großzügige Gastlichkeit',
-    text: 'Unser Küchenteam verbindet Innovation mit Wohlfühlmomenten – ästhetisch und köstlich zugleich.',
+    subtitle: 'Von Koechen gemacht',
+    title: 'Moderne Technik, grosszuegige Gastlichkeit',
+    text: 'Unser Kuechenteam verbindet Innovation mit Wohlfuehlmomenten - aesthetisch und koestlich zugleich.',
     skills: [
-      { title: 'Menügestaltung', description: 'Passend zu Thema und Gästen.' },
-      { title: 'Ernährungswünsche', description: 'Sorgfältige Optionen für alle Bedürfnisse.' },
-      { title: 'Logistik', description: 'Pünktliche Lieferung und koordinierter Service.' },
+      { title: 'Menuegestaltung', description: 'Passend zu Thema und Gaesten.' },
+      { title: 'Ernaehrungswuensche', description: 'Sorgfaeltige Optionen fuer alle Beduerfnisse.' },
+      { title: 'Logistik', description: 'Puenktliche Lieferung und koordinierter Service.' },
     ],
     cta: 'Team kennenlernen',
   },
   journey: {
     title: 'So arbeiten wir',
     milestones: [
-      { title: 'Erkundung', date: 'Schritt 1', description: 'Wir verstehen Ziele und Gäste.' },
-      { title: 'Konzept', date: 'Schritt 2', description: 'Menüs und Erlebnisse abgestimmt auf Sie.' },
+      { title: 'Erkundung', date: 'Schritt 1', description: 'Wir verstehen Ziele und Gaeste.' },
+      { title: 'Konzept', date: 'Schritt 2', description: 'Menues und Erlebnisse abgestimmt auf Sie.' },
       { title: 'Verkostung', date: 'Schritt 3', description: 'Optionales Tasting und Feinschliff.' },
-      { title: 'Durchführung', date: 'Schritt 4', description: 'Perfekte Umsetzung am Eventtag.' },
+      { title: 'Durchfuehrung', date: 'Schritt 4', description: 'Perfekte Umsetzung am Eventtag.' },
     ],
   },
   services: {
     title: 'Service-Formate',
     items: [
       { title: 'Full-Service Catering', description: 'Events mit Team vor Ort.' },
-      { title: 'Drop-off', description: 'Schön verpackt und servierfertig.' },
-      { title: 'Bar & Getränke', description: 'Wein, Cocktails und Pairings.' },
+      { title: 'Drop-off', description: 'Schoen verpackt und servierfertig.' },
+      { title: 'Bar & Getraenke', description: 'Wein, Cocktails und Pairings.' },
     ],
     cta: 'Alle Services ansehen',
   },
   menus: {
-    title: 'Menü-Einblicke',
+    title: 'Menue-Einblicke',
     items: [
-      { name: 'Brunch Social', desc: 'Frühstücks-Spezialitäten und warme Gerichte.' },
-      { name: 'Evening Soirée', desc: 'Fingerfood und elegante Hauptgänge.' },
-      { name: 'Family Style', desc: 'Geteilte Platten für lebendige Tische.' },
+      { name: 'Brunch Social', desc: 'Fruehstuecks-Spezialitaeten und warme Gerichte.' },
+      { name: 'Evening Soiree', desc: 'Fingerfood und elegante Hauptgaenge.' },
+      { name: 'Family Style', desc: 'Geteilte Platten fuer lebendige Tische.' },
     ],
-    cta: 'Menüpläne anzeigen',
+    cta: 'Menueplaene anzeigen',
   },
   testimonials: {
     title: 'Stimmen unserer Kunden',
     items: [
-      { quote: 'Professionell, reaktionsschnell und köstlich.', name: 'Laura M.', role: 'Unternehmenskunde' },
-      { quote: 'Die Gäste schwärmen noch Wochen später.', name: 'David K.', role: 'Event-Gastgeber' },
+      { quote: 'Professionell, reaktionsschnell und koestlich.', name: 'Laura M.', role: 'Unternehmenskunde' },
+      { quote: 'Die Gaeste schwaermen noch Wochen spaeter.', name: 'David K.', role: 'Event-Gastgeber' },
     ],
   },
-  brandBanner: { title: 'Vertraut von führenden Marken', subtitle: 'Events, Offsites, Launches und Feiern.' },
+  brandBanner: { title: 'Vertraut von fuehrenden Marken', subtitle: 'Events, Offsites, Launches und Feiern.' },
   footer: {
     tagline: 'Unvergessliche kulinarische Erlebnisse.',
     quickLinksTitle: 'Schnellzugriff',
     contactTitle: 'Kontakt',
     contact: { phone: '+49 2133 978 2992', email: 'booking@la-cannelle.com', location: 'Dormagen, Deutschland' },
-    hoursTitle: 'Öffnungszeiten',
+    hoursTitle: 'Oeffnungszeiten',
     hours: { weekdays: 'Mo - Fr: 9:00 - 18:00', saturday: 'Sa: 10:00 - 16:00', sunday: 'So: Geschlossen' },
-    copyright: '© 2025 La Cannelle Catering. Alle Rechte vorbehalten.',
+    copyright: '(c) 2025 La Cannelle Catering. Alle Rechte vorbehalten.',
   },
 };
 

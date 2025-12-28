@@ -1,14 +1,11 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-
-const prisma = new PrismaClient();
 
 export const menuService = {
   async getMenus(filters?: {
     isActive?: boolean;
-    category?: string;
-    type?: string;
     search?: string;
+    serviceId?: number;
   }) {
     const where: any = {};
 
@@ -16,19 +13,15 @@ export const menuService = {
       where.isActive = filters.isActive;
     }
 
-    if (filters?.category) {
-      where.category = filters.category;
-    }
-
-    if (filters?.type) {
-      where.type = filters.type;
-    }
-
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search } },
         { description: { contains: filters.search } }
       ];
+    }
+
+    if (filters?.serviceId) {
+      where.menuServices = { some: { serviceId: filters.serviceId } };
     }
 
     const menus = await prisma.menu.findMany({
@@ -40,6 +33,11 @@ export const menuService = {
           },
           include: {
             product: true
+          }
+        },
+        menuServices: {
+          include: {
+            service: true
           }
         }
       },
@@ -62,6 +60,11 @@ export const menuService = {
           include: {
             product: true
           }
+        },
+        menuServices: {
+          include: {
+            service: true
+          }
         }
       }
     });
@@ -76,8 +79,6 @@ export const menuService = {
   async createMenu(data: {
     name: string;
     description: string;
-    category: string;
-    type: string;
     isActive?: boolean;
     startDate?: Date;
     endDate?: Date;
@@ -86,13 +87,13 @@ export const menuService = {
     minPeople?: number | null;
     steps?: any;
     productIds?: number[];
+    serviceIds?: number[];
+    services?: number[];
   }) {
     const menu = await prisma.menu.create({
       data: {
         name: data.name,
         description: data.description,
-        category: data.category,
-        type: data.type,
         isActive: data.isActive ?? true,
         startDate: data.startDate,
         endDate: data.endDate,
@@ -102,6 +103,9 @@ export const menuService = {
         steps: data.steps ?? undefined,
         menuProducts: data.productIds ? {
           create: data.productIds.map(productId => ({ productId }))
+        } : undefined,
+        menuServices: (data.serviceIds || data.services) ? {
+          create: (data.serviceIds || data.services || []).map(serviceId => ({ serviceId }))
         } : undefined
       },
       include: {
@@ -111,6 +115,11 @@ export const menuService = {
           },
           include: {
             product: true
+          }
+        },
+        menuServices: {
+          include: {
+            service: true
           }
         }
       }
@@ -122,8 +131,6 @@ export const menuService = {
   async updateMenu(id: number, data: Partial<{
     name: string;
     description: string;
-    category: string;
-    type: string;
     isActive: boolean;
     startDate: Date;
     endDate: Date;
@@ -133,14 +140,19 @@ export const menuService = {
     steps: any;
     productIds: number[];
     products: number[];
+    serviceIds: number[];
+    services: number[];
   }>) {
     const updateData: any = { ...data };
     delete updateData.productIds;
     delete updateData.products;
+    delete updateData.serviceIds;
+    delete updateData.services;
     delete updateData.id;
     delete updateData.createdAt;
     delete updateData.updatedAt;
     delete updateData.menuProducts;
+    delete updateData.menuServices;
 
     const menu = await prisma.menu.update({
       where: { id },
@@ -152,6 +164,11 @@ export const menuService = {
           },
           include: {
             product: true
+          }
+        },
+        menuServices: {
+          include: {
+            service: true
           }
         }
       }
@@ -172,6 +189,21 @@ export const menuService = {
       }
 
       // Fetch updated menu
+      return this.getMenuById(id);
+    }
+
+    const serviceIds = data.serviceIds ?? data.services;
+    if (serviceIds !== undefined) {
+      await prisma.menuService.deleteMany({
+        where: { menuId: id }
+      });
+
+      if (serviceIds.length > 0) {
+        await prisma.menuService.createMany({
+          data: serviceIds.map(serviceId => ({ menuId: id, serviceId }))
+        });
+      }
+
       return this.getMenuById(id);
     }
 

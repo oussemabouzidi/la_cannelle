@@ -34,6 +34,7 @@ export const config = {
     '/dashboard/:path*',
     '/orders/:path*',
     '/menu_management/:path*',
+    '/services_management/:path*',
     '/accessories/:path*',
     '/system_control/:path*',
     '/customers/:path*',

@@ -147,8 +147,6 @@ async function main() {
         data: {
             name: 'Spring Menu',
             description: 'Seasonal spring dishes with fresh ingredients',
-            category: 'seasonal',
-            type: 'fixed',
             isActive: true,
             startDate: new Date('2024-03-01'),
             endDate: new Date('2024-05-31'),
@@ -167,8 +165,6 @@ async function main() {
         data: {
             name: 'Premium Tasting',
             description: 'Gourmet tasting experience with wine pairing',
-            category: 'luxury',
-            type: 'tasting',
             isActive: true,
             price: 120,
             menuProducts: {

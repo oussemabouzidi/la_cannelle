@@ -4,13 +4,15 @@ import { menuService } from '../services/menuService';
 
 export const menuController = {
   async getMenus(req: AuthRequest, res: Response) {
-    const { isActive, category, type, search } = req.query;
+    const { isActive, search, serviceId } = req.query;
 
     const filters: any = {};
     if (isActive !== undefined) filters.isActive = isActive === 'true';
-    if (category) filters.category = category as string;
-    if (type) filters.type = type as string;
     if (search) filters.search = search as string;
+    if (serviceId !== undefined) {
+      const parsed = parseInt(String(serviceId), 10);
+      if (Number.isFinite(parsed)) filters.serviceId = parsed;
+    }
 
     const menus = await menuService.getMenus(filters);
     res.json(menus);
@@ -27,8 +29,18 @@ export const menuController = {
     const minPeople = minPeopleValue === '' || minPeopleValue === null || minPeopleValue === undefined
       ? null
       : parseInt(minPeopleValue, 10);
+    const serviceIdsSource = Array.isArray(req.body?.serviceIds)
+      ? req.body.serviceIds
+      : Array.isArray(req.body?.services)
+      ? req.body.services
+      : undefined;
+    const serviceIds = Array.isArray(serviceIdsSource)
+      ? (serviceIdsSource as any[]).map((id) => parseInt(id as any, 10)).filter((id) => Number.isFinite(id))
+      : undefined;
+    const { category: _category, type: _type, services: _services, ...body } = req.body || {};
     const menu = await menuService.createMenu({
-      ...req.body,
+      ...body,
+      serviceIds,
       minPeople: Number.isFinite(minPeople) ? minPeople : null,
       startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
       endDate: req.body.endDate ? new Date(req.body.endDate) : undefined
@@ -64,8 +76,21 @@ export const menuController = {
     delete updateData.createdAt;
     delete updateData.updatedAt;
     delete updateData.menuProducts;
+    delete updateData.menuServices;
+    delete updateData.category;
+    delete updateData.type;
+    delete updateData.services;
 
-    const menu = await menuService.updateMenu(parseInt(id), updateData);
+    const serviceIdsSource = Array.isArray(req.body?.serviceIds)
+      ? req.body.serviceIds
+      : Array.isArray(req.body?.services)
+      ? req.body.services
+      : undefined;
+    const serviceIds = Array.isArray(serviceIdsSource)
+      ? (serviceIdsSource as any[]).map((id) => parseInt(id as any, 10)).filter((id) => Number.isFinite(id))
+      : undefined;
+
+    const menu = await menuService.updateMenu(parseInt(id), { ...updateData, serviceIds });
     res.json(menu);
   },
 

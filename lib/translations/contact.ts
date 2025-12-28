@@ -2,7 +2,7 @@ import type { Language } from '../hooks/useTranslation';
 
 const base = {
   nav: { about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order Now' },
-  hero: { title: 'Get in Touch', subtitle: "Let’s create something extraordinary together" },
+  hero: { title: 'Get in Touch', subtitle: "Let's create something extraordinary together" },
   quickOrder: {
     title: 'Quick Order',
     subtitle: 'Need immediate assistance? Place a quick order',
@@ -13,13 +13,20 @@ const base = {
     instagram: 'Instagram',
     tiktok: 'TikTok',
   },
+  location: {
+    title: 'Our Location',
+    loading: 'Loading Google Maps...',
+    openMap: 'Open in Google Maps',
+  },
   contactForm: {
     title: 'Send Us a Message',
     name: 'Full Name',
     email: 'Email Address',
     phone: 'Phone Number',
     eventType: 'Event Type',
+    eventTypePlaceholder: 'Select Event Type',
     eventDate: 'Event Date',
+    invalidEventDate: 'Please choose today or a future date.',
     guests: 'Number of Guests',
     message: 'Your Message',
     eventTypes: ['Corporate Event', 'Wedding', 'Private Party', 'Conference', 'Product Launch', 'Other'],
@@ -31,7 +38,7 @@ const base = {
     phone: '02133 978 2992',
     mobile: '0163 599 7062',
     email: 'booking@la-cannelle.com',
-    address: 'Borsigstraße 2, 41541 Dormagen',
+    address: 'Borsigstrasse 2, 41541 Dormagen',
     hours: {
       title: 'Business Hours',
       weekdays: 'Monday - Friday: 9:00 AM - 6:00 PM',
@@ -40,28 +47,52 @@ const base = {
     },
   },
   success: { message: 'Thank you for reaching out!' },
+  alerts: {
+    invalidEmail: 'Please enter a valid email address.',
+    invalidPhone: 'Please enter a valid phone number.',
+    failedToSend: 'Failed to send. Please try again.',
+  },
 };
 
 export const contactTranslations: Record<Language, typeof base> = {
   EN: base,
   DE: {
     ...base,
-    nav: { about: 'Über uns', services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Jetzt bestellen' },
+    nav: {
+      about: 'Ueber uns',
+      services: 'Dienstleistungen',
+      menus: 'Menues',
+      contact: 'Kontakt',
+      connect: 'Verbinden',
+      order: 'Jetzt bestellen',
+    },
     hero: { title: 'Kontaktieren Sie uns', subtitle: 'Lassen Sie uns gemeinsam etwas Besonderes schaffen' },
     quickOrder: {
       title: 'Schnellbestellung',
       subtitle: 'Brauchen Sie sofort Hilfe? Geben Sie eine Schnellbestellung auf',
-      button: 'Jetzt Schnellbestellen',
+      button: 'Jetzt schnell bestellen',
+    },
+    social: {
+      title: 'Folgen Sie uns',
+      instagram: 'Instagram',
+      tiktok: 'TikTok',
+    },
+    location: {
+      title: 'Unser Standort',
+      loading: 'Google Maps wird geladen...',
+      openMap: 'In Google Maps oeffnen',
     },
     contactForm: {
       ...base.contactForm,
       title: 'Senden Sie uns eine Nachricht',
-      name: 'Vollständiger Name',
+      name: 'Vollstaendiger Name',
       email: 'E-Mail-Adresse',
       phone: 'Telefonnummer',
       eventType: 'Veranstaltungstyp',
+      eventTypePlaceholder: 'Veranstaltungstyp waehlen',
       eventDate: 'Veranstaltungsdatum',
-      guests: 'Anzahl der Gäste',
+      invalidEventDate: 'Bitte waehlen Sie heute oder ein zukuenftiges Datum.',
+      guests: 'Anzahl der Gaeste',
       message: 'Ihre Nachricht',
       eventTypes: ['Firmenevent', 'Hochzeit', 'Private Feier', 'Konferenz', 'Produktvorstellung', 'Andere'],
       button: 'Nachricht senden',
@@ -73,12 +104,17 @@ export const contactTranslations: Record<Language, typeof base> = {
       phone: '+49 2133 978 2992',
       mobile: '+49 163 599 7062',
       hours: {
-        title: 'Geschäftszeiten',
+        title: 'Geschaeftszeiten',
         weekdays: 'Montag - Freitag: 9:00 - 18:00',
         saturday: 'Samstag: 10:00 - 16:00',
         sunday: 'Sonntag: Geschlossen',
       },
     },
-    success: { message: 'Danke für Ihre Nachricht!' },
+    success: { message: 'Danke fuer Ihre Nachricht!' },
+    alerts: {
+      invalidEmail: 'Bitte geben Sie eine gueltige E-Mail-Adresse ein.',
+      invalidPhone: 'Bitte geben Sie eine gueltige Telefonnummer ein.',
+      failedToSend: 'Senden fehlgeschlagen. Bitte versuchen Sie es erneut.',
+    },
   },
 };

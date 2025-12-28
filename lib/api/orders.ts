@@ -1,4 +1,5 @@
 import { apiClient } from '../api';
+import type { Service } from './services';
 
 export interface OrderItem {
   productId: number;
@@ -20,6 +21,7 @@ export interface CreateOrderData {
   specialRequests?: string;
   businessType?: string;
   serviceType?: string;
+  serviceId?: number;
   postalCode?: string;
   items: OrderItem[];
   subtotal: number;
@@ -30,6 +32,7 @@ export interface CreateOrderData {
 export interface Order {
   id: string;
   userId?: number;
+  serviceId?: number | null;
   clientName: string;
   contactEmail: string;
   phone: string;
@@ -48,6 +51,7 @@ export interface Order {
   businessType?: string;
   serviceType?: string;
   postalCode?: string;
+  service?: Service | null;
   items: Array<{
     id: number;
     productId: number;

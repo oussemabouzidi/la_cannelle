@@ -2,16 +2,18 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Users, Heart, Target, Award, Clock } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Crown, Building } from 'lucide-react';
 import { commonTranslations } from '@/lib/translations/common';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import { aboutTranslations } from '@/lib/translations/about';
 
 export default function AboutPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { language, toggleLanguage } = useTranslation('about');
+  const { t: rawT, language, toggleLanguage } = useTranslation('about');
   const [isVisible, setIsVisible] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const t = rawT as typeof aboutTranslations.EN;
   const [quoteForm, setQuoteForm] = useState({
     name: '',
     email: '',
@@ -24,6 +26,18 @@ export default function AboutPage() {
 
   const modalRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isActiveHref = (href: string) => {
+    if (href === '/home') return pathname === '/' || pathname === '/home';
+    return pathname === href;
+  };
+
+  const desktopLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:scale-105`;
+
+  const mobileLinkClass = (href: string) =>
+    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:translate-x-2`;
 
   // Handle click outside modal to close
   useEffect(() => {
@@ -68,10 +82,7 @@ export default function AboutPage() {
     console.log('Quote request:', quoteForm);
     
     // For now, we'll just show an alert and close the modal
-    alert(language === 'EN' 
-      ? 'Thank you for your quote request! We will contact you soon.' 
-      : 'Vielen Dank f├╝r Ihre Angebotsanfrage! Wir werden Sie bald kontaktieren.'
-    );
+    alert(t.alerts.quoteSubmitted);
     setShowQuoteModal(false);
     setQuoteForm({
       name: '',
@@ -285,11 +296,11 @@ export default function AboutPage() {
     }
   };
 
-  const t: AboutContent = translations[language];
   const commonNav = commonTranslations[language].nav;
+  const commonA11y = commonTranslations[language].accessibility;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Add animations and fonts */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
@@ -396,12 +407,12 @@ export default function AboutPage() {
 
       {/* Quote Modal */}
       {showQuoteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 animate-scale-in pt-24">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-[100] p-4 sm:p-6 overflow-y-auto animate-scale-in">
           <div 
             ref={modalRef}
             className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto"
           >
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-2xl font-bold text-gray-900 font-elegant">
                   {t.quoteModal.title}
@@ -543,28 +554,33 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              <img src="/images/logo-removebg-preview.png" alt="" className="w-50 h-auto" />
+              <img
+                src="/images/logo-removebg-preview.png"
+                alt="La Cannelle"
+                className="h-10 sm:h-12 w-auto object-contain"
+              />
             </div>
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="/home" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{commonNav.home}</a>
-              <a href="/about" className="text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{commonNav.about}</a>
-              <a href="/services" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.services}</a>
-              <a href="/menus" className="text-gray-900 hover:text-amber-700 transition-all duration-300 transform hover:scale-105 font-medium">{t.nav.menus}</a>
-              <a href="/contact" className="text-gray-900 hover:text-amber-700 font-semibold transition-all duration-300 transform hover:scale-105">{t.nav.contact}</a>
+              <a href="/home" className={desktopLinkClass('/home')}>{commonNav.home}</a>
+              <a href="/about" className={desktopLinkClass('/about')}>{commonNav.about}</a>
+              <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
+              <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
+              <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>
               <button 
                 onClick={toggleLanguage}
+                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
                 className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
               >
                 {language === 'EN' ? (
                   <>
-                    <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
+                    <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} alt={commonA11y.englishFlagAlt} /></span>
                     English
                   </>
                 ) : (
                   <>
-                    <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} /></span>
+                    <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} alt={commonA11y.germanFlagAlt} /></span>
                     Deutsch
                   </>
                 )}
@@ -590,31 +606,31 @@ export default function AboutPage() {
           {isMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
-                <a href="/" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.home}</a>
-                <a href="/about" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.about}</a>
-                <a href="/services" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.services}</a>
-                <a href="/menus" className="text-gray-900 hover:text-amber-700 font-medium transition-all duration-300 transform hover:translate-x-2">{commonNav.menus}</a>
-                <a href="/contact" className="text-amber-700 font-semibold transition-all duration-300 transform hover:translate-x-2">{commonNav.contact}</a>
+                <a href="/home" className={mobileLinkClass('/home')}>{commonNav.home}</a>
+                <a href="/about" className={mobileLinkClass('/about')}>{commonNav.about}</a>
+                <a href="/services" className={mobileLinkClass('/services')}>{commonNav.services}</a>
+                <a href="/menus" className={mobileLinkClass('/menus')}>{commonNav.menus}</a>
+                <a href="/contact" className={mobileLinkClass('/contact')}>{commonNav.contact}</a>
                 <button 
                   onClick={toggleLanguage}
-                  aria-label={language === 'EN' ? 'Switch to German' : 'Switch to English'}
+                  aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
                   className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
                 >
                   {language === 'EN' ? (
                     <img
                       src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
-                      alt="English flag"
+                      alt={commonA11y.englishFlagAlt}
                       className="h-5 w-auto"
                     />
                   ) : (
                     <img
                       src="/images/language/Flag_of_Germany-4096x2453.png"
-                      alt="German flag"
+                      alt={commonA11y.germanFlagAlt}
                       className="h-5 w-auto"
                     />
                   )}
                 </button>
-                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
+                <button onClick={handleOrderClick} className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
                   {t.nav.order}
                 </button>
               </div>
@@ -995,7 +1011,7 @@ export default function AboutPage() {
           <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
             <button 
               onClick={handleGetQuoteClick}
-              className="px-12 py-4 bg-white text-amber-700 rounded-lg text-lg font-semibold hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl inline-flex items-center gap-3"
+              className="group w-full sm:w-auto justify-center px-6 sm:px-12 py-4 bg-white text-amber-700 rounded-lg text-lg font-semibold hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl inline-flex items-center gap-3"
             >
               {t.cta.button}
               <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />

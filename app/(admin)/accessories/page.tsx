@@ -17,24 +17,22 @@ import {
   DollarSign,
   ShoppingBag,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Briefcase
 } from 'lucide-react';
 
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import AdminLayout from '../components/AdminLayout';
 import { accessoriesApi, type Accessory } from '@/lib/api/accessories';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { useBodyScrollLock } from '../components/useBodyScrollLock';
 
 type FormState = {
   id?: number;
-  nameEn: string;
-  nameDe: string;
-  descriptionEn: string;
-  descriptionDe: string;
-  detailsEn: string;
-  detailsDe: string;
-  unitEn: string;
-  unitDe: string;
+  name: string;
+  description: string;
+  details: string;
   price: string;
   minQuantity: string;
   image: string;
@@ -42,14 +40,9 @@ type FormState = {
 };
 
 const emptyForm = (): FormState => ({
-  nameEn: '',
-  nameDe: '',
-  descriptionEn: '',
-  descriptionDe: '',
-  detailsEn: '',
-  detailsDe: '',
-  unitEn: '',
-  unitDe: '',
+  name: '',
+  description: '',
+  details: '',
   price: '0',
   minQuantity: '1',
   image: '',
@@ -67,9 +60,13 @@ export default function AdminAccessories() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [accessories, setAccessories] = useState<Accessory[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+
+  useBodyScrollLock(modalOpen);
 
   const copy = useMemo(() => {
     const isDE = language === 'DE';
@@ -78,6 +75,7 @@ export default function AdminAccessories() {
         dashboard: isDE ? 'Ubersicht' : 'Dashboard',
         orders: isDE ? 'Bestellungen' : 'Orders',
         menu: isDE ? 'Menueverwaltung' : 'Menu Management',
+        services: isDE ? 'Services' : 'Services',
         accessories: isDE ? 'Zubehoer' : 'Accessories',
         system: isDE ? 'Systemsteuerung' : 'System Control',
         customers: isDE ? 'Kunden' : 'Customers',
@@ -106,6 +104,15 @@ export default function AdminAccessories() {
         updated: isDE ? 'Aktualisiert' : 'Updated',
         actions: isDE ? 'Aktionen' : 'Actions'
       },
+      actions: {
+        edit: isDE ? 'Bearbeiten' : 'Edit',
+        delete: isDE ? 'Loeschen' : 'Delete',
+        confirmDelete: isDE ? 'Dieses Zubehoer loeschen?' : 'Delete this accessory?',
+      },
+      confirm: {
+        title: isDE ? 'Zubehoer loeschen' : 'Delete accessory',
+        body: isDE ? 'Moechten Sie dieses Zubehoer wirklich loeschen?' : 'Do you really want to delete this accessory?',
+      },
       modal: {
         createTitle: isDE ? 'Zubehoer erstellen' : 'Create Accessory',
         editTitle: isDE ? 'Zubehoer bearbeiten' : 'Edit Accessory',
@@ -116,14 +123,9 @@ export default function AdminAccessories() {
         required: isDE ? 'Pflichtfeld' : 'Required'
       },
       fields: {
-        nameEn: isDE ? 'Name (EN)' : 'Name (EN)',
-        nameDe: isDE ? 'Name (DE)' : 'Name (DE)',
-        descEn: isDE ? 'Beschreibung (EN)' : 'Description (EN)',
-        descDe: isDE ? 'Beschreibung (DE)' : 'Description (DE)',
-        detailsEn: isDE ? 'Details (EN)' : 'Details (EN)',
-        detailsDe: isDE ? 'Details (DE)' : 'Details (DE)',
-        unitEn: isDE ? 'Einheit (EN)' : 'Unit (EN)',
-        unitDe: isDE ? 'Einheit (DE)' : 'Unit (DE)',
+        name: isDE ? 'Name' : 'Name',
+        description: isDE ? 'Beschreibung' : 'Description',
+        details: isDE ? 'Details' : 'Details',
         price: isDE ? 'Preis' : 'Price',
         minQuantity: isDE ? 'Mindestmenge' : 'Minimum quantity',
         image: isDE ? 'Bild URL' : 'Image URL',
@@ -135,6 +137,10 @@ export default function AdminAccessories() {
         failedLoad: isDE ? 'Laden fehlgeschlagen' : 'Failed to load',
         failedSave: isDE ? 'Speichern fehlgeschlagen' : 'Failed to save',
         failedDelete: isDE ? 'Loeschen fehlgeschlagen' : 'Failed to delete'
+      },
+      status: {
+        loading: isDE ? 'Lade...' : 'Loading...',
+        noResults: isDE ? 'Kein Zubehoer gefunden.' : 'No accessories found.',
       }
     };
   }, [language]);
@@ -186,14 +192,9 @@ export default function AdminAccessories() {
   const openEdit = (accessory: Accessory) => {
     setForm({
       id: accessory.id,
-      nameEn: accessory.nameEn || '',
-      nameDe: accessory.nameDe || '',
-      descriptionEn: accessory.descriptionEn || '',
-      descriptionDe: accessory.descriptionDe || '',
-      detailsEn: accessory.detailsEn || '',
-      detailsDe: accessory.detailsDe || '',
-      unitEn: accessory.unitEn || '',
-      unitDe: accessory.unitDe || '',
+      name: accessory.nameDe || accessory.nameEn || '',
+      description: accessory.descriptionDe || accessory.descriptionEn || '',
+      details: accessory.detailsDe || accessory.detailsEn || '',
       price: String(accessory.price ?? 0),
       minQuantity: String(accessory.minQuantity ?? 1),
       image: accessory.image || '',
@@ -208,19 +209,23 @@ export default function AdminAccessories() {
   };
 
   const saveAccessory = async () => {
-    if (!form.nameEn.trim() || !form.descriptionEn.trim()) {
+    if (!form.name.trim() || !form.description.trim()) {
       return;
     }
 
+    const name = form.name.trim();
+    const description = form.description.trim();
+    const details = form.details.trim();
+
     const payload: any = {
-      nameEn: form.nameEn.trim(),
-      nameDe: form.nameDe.trim() || null,
-      descriptionEn: form.descriptionEn.trim(),
-      descriptionDe: form.descriptionDe.trim() || null,
-      detailsEn: form.detailsEn.trim() || null,
-      detailsDe: form.detailsDe.trim() || null,
-      unitEn: form.unitEn.trim() || null,
-      unitDe: form.unitDe.trim() || null,
+      nameEn: name,
+      nameDe: name,
+      descriptionEn: description,
+      descriptionDe: description,
+      detailsEn: details || null,
+      detailsDe: details || null,
+      unitEn: null,
+      unitDe: null,
       price: Number(form.price),
       minQuantity: Number(form.minQuantity),
       image: form.image.trim() || null,
@@ -246,8 +251,6 @@ export default function AdminAccessories() {
   };
 
   const deleteAccessory = async (id: number) => {
-    const ok = window.confirm('Delete this accessory?');
-    if (!ok) return;
     try {
       await accessoriesApi.deleteAccessory(id);
       setAccessories((prev) => prev.filter((a) => a.id !== id));
@@ -257,10 +260,16 @@ export default function AdminAccessories() {
     }
   };
 
+  const requestDeleteAccessory = (id: number) => {
+    setConfirmDeleteId(id);
+    setConfirmOpen(true);
+  };
+
   const navigation = [
     { id: 'dashboard', name: copy.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
     { id: 'orders', name: copy.nav.orders, icon: Package, path: '/orders' },
     { id: 'menu', name: copy.nav.menu, icon: Menu, path: '/menu_management' },
+    { id: 'services', name: copy.nav.services, icon: Briefcase, path: '/services_management' },
     { id: 'accessories', name: copy.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: copy.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: copy.nav.customers, icon: Users, path: '/customers' },
@@ -364,13 +373,13 @@ export default function AdminAccessories() {
                     {isLoading ? (
                       <tr>
                         <td colSpan={7} className="px-6 py-10 text-center text-gray-600">
-                          Loading...
+                          {copy.status.loading}
                         </td>
                       </tr>
                     ) : filteredAccessories.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="px-6 py-10 text-center text-gray-600">
-                          No accessories found.
+                          {copy.status.noResults}
                         </td>
                       </tr>
                     ) : (
@@ -381,27 +390,26 @@ export default function AdminAccessories() {
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={a.image || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop'}
-                                alt={a.nameEn}
+                                alt={a.nameDe || a.nameEn}
                                 className="h-full w-full object-cover"
                                 loading="lazy"
                               />
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="font-semibold text-gray-900">{a.nameEn}</div>
-                            {a.nameDe && <div className="text-xs text-gray-500">{a.nameDe}</div>}
+                            <div className="font-semibold text-gray-900">{a.nameDe || a.nameEn}</div>
                           </td>
-                          <td className="px-6 py-4 text-gray-800">€{Number(a.price).toFixed(2)}</td>
+                          <td className="px-6 py-4 text-gray-800">EUR {Number(a.price).toFixed(2)}</td>
                           <td className="px-6 py-4 text-gray-800">{a.minQuantity}</td>
                           <td className="px-6 py-4">
                             {a.isActive ? (
                               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-800 border border-green-200">
                                 <CheckCircle className="w-4 h-4" />
-                                Active
+                                {copy.filters.active}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
-                                Inactive
+                                {copy.filters.inactive}
                               </span>
                             )}
                           </td>
@@ -413,15 +421,15 @@ export default function AdminAccessories() {
                               <button
                                 onClick={() => openEdit(a)}
                                 className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50"
-                                title="Edit"
+                                title={copy.actions.edit}
                                 type="button"
                               >
                                 <Edit className="w-4 h-4 text-gray-700" />
                               </button>
                               <button
-                                onClick={() => deleteAccessory(a.id)}
+                                onClick={() => requestDeleteAccessory(a.id)}
                                 className="p-2 rounded-lg border border-red-200 hover:bg-red-50"
-                                title="Delete"
+                                title={copy.actions.delete}
                                 type="button"
                               >
                                 <Trash2 className="w-4 h-4 text-red-700" />
@@ -438,10 +446,15 @@ export default function AdminAccessories() {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30" onClick={closeModal} />
-          <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <button
+            type="button"
+            aria-label="Close"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={closeModal}
+          />
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
               <h3 className="text-lg font-bold text-gray-900">
                 {form.id ? copy.modal.editTitle : copy.modal.createTitle}
               </h3>
@@ -450,79 +463,36 @@ export default function AdminAccessories() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="md:col-span-2">
                   <label className="text-sm font-semibold text-gray-800">
-                    {copy.fields.nameEn} <span className="text-red-600">*</span>
+                    {copy.fields.name} <span className="text-red-600">*</span>
                   </label>
                   <input
-                    value={form.nameEn}
-                    onChange={(e) => setForm((p) => ({ ...p, nameEn: e.target.value }))}
-                    className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-800">{copy.fields.nameDe}</label>
-                  <input
-                    value={form.nameDe}
-                    onChange={(e) => setForm((p) => ({ ...p, nameDe: e.target.value }))}
+                    value={form.name}
+                    onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                     className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
                 <div className="md:col-span-2">
                   <label className="text-sm font-semibold text-gray-800">
-                    {copy.fields.descEn} <span className="text-red-600">*</span>
+                    {copy.fields.description} <span className="text-red-600">*</span>
                   </label>
                   <textarea
-                    value={form.descriptionEn}
-                    onChange={(e) => setForm((p) => ({ ...p, descriptionEn: e.target.value }))}
-                    rows={3}
-                    className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-sm font-semibold text-gray-800">{copy.fields.descDe}</label>
-                  <textarea
-                    value={form.descriptionDe}
-                    onChange={(e) => setForm((p) => ({ ...p, descriptionDe: e.target.value }))}
+                    value={form.description}
+                    onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                     rows={3}
                     className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-sm font-semibold text-gray-800">{copy.fields.detailsEn}</label>
+                  <label className="text-sm font-semibold text-gray-800">{copy.fields.details}</label>
                   <textarea
-                    value={form.detailsEn}
-                    onChange={(e) => setForm((p) => ({ ...p, detailsEn: e.target.value }))}
+                    value={form.details}
+                    onChange={(e) => setForm((p) => ({ ...p, details: e.target.value }))}
                     rows={2}
-                    className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-sm font-semibold text-gray-800">{copy.fields.detailsDe}</label>
-                  <textarea
-                    value={form.detailsDe}
-                    onChange={(e) => setForm((p) => ({ ...p, detailsDe: e.target.value }))}
-                    rows={2}
-                    className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-semibold text-gray-800">{copy.fields.unitEn}</label>
-                  <input
-                    value={form.unitEn}
-                    onChange={(e) => setForm((p) => ({ ...p, unitEn: e.target.value }))}
-                    className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-800">{copy.fields.unitDe}</label>
-                  <input
-                    value={form.unitDe}
-                    onChange={(e) => setForm((p) => ({ ...p, unitDe: e.target.value }))}
                     className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
                   />
                 </div>
@@ -576,17 +546,17 @@ export default function AdminAccessories() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50/60">
+            <div className="p-4 sm:p-6 border-t border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 bg-gray-50/60">
               <button
                 onClick={closeModal}
-                className="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 transition-colors"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 hover:bg-gray-50 transition-colors"
               >
                 {copy.modal.cancel}
               </button>
               <button
                 onClick={saveAccessory}
-                disabled={saving || !form.nameEn.trim() || !form.descriptionEn.trim()}
-                className="px-5 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                disabled={saving || !form.name.trim() || !form.description.trim()}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 {copy.modal.save}
@@ -595,6 +565,25 @@ export default function AdminAccessories() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title={copy.confirm.title}
+        description={copy.confirm.body}
+        confirmText={copy.actions.delete}
+        cancelText={copy.modal.cancel}
+        isDanger
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmDeleteId(null);
+        }}
+        onConfirm={async () => {
+          if (confirmDeleteId == null) return;
+          setConfirmOpen(false);
+          await deleteAccessory(confirmDeleteId);
+          setConfirmDeleteId(null);
+        }}
+      />
     </AdminLayout>
   );
 }

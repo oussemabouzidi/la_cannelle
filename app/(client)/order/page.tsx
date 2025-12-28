@@ -6,7 +6,9 @@ import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
 import { accessoriesApi } from '@/lib/api/accessories';
 import { systemApi, type ClosedDate } from '@/lib/api/system';
+import { servicesApi, type Service } from '@/lib/api/services';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import { commonTranslations } from '@/lib/translations/common';
 import { 
   Menu, X, ChevronRight, ChevronLeft, Phone, Mail, MapPin, 
   Clock, Users, Calendar, CreditCard, CheckCircle, 
@@ -17,26 +19,26 @@ import {
   Home, Check, Shield, Package, Sparkles, Award,
   AlertCircle, Truck as TruckIcon, Clock as ClockIcon,
   Calendar as CalendarIcon, MapPin as MapPinIcon,
-  FileText, Shield as ShieldIcon, Globe
+  FileText, Shield as ShieldIcon
 } from 'lucide-react';
 
 const GERMAN_STATES = [
-  { code: 'BW', name: 'Baden-Wuerttemberg' },
-  { code: 'BY', name: 'Bavaria' },
-  { code: 'BE', name: 'Berlin' },
-  { code: 'BB', name: 'Brandenburg' },
-  { code: 'HB', name: 'Bremen' },
-  { code: 'HH', name: 'Hamburg' },
-  { code: 'HE', name: 'Hesse' },
-  { code: 'MV', name: 'Mecklenburg-Vorpommern' },
-  { code: 'NI', name: 'Lower Saxony' },
-  { code: 'NW', name: 'North Rhine-Westphalia' },
-  { code: 'RP', name: 'Rhineland-Palatinate' },
-  { code: 'SL', name: 'Saarland' },
-  { code: 'SN', name: 'Saxony' },
-  { code: 'ST', name: 'Saxony-Anhalt' },
-  { code: 'SH', name: 'Schleswig-Holstein' },
-  { code: 'TH', name: 'Thuringia' }
+  { code: 'BW', nameEn: 'Baden-Wuerttemberg', nameDe: 'Baden-Wuerttemberg' },
+  { code: 'BY', nameEn: 'Bavaria', nameDe: 'Bayern' },
+  { code: 'BE', nameEn: 'Berlin', nameDe: 'Berlin' },
+  { code: 'BB', nameEn: 'Brandenburg', nameDe: 'Brandenburg' },
+  { code: 'HB', nameEn: 'Bremen', nameDe: 'Bremen' },
+  { code: 'HH', nameEn: 'Hamburg', nameDe: 'Hamburg' },
+  { code: 'HE', nameEn: 'Hesse', nameDe: 'Hessen' },
+  { code: 'MV', nameEn: 'Mecklenburg-Vorpommern', nameDe: 'Mecklenburg-Vorpommern' },
+  { code: 'NI', nameEn: 'Lower Saxony', nameDe: 'Niedersachsen' },
+  { code: 'NW', nameEn: 'North Rhine-Westphalia', nameDe: 'Nordrhein-Westfalen' },
+  { code: 'RP', nameEn: 'Rhineland-Palatinate', nameDe: 'Rheinland-Pfalz' },
+  { code: 'SL', nameEn: 'Saarland', nameDe: 'Saarland' },
+  { code: 'SN', nameEn: 'Saxony', nameDe: 'Sachsen' },
+  { code: 'ST', nameEn: 'Saxony-Anhalt', nameDe: 'Sachsen-Anhalt' },
+  { code: 'SH', nameEn: 'Schleswig-Holstein', nameDe: 'Schleswig-Holstein' },
+  { code: 'TH', nameEn: 'Thuringia', nameDe: 'Thueringen' },
 ];
 const MIN_GUESTS = 10;
 const MIN_ORDER_TOTAL = 388.80;
@@ -282,6 +284,7 @@ const TimePicker = ({
 const PostalCodeFields = ({
   label,
   required,
+  isDE,
   orderData,
   postalCopy,
   cityLookupOptions,
@@ -315,7 +318,7 @@ const PostalCodeFields = ({
           <option value="">{postalCopy.statePlaceholder}</option>
           {GERMAN_STATES.map((state) => (
             <option key={state.code} value={state.code}>
-              {state.code} - {state.name}
+              {state.code} - {isDE ? state.nameDe : state.nameEn}
             </option>
           ))}
         </select>
@@ -399,6 +402,7 @@ const PostalCodeFields = ({
 export default function OrderPage() {
   const router = useRouter();
   const { t, language, toggleLanguage, setLanguage: setAppLanguage } = useTranslation('order');
+  const commonA11y = commonTranslations[language].accessibility;
   const [currentStep, setCurrentStep] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
   const [quantities, setQuantities] = useState({});
@@ -407,7 +411,45 @@ export default function OrderPage() {
   const [menusData, setMenusData] = useState<any[]>([]);
   const [menuItemsData, setMenuItemsData] = useState<any[]>([]);
   const [accessoriesData, setAccessoriesData] = useState<any[]>([]);
+  const [servicesData, setServicesData] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [orderData, setOrderData] = useState<any>({
+    businessType: '',
+    serviceType: '',
+    serviceId: '',
+    eventDate: '',
+    eventTime: '',
+    guestCount: '',
+    location: '',
+    selectedMenu: '',
+    selectedStarters: [],
+    selectedMains: [],
+    selectedSides: [],
+    selectedDesserts: [],
+    selectedDrinks: [],
+    selectedAccessories: [],
+    contactInfo: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      company: ''
+    },
+    specialRequests: '',
+    deliveryOption: 'standard',
+    city: '',
+    state: '',
+    postalCode: '',
+    deliveryDate: '',
+    companyInfo: '',
+    paymentMethod: '',
+    cardDetails: {
+      number: '',
+      expiry: '',
+      cvc: '',
+      name: ''
+    }
+  });
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [closedDates, setClosedDates] = useState<ClosedDate[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -460,25 +502,30 @@ export default function OrderPage() {
       yourBankName: isDE ? 'Ihre Bank' : 'Your Bank Name',
     };
   }, [language]);
+
+  const normalizeMenus = (menus: any[]) =>
+    (menus || []).map((menu: any) => ({
+      ...menu,
+      products: menu?.menuProducts ? menu.menuProducts.map((mp: any) => mp.productId) : menu?.products || [],
+      serviceIds: menu?.menuServices ? menu.menuServices.map((ms: any) => ms.serviceId) : menu?.serviceIds || [],
+      services: menu?.menuServices ? menu.menuServices.map((ms: any) => ms.service) : menu?.services || []
+    }));
+
+  const hasLoadedInitialMenus = useRef(false);
   // Load data from API
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [menus, products, accessories, status, dates] = await Promise.all([
+        const [menus, products, accessories, status, dates, services] = await Promise.all([
           menusApi.getMenus({ isActive: true }),
           productsApi.getProducts({ available: true }),
           accessoriesApi.getAccessories({ isActive: true }),
           systemApi.getSystemStatus(),
-          systemApi.getClosedDates()
+          systemApi.getClosedDates(),
+          servicesApi.getServices({ isActive: true })
         ]);
-        // Normalize shape so the client has product ids and menu ids available
-        const normalizedMenus = (menus || []).map((menu: any) => ({
-          ...menu,
-          products: menu?.menuProducts
-            ? menu.menuProducts.map((mp: any) => mp.productId)
-            : menu?.products || []
-        }));
+        const normalizedMenus = normalizeMenus(menus || []);
         const normalizedProducts = (products || []).map((product: any) => ({
           ...product,
           menus: product?.menuProducts
@@ -486,8 +533,10 @@ export default function OrderPage() {
             : product?.menus || []
         }));
         setMenusData(normalizedMenus);
+        hasLoadedInitialMenus.current = true;
         setMenuItemsData(normalizedProducts);
         setAccessoriesData(accessories || []);
+        setServicesData(services || []);
         setSystemStatus(status);
         setClosedDates(dates || []);
       } catch (error) {
@@ -498,42 +547,39 @@ export default function OrderPage() {
     };
     loadData();
   }, []);
-  const [orderData, setOrderData] = useState<any>({
-    businessType: '',
-    serviceType: '',
-    eventDate: '',
-    eventTime: '',
-    guestCount: '',
-    location: '',
-    selectedMenu: '',
-    selectedStarters: [],
-    selectedMains: [],
-    selectedSides: [],
-    selectedDesserts: [],
-    selectedDrinks: [],
-    selectedAccessories: [],
-    contactInfo: {
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      company: ''
-    },
-    specialRequests: '',
-    deliveryOption: 'standard',
-    city: '',
-    state: '',
-    postalCode: '',
-    deliveryDate: '',
-    companyInfo: '',
-    paymentMethod: '',
-    cardDetails: {
-      number: '',
-      expiry: '',
-      cvc: '',
-      name: ''
-    }
-  });
+
+  useEffect(() => {
+    if (!hasLoadedInitialMenus.current) return;
+
+    const fetchMenusForService = async () => {
+      try {
+        const serviceId = orderData.serviceId ? Number(orderData.serviceId) : undefined;
+        const menus = await menusApi.getMenus({ isActive: true, serviceId });
+        const normalizedMenus = normalizeMenus(menus || []);
+        setMenusData(normalizedMenus);
+
+        if (orderData.selectedMenu) {
+          const selectedId = Number(orderData.selectedMenu);
+          const exists = normalizedMenus.some((menu: any) => Number(menu.id) === selectedId);
+          if (!exists) {
+            setOrderData((prev: any) => ({
+              ...prev,
+              selectedMenu: '',
+              selectedStarters: [],
+              selectedMains: [],
+              selectedSides: [],
+              selectedDesserts: [],
+              selectedDrinks: []
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load menus for service:', error);
+      }
+    };
+
+    fetchMenusForService();
+  }, [orderData.serviceId]);
   const [contactErrors, setContactErrors] = useState({ email: '', phone: '' });
   const [companyErrors, setCompanyErrors] = useState({ name: '', info: '' });
   const [guestCountError, setGuestCountError] = useState('');
@@ -546,6 +592,18 @@ export default function OrderPage() {
   const [extraNoticeOpen, setExtraNoticeOpen] = useState(false);
   const [extraNoticeData, setExtraNoticeData] = useState({ label: '', extra: 0 });
   const extraNoticeRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const isAnyModalOpen = termsModalOpen || bankDetailsOpen || productDetailsOpen || extraNoticeOpen;
+    if (!isAnyModalOpen) return;
+    if (typeof document === 'undefined') return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [termsModalOpen, bankDetailsOpen, productDetailsOpen, extraNoticeOpen]);
   const [postalLookupError, setPostalLookupError] = useState('');
   const [postalLookupLoading, setPostalLookupLoading] = useState(false);
   const [cityLookupOptions, setCityLookupOptions] = useState<any[]>([]);
@@ -615,6 +673,8 @@ export default function OrderPage() {
       setCompanyErrors({ name: '', info: '' });
     }
   }, [orderData.businessType]);
+
+  // Service selection is handled in Step 1; menu selection doesn't need to re-validate it.
   const getGuestCountError = () => (
     language === 'DE'
       ? 'Anzahl der Gäste muss mindestens 10 sein.'
@@ -854,6 +914,7 @@ export default function OrderPage() {
     checking: language === 'DE' ? 'Pruefe...' : 'Checking...'
   }), [language]);
   const postalFieldProps = {
+    isDE: language === 'DE',
     orderData,
     postalCopy,
     cityLookupOptions,
@@ -1094,9 +1155,10 @@ export default function OrderPage() {
         }
         return '';
       case 'menu':
-        return orderData.selectedMenu
-          ? ''
-          : (language === 'DE' ? 'Bitte ein Menue waehlen.' : 'Please select a menu.');
+        if (!orderData.selectedMenu) {
+          return language === 'DE' ? 'Bitte ein Menue waehlen.' : 'Please select a menu.';
+        }
+        return '';
       case 'accessories':
         if (!hasValidGuestCount) {
           return getGuestCountError();
@@ -1249,9 +1311,9 @@ export default function OrderPage() {
       </button>
       <button
         onClick={nextStep}
-        disabled={shouldBlockProgress || !canProceedToNext}
+        disabled={shouldBlockProgress}
         className={`px-5 py-2 text-sm font-semibold rounded-lg inline-flex items-center shadow-sm transition-colors ${
-          shouldBlockProgress || !canProceedToNext
+          shouldBlockProgress
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
             : 'bg-amber-600 text-white hover:bg-amber-700'
         }`}
@@ -1277,6 +1339,15 @@ export default function OrderPage() {
     });
     const constraintTemplate = leadTimeDays > 2 ? t.eventInfo.dateConstraintLarge : t.eventInfo.dateConstraint;
     const constraintText = constraintTemplate.replace('{date}', earliestDateLabel);
+
+    const occasion = orderData.businessType === 'business'
+      ? 'BUSINESS'
+      : orderData.businessType === 'private'
+      ? 'PRIVATE'
+      : '';
+    const occasionServices = (servicesData || [])
+      .filter((service) => service.isActive)
+      .filter((service) => !occasion || service.occasion === occasion || service.occasion === 'BOTH');
     return (
       <div className="space-y-6">
         <div className="grid gap-4">
@@ -1297,6 +1368,7 @@ export default function OrderPage() {
                   onClick={() => {
                     updateOrderData('businessType', type);
                     updateOrderData('serviceType', '');
+                    updateOrderData('serviceId', '');
                   }}
                   className={`flex flex-col justify-between rounded-xl border-2 px-4 py-4 text-left transition-all duration-300 hover:-translate-y-0.5 ${
                     orderData.businessType === type
@@ -1312,7 +1384,62 @@ export default function OrderPage() {
               )})}
             </div>
           </div>
-          
+
+          {orderData.businessType && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {language === 'DE' ? 'Service ausw\u00e4hlen' : 'Choose a service'}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {language === 'DE'
+                      ? 'W\u00e4hlen Sie eine Dienstleistung passend zum Anlass.'
+                      : 'Pick a service that matches your occasion.'}
+                  </p>
+                </div>
+              </div>
+
+              {occasionServices.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  {language === 'DE' ? 'Keine Services verf\u00fcgbar.' : 'No services available.'}
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {occasionServices.map((service) => {
+                    const selected = String(orderData.serviceId) === String(service.id);
+                    return (
+                      <button
+                        key={service.id}
+                        type="button"
+                        onClick={() => {
+                          updateOrderData('serviceId', service.id);
+                          updateOrderData('serviceType', service.name);
+                        }}
+                        className={`text-left rounded-xl border overflow-hidden transition-all ${
+                          selected ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200 hover:border-amber-300'
+                        }`}
+                      >
+                        <div className="h-20 bg-gray-100">
+                          {service.image ? (
+                            <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+                          ) : null}
+                        </div>
+                        <div className="p-3">
+                          <div className="font-semibold text-gray-900">{service.name}</div>
+                          {service.description ? (
+                            <div className="text-xs text-gray-600 mt-1 overflow-hidden text-ellipsis">
+                              {service.description}
+                            </div>
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
           <div className="grid gap-4 lg:grid-cols-3">
@@ -1367,9 +1494,10 @@ export default function OrderPage() {
       </div>
     );
   };
-  // Step 4: Menu Selection
-  const Step4 = () => (
-    <div className="space-y-8">
+  // Step 4: Menu + Service selection
+  const Step4 = () => {
+    return (
+      <div className="space-y-8">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-4">
           {t.menuSelection.title}
@@ -1394,11 +1522,14 @@ export default function OrderPage() {
               ? 'hover:border-amber-300'
               : 'bg-gray-50 opacity-70 cursor-not-allowed');
           return (
-            <button
-              key={menu.id}
-              onClick={() => menu.isActive && updateOrderData('selectedMenu', menu.id)}
-              className={cardClassName}
-            >
+                <button
+                  key={menu.id}
+                  onClick={() => {
+                  if (!menu.isActive) return;
+                  updateOrderData('selectedMenu', menu.id);
+                }}
+                  className={cardClassName}
+                >
               <div className="relative h-44 bg-gray-200">
                 {menu.image ? (
                   <img
@@ -1459,8 +1590,9 @@ export default function OrderPage() {
           );
         })}
       </div>
-    </div>
-  );
+      </div>
+     );
+   };
   // Step 5-9: Product Selection by Category
   const Step5 = () => {
     const stepKey = stepsConfig[currentStep - 1]?.key;
@@ -2981,6 +3113,7 @@ export default function OrderPage() {
         specialRequests: mergedRequests,
         businessType: orderData.businessType,
         serviceType: orderData.serviceType,
+        serviceId: orderData.serviceId ? Number(orderData.serviceId) : undefined,
         postalCode: orderData.postalCode,
         items: orderItems,
         subtotal: subtotal,
@@ -3043,7 +3176,7 @@ export default function OrderPage() {
   ]);
   const showHeaderNav = true;
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
       {notification && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
@@ -3052,8 +3185,8 @@ export default function OrderPage() {
         </div>
       )}
       {termsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">Terms and Conditions</h3>
               <button
@@ -3064,7 +3197,7 @@ export default function OrderPage() {
                 <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 max-h-[65vh] overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
+            <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
               <p>
                 Please review the full terms below. These terms are provided for convenience and should be updated to match your official policy.
               </p>
@@ -3106,8 +3239,8 @@ export default function OrderPage() {
         </div>
       )}
       {bankDetailsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">{ui.bankTransferTitle}</h3>
               <button
@@ -3118,27 +3251,27 @@ export default function OrderPage() {
                 <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 space-y-4 text-sm text-gray-700">
+            <div className="px-6 py-5 flex-1 overflow-y-auto space-y-4 text-sm text-gray-700">
               <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
                 <p className="font-semibold text-gray-900">{ui.bankTransferIntro}</p>
                 <p className="mt-2 text-xs text-gray-600">{ui.bankTransferReference}</p>
               </div>
               <div className="grid gap-3">
-                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
                   <span className="text-gray-500">{ui.accountName}</span>
-                  <span className="font-semibold text-gray-900">La Cannelle Catering</span>
+                  <span className="font-semibold text-gray-900 break-all sm:text-right">La Cannelle Catering</span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
                   <span className="text-gray-500">IBAN</span>
-                  <span className="font-semibold text-gray-900">DE00 0000 0000 0000 0000 00</span>
+                  <span className="font-semibold text-gray-900 break-all sm:text-right">DE00 0000 0000 0000 0000 00</span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
                   <span className="text-gray-500">BIC/SWIFT</span>
-                  <span className="font-semibold text-gray-900">DEUTDEFFXXX</span>
+                  <span className="font-semibold text-gray-900 break-all sm:text-right">DEUTDEFFXXX</span>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
                   <span className="text-gray-500">{ui.bank}</span>
-                  <span className="font-semibold text-gray-900">{ui.yourBankName}</span>
+                  <span className="font-semibold text-gray-900 break-words sm:text-right">{ui.yourBankName}</span>
                 </div>
               </div>
             </div>
@@ -3155,8 +3288,8 @@ export default function OrderPage() {
         </div>
       )}
       {productDetailsOpen && productDetailsItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">{ui.productDetailsTitle}</h3>
               <button
@@ -3170,7 +3303,7 @@ export default function OrderPage() {
                 <X size={18} />
               </button>
             </div>
-            <div className="px-5 py-5">
+            <div className="px-5 py-5 flex-1 overflow-y-auto">
               <div className="grid gap-5 md:grid-cols-[180px,1fr]">
                 <div className="w-full h-40 rounded-xl bg-gray-100 overflow-hidden">
                   {productDetailsItem.image ? (
@@ -3255,8 +3388,8 @@ export default function OrderPage() {
         </div>
       )}
       {extraNoticeOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">Extras notice</h3>
               <button
@@ -3267,7 +3400,7 @@ export default function OrderPage() {
                 <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 text-sm text-gray-700 space-y-3">
+            <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 space-y-3">
               <p>
                 You have selected more dishes than the included amount for <span className="font-semibold">{extraNoticeData.label}</span>.
               </p>
@@ -3377,9 +3510,18 @@ export default function OrderPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleLanguage}
+                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
                 className="px-3 py-1.5 text-xs font-medium border border-amber-300 text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors inline-flex items-center"
               >
-                <Globe size={12} className="mr-1" />
+                <img
+                  src={
+                    language === 'EN'
+                      ? '/images/language/Flag_of_United_Kingdom-4096x2048.png'
+                      : '/images/language/Flag_of_Germany-4096x2453.png'
+                  }
+                  alt={language === 'EN' ? commonA11y.englishFlagAlt : commonA11y.germanFlagAlt}
+                  className="h-3.5 w-auto mr-1"
+                />
                 {language === 'EN' ? 'EN' : 'DE'}
               </button>
             </div>
@@ -3408,9 +3550,9 @@ export default function OrderPage() {
                   
                   <button
                     onClick={nextStep}
-                    disabled={shouldBlockProgress || !canProceedToNext}
+                    disabled={shouldBlockProgress}
                     className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center shadow-sm ${
-                      shouldBlockProgress || !canProceedToNext
+                      shouldBlockProgress
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         : 'bg-amber-600 text-white hover:bg-amber-700'
                     }`}
@@ -3422,7 +3564,7 @@ export default function OrderPage() {
               )}
             </div>
             {/* Steps Navigation */}
-            <div className="flex items-center justify-center gap-2 px-2 flex-nowrap overflow-hidden">
+            <div className="flex items-center justify-start sm:justify-center gap-2 px-2 flex-nowrap overflow-x-auto overscroll-x-contain">
               {stepsConfig.map((step, index) => {
                 const stepNumber = index + 1;
                 const isCurrent = stepNumber === currentStep;
