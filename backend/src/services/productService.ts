@@ -1,7 +1,6 @@
 import { ProductCategory, MenuTier } from '@prisma/client';
 import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-import { normalizeImageValue } from '../utils/uploads';
 
 const normalizeCategory = (category?: string | ProductCategory): ProductCategory | undefined => {
   if (!category) return undefined;
@@ -112,7 +111,6 @@ export const productService = {
     menuIds?: number[];
   }) {
     const normalizedData = normalizeProductInput(data);
-    const image = await normalizeImageValue(normalizedData.image, { prefix: 'product' });
 
     const product = await prisma.product.create({
       data: {
@@ -129,7 +127,7 @@ export const productService = {
         ingredients: normalizedData.ingredients,
         allergens: normalizedData.allergens,
         productCategories: normalizedData.productCategories,
-        image,
+        image: normalizedData.image,
         menuProducts: normalizedData.menuIds ? {
           create: normalizedData.menuIds.map(menuId => ({ menuId }))
         } : undefined
@@ -172,10 +170,6 @@ export const productService = {
     delete updateData.menuProducts;
     delete updateData.orderItems;
     delete updateData.favorites;
-
-    if (updateData.image !== undefined) {
-      updateData.image = await normalizeImageValue(updateData.image, { prefix: 'product' });
-    }
 
     const product = await prisma.product.update({
       where: { id },

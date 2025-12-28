@@ -99,7 +99,7 @@ model Product {
   ingredients       Json?
   allergens         Json?
   productCategories Json? // vegetarian, vegan, gluten-free, etc.
-  image             String?
+  image             String?        @db.LongText
   popularity        Int             @default(0)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
@@ -283,7 +283,7 @@ model Accessory {
   unitDe        String?
   price         Float
   minQuantity   Int      @default(1)
-  image         String?
+  image         String?  @db.LongText
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

@@ -1,6 +1,5 @@
 import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
-import { normalizeImageValue } from '../utils/uploads';
 
 const toOptionalString = (value: unknown) => {
   if (value === null || value === undefined) return undefined;
@@ -86,7 +85,6 @@ export const accessoryService = {
 
     const price = toNumber(data.price, 'price');
     const minQuantity = Math.max(1, data.minQuantity ? toInt(data.minQuantity, 'minQuantity') : 1);
-    const image = await normalizeImageValue(toOptionalString(data.image), { prefix: 'accessory' });
 
     return prisma.accessory.create({
       data: {
@@ -100,7 +98,7 @@ export const accessoryService = {
         unitDe: toOptionalString(data.unitDe),
         price,
         minQuantity,
-        image,
+        image: toOptionalString(data.image),
         isActive: data.isActive ?? true
       }
     });
@@ -119,9 +117,7 @@ export const accessoryService = {
     if (data.detailsDe !== undefined) update.detailsDe = toOptionalText(data.detailsDe) ?? null;
     if (data.unitEn !== undefined) update.unitEn = toOptionalString(data.unitEn) ?? null;
     if (data.unitDe !== undefined) update.unitDe = toOptionalString(data.unitDe) ?? null;
-    if (data.image !== undefined) {
-      update.image = (await normalizeImageValue(toOptionalString(data.image), { prefix: 'accessory' })) ?? null;
-    }
+    if (data.image !== undefined) update.image = toOptionalString(data.image) ?? null;
     if (data.isActive !== undefined) update.isActive = Boolean(data.isActive);
     if (data.price !== undefined) update.price = toNumber(data.price, 'price');
     if (data.minQuantity !== undefined) update.minQuantity = Math.max(1, toInt(data.minQuantity, 'minQuantity'));
