@@ -1704,7 +1704,7 @@ export default function CateringHomepage() {
 
             <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.services.title}</h2>
 
-            <p className="text-sm text-gray-600 max-w-2xl mx-auto mb-6">Tailored experiences without the heavy layout�pick the format that fits your event.</p>
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto mb-6">Tailored experiences without the heavy layout'pick the format that fits your event.</p>
 
           </div>
 
@@ -1756,7 +1756,7 @@ export default function CateringHomepage() {
 
             <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.menus.title}</h2>
 
-            <p className="text-sm text-gray-600 mb-4">A quick peek at what�s cooking�compact, curated, ready to order.</p>
+            <p className="text-sm text-gray-600 mb-4">A quick peek at what's cooking'compact, curated, ready to order.</p>
 
           </div>
 

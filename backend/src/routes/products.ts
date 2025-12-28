@@ -1,19 +1,20 @@
 import express from 'express';
 import { productController } from '../controllers/productController';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = express.Router();
 
 // Public routes
-router.get('/', productController.getProducts);
-router.get('/:id', productController.getProductById);
+router.get('/', asyncHandler(productController.getProducts));
+router.get('/:id', asyncHandler(productController.getProductById));
 
 // Admin routes
 router.use(authenticate);
 router.use(requireAdmin);
 
-router.post('/', productController.createProduct);
-router.put('/:id', productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
+router.post('/', asyncHandler(productController.createProduct));
+router.put('/:id', asyncHandler(productController.updateProduct));
+router.delete('/:id', asyncHandler(productController.deleteProduct));
 
 export default router;
