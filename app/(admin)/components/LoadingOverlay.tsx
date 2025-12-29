@@ -10,7 +10,7 @@ type LoadingOverlayProps = {
   minDurationMs?: number;
 };
 
-export default function LoadingOverlay({ open, label = 'Loading...', minDurationMs = 300 }: LoadingOverlayProps) {
+export default function LoadingOverlay({ open, label = 'Loading...', minDurationMs = 500 }: LoadingOverlayProps) {
   const [visible, setVisible] = useState(open);
   const [shownAt, setShownAt] = useState<number | null>(open ? Date.now() : null);
 

@@ -336,6 +336,7 @@ export default function AdminAccessories() {
             ? 'Speichert...'
             : 'Saving...'
         }
+        minDurationMs={900}
       />
       <div className={`${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 mb-6`}>
         <p className="text-gray-600">{copy.header.subtitle}</p>

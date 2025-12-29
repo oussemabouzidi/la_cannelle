@@ -2451,15 +2451,16 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           <span className="hidden md:inline text-sm text-gray-600">
             {t.header.totalProducts}: {menuItems.length} | {t.header.totalMenus}: {menus.length}
           </span>
-          {isLoading ? (
-            <span className="hidden md:inline">
-              <LoadingSpinner label={language === 'DE' ? 'Lade...' : 'Loading...'} />
-            </span>
-          ) : null}
+          {isLoading ? <LoadingSpinner label={language === 'DE' ? 'Lade...' : 'Loading...'} /> : null}
         </div>
       }
     >
-      <LoadingOverlay open={isLoading || isMutating} label={overlayLabel} />
+      <LoadingOverlay open={isLoading || isMutating} label={overlayLabel} minDurationMs={900} />
+      {isLoading ? (
+        <div className="py-10">
+          <LoadingSpinner label={language === 'DE' ? 'Lade...' : 'Loading...'} />
+        </div>
+      ) : null}
       {notification && (
         <div className="fixed top-6 right-6 z-50">
           <div
