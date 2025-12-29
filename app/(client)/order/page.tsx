@@ -1638,8 +1638,9 @@ export default function OrderPage() {
       return null;
     }
     
+    const activeMenuId = pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null;
     const selectedMenu = menusData.find(
-      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+      m => (activeMenuId != null) && Number(m.id) === activeMenuId
     );
     const products = menuItemsData
       .filter(item => matchesStepCategory(item, currentCategory))
@@ -1676,9 +1677,7 @@ export default function OrderPage() {
     const flatServiceFee = 48.90;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
     
-    const selectedMenuObj = menusData.find(
-      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
-    );
+    const selectedMenuObj = selectedMenu;
     
     return (
       <div className="grid lg:grid-cols-3 gap-8">

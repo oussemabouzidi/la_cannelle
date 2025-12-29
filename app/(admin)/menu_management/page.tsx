@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Menu, X, ChevronRight, Package, Calendar, DollarSign, 
   Users, TrendingUp, Clock, Plus, Edit, Archive, Trash2,
-  Search, Filter, Save, XCircle, CheckCircle, AlertCircle,
+  Search, Filter, Save, XCircle, CheckCircle, AlertCircle, RefreshCw,
   Utensils, Wine, Coffee, Dessert, Camera, FolderPlus,
   ChevronDown, Layers, Tag, Grid, Eye, List, LayoutGrid, ShoppingBag, BarChart3, Briefcase
 } from 'lucide-react';
@@ -2447,6 +2447,15 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       locale={locale}
       headerMeta={
         <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={loadMenusAndProducts}
+            disabled={isLoading || isMutating}
+            className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{language === 'DE' ? 'Aktualisieren' : 'Refresh'}</span>
+          </button>
           <ViewModeToggle />
           <span className="hidden md:inline text-sm text-gray-600">
             {t.header.totalProducts}: {menuItems.length} | {t.header.totalMenus}: {menus.length}

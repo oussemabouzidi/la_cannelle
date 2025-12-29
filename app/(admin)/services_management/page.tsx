@@ -9,6 +9,7 @@ import {
   Menu,
   Package,
   Plus,
+  RefreshCw,
   Save,
   ShoppingBag,
   Trash2,
@@ -279,14 +280,26 @@ export default function AdminServicesManagement() {
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
       headerMeta={
-        <button
-          onClick={openCreate}
-          type="button"
-          className="px-4 py-2 rounded-xl bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">{t.actions.new}</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={load}
+            type="button"
+            disabled={loading || saving || mutating}
+            className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{isDE ? 'Aktualisieren' : 'Refresh'}</span>
+          </button>
+          <button
+            onClick={openCreate}
+            type="button"
+            disabled={loading || saving || mutating}
+            className="px-4 py-2 rounded-xl bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">{t.actions.new}</span>
+          </button>
+        </div>
       }
     >
       <LoadingOverlay open={loading || saving || mutating} label={overlayLabel} minDurationMs={900} />
