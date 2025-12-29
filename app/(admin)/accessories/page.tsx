@@ -326,7 +326,7 @@ export default function AdminAccessories() {
       }
     >
       <LoadingOverlay
-        open={saving || deleting}
+        open={isLoading || saving || deleting}
         label={
           isLoading
             ? copy.status.loading

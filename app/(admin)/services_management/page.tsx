@@ -289,7 +289,7 @@ export default function AdminServicesManagement() {
         </button>
       }
     >
-      <LoadingOverlay open={saving || mutating} label={overlayLabel} />
+      <LoadingOverlay open={loading || saving || mutating} label={overlayLabel} />
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.subtitle}</h2>
       </div>

@@ -16,6 +16,7 @@ import AdminLayout from '../components/AdminLayout';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
 import LoadingOverlay from '../components/LoadingOverlay';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
 import { servicesApi, type Service } from '@/lib/api/services';
@@ -2450,6 +2451,11 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           <span className="hidden md:inline text-sm text-gray-600">
             {t.header.totalProducts}: {menuItems.length} | {t.header.totalMenus}: {menus.length}
           </span>
+          {isLoading ? (
+            <span className="hidden md:inline">
+              <LoadingSpinner label={language === 'DE' ? 'Lade...' : 'Loading...'} />
+            </span>
+          ) : null}
         </div>
       }
     >
