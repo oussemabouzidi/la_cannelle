@@ -8,6 +8,7 @@ import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
 import { commonTranslations } from '@/lib/translations/common';
 import { menusTranslations } from '@/lib/translations/menus';
 import { useTranslation } from '@/lib/hooks/useTranslation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 type MenuHighlightItem = {
   id: number;
@@ -834,7 +835,7 @@ export default function MenusPage() {
             <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
           )}
           {isLoadingData && menuHighlights.length === 0 && (
-            <p className="text-center text-sm text-gray-500 mb-4">{t.labels.loadingMenus}</p>
+            <LoadingSpinner className="mb-4" label={t.labels.loadingMenus} />
           )}
           <div className={`transition-all duration-1000 ${isVisible ?'animate-fade-in-up' : 'opacity-0'}`}>
             <div className="text-center mb-8">

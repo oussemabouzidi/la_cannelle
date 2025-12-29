@@ -16,6 +16,8 @@ import { productsApi, type Product } from '@/lib/api/products';
 
 import { useTranslation } from '@/lib/hooks/useTranslation';
 
+import LoadingSpinner from '@/components/LoadingSpinner';
+
 
 import { commonTranslations } from '@/lib/translations/common';
 import type { Language } from '@/lib/hooks/useTranslation';
@@ -1190,7 +1192,7 @@ export default function CateringHomepage() {
 
           {isLoadingData && !products.length && (
 
-            <p className="text-center text-sm text-gray-500 mb-4">Loading menu items...</p>
+            <LoadingSpinner className="mb-4" label="Loading menu items..." />
 
           )}
 
@@ -1770,7 +1772,7 @@ export default function CateringHomepage() {
 
           {isLoadingData && !menus.length && (
 
-            <p className="text-center text-sm text-gray-500 mb-4">Loading featured menus...</p>
+            <LoadingSpinner className="mb-4" label="Loading featured menus..." />
 
           )}
 
