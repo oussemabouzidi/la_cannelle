@@ -28,6 +28,7 @@ import { accessoriesApi, type Accessory } from '@/lib/api/accessories';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
 import LoadingOverlay from '../components/LoadingOverlay';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 type FormState = {
   id?: number;
@@ -325,7 +326,7 @@ export default function AdminAccessories() {
       }
     >
       <LoadingOverlay
-        open={isLoading || saving || deleting}
+        open={saving || deleting}
         label={
           isLoading
             ? copy.status.loading
@@ -404,7 +405,7 @@ export default function AdminAccessories() {
                     {isLoading ? (
                       <tr>
                         <td colSpan={7} className="px-6 py-10 text-center text-gray-600">
-                          {copy.status.loading}
+                          <LoadingSpinner label={copy.status.loading} />
                         </td>
                       </tr>
                     ) : filteredAccessories.length === 0 ? (

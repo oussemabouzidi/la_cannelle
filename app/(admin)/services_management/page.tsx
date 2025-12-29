@@ -24,6 +24,7 @@ import { servicesApi, type Service, type ServiceOccasion } from '@/lib/api/servi
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
 import LoadingOverlay from '../components/LoadingOverlay';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 type FormState = {
   id?: number;
@@ -288,7 +289,7 @@ export default function AdminServicesManagement() {
         </button>
       }
     >
-      <LoadingOverlay open={loading || saving || mutating} label={overlayLabel} />
+      <LoadingOverlay open={saving || mutating} label={overlayLabel} />
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.subtitle}</h2>
       </div>
@@ -330,7 +331,7 @@ export default function AdminServicesManagement() {
 
         <div className="mt-6">
           {loading ? (
-            <p className="text-sm text-gray-500">{t.status.loading}</p>
+            <LoadingSpinner className="py-6" label={t.status.loading} />
           ) : filtered.length === 0 ? (
             <p className="text-sm text-gray-500">{t.status.empty}</p>
           ) : (
