@@ -450,6 +450,7 @@ export default function OrderPage() {
       name: ''
     }
   });
+  const [pendingMenuId, setPendingMenuId] = useState<number | ''>('');
   const [systemStatus, setSystemStatus] = useState<any>(null);
   const [closedDates, setClosedDates] = useState<ClosedDate[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -571,6 +572,7 @@ export default function OrderPage() {
               selectedDesserts: [],
               selectedDrinks: []
             }));
+            setPendingMenuId('');
           }
         }
       } catch (error) {
@@ -580,6 +582,14 @@ export default function OrderPage() {
 
     fetchMenusForService();
   }, [orderData.serviceId]);
+
+  useEffect(() => {
+    if (!orderData.selectedMenu) {
+      setPendingMenuId('');
+      return;
+    }
+    setPendingMenuId(Number(orderData.selectedMenu));
+  }, [orderData.selectedMenu]);
   const [contactErrors, setContactErrors] = useState({ email: '', phone: '' });
   const [companyErrors, setCompanyErrors] = useState({ name: '', info: '' });
   const [guestCountError, setGuestCountError] = useState('');
@@ -1155,7 +1165,7 @@ export default function OrderPage() {
         }
         return '';
       case 'menu':
-        if (!orderData.selectedMenu) {
+        if (!orderData.selectedMenu && !pendingMenuId) {
           return language === 'DE' ? 'Bitte ein Menue waehlen.' : 'Please select a menu.';
         }
         return '';
@@ -1516,7 +1526,7 @@ export default function OrderPage() {
             : 0;
           const cardClassName =
             'rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 text-left bg-white shadow-sm hover:shadow-xl ' +
-            (orderData.selectedMenu === menu.id
+            ((pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null) === Number(menu.id)
               ? 'border-amber-500 ring-2 ring-amber-200'
               : menu.isActive
               ? 'hover:border-amber-300'
@@ -1524,9 +1534,10 @@ export default function OrderPage() {
           return (
                 <button
                   key={menu.id}
+                  type="button"
                   onClick={() => {
                   if (!menu.isActive) return;
-                  updateOrderData('selectedMenu', menu.id);
+                  setPendingMenuId(menu.id);
                 }}
                   className={cardClassName}
                 >
@@ -2927,8 +2938,27 @@ export default function OrderPage() {
       showNotification('error', blockedMessage, 3000);
       return;
     }
+    const stepKey = stepsConfig[currentStep - 1]?.key;
     if (!validateStepsUpTo(currentStep)) {
       return;
+    }
+    if (stepKey === 'menu' && pendingMenuId) {
+      setQuantities({});
+      setOrderData((prev: any) => {
+        const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
+        if (previousSelected === Number(pendingMenuId)) {
+          return { ...prev, selectedMenu: Number(pendingMenuId) };
+        }
+        return {
+          ...prev,
+          selectedMenu: Number(pendingMenuId),
+          selectedStarters: [],
+          selectedMains: [],
+          selectedSides: [],
+          selectedDesserts: [],
+          selectedDrinks: []
+        };
+      });
     }
     if (currentStep === stepsConfig.length) {
       handleSubmitOrder();
