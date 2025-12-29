@@ -193,7 +193,7 @@ export default function AboutPage() {
       },
       cta: {
         title: 'Ready to plan your event?',
-        subtitle: 'Let’s create an unforgettable experience together.',
+        subtitle: "Let's create an unforgettable experience together.",
         button: 'Start Now'
       },
       quoteModal: {

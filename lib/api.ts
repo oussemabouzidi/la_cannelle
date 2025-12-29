@@ -14,6 +14,30 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+const sanitizeString = (value: string) => {
+  return value
+    .replace(/\uFFFD/g, "'")
+    .replace(/â€™|â€˜/g, "'")
+    .replace(/â€œ|â€�/g, '"');
+};
+
+const sanitizeDeep = <T,>(value: T): T => {
+  if (typeof value === 'string') {
+    return sanitizeString(value) as T;
+  }
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeDeep(item)) as T;
+  }
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    record[key] = sanitizeDeep(record[key]);
+  }
+  return value;
+};
+
 class ApiClient {
   private baseURL: string;
   private token: string | null = null;
@@ -71,7 +95,7 @@ class ApiClient {
       let data: any = undefined;
       if (text) {
         try {
-          data = JSON.parse(text);
+          data = sanitizeDeep(JSON.parse(text));
         } catch (parseError) {
           return {
             error: parseError instanceof Error ? parseError.message : 'Invalid response format',

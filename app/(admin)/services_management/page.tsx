@@ -23,6 +23,7 @@ import AdminLayout from '../components/AdminLayout';
 import { servicesApi, type Service, type ServiceOccasion } from '@/lib/api/services';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 type FormState = {
   id?: number;
@@ -134,6 +135,8 @@ export default function AdminServicesManagement() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<FormState>(getEmptyForm());
   const [saving, setSaving] = useState(false);
+  const [mutating, setMutating] = useState(false);
+  const [mutatingLabel, setMutatingLabel] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmDeleteService, setConfirmDeleteService] = useState<Service | null>(null);
 
@@ -167,6 +170,17 @@ export default function AdminServicesManagement() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const runMutation = async (label: string, action: () => Promise<void>) => {
+    setMutating(true);
+    setMutatingLabel(label);
+    try {
+      await action();
+    } finally {
+      setMutating(false);
+      setMutatingLabel('');
+    }
+  };
 
   const openCreate = () => {
     setForm(getEmptyForm());
@@ -226,24 +240,34 @@ export default function AdminServicesManagement() {
   };
 
   const remove = async (service: Service) => {
-    try {
-      setError('');
-      await servicesApi.deleteService(service.id);
-      await load();
-    } catch (e: any) {
-      setError(e?.message || t.errors.failedDelete);
-    }
+    await runMutation(isDE ? 'Loesche...' : 'Deleting...', async () => {
+      try {
+        setError('');
+        await servicesApi.deleteService(service.id);
+        await load();
+      } catch (e: any) {
+        setError(e?.message || t.errors.failedDelete);
+      }
+    });
   };
 
   const toggleActive = async (service: Service) => {
-    try {
-      setError('');
-      await servicesApi.updateService(service.id, { isActive: !service.isActive } as any);
-      setServices((prev) => prev.map((s) => (s.id === service.id ? { ...s, isActive: !s.isActive } : s)));
-    } catch (e: any) {
-      setError(e?.message || 'Failed to update service');
-    }
+    await runMutation(isDE ? 'Aktualisiere...' : 'Updating...', async () => {
+      try {
+        setError('');
+        await servicesApi.updateService(service.id, { isActive: !service.isActive } as any);
+        setServices((prev) => prev.map((s) => (s.id === service.id ? { ...s, isActive: !s.isActive } : s)));
+      } catch (e: any) {
+        setError(e?.message || 'Failed to update service');
+      }
+    });
   };
+
+  const overlayLabel = loading
+    ? t.status.loading
+    : saving
+    ? (isDE ? 'Speichert...' : 'Saving...')
+    : mutatingLabel || (isDE ? 'Bitte warten...' : 'Please wait...');
 
   return (
     <AdminLayout
@@ -264,6 +288,7 @@ export default function AdminServicesManagement() {
         </button>
       }
     >
+      <LoadingOverlay open={loading || saving || mutating} label={overlayLabel} />
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.subtitle}</h2>
       </div>
@@ -510,6 +535,7 @@ export default function AdminServicesManagement() {
         confirmText={t.actions.delete}
         cancelText={t.actions.cancel}
         isDanger
+        isLoading={mutating}
         onCancel={() => {
           setConfirmOpen(false);
           setConfirmDeleteService(null);

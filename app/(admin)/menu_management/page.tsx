@@ -15,6 +15,7 @@ import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import AdminLayout from '../components/AdminLayout';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
+import LoadingOverlay from '../components/LoadingOverlay';
 import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
 import { servicesApi, type Service } from '@/lib/api/services';
@@ -83,6 +84,8 @@ export default function AdminMenuManagement() {
   const [expandedMenu, setExpandedMenu] = useState<number | null>(null);
   const [selectedMenuForDetail, setSelectedMenuForDetail] = useState<MenuType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMutating, setIsMutating] = useState(false);
+  const [mutatingLabel, setMutatingLabel] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmDeleteMenuId, setConfirmDeleteMenuId] = useState<number | null>(null);
@@ -591,6 +594,17 @@ export default function AdminMenuManagement() {
     }
   };
 
+  const runMutation = async (label: string, action: () => Promise<void>) => {
+    setIsMutating(true);
+    setMutatingLabel(label);
+    try {
+      await action();
+    } finally {
+      setIsMutating(false);
+      setMutatingLabel('');
+    }
+  };
+
   // Load data from backend
   const loadMenusAndProducts = async () => {
     try {
@@ -680,119 +694,131 @@ const [newItem, setNewItem] = useState<NewItemState>({
   // CRUD Operations for Menu Items
   const addMenuItem = async (itemData?: NewItemState | MenuItem) => {
     const base = itemData || newItem;
-    try {
-      const created = await productsApi.createProduct(base as any);
-      const normalized = normalizeProduct(created);
-      setMenuItems([...menuItems, normalized]);
+    await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
+      try {
+        const created = await productsApi.createProduct(base as any);
+        const normalized = normalizeProduct(created);
+        setMenuItems([...menuItems, normalized]);
 
-      if (base.menus && (base.menus as number[]).length > 0) {
-        const updatedMenus = menus.map(menu => {
-          if ((base.menus as number[]).includes(menu.id)) {
-            return { ...menu, products: [...menu.products, normalized.id] };
-          }
-          return menu;
-        });
-        setMenus(updatedMenus);
+        if (base.menus && (base.menus as number[]).length > 0) {
+          const updatedMenus = menus.map(menu => {
+            if ((base.menus as number[]).includes(menu.id)) {
+              return { ...menu, products: [...menu.products, normalized.id] };
+            }
+            return menu;
+          });
+          setMenus(updatedMenus);
+        }
+
+        resetNewItemForm();
+        setShowAddForm(false);
+        showNotification('success', t.notifications.productCreated);
+      } catch (err: unknown) {
+        console.error('Failed to create product', err);
+        const message = err instanceof Error ? err.message : t.notifications.productCreateFailed;
+        showNotification('error', message);
       }
-
-      resetNewItemForm();
-      setShowAddForm(false);
-      showNotification('success', t.notifications.productCreated);
-    } catch (err: unknown) {
-      console.error('Failed to create product', err);
-      const message = err instanceof Error ? err.message : t.notifications.productCreateFailed;
-      showNotification('error', message);
-    }
+    });
   };
 
   const updateMenuItem = async (updatedItem: MenuItem) => {
     const oldItem = menuItems.find(item => item.id === updatedItem.id);
     if (!oldItem) return;
-    try {
-      const payload = { ...updatedItem, menuIds: updatedItem.menus };
-      const saved = await productsApi.updateProduct(updatedItem.id, payload as any);
-      const normalized = normalizeProduct(saved);
+    await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
+      try {
+        const payload = { ...updatedItem, menuIds: updatedItem.menus };
+        const saved = await productsApi.updateProduct(updatedItem.id, payload as any);
+        const normalized = normalizeProduct(saved);
 
-      setMenuItems(menuItems.map(item =>
-        item.id === normalized.id ? normalized : item
-      ));
+        setMenuItems(menuItems.map(item =>
+          item.id === normalized.id ? normalized : item
+        ));
 
-      if (JSON.stringify(oldItem.menus) !== JSON.stringify(normalized.menus)) {
-        const updatedMenus = menus.map(menu => {
-          let products = [...menu.products];
-          if (oldItem.menus.includes(menu.id) && !normalized.menus.includes(menu.id)) {
-            products = products.filter(productId => productId !== normalized.id);
-          } else if (!oldItem.menus.includes(menu.id) && normalized.menus.includes(menu.id)) {
-            products.push(normalized.id);
-          }
-          return { ...menu, products };
-        });
-        setMenus(updatedMenus);
-        syncSelectedMenus(updatedMenus);
+        if (JSON.stringify(oldItem.menus) !== JSON.stringify(normalized.menus)) {
+          const updatedMenus = menus.map(menu => {
+            let products = [...menu.products];
+            if (oldItem.menus.includes(menu.id) && !normalized.menus.includes(menu.id)) {
+              products = products.filter(productId => productId !== normalized.id);
+            } else if (!oldItem.menus.includes(menu.id) && normalized.menus.includes(menu.id)) {
+              products.push(normalized.id);
+            }
+            return { ...menu, products };
+          });
+          setMenus(updatedMenus);
+          syncSelectedMenus(updatedMenus);
+        }
+
+        setEditingItem(null);
+        showNotification('success', t.notifications.productUpdated);
+      } catch (err) {
+        console.error('Failed to update product', err);
+        const message = err instanceof Error ? err.message : t.notifications.productUpdateFailed;
+        showNotification('error', message);
       }
-
-      setEditingItem(null);
-      showNotification('success', t.notifications.productUpdated);
-    } catch (err) {
-      console.error('Failed to update product', err);
-      const message = err instanceof Error ? err.message : t.notifications.productUpdateFailed;
-      showNotification('error', message);
-    }
+    });
   };
 
 // CRUD Operations for Menus
   const addMenu = async (menuData?: NewMenuState | MenuType) => {
-    try {
-      const payload = menuData || newMenu;
-      const created = await menusApi.createMenu({ ...(payload as any), serviceIds: (payload as any).services } as any);
-      await loadMenusAndProducts();
-      setShowAddMenuForm(false);
-      if (!menuData) {
-        resetNewMenuForm();
+    await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
+      try {
+        const payload = menuData || newMenu;
+        await menusApi.createMenu({ ...(payload as any), serviceIds: (payload as any).services } as any);
+        await loadMenusAndProducts();
+        setShowAddMenuForm(false);
+        if (!menuData) {
+          resetNewMenuForm();
+        }
+      } catch (err) {
+        console.error('Failed to create menu', err);
       }
-    } catch (err) {
-      console.error('Failed to create menu', err);
-    }
+    });
   };
 
   const updateMenu = async (updatedMenu: MenuType) => {
-    try {
-      const saved = await menusApi.updateMenu(updatedMenu.id, { ...(updatedMenu as any), serviceIds: updatedMenu.services } as any);
-      const normalized = normalizeMenu(saved);
-      setMenus(menus.map(menu =>
-        menu.id === normalized.id ? normalized : menu
-      ));
-      await loadMenusAndProducts();
-    } catch (err) {
-      console.error('Failed to update menu', err);
-    }
+    await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
+      try {
+        const saved = await menusApi.updateMenu(updatedMenu.id, { ...(updatedMenu as any), serviceIds: updatedMenu.services } as any);
+        const normalized = normalizeMenu(saved);
+        setMenus(menus.map(menu =>
+          menu.id === normalized.id ? normalized : menu
+        ));
+        await loadMenusAndProducts();
+      } catch (err) {
+        console.error('Failed to update menu', err);
+      }
+    });
   };
 
 const toggleMenuActive = async (menuId: number) => {
     const target = menus.find(m => m.id === menuId);
     if (!target) return;
-    try {
-      const saved = await menusApi.updateMenu(menuId, { ...target, isActive: !target.isActive } as any);
-      const normalized = normalizeMenu(saved);
-      setMenus(menus.map(menu => menu.id === menuId ? normalized : menu));
-    } catch (err) {
-      console.error('Failed to toggle menu', err);
-    }
+    await runMutation(language === 'DE' ? 'Aktualisiere...' : 'Updating...', async () => {
+      try {
+        const saved = await menusApi.updateMenu(menuId, { ...target, isActive: !target.isActive } as any);
+        const normalized = normalizeMenu(saved);
+        setMenus(menus.map(menu => menu.id === menuId ? normalized : menu));
+      } catch (err) {
+        console.error('Failed to toggle menu', err);
+      }
+    });
   };
 
   const deleteMenu = async (menuId: number) => {
-    try {
-      await menusApi.deleteMenu(menuId);
-      await loadMenusAndProducts();
-      if (selectedMenu?.id === menuId) {
-        setSelectedMenu(null);
+    await runMutation(language === 'DE' ? 'Loesche...' : 'Deleting...', async () => {
+      try {
+        await menusApi.deleteMenu(menuId);
+        await loadMenusAndProducts();
+        if (selectedMenu?.id === menuId) {
+          setSelectedMenu(null);
+        }
+        if (selectedMenuForDetail?.id === menuId) {
+          setSelectedMenuForDetail(null);
+        }
+      } catch (err) {
+        console.error('Failed to delete menu', err);
       }
-      if (selectedMenuForDetail?.id === menuId) {
-        setSelectedMenuForDetail(null);
-      }
-    } catch (err) {
-      console.error('Failed to delete menu', err);
-    }
+    });
   };
 
   const requestDeleteMenu = (menuId: number) => {
@@ -807,28 +833,30 @@ const toggleMenuActive = async (menuId: number) => {
   };
 
   const deleteMenuItem = async (id: number) => {
-    try {
-      const result = await productsApi.deleteProduct(id);
-      // Remove item from all menus first
-      const updatedMenus = menus.map(menu => ({
-        ...menu,
-        products: menu.products.filter(productId => productId !== id)
-      }));
-      setMenus(updatedMenus);
-      syncSelectedMenus(updatedMenus);
+    await runMutation(language === 'DE' ? 'Loesche...' : 'Deleting...', async () => {
+      try {
+        const result = await productsApi.deleteProduct(id);
+        // Remove item from all menus first
+        const updatedMenus = menus.map(menu => ({
+          ...menu,
+          products: menu.products.filter(productId => productId !== id)
+        }));
+        setMenus(updatedMenus);
+        syncSelectedMenus(updatedMenus);
 
-      // Then delete the item locally
-      setMenuItems(menuItems.filter(item => item.id !== id));
-      if (result.archived) {
-        showNotification('success', t.notifications.productArchived);
-      } else {
-        showNotification('success', t.notifications.productDeleted);
+        // Then delete the item locally
+        setMenuItems(menuItems.filter(item => item.id !== id));
+        if (result.archived) {
+          showNotification('success', t.notifications.productArchived);
+        } else {
+          showNotification('success', t.notifications.productDeleted);
+        }
+      } catch (err) {
+        console.error('Failed to delete product', err);
+        const message = err instanceof Error ? err.message : t.notifications.productDeleteFailed;
+        showNotification('error', message);
       }
-    } catch (err) {
-      console.error('Failed to delete product', err);
-      const message = err instanceof Error ? err.message : t.notifications.productDeleteFailed;
-      showNotification('error', message);
-    }
+    });
   };
 
   const restoreMenuItem = (id: number) => {
@@ -1284,7 +1312,12 @@ const AddFormModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto" onClick={() => setShowAddForm(false)}>
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setShowAddForm(false);
+      }}
+    >
       <div className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -1619,7 +1652,12 @@ const AddMenuFormModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto" onClick={() => setShowAddMenuForm(false)}>
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setShowAddMenuForm(false);
+      }}
+    >
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.createMenu}</h2>
@@ -1900,7 +1938,12 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto" onClick={() => setEditingMenu(null)}>
+    <div
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setEditingMenu(null);
+      }}
+    >
       <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.menu.editMenu}</h2>
@@ -2389,6 +2432,10 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
     </div>
   );
 
+  const overlayLabel = isLoading
+    ? (language === 'DE' ? 'Lade...' : 'Loading...')
+    : mutatingLabel || (language === 'DE' ? 'Bitte warten...' : 'Please wait...');
+
   return (
     <AdminLayout
       navigation={navigation}
@@ -2406,6 +2453,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
         </div>
       }
     >
+      <LoadingOverlay open={isLoading || isMutating} label={overlayLabel} />
       {notification && (
         <div className="fixed top-6 right-6 z-50">
           <div
@@ -2653,6 +2701,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
         confirmText={t.actions.deleteMenuTitle}
         cancelText={t.actions.cancel}
         isDanger
+        isLoading={isMutating}
         onCancel={() => {
           setConfirmOpen(false);
           setConfirmDeleteMenuId(null);

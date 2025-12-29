@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useBodyScrollLock } from './useBodyScrollLock';
 
 type ConfirmDialogProps = {
@@ -67,11 +68,12 @@ export default function ConfirmDialog({
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60 disabled:cursor-not-allowed ${
+            className={`px-4 py-2 text-sm font-semibold rounded-lg text-white disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
               isDanger ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'
             }`}
           >
-            {confirmText}
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : null}
+            <span>{confirmText}</span>
           </button>
         </div>
       </div>

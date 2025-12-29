@@ -27,6 +27,7 @@ import AdminLayout from '../components/AdminLayout';
 import { accessoriesApi, type Accessory } from '@/lib/api/accessories';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 type FormState = {
   id?: number;
@@ -57,6 +58,7 @@ export default function AdminAccessories() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [accessories, setAccessories] = useState<Accessory[]>([]);
@@ -264,6 +266,7 @@ export default function AdminAccessories() {
   };
 
   const deleteAccessory = async (id: number) => {
+    setDeleting(true);
     try {
       await accessoriesApi.deleteAccessory(id);
       setAccessories((prev) => prev.filter((a) => a.id !== id));
@@ -271,6 +274,8 @@ export default function AdminAccessories() {
       console.error(err);
       const message = err instanceof Error ? err.message : copy.toast.failedDelete;
       setLoadError(message || copy.toast.failedDelete);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -305,7 +310,7 @@ export default function AdminAccessories() {
             className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
             type="button"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{copy.header.refresh}</span>
           </button>
           <button
@@ -319,6 +324,18 @@ export default function AdminAccessories() {
         </div>
       }
     >
+      <LoadingOverlay
+        open={isLoading || saving || deleting}
+        label={
+          isLoading
+            ? copy.status.loading
+            : deleting
+            ? (language === 'DE' ? 'Loesche...' : 'Deleting...')
+            : language === 'DE'
+            ? 'Speichert...'
+            : 'Saving...'
+        }
+      />
       <div className={`${isVisible ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 mb-6`}>
         <p className="text-gray-600">{copy.header.subtitle}</p>
       </div>
@@ -598,6 +615,7 @@ export default function AdminAccessories() {
         confirmText={copy.actions.delete}
         cancelText={copy.modal.cancel}
         isDanger
+        isLoading={deleting}
         onCancel={() => {
           setConfirmOpen(false);
           setConfirmDeleteId(null);
