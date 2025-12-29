@@ -651,7 +651,7 @@ export default function Customers() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-gray-900">${order.total}</p>
+                              <p className="font-bold text-gray-900">€{order.total}</p>
                               <p className="text-sm text-gray-600">
                                 {order.createdAt || order.eventDate
                                   ? new Date(order.createdAt || order.eventDate).toLocaleDateString(locale)

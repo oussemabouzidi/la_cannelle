@@ -1537,7 +1537,32 @@ export default function OrderPage() {
                   type="button"
                   onClick={() => {
                   if (!menu.isActive) return;
+                  if (shouldBlockProgress) {
+                    showNotification('error', blockedMessage, 3000);
+                    return;
+                  }
+                  if (!validateStepsUpTo(currentStep - 1)) {
+                    return;
+                  }
+
+                  setQuantities({});
                   setPendingMenuId(menu.id);
+                  setOrderData((prev: any) => {
+                    const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
+                    if (previousSelected === Number(menu.id)) {
+                      return { ...prev, selectedMenu: Number(menu.id) };
+                    }
+                    return {
+                      ...prev,
+                      selectedMenu: Number(menu.id),
+                      selectedStarters: [],
+                      selectedMains: [],
+                      selectedSides: [],
+                      selectedDesserts: [],
+                      selectedDrinks: []
+                    };
+                  });
+                  setCurrentStep((prev) => Math.min(prev + 1, stepsConfig.length));
                 }}
                   className={cardClassName}
                 >
