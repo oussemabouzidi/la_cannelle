@@ -2182,8 +2182,10 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
         setSelectedMenu(isSelected ? null : menu);
       }
     }}
-    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 cursor-pointer €{
-      isSelected ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-gray-200 hover-border-amber-300 hover:bg-amber-50'
+    className={`w-full text-left p-4 rounded-xl border transition-all duration-300 cursor-pointer ${
+      isSelected
+        ? 'border-amber-500 bg-amber-100/60 ring-2 ring-amber-200 shadow-sm'
+        : 'bg-white border-gray-200 hover:border-amber-300 hover:bg-amber-50'
     }`}
   >
     <div className="flex items-start gap-3">
@@ -2195,7 +2197,7 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
         <div className="flex items-start justify-between gap-3 mb-2">
           <h4 className="text-lg font-semibold text-gray-900 truncate">{menu.name || t.menu.untitledMenu}</h4>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className={`px-2 py-1 text-xs rounded-full €{
+            <span className={`px-2 py-1 text-xs rounded-full ${
               menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
             }`}>
               {menu.isActive ? t.actions.active : t.actions.inactive}
@@ -2593,7 +2595,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             {/* Menus Panel - Left */}
             {(viewMode === 'split' || viewMode === 'menus') && (
               <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm ${
-                viewMode === 'split' ? 'lg:w-[520px] xl:w-[640px] 2xl:w-[720px] shrink-0' : 'w-full'
+                viewMode === 'split' ? 'lg:w-[320px] xl:w-[360px] 2xl:w-[420px] shrink-0' : 'w-full'
               }`}>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
