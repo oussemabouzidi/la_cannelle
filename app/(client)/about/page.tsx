@@ -557,7 +557,7 @@ export default function AboutPage() {
               <img
                 src="/images/logo-removebg-preview.png"
                 alt="La Cannelle"
-                className="h-12 sm:h-14 md:h-16 w-auto object-contain"
+                className="h-16 sm:h-[72px] md:h-[80px] w-[180px] sm:w-[220px] md:w-[260px] lg:w-[320px] object-cover object-center"
               />
             </div>
             

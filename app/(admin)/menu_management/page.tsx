@@ -2405,8 +2405,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
     <div className="bg-white rounded-lg border border-gray-200 p-1 flex flex-wrap items-center gap-1">
       <button
         onClick={() => setViewMode('split')}
-        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium €{
-          viewMode === 'split' ? 'bg-amber-100 text-amber-700' : 'text-gray-900 hover:bg-gray-50'
+        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium ${
+          viewMode === 'split' ? 'bg-amber-100 text-amber-700' : 'text-black hover:bg-gray-50'
         }`}
       >
         <LayoutGrid size={16} />
@@ -2414,8 +2414,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       </button>
       <button
         onClick={() => setViewMode('menus')}
-        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium €{
-          viewMode === 'menus' ? 'bg-amber-100 text-amber-700' : 'text-gray-900 hover:bg-gray-50'
+        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium ${
+          viewMode === 'menus' ? 'bg-amber-100 text-amber-700' : 'text-black hover:bg-gray-50'
         }`}
       >
         <List size={16} />
@@ -2423,8 +2423,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       </button>
       <button
         onClick={() => setViewMode('products')}
-        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium €{
-          viewMode === 'products' ? 'bg-amber-100 text-amber-700' : 'text-gray-900 hover:bg-gray-50'
+        className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium ${
+          viewMode === 'products' ? 'bg-amber-100 text-amber-700' : 'text-black hover:bg-gray-50'
         }`}
       >
         <Grid size={16} />
@@ -2592,8 +2592,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Menus Panel - Left */}
             {(viewMode === 'split' || viewMode === 'menus') && (
-              <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm €{
-                viewMode === 'split' ? 'lg:w-[440px] xl:w-[520px] 2xl:w-[560px] shrink-0' : 'w-full'
+              <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm ${
+                viewMode === 'split' ? 'lg:w-[520px] xl:w-[640px] 2xl:w-[720px] shrink-0' : 'w-full'
               }`}>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
@@ -2632,13 +2632,13 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
 
             {/* Products Panel - Right */}
             {(viewMode === 'split' || viewMode === 'products') && (
-              <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm €{
+              <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm ${
                 viewMode === 'split' ? 'lg:flex-1' : 'w-full'
               }`}>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold text-gray-900 font-elegant">
-                      {selectedMenu ? `€{selectedMenu.name} - Products` : 'All Products'}
+                      {selectedMenu ? `${selectedMenu.name} - Products` : 'All Products'}
                     </h3>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">{t.menu.menuSections}</span>

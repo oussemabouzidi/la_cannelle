@@ -92,7 +92,7 @@ export default function AdminLayout({
               <img
                 src="/images/logo-removebg-preview.png"
                 alt=""
-                className="h-auto max-w-[180px]"
+                className="h-auto max-w-[240px]"
               />
             </div>
             <button
