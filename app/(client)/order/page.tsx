@@ -519,7 +519,7 @@ export default function OrderPage() {
       try {
         setIsLoading(true);
         const [menus, products, accessories, status, dates, services] = await Promise.all([
-          menusApi.getMenus({ isActive: true }),
+          menusApi.getMenus({ isActive: true, includeImages: true }),
           productsApi.getProducts({ available: true }),
           accessoriesApi.getAccessories({ isActive: true }),
           systemApi.getSystemStatus(),
@@ -555,7 +555,7 @@ export default function OrderPage() {
     const fetchMenusForService = async () => {
       try {
         const serviceId = orderData.serviceId ? Number(orderData.serviceId) : undefined;
-        const menus = await menusApi.getMenus({ isActive: true, serviceId });
+        const menus = await menusApi.getMenus({ isActive: true, serviceId, includeImages: true });
         const normalizedMenus = normalizeMenus(menus || []);
         setMenusData(normalizedMenus);
 

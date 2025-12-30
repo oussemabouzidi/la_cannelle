@@ -96,7 +96,7 @@ export default function CateringHomepage() {
 
         const [fetchedMenus, fetchedProducts] = await Promise.all([
 
-          menusApi.getMenus({ isActive: true }),
+          menusApi.getMenus({ isActive: true, includeImages: true }),
 
           productsApi.getProducts({ available: true }),
 
@@ -672,7 +672,7 @@ export default function CateringHomepage() {
                 alt="La Cannelle"
                 className="h-16 sm:h-[72px] md:h-[80px] w-[180px] sm:w-[220px] md:w-[260px] lg:w-[320px] object-cover object-center"
               />
-
+              
             </div>
 
             {/* Desktop Navigation */}

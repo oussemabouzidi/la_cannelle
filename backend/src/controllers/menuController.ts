@@ -56,9 +56,16 @@ export const menuController = {
     const { id } = req.params;
     const updateData: any = { ...req.body };
 
-    // Normalize date fields
-    if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
-    if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
+    const parseOptionalDate = (value: unknown) => {
+      if (value === '' || value === null) return null;
+      if (value === undefined) return undefined;
+      const date = new Date(String(value));
+      return Number.isFinite(date.getTime()) ? date : null;
+    };
+
+    // Normalize date fields (allow clearing via empty string)
+    if (updateData.startDate !== undefined) updateData.startDate = parseOptionalDate(updateData.startDate);
+    if (updateData.endDate !== undefined) updateData.endDate = parseOptionalDate(updateData.endDate);
 
     // Normalize price (avoid sending empty string/NaN to Prisma)
     if (updateData.price === '' || updateData.price === null) {

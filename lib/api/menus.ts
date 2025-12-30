@@ -36,11 +36,13 @@ export const menusApi = {
     isActive?: boolean;
     search?: string;
     serviceId?: number;
+    includeImages?: boolean;
   }): Promise<Menu[]> {
     const params = new URLSearchParams();
     if (filters?.isActive !== undefined) params.append('isActive', String(filters.isActive));
     if (filters?.search) params.append('search', filters.search);
     if (filters?.serviceId !== undefined) params.append('serviceId', String(filters.serviceId));
+    if (filters?.includeImages !== undefined) params.append('includeImages', String(filters.includeImages));
 
     const query = params.toString();
     const endpoint = query ? `/menus?${query}` : '/menus';

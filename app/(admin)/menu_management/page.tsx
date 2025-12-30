@@ -611,7 +611,7 @@ export default function AdminMenuManagement() {
     try {
       setIsLoading(true);
       const [menuResponse, productResponse, serviceResponse] = await Promise.all([
-        menusApi.getMenus(),
+        menusApi.getMenus({ includeImages: true }),
         productsApi.getProducts(),
         servicesApi.getServices()
       ]);
@@ -623,6 +623,8 @@ export default function AdminMenuManagement() {
       syncSelectedMenus(normalizedMenus);
     } catch (err) {
       console.error('Failed to load menus/products', err);
+      const message = err instanceof Error ? err.message : (language === 'DE' ? 'Fehler beim Laden' : 'Failed to load data');
+      showNotification('error', message, 3500);
     } finally {
       setIsLoading(false);
     }
@@ -770,8 +772,11 @@ const [newItem, setNewItem] = useState<NewItemState>({
         if (!menuData) {
           resetNewMenuForm();
         }
+        showNotification('success', language === 'DE' ? 'Menü gespeichert' : 'Menu saved');
       } catch (err) {
         console.error('Failed to create menu', err);
+        const message = err instanceof Error ? err.message : (language === 'DE' ? 'Menü konnte nicht gespeichert werden' : 'Failed to create menu');
+        showNotification('error', message, 3500);
       }
     });
   };
@@ -785,13 +790,16 @@ const [newItem, setNewItem] = useState<NewItemState>({
           menu.id === normalized.id ? normalized : menu
         ));
         await loadMenusAndProducts();
+        showNotification('success', language === 'DE' ? 'Menü aktualisiert' : 'Menu updated');
       } catch (err) {
         console.error('Failed to update menu', err);
+        const message = err instanceof Error ? err.message : (language === 'DE' ? 'Menü konnte nicht aktualisiert werden' : 'Failed to update menu');
+        showNotification('error', message, 3500);
       }
     });
   };
 
-const toggleMenuActive = async (menuId: number) => {
+ const toggleMenuActive = async (menuId: number) => {
     const target = menus.find(m => m.id === menuId);
     if (!target) return;
     await runMutation(language === 'DE' ? 'Aktualisiere...' : 'Updating...', async () => {
@@ -799,8 +807,11 @@ const toggleMenuActive = async (menuId: number) => {
         const saved = await menusApi.updateMenu(menuId, { ...target, isActive: !target.isActive } as any);
         const normalized = normalizeMenu(saved);
         setMenus(menus.map(menu => menu.id === menuId ? normalized : menu));
+        showNotification('success', language === 'DE' ? 'Menü aktualisiert' : 'Menu updated');
       } catch (err) {
         console.error('Failed to toggle menu', err);
+        const message = err instanceof Error ? err.message : (language === 'DE' ? 'Menü konnte nicht aktualisiert werden' : 'Failed to update menu');
+        showNotification('error', message, 3500);
       }
     });
   };
@@ -816,8 +827,11 @@ const toggleMenuActive = async (menuId: number) => {
         if (selectedMenuForDetail?.id === menuId) {
           setSelectedMenuForDetail(null);
         }
+        showNotification('success', language === 'DE' ? 'Menü gelöscht' : 'Menu deleted');
       } catch (err) {
         console.error('Failed to delete menu', err);
+        const message = err instanceof Error ? err.message : (language === 'DE' ? 'Menü konnte nicht gelöscht werden' : 'Failed to delete menu');
+        showNotification('error', message, 3500);
       }
     });
   };

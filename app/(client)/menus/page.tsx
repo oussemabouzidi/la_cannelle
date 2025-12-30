@@ -279,7 +279,7 @@ export default function MenusPage() {
         setIsLoadingData(true);
         setFetchError(null);
         const [menusResult, productsResult] = await Promise.allSettled([
-          menusApi.getMenus(),
+          menusApi.getMenus({ includeImages: true }),
           productsApi.getProducts({ available: true }),
         ]);
 
