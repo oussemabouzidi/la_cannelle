@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -115,8 +115,8 @@ export default function AdminMenuManagement() {
         totalMenus: 'Menus',
       },
       productsPanel: {
-        showingInMenu: (count: number) => `Showing €{count} products in this menu`,
-        showingAll: (count: number) => `Showing €{count} products`,
+        showingInMenu: (count: number) => `Showing ${count} products in this menu`,
+        showingAll: (count: number) => `Showing ${count} products`,
         noProductsInMenu: 'No products in this menu yet',
         noProductsMatching: 'No products found matching your criteria',
       },
@@ -130,7 +130,7 @@ export default function AdminMenuManagement() {
         noDescriptionProvided: 'No description provided.',
         noServices: 'No services',
         noServicesYet: 'No services created yet.',
-        servicesCount: (count: number) => `€{count} services`,
+        servicesCount: (count: number) => `${count} services`,
         priceCurrency: 'EUR',
         confirmDeleteMenuTitle: 'Delete menu',
         confirmDeleteMenuBody: 'Do you really want to delete this menu?',
@@ -262,8 +262,8 @@ export default function AdminMenuManagement() {
         totalMenus: 'Menues',
       },
       productsPanel: {
-        showingInMenu: (count: number) => `€{count} Produkte in diesem Menue`,
-        showingAll: (count: number) => `€{count} Produkte`,
+        showingInMenu: (count: number) => `${count} Produkte in diesem Menue`,
+        showingAll: (count: number) => `${count} Produkte`,
         noProductsInMenu: 'Noch keine Produkte in diesem Menue',
         noProductsMatching: 'Keine Produkte passend zu Ihren Filtern gefunden',
       },
@@ -277,7 +277,7 @@ export default function AdminMenuManagement() {
         noDescriptionProvided: 'Keine Beschreibung vorhanden.',
         noServices: 'Keine Services',
         noServicesYet: 'Noch keine Services vorhanden.',
-        servicesCount: (count: number) => `€{count} Services`,
+        servicesCount: (count: number) => `${count} Services`,
         priceCurrency: 'EUR',
         confirmDeleteMenuTitle: 'Menue loeschen',
         confirmDeleteMenuBody: 'Moechten Sie dieses Menue wirklich loeschen?',
@@ -507,7 +507,7 @@ export default function AdminMenuManagement() {
           <div className="p-4 sm:p-6 space-y-3">
             <p className="text-gray-700 leading-relaxed">{menu.description || t.menu.noDescriptionProvided}</p>
             <div className="flex flex-wrap gap-2 text-sm text-gray-600">
-              <span className={`px-3 py-1 rounded-full font-semibold €{menu.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+              <span className={`px-3 py-1 rounded-full font-semibold ${menu.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                 {menu.isActive ? t.actions.active : t.actions.inactive}
               </span>
               {menu.price !== undefined && (
@@ -524,7 +524,7 @@ export default function AdminMenuManagement() {
                 <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">{t.menu.menuSteps}</p>
                 <ul className="space-y-1 text-sm text-gray-700">
                   {menu.steps.map((step, index) => (
-                    <li key={`step-€{index}`} className="flex items-center justify-between">
+                    <li key={`step-${index}`} className="flex items-center justify-between">
                       <span>{step.label}</span>
                       <span className="font-semibold text-gray-900">{step.included}</span>
                     </li>
@@ -988,7 +988,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
     }, [src]);
 
     return (
-      <div className={`relative €{className}`}>
+      <div className={`relative ${className}`}>
         {hasError ? (
           <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center">
             <div className="text-center">
@@ -1203,13 +1203,13 @@ const [newItem, setNewItem] = useState<NewItemState>({
                         <div key={category} className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            id={`category-€{category}`}
+                            id={`category-${category}`}
                             checked={localItem.productCategories.includes(category)}
                             onChange={() => toggleLocalProductCategory(category)}
                             className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                           />
                           <label 
-                            htmlFor={`category-€{category}`}
+                            htmlFor={`category-${category}`}
                             className="text-sm text-gray-700 capitalize cursor-pointer"
                           >
                             {category.replace('-', ' ')}
@@ -1226,18 +1226,18 @@ const [newItem, setNewItem] = useState<NewItemState>({
                         <div key={menu.id} className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            id={`menu-€{menu.id}`}
+                            id={`menu-${menu.id}`}
                             checked={localItem.menus.includes(menu.id)}
                             onChange={() => toggleLocalMenuAssociation(menu.id)}
                             className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                           />
                           <label 
-                            htmlFor={`menu-€{menu.id}`}
+                            htmlFor={`menu-${menu.id}`}
                             className="text-sm text-gray-700 cursor-pointer"
                           >
                             {menu.name}
                           </label>
-                          <span className={`text-xs px-2 py-1 rounded €{
+                          <span className={`text-xs px-2 py-1 rounded ${
                             menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                           }`}>
                             {menu.isActive ? t.actions.active : t.actions.inactive}
@@ -1267,7 +1267,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
                           {steps.length > 0 ? (
                             <div className="space-y-1 text-sm text-gray-700">
                               {steps.map((step: MenuStep, index: number) => (
-                                <div key={`menu-€{menuId}-step-€{index}`} className="flex items-center justify-between">
+                                <div key={`menu-${menuId}-step-${index}`} className="flex items-center justify-between">
                                   <span>{step.label}</span>
                                   <span className="font-semibold text-gray-900">{step.included}</span>
                                 </div>
@@ -1482,7 +1482,7 @@ const AddFormModal = () => {
                       <div key={category} className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          id={`new-category-€{category}`}
+                          id={`new-category-${category}`}
                           checked={localItem.productCategories.includes(category)}
                           onChange={(e) => {
                             const updatedCategories = e.target.checked
@@ -1492,7 +1492,7 @@ const AddFormModal = () => {
                           }}
                           className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                         />
-                        <label htmlFor={`new-category-€{category}`} className="text-sm text-gray-700 capitalize cursor-pointer">
+                        <label htmlFor={`new-category-${category}`} className="text-sm text-gray-700 capitalize cursor-pointer">
                           {category}
                         </label>
                       </div>
@@ -1507,7 +1507,7 @@ const AddFormModal = () => {
                       <div key={menu.id} className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          id={`new-menu-€{menu.id}`}
+                          id={`new-menu-${menu.id}`}
                           checked={localItem.menus.includes(menu.id)}
                           onChange={(e) => {
                             const updatedMenus = e.target.checked
@@ -1517,7 +1517,7 @@ const AddFormModal = () => {
                           }}
                           className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                         />
-                        <label htmlFor={`new-menu-€{menu.id}`} className="text-sm text-gray-700 cursor-pointer">
+                        <label htmlFor={`new-menu-${menu.id}`} className="text-sm text-gray-700 cursor-pointer">
                           {menu.name}
                         </label>
                       </div>
@@ -1532,7 +1532,7 @@ const AddFormModal = () => {
                   {tiers.map(tier => (
                     <button
                       key={tier}
-                      className={`px-4 py-2 rounded-lg font-medium capitalize €{
+                      className={`px-4 py-2 rounded-lg font-medium capitalize ${
                         localItem.tier.includes(tier)
                           ? 'bg-amber-600 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1776,7 +1776,7 @@ const AddMenuFormModal = () => {
                       return (
                         <label
                           key={service.id}
-                          className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors €{
+                          className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
                             checked ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white hover:bg-gray-50'
                           }`}
                         >
@@ -1822,7 +1822,7 @@ const AddMenuFormModal = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSteps}</label>
                 <div className="space-y-3">
                   {(localMenuState.steps || []).map((step, index) => (
-                    <div key={`step-€{index}`} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                    <div key={`step-${index}`} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                       <select
                         value={step.label}
                         onChange={(e) => updateMenuStep(index, { label: e.target.value })}
@@ -2062,7 +2062,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                       return (
                         <label
                           key={service.id}
-                          className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors €{
+                          className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
                             checked ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white hover:bg-gray-50'
                           }`}
                         >
@@ -2108,7 +2108,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSteps}</label>
                 <div className="space-y-3">
                   {(localMenuState.steps || []).map((step, index) => (
-                    <div key={`step-€{index}`} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                    <div key={`step-${index}`} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                       <select
                         value={step.label}
                         onChange={(e) => updateMenuStep(index, { label: e.target.value })}
@@ -2257,9 +2257,9 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
 
 const ProductCard = ({ item }: { item: MenuItem }) => (
     <div
-      className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-md €{
+      className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-md ${
         isVisible ? 'animate-fade-in-up' : 'opacity-0'
-      } €{!item.available ? 'opacity-60' : ''}`}
+      } ${!item.available ? 'opacity-60' : ''}`}
     >
       {/* Image Section */}
       <div className="relative h-48 w-full overflow-hidden">
@@ -2277,7 +2277,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           </span>
         </div>
         <div className="absolute top-4 right-4">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium €{
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
             item.available 
               ? 'bg-green-100 text-green-800' 
               : 'bg-red-100 text-red-800'
@@ -2299,8 +2299,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-gray-900">€{item.price}</p>
-            <p className="text-sm text-gray-600">{t.menu.costLabel}: €{item.cost}</p>
+            <p className="text-2xl font-bold text-gray-900">{'€'}{item.price}</p>
+            <p className="text-sm text-gray-600">{t.menu.costLabel}: {'€'}{item.cost}</p>
           </div>
         </div>
         
@@ -2353,7 +2353,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             {tiers.map(tier => (
               <span
                 key={tier}
-                className={`px-2 py-1 rounded text-xs font-medium capitalize €{
+                className={`px-2 py-1 rounded text-xs font-medium capitalize ${
                   item.tier.includes(tier)
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-gray-100 text-gray-500'
@@ -2374,7 +2374,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
               className="bg-amber-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `€{item.popularity}%` }}
+              style={{ width: `${item.popularity}%` }}
             ></div>
           </div>
         </div>
@@ -2489,7 +2489,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       {notification && (
         <div className="fixed top-6 right-6 z-50">
           <div
-            className={`px-4 py-3 rounded-lg shadow-lg text-white €{
+            className={`px-4 py-3 rounded-lg shadow-lg text-white ${
               notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'
             }`}
           >
@@ -2546,7 +2546,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           </div>
 
           {/* Filters and Search */}
-          <div className={`bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm mb-6 €{
+          <div className={`bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm mb-6 ${
             isVisible ? 'animate-fade-in-up' : 'opacity-0'
           }`}>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
