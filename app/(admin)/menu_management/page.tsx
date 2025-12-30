@@ -2406,7 +2406,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       <button
         onClick={() => setViewMode('split')}
         className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium €{
-          viewMode === 'split' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'
+          viewMode === 'split' ? 'bg-amber-100 text-amber-700' : 'text-gray-900 hover:bg-gray-50'
         }`}
       >
         <LayoutGrid size={16} />
@@ -2415,7 +2415,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       <button
         onClick={() => setViewMode('menus')}
         className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium €{
-          viewMode === 'menus' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'
+          viewMode === 'menus' ? 'bg-amber-100 text-amber-700' : 'text-gray-900 hover:bg-gray-50'
         }`}
       >
         <List size={16} />
@@ -2424,7 +2424,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       <button
         onClick={() => setViewMode('products')}
         className={`px-2 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm font-medium €{
-          viewMode === 'products' ? 'bg-amber-100 text-amber-700' : 'text-gray-600 hover:bg-gray-50'
+          viewMode === 'products' ? 'bg-amber-100 text-amber-700' : 'text-gray-900 hover:bg-gray-50'
         }`}
       >
         <Grid size={16} />
@@ -2593,7 +2593,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             {/* Menus Panel - Left */}
             {(viewMode === 'split' || viewMode === 'menus') && (
               <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm €{
-                viewMode === 'split' ? 'lg:w-1/3' : 'w-full'
+                viewMode === 'split' ? 'lg:w-[440px] xl:w-[520px] 2xl:w-[560px] shrink-0' : 'w-full'
               }`}>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
@@ -2633,7 +2633,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             {/* Products Panel - Right */}
             {(viewMode === 'split' || viewMode === 'products') && (
               <div className={`bg-white rounded-2xl shadow-sm border border-stone-100 backdrop-blur-sm €{
-                viewMode === 'split' ? 'lg:w-2/3' : 'w-full'
+                viewMode === 'split' ? 'lg:flex-1' : 'w-full'
               }`}>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
