@@ -48,9 +48,9 @@ export const adminTranslations: Record<Language, AdminTranslations> = {
   },
   DE: {
     nav: {
-      dashboard: 'Uebersicht',
+      dashboard: 'Übersicht',
       orders: 'Bestellungen',
-      menu: 'Menueverwaltung',
+      menu: 'Menüverwaltung',
       customers: 'Kunden',
       reports: 'Berichte',
       system: 'Systemsteuerung',
@@ -62,7 +62,7 @@ export const adminTranslations: Record<Language, AdminTranslations> = {
       passwordLabel: 'Passwort',
       submit: 'Anmelden',
       signingIn: 'Anmeldung...',
-      invalidCredentials: 'Ungueltige Zugangsdaten',
+      invalidCredentials: 'Ungültige Zugangsdaten',
     },
     labels: {
       viewAllOrders: 'Alle Bestellungen ansehen',

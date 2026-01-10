@@ -84,9 +84,9 @@ export const commonTranslations: CommonTranslations = {
   DE: {
     nav: {
       home: 'Startseite',
-      about: 'Ueber uns',
+      about: 'Über uns',
       services: 'Dienstleistungen',
-      menus: 'Menues',
+      menus: 'Menüs',
       contact: 'Kontakt',
       connect: 'Verbinden',
       order: 'Bestellen',
@@ -114,9 +114,9 @@ export const commonTranslations: CommonTranslations = {
     },
     buttons: {
       next: 'Weiter',
-      back: 'Zurueck',
-      confirm: 'Bestaetigen',
-      backToHome: 'Zurueck zur Startseite',
+      back: 'Zurück',
+      confirm: 'Bestätigen',
+      backToHome: 'Zurück zur Startseite',
     },
   },
 };

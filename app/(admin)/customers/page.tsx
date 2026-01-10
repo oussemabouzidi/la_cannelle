@@ -115,11 +115,11 @@ export default function Customers() {
     },
     DE: {
       nav: {
-        dashboard: 'Ubersicht',
+        dashboard: 'Übersicht',
         orders: 'Bestellungen',
-        menu: 'Menueverwaltung',
+        menu: 'Menüverwaltung',
         services: 'Dienstleistungen',
-        accessories: 'Zubehoer',
+        accessories: 'Zubehör',
         system: 'Systemsteuerung',
         customers: 'Kunden',
         reports: 'Berichte',
@@ -175,10 +175,10 @@ export default function Customers() {
         contactInfo: 'Kontaktinformationen',
         memberSince: 'Mitglied seit',
         totalSpent: 'Gesamtumsatz',
-        preferencesNotes: 'Praeferenzen & Notizen',
-        dietaryPreferences: 'Ernaehrungspraeferenzen',
+        preferencesNotes: 'Präferenzen & Notizen',
+        dietaryPreferences: 'Ernährungspräferenzen',
         allergies: 'Allergien',
-        additionalNotes: 'Zusaetzliche Notizen',
+        additionalNotes: 'Zusätzliche Notizen',
       },
     },
   } as const;
@@ -443,8 +443,8 @@ export default function Customers() {
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
-      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
-      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
+      openMenuLabel={language === 'DE' ? 'Menü öffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menü schließen' : 'Close menu'}
     >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">

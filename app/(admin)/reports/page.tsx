@@ -43,7 +43,7 @@ export default function AdminReports() {
         avgCustomer: isDE ? 'Ø Kundenwert' : 'Avg Customer Value'
       },
       sections: {
-        daily: isDE ? 'Taeglicher Umsatz' : 'Daily Revenue',
+        daily: isDE ? 'Täglicher Umsatz' : 'Daily Revenue',
         popular: isDE ? 'Top Produkte' : 'Top Products',
         byCategory: isDE ? 'Umsatz nach Kategorie' : 'Revenue by Category'
       }
@@ -52,11 +52,11 @@ export default function AdminReports() {
 
   const navigation = useMemo(() => {
     return [
-      { id: 'dashboard', name: isDE ? 'Ubersicht' : 'Dashboard', icon: TrendingUp, path: '/dashboard' },
+      { id: 'dashboard', name: isDE ? 'Übersicht' : 'Dashboard', icon: TrendingUp, path: '/dashboard' },
       { id: 'orders', name: isDE ? 'Bestellungen' : 'Orders', icon: Package, path: '/orders' },
-      { id: 'menu', name: isDE ? 'Menueverwaltung' : 'Menu Management', icon: Menu, path: '/menu_management' },
+      { id: 'menu', name: isDE ? 'Menüverwaltung' : 'Menu Management', icon: Menu, path: '/menu_management' },
       { id: 'services', name: isDE ? 'Services' : 'Services', icon: Briefcase, path: '/services_management' },
-      { id: 'accessories', name: isDE ? 'Zubehoer' : 'Accessories', icon: ShoppingBag, path: '/accessories' },
+      { id: 'accessories', name: isDE ? 'Zubehör' : 'Accessories', icon: ShoppingBag, path: '/accessories' },
       { id: 'system', name: isDE ? 'Systemsteuerung' : 'System Control', icon: Clock, path: '/system_control' },
       { id: 'customers', name: isDE ? 'Kunden' : 'Customers', icon: Users, path: '/customers' },
       { id: 'reports', name: isDE ? 'Berichte' : 'Reports', icon: BarChart3, path: '/reports' }
@@ -111,8 +111,8 @@ export default function AdminReports() {
       adminRoleLabel={isDE ? 'Administrator' : 'Administrator'}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
-      openMenuLabel={isDE ? 'Menue oeffnen' : 'Open menu'}
-      closeMenuLabel={isDE ? 'Menue schliessen' : 'Close menu'}
+      openMenuLabel={isDE ? 'Menü öffnen' : 'Open menu'}
+      closeMenuLabel={isDE ? 'Menü schließen' : 'Close menu'}
       headerMeta={
         <button
           onClick={loadReports}

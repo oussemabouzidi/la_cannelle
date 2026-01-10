@@ -98,11 +98,11 @@ export default function AdminDashboard() {
     },
     DE: {
       nav: {
-        dashboard: 'Ubersicht',
+        dashboard: 'Übersicht',
         orders: 'Bestellungen',
-        menu: 'Menueverwaltung',
+        menu: 'Menüverwaltung',
         services: 'Dienstleistungen',
-        accessories: 'Zubehoer',
+        accessories: 'Zubehör',
         system: 'Systemsteuerung',
         customers: 'Kunden',
         reports: 'Berichte',
@@ -112,12 +112,12 @@ export default function AdminDashboard() {
         role: 'Administrator',
       },
       header: {
-        title: 'Ubersicht',
+        title: 'Übersicht',
       },
       stats: {
         totalOrders: 'Gesamtbestellungen',
         pending: 'Ausstehend',
-        confirmed: 'Bestaetigt',
+        confirmed: 'Bestätigt',
         completed: 'Abgeschlossen',
         todayRevenue: 'Heutiger Umsatz',
         weeklyRevenue: 'Wochenumsatz',
@@ -129,20 +129,20 @@ export default function AdminDashboard() {
         recentOrders: 'Letzte Bestellungen',
       },
       labels: {
-        guests: 'Gaeste',
+        guests: 'Gäste',
         viewAllOrders: 'Alle Bestellungen ansehen',
         addTodoPlaceholder: 'Neues To-do...',
-        addTodo: 'Hinzufuegen',
+        addTodo: 'Hinzufügen',
         emptyTodos: 'Noch keine To-dos.',
-        deleteTodo: 'To-do loeschen',
+        deleteTodo: 'To-do löschen',
         emptyRecentOrders: 'Noch keine Bestellungen.',
       },
       messages: {
         loading: 'Dashboard-Daten werden geladen...',
-        noData: 'Noch keine Dashboard-Daten verfuegbar.',
+        noData: 'Noch keine Dashboard-Daten verfügbar.',
       },
       status: {
-        confirmed: 'Bestaetigt',
+        confirmed: 'Bestätigt',
         pending: 'Ausstehend',
         completed: 'Abgeschlossen',
         cancelled: 'Storniert',
@@ -242,7 +242,7 @@ export default function AdminDashboard() {
       setTodos(prev => prev.filter(item => item.id !== id));
     } catch (err) {
       console.error('Failed to delete todo', err);
-      setTodosError(language === 'DE' ? 'To-do konnte nicht geloescht werden.' : 'Unable to delete todo.');
+      setTodosError(language === 'DE' ? 'To-do konnte nicht gelöscht werden.' : 'Unable to delete todo.');
     }
   };
 
@@ -254,8 +254,8 @@ export default function AdminDashboard() {
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
-      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
-      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
+      openMenuLabel={language === 'DE' ? 'Menü öffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menü schließen' : 'Close menu'}
     >
       <style jsx global>{`
         @keyframes fadeInUp {

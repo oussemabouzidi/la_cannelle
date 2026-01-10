@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 const GERMAN_STATES = [
-  { code: 'BW', nameEn: 'Baden-Wuerttemberg', nameDe: 'Baden-Wuerttemberg' },
+  { code: 'BW', nameEn: 'Baden-Wuerttemberg', nameDe: 'Baden-Württemberg' },
   { code: 'BY', nameEn: 'Bavaria', nameDe: 'Bayern' },
   { code: 'BE', nameEn: 'Berlin', nameDe: 'Berlin' },
   { code: 'BB', nameEn: 'Brandenburg', nameDe: 'Brandenburg' },
@@ -38,7 +38,7 @@ const GERMAN_STATES = [
   { code: 'SN', nameEn: 'Saxony', nameDe: 'Sachsen' },
   { code: 'ST', nameEn: 'Saxony-Anhalt', nameDe: 'Sachsen-Anhalt' },
   { code: 'SH', nameEn: 'Schleswig-Holstein', nameDe: 'Schleswig-Holstein' },
-  { code: 'TH', nameEn: 'Thuringia', nameDe: 'Thueringen' },
+  { code: 'TH', nameEn: 'Thuringia', nameDe: 'Thüringen' },
 ];
 const MIN_GUESTS = 10;
 const normalizePlaces = (data: any) => {
@@ -272,7 +272,7 @@ const TimePicker = ({
           </div>
           {!slots.length && (
             <div className="px-4 py-3 text-sm text-gray-500">
-              {language === 'DE' ? 'Keine Zeiten verfuegbar.' : 'No times available.'}
+              {language === 'DE' ? 'Keine Zeiten verfügbar.' : 'No times available.'}
             </div>
           )}
         </div>
@@ -631,7 +631,7 @@ export default function OrderPage() {
       return language === 'DE' ? 'E-Mail ist erforderlich.' : 'Email is required.';
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      return language === 'DE' ? 'Bitte eine gueltige E-Mail eingeben.' : 'Please enter a valid email address.';
+      return language === 'DE' ? 'Bitte eine gültige E-Mail eingeben.' : 'Please enter a valid email address.';
     }
     return '';
   };
@@ -640,7 +640,7 @@ export default function OrderPage() {
       return language === 'DE' ? 'Telefonnummer ist erforderlich.' : 'Phone number is required.';
     }
     if (!/^\+?[0-9\s-]{7,15}$/.test(value)) {
-      return language === 'DE' ? 'Bitte eine gueltige Telefonnummer eingeben.' : 'Please enter a valid phone number.';
+      return language === 'DE' ? 'Bitte eine gültige Telefonnummer eingeben.' : 'Please enter a valid phone number.';
     }
     return '';
   };
@@ -864,7 +864,7 @@ export default function OrderPage() {
     } catch (error) {
       setCityLookupError(
         language === 'DE'
-          ? 'Keine PLZ fuer diese Stadt gefunden.'
+          ? 'Keine PLZ für diese Stadt gefunden.'
           : 'No postal codes found for this city.'
       );
       setCityLookupOptions([]);
@@ -898,7 +898,7 @@ export default function OrderPage() {
     if (isClosedDate) {
       const reason = closedDateEntry?.reason ? ` (${closedDateEntry.reason})` : '';
       return language === 'DE'
-        ? `Das gewaehlte Datum ist geschlossen${reason}. Bitte waehlen Sie ein anderes Datum.`
+        ? `Das gewählte Datum ist geschlossen${reason}. Bitte wählen Sie ein anderes Datum.`
         : `The selected date is closed${reason}. Please choose another date.`;
     }
     return '';
@@ -950,7 +950,7 @@ export default function OrderPage() {
     salad: { label: language === 'DE' ? 'Salat' : 'Salad', icon: Leaf, color: 'text-green-700' },
     soup: { label: language === 'DE' ? 'Suppe' : 'Soup', icon: Utensils, color: 'text-orange-600' },
     pasta: { label: language === 'DE' ? 'Pasta' : 'Pasta', icon: Utensils, color: 'text-orange-700' },
-    seafood: { label: language === 'DE' ? 'Meeresfruechte' : 'Seafood', icon: Fish, color: 'text-sky-600' },
+    seafood: { label: language === 'DE' ? 'Meeresfrüchte' : 'Seafood', icon: Fish, color: 'text-sky-600' },
     meat: { label: language === 'DE' ? 'Fleisch' : 'Meat', icon: Beef, color: 'text-red-700' },
     vegetarian: { label: language === 'DE' ? 'Vegetarisch' : 'Vegetarian', icon: Leaf, color: 'text-green-700' },
     vegan: { label: language === 'DE' ? 'Vegan' : 'Vegan', icon: Leaf, color: 'text-emerald-700' },
@@ -963,21 +963,21 @@ export default function OrderPage() {
     chefspecial: { label: language === 'DE' ? 'Chef-Special' : 'Chef-Special', icon: Star, color: 'text-amber-600' },
     tapas: { label: 'Tapas', icon: Utensils, color: 'text-amber-700' },
     bbq: { label: language === 'DE' ? 'BBQ' : 'BBQ', icon: Utensils, color: 'text-red-700' },
-    breakfast: { label: language === 'DE' ? 'Fruehstueck' : 'Breakfast', icon: Egg, color: 'text-yellow-700' },
+    breakfast: { label: language === 'DE' ? 'Frühstück' : 'Breakfast', icon: Egg, color: 'text-yellow-700' },
     brunch: { label: language === 'DE' ? 'Brunch' : 'Brunch', icon: Egg, color: 'text-yellow-700' }
   }), [t, language]);
   const postalCopy = useMemo(() => ({
     state: language === 'DE' ? 'Bundesland' : 'State',
-    statePlaceholder: language === 'DE' ? 'Bundesland waehlen' : 'Select state',
+    statePlaceholder: language === 'DE' ? 'Bundesland wählen' : 'Select state',
     city: language === 'DE' ? 'Stadt' : 'City',
     cityPlaceholder: language === 'DE' ? 'z.B. Berlin' : 'e.g. Berlin',
     findPostal: language === 'DE' ? 'PLZ suchen' : 'Find postal codes',
     searching: language === 'DE' ? 'Suche...' : 'Searching...',
-    selectPostal: language === 'DE' ? 'Postleitzahl waehlen' : 'Select postal code',
+    selectPostal: language === 'DE' ? 'Postleitzahl wählen' : 'Select postal code',
     postalCode: language === 'DE' ? 'Postleitzahl' : 'Postal Code',
     postalPlaceholder: language === 'DE' ? 'z.B. 10115' : 'e.g. 10115',
     germanyOnly: language === 'DE' ? 'Nur Deutschland (5-stellig).' : 'Germany only (5 digits).',
-    checking: language === 'DE' ? 'Pruefe...' : 'Checking...'
+    checking: language === 'DE' ? 'Prüfe...' : 'Checking...'
   }), [language]);
   const postalFieldProps = {
     isDE: language === 'DE',
@@ -1053,9 +1053,9 @@ export default function OrderPage() {
   }, [dynamicMenuSteps]);
   const stepsConfig = useMemo(() => ([
     { key: 'event', label: language === 'DE' ? 'Eventdetails' : 'Event Details' },
-    { key: 'menu', label: language === 'DE' ? 'Menue' : 'Menu Selection' },
+    { key: 'menu', label: language === 'DE' ? 'Menü' : 'Menu Selection' },
     ...dynamicMenuSteps,
-    { key: 'accessories', label: language === 'DE' ? 'Zubehoer' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
+    { key: 'accessories', label: language === 'DE' ? 'Zubehör' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
     { key: 'checkout', label: language === 'DE' ? 'Lieferung & Zahlung' : 'Delivery & Payment' }
   ]), [language, dynamicMenuSteps]);
   const firstProductStepIndex = stepsConfig.findIndex(
@@ -1194,7 +1194,7 @@ export default function OrderPage() {
         const selectedCount = getCategorySelectionCount(stepCategory);
         if (selectedCount < requiredCount) {
           return language === 'DE'
-            ? `Bitte mindestens ${requiredCount} Gerichte in ${stepsConfig[step - 1]?.label} waehlen.`
+            ? `Bitte mindestens ${requiredCount} Gerichte in ${stepsConfig[step - 1]?.label} wählen.`
             : `Please select at least ${requiredCount} dishes for ${stepsConfig[step - 1]?.label}.`;
         }
       }
@@ -1203,13 +1203,13 @@ export default function OrderPage() {
     switch (stepKey) {
       case 'event':
         if (!orderData.businessType) {
-          return language === 'DE' ? 'Bitte Anlass waehlen.' : 'Please select an event type.';
+          return language === 'DE' ? 'Bitte Anlass wählen.' : 'Please select an event type.';
         }
         if (!orderData.eventDate) {
-          return language === 'DE' ? 'Bitte Datum waehlen.' : 'Please select an event date.';
+          return language === 'DE' ? 'Bitte Datum wählen.' : 'Please select an event date.';
         }
         if (!orderData.eventTime) {
-          return language === 'DE' ? 'Bitte Uhrzeit waehlen.' : 'Please select an event time.';
+          return language === 'DE' ? 'Bitte Uhrzeit wählen.' : 'Please select an event time.';
         }
         if (!hasValidGuestCount) {
           return getGuestCountError();
@@ -1222,7 +1222,7 @@ export default function OrderPage() {
         return '';
       case 'menu':
         if (!orderData.selectedMenu && !pendingMenuId) {
-          return language === 'DE' ? 'Bitte ein Menue waehlen.' : 'Please select a menu.';
+          return language === 'DE' ? 'Bitte ein Menü wählen.' : 'Please select a menu.';
         }
         return '';
       case 'accessories':
@@ -1247,7 +1247,7 @@ export default function OrderPage() {
           return phoneError;
         }
         if (!orderData.paymentMethod) {
-          return language === 'DE' ? 'Bitte Zahlungsmethode waehlen.' : 'Please select a payment method.';
+          return language === 'DE' ? 'Bitte Zahlungsmethode wählen.' : 'Please select a payment method.';
         }
         if (!termsAccepted) {
           return language === 'DE'
@@ -1260,7 +1260,7 @@ export default function OrderPage() {
           const expiryValid = /^\d{2}\/\d{2}$/.test(expiry);
           if (!digitsOnly || digitsOnly.length < 12 || !expiryValid || cvc.length < 3 || !name.trim()) {
             return language === 'DE'
-              ? 'Bitte gueltige Kartendaten eingeben.'
+              ? 'Bitte gültige Kartendaten eingeben.'
               : 'Please enter valid card details.';
           }
         }
@@ -1515,7 +1515,7 @@ export default function OrderPage() {
                 onChange={(value) => updateOrderData('eventDate', value)}
                 minDate={earliestDate}
                 language={language}
-                placeholder={language === 'DE' ? 'Datum waehlen' : 'Select date'}
+                placeholder={language === 'DE' ? 'Datum wählen' : 'Select date'}
               />
               <p className="text-xs text-gray-500">{constraintText}</p>
               {isClosedDate && (
@@ -1528,7 +1528,7 @@ export default function OrderPage() {
                 value={orderData.eventTime}
                 onChange={(value) => updateOrderData('eventTime', value)}
                 language={language}
-                placeholder={language === 'DE' ? 'Uhrzeit waehlen' : 'Select time'}
+                placeholder={language === 'DE' ? 'Uhrzeit wählen' : 'Select time'}
               />
             </div>
             <div className="space-y-2">
@@ -1814,7 +1814,7 @@ export default function OrderPage() {
                           </span>
                         </div>
                         <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                          <span>{(language === 'DE' ? 'Ausgewaehlt' : 'Selected')}: {row.selected}</span>
+                          <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
                           <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
                           <span className="text-right">
                             {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
@@ -1829,7 +1829,7 @@ export default function OrderPage() {
               {selectedAccessories.length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
                   <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                    {language === 'DE' ? 'Zubehoer' : 'Accessories'}
+                    {language === 'DE' ? 'Zubehör' : 'Accessories'}
                   </h4>
                   <div className="space-y-2">
                     {selectedAccessories.map((item, idx) => (
@@ -1850,7 +1850,7 @@ export default function OrderPage() {
                 <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-900 font-semibold">
-                      {language === 'DE' ? 'Menue + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                      {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
                     </span>
                     <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                   </div>
@@ -1862,12 +1862,12 @@ export default function OrderPage() {
                   </div>
                   {selectedAccessories.length > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehoer:' : 'Accessories:'}</span>
+                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
                       <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebuehr:' : 'Service Fee:'}</span>
+                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
                     <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
@@ -2262,7 +2262,7 @@ export default function OrderPage() {
                           </span>
                         </div>
                         <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                          <span>{(language === 'DE' ? 'Ausgewaehlt' : 'Selected')}: {row.selected}</span>
+                          <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
                           <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
                           <span className="text-right">
                             {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
@@ -2277,7 +2277,7 @@ export default function OrderPage() {
               {selectedAccessories.length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
                   <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                    {language === 'DE' ? 'Zubehoer' : 'Accessories'}
+                    {language === 'DE' ? 'Zubehör' : 'Accessories'}
                   </h4>
                   <div className="space-y-2">
                     {selectedAccessories.map((item, idx) => (
@@ -2298,7 +2298,7 @@ export default function OrderPage() {
                 <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-900 font-semibold">
-                      {language === 'DE' ? 'Menue + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                      {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
                     </span>
                     <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                   </div>
@@ -2310,12 +2310,12 @@ export default function OrderPage() {
                   </div>
                   {selectedAccessories.length > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehoer:' : 'Accessories:'}</span>
+                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
                       <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebuehr:' : 'Service Fee:'}</span>
+                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
                     <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
@@ -2591,16 +2591,16 @@ export default function OrderPage() {
             </div>
             <p className="text-sm text-gray-600 mb-4">
               {language === 'DE'
-                ? 'Teilen Sie Ernaehrungswuensche, Hinweise zum Aufbau oder Zeitdetails.'
-                : 'Share dietary restrictions, setup notes, or timing details.'}
-            </p>
+                  ? 'Teilen Sie Ernährungswünsche, Hinweise zum Aufbau oder Zeitdetails.'
+                  : 'Share dietary restrictions, setup notes, or timing details.'}
+              </p>
             <textarea
               value={orderData.specialRequests}
               onChange={(e) => updateOrderData('specialRequests', e.target.value)}
               rows={4}
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
               placeholder={language === 'DE'
-                ? 'Ernaehrungswuensche oder besondere Anforderungen...'
+                ? 'Ernährungswünsche oder besondere Anforderungen...'
                 : 'Any dietary restrictions or special requirements...'}
             />
           </div>
@@ -2610,7 +2610,7 @@ export default function OrderPage() {
             <div className="flex items-center gap-3 mb-5">
               <MapPinIcon size={18} className="text-amber-600" />
               <h3 className="text-lg font-bold text-gray-900">
-                {language === 'DE' ? 'Lieferuebersicht' : 'Delivery Overview'}
+                {language === 'DE' ? 'Lieferübersicht' : 'Delivery Overview'}
               </h3>
             </div>
             <div className="space-y-3 text-sm text-gray-700">
@@ -2643,7 +2643,7 @@ export default function OrderPage() {
                 <Info size={14} className="text-amber-600" />
                 <span>
                   {language === 'DE'
-                    ? 'Lieferzeitfenster werden nach Zahlung bestaetigt.'
+                    ? 'Lieferzeitfenster werden nach Zahlung bestätigt.'
                     : 'Delivery windows are confirmed after payment.'}
                 </span>
               </div>
@@ -2749,7 +2749,7 @@ export default function OrderPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-900 font-semibold">
-                        {language === 'DE' ? 'Menue + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                        {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
                       </span>
                       <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                     </div>
@@ -2761,12 +2761,12 @@ export default function OrderPage() {
                     </div>
                     {selectedAccessories.length > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehoer:' : 'Accessories:'}</span>
+                        <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
                         <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebuehr:' : 'Service Fee:'}</span>
+                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
                       <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -2801,7 +2801,7 @@ export default function OrderPage() {
                             </span>
                           </div>
                           <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                            <span>{(language === 'DE' ? 'Ausgewaehlt' : 'Selected')}: {row.selected}</span>
+                             <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
                             <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
                             <span className="text-right">
                               {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
@@ -2848,20 +2848,20 @@ export default function OrderPage() {
                       {
                         id: 'credit-card',
                         label: language === 'DE' ? 'Kreditkarte' : 'Credit Card',
-                        description: language === 'DE' ? 'Sofortige Bestaetigung und sicherer Checkout.' : 'Instant confirmation and secure checkout.',
+                        description: language === 'DE' ? 'Sofortige Bestätigung und sicherer Checkout.' : 'Instant confirmation and secure checkout.',
                         icon: CreditCard,
                         badge: language === 'DE' ? 'Schnell' : 'Fast'
                       },
                       {
                         id: 'paypal',
                         label: 'PayPal',
-                        description: language === 'DE' ? 'Nutzen Sie PayPal-Guthaben oder die verknuepfte Karte.' : 'Use your PayPal balance or linked card.',
+                        description: language === 'DE' ? 'Nutzen Sie PayPal-Guthaben oder die verknüpfte Karte.' : 'Use your PayPal balance or linked card.',
                         icon: null,
                         badge: language === 'DE' ? 'Beliebt' : 'Popular'
                       },
                       {
                         id: 'bank-transfer',
-                        label: language === 'DE' ? 'Bankueberweisung' : 'Bank Transfer',
+                        label: language === 'DE' ? 'Banküberweisung' : 'Bank Transfer',
                         description: language === 'DE' ? 'Wir zeigen Ihnen unsere Bankdaten an.' : 'We will display our bank details.',
                         icon: Building2,
                         badge: language === 'DE' ? 'Manuell' : 'Manual'
@@ -2911,8 +2911,8 @@ export default function OrderPage() {
                           <div className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-gray-500">
                             <span className="min-w-0 break-words">
                               {isSelected
-                                ? (language === 'DE' ? 'Ausgewaehlt' : 'Selected')
-                                : (language === 'DE' ? 'Antippen zum Auswaehlen' : 'Tap to select')}
+                                ? (language === 'DE' ? 'Ausgewählt' : 'Selected')
+                                : (language === 'DE' ? 'Antippen zum Auswählen' : 'Tap to select')}
                             </span>
                             <span className="shrink-0 text-amber-600 group-hover:text-amber-700">Details</span>
                           </div>
@@ -3218,13 +3218,13 @@ export default function OrderPage() {
     // Check if ordering is paused
     if (systemStatus?.orderingPaused) {
       showNotification('error', language === 'DE'
-        ? 'Bestellungen sind aktuell pausiert. Bitte spaeter erneut versuchen.'
+        ? 'Bestellungen sind aktuell pausiert. Bitte später erneut versuchen.'
         : 'Ordering is currently paused. Please try again later.', 3000);
       return;
     }
     if (isClosedDate) {
       showNotification('error', language === 'DE'
-        ? 'Das ausgewaehlte Datum ist geschlossen. Bitte waehlen Sie ein anderes Datum.'
+        ? 'Das ausgewählte Datum ist geschlossen. Bitte wählen Sie ein anderes Datum.'
         : 'The selected date is closed. Please choose another date.', 3000);
       return;
     }
@@ -3235,7 +3235,7 @@ export default function OrderPage() {
     setContactErrors({ email: emailError, phone: phoneError });
     if (emailError || phoneError) {
       showNotification('error', language === 'DE'
-        ? 'Bitte gueltige Kontaktdaten angeben.'
+        ? 'Bitte gültige Kontaktdaten angeben.'
         : 'Please provide valid contact details.', 3000);
       return;
     }
@@ -3457,7 +3457,7 @@ export default function OrderPage() {
                 </h4>
                 <p>
                   {language === 'DE'
-                    ? 'Bestellungen werden bestaetigt, sobald die Zahlung eingegangen ist. Preise beinhalten die ausgewaehlten Speisen und Leistungen in Ihrer Bestelluebersicht.'
+                    ? 'Bestellungen werden bestätigt, sobald die Zahlung eingegangen ist. Preise beinhalten die ausgewählten Speisen und Leistungen in Ihrer Bestellübersicht.'
                     : 'Orders are confirmed once payment is received. Prices include the selected items and services listed in your order summary.'}
                 </p>
               </div>
@@ -3467,7 +3467,7 @@ export default function OrderPage() {
                 </h4>
                 <p>
                   {language === 'DE'
-                    ? 'Stornierungen mindestens 48 Stunden vor dem Termin koennen voll erstattet werden. Spaetere Stornierungen koennen mit Gebuehren verbunden sein.'
+                    ? 'Stornierungen mindestens 48 Stunden vor dem Termin können voll erstattet werden. Spätere Stornierungen können mit Gebühren verbunden sein.'
                     : 'Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Late cancellations may be subject to fees.'}
                 </p>
               </div>
@@ -3477,7 +3477,7 @@ export default function OrderPage() {
                 </h4>
                 <p>
                   {language === 'DE'
-                    ? 'Lieferzeitfenster werden nach Zahlung bestaetigt und koennen je nach Verfuegbarkeit und Standort variieren.'
+                    ? 'Lieferzeitfenster werden nach Zahlung bestätigt und können je nach Verfügbarkeit und Standort variieren.'
                     : 'Delivery windows are confirmed after payment and may vary based on scheduling availability and location.'}
                 </p>
               </div>
@@ -3487,7 +3487,7 @@ export default function OrderPage() {
                 </h4>
                 <p>
                   {language === 'DE'
-                    ? 'Wir verwenden Ihre Angaben ausschliesslich zur Abwicklung Ihrer Bestellung und zur Kommunikation rund um Ihr Event. Kontaktieren Sie uns fuer Datenanfragen.'
+                    ? 'Wir verwenden Ihre Angaben ausschließlich zur Abwicklung Ihrer Bestellung und zur Kommunikation rund um Ihr Event. Kontaktieren Sie uns für Datenanfragen.'
                     : 'We only use your information to fulfill your order and communicate about your event. Please contact us for data requests.'}
                 </p>
               </div>
@@ -3682,8 +3682,8 @@ export default function OrderPage() {
               <p>
                 {language === 'DE' ? (
                   <>
-                    Sie haben mehr Gerichte als die enthaltene Menge fuer{' '}
-                    <span className="font-semibold">{extraNoticeData.label}</span> ausgewaehlt.
+                    Sie haben mehr Gerichte als die enthaltene Menge für{' '}
+                    <span className="font-semibold">{extraNoticeData.label}</span> ausgewählt.
                   </>
                 ) : (
                   <>

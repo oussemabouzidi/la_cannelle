@@ -199,7 +199,7 @@ export default function ContactPage() {
         email: 'E-Mail-Adresse',
         phone: 'Telefonnummer',
         eventType: 'Veranstaltungstyp',
-        eventTypePlaceholder: 'Veranstaltungstyp waehlen',
+        eventTypePlaceholder: 'Veranstaltungstyp wählen',
         eventDate: 'Veranstaltungsdatum',
         guests: 'Anzahl der Gäste',
         message: 'Ihre Nachricht',

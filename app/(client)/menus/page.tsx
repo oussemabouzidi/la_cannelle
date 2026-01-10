@@ -196,11 +196,11 @@ export default function MenusPage() {
         subtitle: 'Ein Einblick in unsere kulinarische Kunst'
       },
       menuHighlights: {
-        title: 'Menue Highlights',
-        subtitle: 'Entdecken Sie unsere Menues und sehen Sie die Details',
+        title: 'Menü Highlights',
+        subtitle: 'Entdecken Sie unsere Menüs und sehen Sie die Details',
         viewDetails: 'Details ansehen',
-        includes: 'Enthaelt',
-        noItems: 'Details auf Anfrage verfuegbar.',
+        includes: 'Enthält',
+        noItems: 'Details auf Anfrage verfügbar.',
         priceLabel: 'Ab'
       },
       menuBuilder: {
@@ -554,16 +554,16 @@ export default function MenusPage() {
         ? {
             fingerfood: 'Fingerfood',
             starter: 'Vorspeisen',
-            main: 'Hauptgaenge',
+            main: 'Hauptgänge',
             side: 'Beilagen',
             dessert: 'Desserts',
-            beverage: 'Getraenke',
+            beverage: 'Getränke',
             canape: 'Canape',
             appetizer: 'Vorspeise',
             salad: 'Salat',
             soup: 'Suppe',
             pasta: 'Pasta',
-            seafood: 'Meeresfruechte',
+            seafood: 'Meeresfrüchte',
             meat: 'Fleisch',
             vegetarian: 'Vegetarisch',
             vegan: 'Vegan',
@@ -576,7 +576,7 @@ export default function MenusPage() {
             chefspecial: 'Chef-Special',
             tapas: 'Tapas',
             bbq: 'BBQ',
-            breakfast: 'Fruehstueck',
+            breakfast: 'Frühstück',
             brunch: 'Brunch'
           }
         : {

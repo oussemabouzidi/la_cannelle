@@ -102,11 +102,11 @@ export default function AdminOrders() {
     },
     DE: {
       nav: {
-        dashboard: 'Ubersicht',
+        dashboard: 'Übersicht',
         orders: 'Bestellungen',
-        menu: 'Menueverwaltung',
+        menu: 'Menüverwaltung',
         services: 'Dienstleistungen',
-        accessories: 'Zubehoer',
+        accessories: 'Zubehör',
         system: 'Systemsteuerung',
         customers: 'Kunden',
         reports: 'Berichte',
@@ -149,15 +149,15 @@ export default function AdminOrders() {
         orderItems: 'Bestellpositionen',
         quantity: 'Menge',
         total: 'Gesamt',
-        specialRequests: 'Besondere Wuensche',
+        specialRequests: 'Besondere Wünsche',
         statusManagement: 'Statusverwaltung',
         cancelOrder: 'Bestellung stornieren',
-        cancelPlaceholder: 'Grund fuer die Stornierung...',
-        cancelAction: 'Bestellung stornieren und Rueckerstattung ausloesen',
+        cancelPlaceholder: 'Grund für die Stornierung...',
+        cancelAction: 'Bestellung stornieren und Rückerstattung auslösen',
       },
       status: {
         pending: 'Ausstehend',
-        confirmed: 'Bestaetigt',
+        confirmed: 'Bestätigt',
         preparation: 'In Vorbereitung',
         delivery: 'In Lieferung',
         completed: 'Abgeschlossen',
@@ -443,8 +443,8 @@ export default function AdminOrders() {
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={language === 'DE' ? 'de-DE' : 'en-US'}
-      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
-      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
+      openMenuLabel={language === 'DE' ? 'Menü öffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menü schließen' : 'Close menu'}
     >
           {/* Filters and Search */}
           <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6 ${

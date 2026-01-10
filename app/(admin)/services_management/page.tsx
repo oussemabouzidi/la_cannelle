@@ -58,23 +58,23 @@ export default function AdminServicesManagement() {
   const t = useMemo(() => {
     return {
       nav: {
-        dashboard: isDE ? 'Ubersicht' : 'Dashboard',
+        dashboard: isDE ? 'Übersicht' : 'Dashboard',
         orders: isDE ? 'Bestellungen' : 'Orders',
-        menu: isDE ? 'Menueverwaltung' : 'Menu Management',
+        menu: isDE ? 'Menüverwaltung' : 'Menu Management',
         services: isDE ? 'Services' : 'Services',
-        accessories: isDE ? 'Zubehoer' : 'Accessories',
+        accessories: isDE ? 'Zubehör' : 'Accessories',
         system: isDE ? 'Systemsteuerung' : 'System Control',
         customers: isDE ? 'Kunden' : 'Customers',
         reports: isDE ? 'Berichte' : 'Reports'
       },
       title: isDE ? 'Services' : 'Services',
       subtitle: isDE
-        ? 'Erstellen, bearbeiten und zu Menues zuweisen'
+        ? 'Erstellen, bearbeiten und zu Menüs zuweisen'
         : 'Create, edit, and assign to menus',
       actions: {
         new: isDE ? 'Neuer Service' : 'New service',
         edit: isDE ? 'Bearbeiten' : 'Edit',
-        delete: isDE ? 'Loeschen' : 'Delete',
+        delete: isDE ? 'Löschen' : 'Delete',
         cancel: isDE ? 'Abbrechen' : 'Cancel',
         save: isDE ? 'Speichern' : 'Save',
         active: isDE ? 'Aktiv' : 'Active',
@@ -92,7 +92,7 @@ export default function AdminServicesManagement() {
       errors: {
         failedLoad: isDE ? 'Services konnten nicht geladen werden.' : 'Failed to load services',
         failedSave: isDE ? 'Service konnte nicht gespeichert werden.' : 'Failed to save service',
-        failedDelete: isDE ? 'Service konnte nicht geloescht werden.' : 'Failed to delete service',
+        failedDelete: isDE ? 'Service konnte nicht gelöscht werden.' : 'Failed to delete service',
         failedUpdate: isDE ? 'Service konnte nicht aktualisiert werden.' : 'Failed to update service'
       },
       labels: {
@@ -120,7 +120,7 @@ export default function AdminServicesManagement() {
         private: isDE ? 'Privat' : 'Private',
         both: isDE ? 'Beides' : 'Both'
       },
-      confirmDelete: isDE ? 'Service wirklich loeschen?' : 'Delete this service?'
+      confirmDelete: isDE ? 'Service wirklich löschen?' : 'Delete this service?'
     };
   }, [isDE]);
 
@@ -258,7 +258,7 @@ export default function AdminServicesManagement() {
   };
 
   const remove = async (service: Service) => {
-    await runMutation(isDE ? 'Loesche...' : 'Deleting...', async () => {
+    await runMutation(isDE ? 'Lösche...' : 'Deleting...', async () => {
       try {
         setError('');
         await servicesApi.deleteService(service.id);
@@ -295,8 +295,8 @@ export default function AdminServicesManagement() {
       adminRoleLabel={isDE ? 'Administrator' : 'Administrator'}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
-      openMenuLabel={isDE ? 'Menue oeffnen' : 'Open menu'}
-      closeMenuLabel={isDE ? 'Menue schliessen' : 'Close menu'}
+      openMenuLabel={isDE ? 'Menü öffnen' : 'Open menu'}
+      closeMenuLabel={isDE ? 'Menü schließen' : 'Close menu'}
       headerMeta={
         <div className="flex items-center gap-3">
           <button
@@ -593,7 +593,7 @@ export default function AdminServicesManagement() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title={isDE ? 'Service loeschen' : 'Delete service'}
+        title={isDE ? 'Service löschen' : 'Delete service'}
         description={t.confirmDelete}
         confirmText={t.actions.delete}
         cancelText={t.actions.cancel}

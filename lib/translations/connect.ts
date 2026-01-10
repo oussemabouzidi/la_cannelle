@@ -101,13 +101,13 @@ const en: ConnectTranslations = {
 const de: ConnectTranslations = {
   nav: {
     services: 'Dienstleistungen',
-    menus: 'Menues',
+    menus: 'Menüs',
     contact: 'Kontakt',
     connect: 'Verbinden',
     order: 'Bestellen',
   },
   hero: {
-    title: 'Willkommen zurueck',
+    title: 'Willkommen zurück',
     subtitle: 'Verwalten Sie Ihre Einstellungen, Bestellungen und Zahlungsmethoden',
   },
   tabs: {
@@ -119,7 +119,7 @@ const de: ConnectTranslations = {
   },
   profile: {
     personal: {
-      title: 'Persoenliche Daten',
+      title: 'Persönliche Daten',
       subtitle: 'Halten Sie Ihre Informationen aktuell',
       firstName: 'Vorname',
       lastName: 'Nachname',
@@ -133,15 +133,15 @@ const de: ConnectTranslations = {
       newsletter: 'Newsletter abonnieren',
       sms: 'SMS-Benachrichtigungen',
       reminders: 'Event-Erinnerungen',
-      dietary: 'Ernaehrungspraeferenzen',
+      dietary: 'Ernährungspräferenzen',
       allergies: 'Allergien',
     },
-    save: 'Aenderungen speichern',
+    save: 'Änderungen speichern',
     edit: 'Profil bearbeiten',
   },
   orders: {
     title: 'Letzte Bestellungen',
-    status: { pending: 'Ausstehend', confirmed: 'Bestaetigt', completed: 'Abgeschlossen' },
+    status: { pending: 'Ausstehend', confirmed: 'Bestätigt', completed: 'Abgeschlossen' },
     viewDetails: 'Details ansehen',
   },
   favorites: { title: 'Favoriten' },
@@ -150,7 +150,7 @@ const de: ConnectTranslations = {
     default: 'Standard',
     setDefault: 'Als Standard setzen',
     remove: 'Entfernen',
-    addCard: 'Neue Karte hinzufuegen',
+    addCard: 'Neue Karte hinzufügen',
   },
   settings: {
     title: 'Einstellungen',
@@ -158,7 +158,7 @@ const de: ConnectTranslations = {
     notifications: 'Benachrichtigungen',
     privacy: 'Datenschutz',
     language: 'Sprache',
-    delete: 'Konto loeschen',
+    delete: 'Konto löschen',
   },
 };
 
@@ -166,4 +166,3 @@ export const connectTranslations: Record<Language, ConnectTranslations> = {
   EN: en,
   DE: de,
 };
-

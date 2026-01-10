@@ -265,11 +265,11 @@ export default function AdminMenuManagement() {
     },
     DE: {
       nav: {
-        dashboard: 'Ubersicht',
+        dashboard: 'Übersicht',
         orders: 'Bestellungen',
-        menu: 'Menueverwaltung',
+        menu: 'Menüverwaltung',
         services: 'Dienstleistungen',
-        accessories: 'Zubehoer',
+        accessories: 'Zubehör',
         system: 'Systemsteuerung',
         customers: 'Kunden',
         reports: 'Berichte',
@@ -279,44 +279,44 @@ export default function AdminMenuManagement() {
         role: 'Administrator',
       },
       header: {
-        title: 'Menueverwaltung',
-        subtitle: 'Menues, Produkte, Kategorien und Verfuegbarkeit verwalten',
+        title: 'Menüverwaltung',
+        subtitle: 'Menüs, Produkte, Kategorien und Verfügbarkeit verwalten',
         totalProducts: 'Produkte gesamt',
-        totalMenus: 'Menues',
+        totalMenus: 'Menüs',
       },
       productsPanel: {
-        showingInMenu: (count: number) => `${count} Produkte in diesem Menue`,
+        showingInMenu: (count: number) => `${count} Produkte in diesem Menü`,
         showingAll: (count: number) => `${count} Produkte`,
-        noProductsInMenu: 'Noch keine Produkte in diesem Menue',
+        noProductsInMenu: 'Noch keine Produkte in diesem Menü',
         noProductsMatching: 'Keine Produkte passend zu Ihren Filtern gefunden',
       },
       menu: {
         starts: 'Startet',
         ends: 'Endet',
         noImage: 'Kein Bild',
-        noImageAvailable: 'Kein Bild verfuegbar',
+        noImageAvailable: 'Kein Bild verfügbar',
         previewAlt: 'Vorschau',
-        menuPreviewAlt: 'Menue-Vorschau',
-        untitledMenu: 'Unbenanntes Menue',
+        menuPreviewAlt: 'Menü-Vorschau',
+        untitledMenu: 'Unbenanntes Menü',
         noDescription: 'Keine Beschreibung',
         noDescriptionProvided: 'Keine Beschreibung vorhanden.',
         noServices: 'Keine Services',
         noServicesYet: 'Noch keine Services vorhanden.',
         servicesCount: (count: number) => `${count} Services`,
         priceCurrency: 'EUR',
-        confirmDeleteMenuTitle: 'Menue loeschen',
-        confirmDeleteMenuBody: 'Moechten Sie dieses Menue wirklich loeschen?',
-        editItem: 'Menuepunkt bearbeiten',
-        addItem: 'Neuen Menuepunkt hinzufuegen',
+        confirmDeleteMenuTitle: 'Menü löschen',
+        confirmDeleteMenuBody: 'Möchten Sie dieses Menü wirklich löschen?',
+        editItem: 'Menüpunkt bearbeiten',
+        addItem: 'Neuen Menüpunkt hinzufügen',
         dishImage: 'Gerichtebild',
-        menuImage: 'Menuebild',
+        menuImage: 'Menübild',
         uploadImage: 'Bild hochladen',
         imageUrl: 'Oder Bild-URL eingeben',
         name: 'Name',
         nameEn: 'Name (EN)',
         nameDe: 'Name (DE)',
         category: 'Kategorie',
-        menuSection: 'Menueabschnitt',
+        menuSection: 'Menüabschnitt',
         type: 'Typ',
         description: 'Beschreibung',
         descriptionEn: 'Beschreibung (EN)',
@@ -325,52 +325,52 @@ export default function AdminMenuManagement() {
         cost: 'Kosten (€)',
         prepTime: 'Vorbereitungszeit (Min)',
         productCategories: 'Produktkategorien',
-        includeMenus: 'In Menues aufnehmen',
-        assignMenus: 'Menues zuordnen',
-        menuTiers: 'Menue-Stufen',
-        menuSteps: 'Menue-Schritte',
+        includeMenus: 'In Menüs aufnehmen',
+        assignMenus: 'Menüs zuordnen',
+        menuTiers: 'Menü-Stufen',
+        menuSteps: 'Menü-Schritte',
         stepLabel: 'Schrittname',
         includedDishes: 'Enthaltene Gerichte',
-        addStep: 'Schritt hinzufuegen',
+        addStep: 'Schritt hinzufügen',
         minPeople: 'Mindestpersonen',
         minPeopleLabel: 'Mindestpersonen',
-        dishesAvailable: 'Verfuegbare Gerichte',
+        dishesAvailable: 'Verfügbare Gerichte',
         ingredients: 'Zutaten',
-        noMenusYet: 'Noch keine Menues erstellt',
-        createFirstMenu: 'Erstellen Sie Ihr erstes Menue',
-        createMenu: 'Menue erstellen',
-        editMenu: 'Menue bearbeiten',
+        noMenusYet: 'Noch keine Menüs erstellt',
+        createFirstMenu: 'Erstellen Sie Ihr erstes Menü',
+        createMenu: 'Menü erstellen',
+        editMenu: 'Menü bearbeiten',
         priceOptional: 'Preis (optional)',
-        menuActive: 'Menue ist aktiv',
+        menuActive: 'Menü ist aktiv',
         custom: 'Individuell',
         costLabel: 'Kosten',
-        includedInMenus: 'In Menues enthalten:',
+        includedInMenus: 'In Menüs enthalten:',
         popularity: 'Beliebtheit',
-        menusTitle: 'Menues',
-        menuHint: 'Klicke auf ein Menue, um Details zu sehen',
+        menusTitle: 'Menüs',
+        menuHint: 'Klicke auf ein Menü, um Details zu sehen',
         only: 'Nur',
-        menuSections: 'Menueabschnitte:',
+        menuSections: 'Menüabschnitte:',
         splitView: 'Geteilte Ansicht',
         productsOnly: 'Nur Produkte',
       },
       actions: {
         active: 'Aktiv',
         inactive: 'Inaktiv',
-        available: 'Verfuegbar',
-        unavailable: 'Nicht verfuegbar',
-        saveChanges: 'Aenderungen speichern',
-        saveMenu: 'Menue speichern',
+        available: 'Verfügbar',
+        unavailable: 'Nicht verfügbar',
+        saveChanges: 'Änderungen speichern',
+        saveMenu: 'Menü speichern',
         cancel: 'Abbrechen',
-        addIngredient: 'Zutat hinzufuegen',
+        addIngredient: 'Zutat hinzufügen',
         edit: 'Bearbeiten',
-        addMenu: 'Menue hinzufuegen',
-        addProduct: 'Produkt hinzufuegen',
-        addProductToMenu: 'Produkt zum Menue hinzufuegen',
-        addFirstProduct: 'Erstes Produkt hinzufuegen',
-        deleteMenuTitle: 'Menue loeschen',
-        editMenuTitle: 'Menue bearbeiten',
+        addMenu: 'Menü hinzufügen',
+        addProduct: 'Produkt hinzufügen',
+        addProductToMenu: 'Produkt zum Menü hinzufügen',
+        addFirstProduct: 'Erstes Produkt hinzufügen',
+        deleteMenuTitle: 'Menü löschen',
+        editMenuTitle: 'Menü bearbeiten',
         archiveItemTitle: 'Artikel archivieren',
-        deleteItemTitle: 'Artikel loeschen',
+        deleteItemTitle: 'Artikel löschen',
         restoreItemTitle: 'Artikel wiederherstellen',
         removeIngredientTitle: 'Zutat entfernen',
       },
@@ -379,20 +379,20 @@ export default function AdminMenuManagement() {
         starters: 'Vorspeisen',
         mains: 'Hauptgerichte',
         desserts: 'Desserts',
-        drinks: 'Getraenke',
+        drinks: 'Getränke',
         sides: 'Beilagen',
-        allMenus: 'Alle Menues',
-        unassigned: 'In keinem Menue',
+        allMenus: 'Alle Menüs',
+        unassigned: 'In keinem Menü',
         allStatus: 'Alle Status',
-        available: 'Verfuegbar',
-        unavailable: 'Nicht verfuegbar',
+        available: 'Verfügbar',
+        unavailable: 'Nicht verfügbar',
         searchProducts: 'Produkte suchen...',
       },
       categories: {
         starter: 'Vorspeise',
         main: 'Hauptgericht',
         dessert: 'Dessert',
-        drink: 'Getraenk',
+        drink: 'Getränk',
         side: 'Beilage',
       },
       placeholders: {
@@ -402,9 +402,9 @@ export default function AdminMenuManagement() {
         price: '0.00',
         prepTime: '15',
         ingredients: 'z.B. Atlantischer Lachs, Zitrone, Butter',
-        menuName: 'Menue-Name',
+        menuName: 'Menü-Name',
         menuType: 'fest, tasting, thematisch',
-        menuDescription: 'Dieses Menue beschreiben',
+        menuDescription: 'Dieses Menü beschreiben',
         stepLabel: 'z.B. Vorspeisen',
       },
       notifications: {
@@ -412,9 +412,9 @@ export default function AdminMenuManagement() {
         productCreateFailed: 'Produkt konnte nicht erstellt werden.',
         productUpdated: 'Produkt aktualisiert.',
         productUpdateFailed: 'Produkt konnte nicht aktualisiert werden.',
-        productDeleted: 'Produkt geloescht.',
+        productDeleted: 'Produkt gelöscht.',
         productArchived: 'Produkt archiviert (bereits in Bestellungen).',
-        productDeleteFailed: 'Produkt konnte gerade nicht geloescht werden.',
+        productDeleteFailed: 'Produkt konnte gerade nicht gelöscht werden.',
       },
     },
   } as const;
@@ -440,14 +440,14 @@ export default function AdminMenuManagement() {
     { value: 'main', label: language === 'DE' ? 'Hauptgang' : 'Main' },
     { value: 'side', label: language === 'DE' ? 'Beilage' : 'Side' },
     { value: 'dessert', label: language === 'DE' ? 'Dessert' : 'Dessert' },
-    { value: 'beverage', label: language === 'DE' ? 'Getraenke' : 'Drinks' },
+    { value: 'beverage', label: language === 'DE' ? 'Getränke' : 'Drinks' },
     { value: 'fingerfood', label: language === 'DE' ? 'Fingerfood' : 'Fingerfood' },
     { value: 'canape', label: language === 'DE' ? 'Canape' : 'Canape' },
     { value: 'appetizer', label: language === 'DE' ? 'Appetizer' : 'Appetizer' },
     { value: 'salad', label: language === 'DE' ? 'Salat' : 'Salad' },
     { value: 'soup', label: language === 'DE' ? 'Suppe' : 'Soup' },
     { value: 'pasta', label: language === 'DE' ? 'Pasta' : 'Pasta' },
-    { value: 'seafood', label: language === 'DE' ? 'Meeresfruechte' : 'Seafood' },
+    { value: 'seafood', label: language === 'DE' ? 'Meeresfrüchte' : 'Seafood' },
     { value: 'meat', label: language === 'DE' ? 'Fleisch' : 'Meat' },
     { value: 'vegetarian', label: language === 'DE' ? 'Vegetarisch' : 'Vegetarian' },
     { value: 'vegan', label: language === 'DE' ? 'Vegan' : 'Vegan' },
@@ -460,7 +460,7 @@ export default function AdminMenuManagement() {
     { value: 'chef-special', label: language === 'DE' ? 'Chef-Special' : 'Chef-Special' },
     { value: 'tapas', label: language === 'DE' ? 'Tapas' : 'Tapas' },
     { value: 'bbq', label: language === 'DE' ? 'BBQ' : 'BBQ' },
-    { value: 'breakfast', label: language === 'DE' ? 'Fruehstueck' : 'Breakfast' },
+    { value: 'breakfast', label: language === 'DE' ? 'Frühstück' : 'Breakfast' },
     { value: 'brunch', label: language === 'DE' ? 'Brunch' : 'Brunch' }
   ];
 
@@ -922,7 +922,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
   };
 
   const deleteMenu = async (menuId: number) => {
-    await runMutation(language === 'DE' ? 'Loesche...' : 'Deleting...', async () => {
+    await runMutation(language === 'DE' ? 'Lösche...' : 'Deleting...', async () => {
       try {
         await menusApi.deleteMenu(menuId);
         await loadMenusAndProducts();
@@ -953,7 +953,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
   };
 
   const deleteMenuItem = async (id: number) => {
-    await runMutation(language === 'DE' ? 'Loesche...' : 'Deleting...', async () => {
+    await runMutation(language === 'DE' ? 'Lösche...' : 'Deleting...', async () => {
       try {
         const result = await productsApi.deleteProduct(id);
         // Remove item from all menus first
@@ -1072,7 +1072,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
 
   const getMenuName = (menuId: number) => {
     const menu = menus.find(m => m.id === menuId);
-    return menu ? getMenuDisplayName(menu) : (isDE ? 'Unbekanntes Menue' : 'Unknown Menu');
+    return menu ? getMenuDisplayName(menu) : (isDE ? 'Unbekanntes Menü' : 'Unknown Menu');
   };
 
   const viewMenuDetails = (menu: MenuType) => {
@@ -2624,8 +2624,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
-      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
-      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
+      openMenuLabel={language === 'DE' ? 'Menü öffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menü schließen' : 'Close menu'}
       headerMeta={
         <div className="flex items-center gap-4">
           <button

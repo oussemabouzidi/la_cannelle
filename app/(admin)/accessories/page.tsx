@@ -77,21 +77,21 @@ export default function AdminAccessories() {
     const isDE = language === 'DE';
     return {
       nav: {
-        dashboard: isDE ? 'Ubersicht' : 'Dashboard',
+        dashboard: isDE ? 'Übersicht' : 'Dashboard',
         orders: isDE ? 'Bestellungen' : 'Orders',
-        menu: isDE ? 'Menueverwaltung' : 'Menu Management',
+        menu: isDE ? 'Menüverwaltung' : 'Menu Management',
         services: isDE ? 'Dienstleistungen' : 'Services',
-        accessories: isDE ? 'Zubehoer' : 'Accessories',
+        accessories: isDE ? 'Zubehör' : 'Accessories',
         system: isDE ? 'Systemsteuerung' : 'System Control',
         customers: isDE ? 'Kunden' : 'Customers',
         reports: isDE ? 'Berichte' : 'Reports'
       },
       header: {
-        title: isDE ? 'Zubehoer verwalten' : 'Accessories Management',
+        title: isDE ? 'Zubehör verwalten' : 'Accessories Management',
         subtitle: isDE
-          ? 'Erstellen, bearbeiten und deaktivieren Sie optionales Zubehoer'
+          ? 'Erstellen, bearbeiten und deaktivieren Sie optionales Zubehör'
           : 'Create, edit, and deactivate optional accessories',
-        add: isDE ? 'Zubehoer hinzufuegen' : 'Add Accessory',
+        add: isDE ? 'Zubehör hinzufügen' : 'Add Accessory',
         refresh: isDE ? 'Aktualisieren' : 'Refresh'
       },
       filters: {
@@ -111,16 +111,16 @@ export default function AdminAccessories() {
       },
       actions: {
         edit: isDE ? 'Bearbeiten' : 'Edit',
-        delete: isDE ? 'Loeschen' : 'Delete',
-        confirmDelete: isDE ? 'Dieses Zubehoer loeschen?' : 'Delete this accessory?',
+        delete: isDE ? 'Löschen' : 'Delete',
+        confirmDelete: isDE ? 'Dieses Zubehör löschen?' : 'Delete this accessory?',
       },
       confirm: {
-        title: isDE ? 'Zubehoer loeschen' : 'Delete accessory',
-        body: isDE ? 'Moechten Sie dieses Zubehoer wirklich loeschen?' : 'Do you really want to delete this accessory?',
+        title: isDE ? 'Zubehör löschen' : 'Delete accessory',
+        body: isDE ? 'Möchten Sie dieses Zubehör wirklich löschen?' : 'Do you really want to delete this accessory?',
       },
       modal: {
-        createTitle: isDE ? 'Zubehoer erstellen' : 'Create Accessory',
-        editTitle: isDE ? 'Zubehoer bearbeiten' : 'Edit Accessory',
+        createTitle: isDE ? 'Zubehör erstellen' : 'Create Accessory',
+        editTitle: isDE ? 'Zubehör bearbeiten' : 'Edit Accessory',
         save: isDE ? 'Speichern' : 'Save',
         cancel: isDE ? 'Abbrechen' : 'Cancel',
         previewAlt: isDE ? 'Vorschau' : 'Preview',
@@ -134,7 +134,7 @@ export default function AdminAccessories() {
         details: isDE ? 'Details' : 'Details',
         price: isDE ? 'Preis' : 'Price',
         quantityMode: isDE ? 'Mengenregel' : 'Quantity rule',
-        quantityModeGuest: isDE ? 'Wie Gaesteanzahl (Bestellung)' : 'Same as guest count (order)',
+        quantityModeGuest: isDE ? 'Wie Gästeanzahl (Bestellung)' : 'Same as guest count (order)',
         quantityModeFixed: isDE ? 'Feste Menge' : 'Fixed quantity',
         fixedQuantity: isDE ? 'Feste Menge' : 'Fixed quantity',
         image: isDE ? 'Bild (URL oder Upload)' : 'Image (URL or upload)',
@@ -144,14 +144,14 @@ export default function AdminAccessories() {
       },
       toast: {
         saved: isDE ? 'Gespeichert' : 'Saved',
-        deleted: isDE ? 'Geloescht' : 'Deleted',
+        deleted: isDE ? 'Gelöscht' : 'Deleted',
         failedLoad: isDE ? 'Laden fehlgeschlagen' : 'Failed to load',
         failedSave: isDE ? 'Speichern fehlgeschlagen' : 'Failed to save',
-        failedDelete: isDE ? 'Loeschen fehlgeschlagen' : 'Failed to delete'
+        failedDelete: isDE ? 'Löschen fehlgeschlagen' : 'Failed to delete'
       },
       status: {
         loading: isDE ? 'Lade...' : 'Loading...',
-        noResults: isDE ? 'Kein Zubehoer gefunden.' : 'No accessories found.',
+        noResults: isDE ? 'Kein Zubehör gefunden.' : 'No accessories found.',
       }
     };
   }, [language]);
@@ -315,8 +315,8 @@ export default function AdminAccessories() {
       adminRoleLabel={language === 'DE' ? 'Administrator' : 'Administrator'}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
-      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
-      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
+      openMenuLabel={language === 'DE' ? 'Menü öffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menü schließen' : 'Close menu'}
       headerMeta={
         <div className="flex items-center gap-3">
           <button
@@ -344,7 +344,7 @@ export default function AdminAccessories() {
           isLoading
             ? copy.status.loading
             : deleting
-            ? (language === 'DE' ? 'Loesche...' : 'Deleting...')
+            ? (language === 'DE' ? 'Lösche...' : 'Deleting...')
             : language === 'DE'
             ? 'Speichert...'
             : 'Saving...'
