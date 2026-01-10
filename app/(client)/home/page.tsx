@@ -212,17 +212,19 @@ export default function CateringHomepage() {
 
   const showcaseItems = (products.length
 
-    ? products.slice(0, 3).map((product) => ({
+      ? products.slice(0, 3).map((product) => ({
 
         id: product.id,
 
-        name: product.name,
+        name: language === 'DE' ? (product.nameDe || product.name) : product.name,
 
-        category: product.menuCategory || product.category,
+        category: product.category,
 
         price: product.price !== undefined ? `${product.price.toFixed(2)} EUR` : undefined,
 
-        description: product.description,
+        description: language === 'DE'
+          ? (product.descriptionDe || product.description)
+          : product.description,
 
         image: product.image,
 
@@ -280,9 +282,9 @@ export default function CateringHomepage() {
 
         id: menu.id,
 
-        name: menu.name,
+        name: language === 'DE' ? (menu.nameDe || menu.name) : menu.name,
 
-        desc: menu.description || '',
+        desc: (language === 'DE' ? (menu.descriptionDe || menu.description) : menu.description) || '',
         price: menu.price !== undefined ? `${menu.price.toFixed(2)} EUR` : undefined,
 
         productIds: menu.products,

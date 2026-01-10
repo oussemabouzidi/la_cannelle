@@ -41,7 +41,6 @@ const GERMAN_STATES = [
   { code: 'TH', nameEn: 'Thuringia', nameDe: 'Thueringen' },
 ];
 const MIN_GUESTS = 10;
-const MIN_ORDER_TOTAL = 388.80;
 const normalizePlaces = (data: any) => {
   const defaultPostCode = data?.['post code'] || '';
   const defaultState = data?.['state'] || '';
@@ -488,7 +487,6 @@ export default function OrderPage() {
       productDetailsTitle: isDE ? 'Produktdetails' : 'Product details',
       noDescription: isDE ? 'Keine Beschreibung verfügbar.' : 'No description available.',
       price: isDE ? 'Preis' : 'Price',
-      preparationTime: isDE ? 'Zubereitungszeit' : 'Preparation time',
       notSpecified: isDE ? 'Nicht angegeben' : 'Not specified',
       availability: isDE ? 'Verfügbarkeit' : 'Availability',
       available: isDE ? 'Verfügbar' : 'Available',
@@ -527,12 +525,18 @@ export default function OrderPage() {
           servicesApi.getServices({ isActive: true })
         ]);
         const normalizedMenus = normalizeMenus(menus || []);
-        const normalizedProducts = (products || []).map((product: any) => ({
-          ...product,
-          menus: product?.menuProducts
-            ? product.menuProducts.map((mp: any) => mp.menuId)
-            : product?.menus || []
-        }));
+        const normalizedProducts = (products || []).map((product: any) => {
+          const stepCategory =
+            normalizeMenuStepKey(product?.category)
+            || normalizeCategoryValue(product?.category);
+          return {
+            ...product,
+            category: stepCategory || product?.category,
+            menus: product?.menuProducts
+              ? product.menuProducts.map((mp: any) => mp.menuId)
+              : product?.menus || []
+          };
+        });
         setMenusData(normalizedMenus);
         hasLoadedInitialMenus.current = true;
         setMenuItemsData(normalizedProducts);
@@ -601,10 +605,13 @@ export default function OrderPage() {
   const [productDetailsItem, setProductDetailsItem] = useState<any>(null);
   const [extraNoticeOpen, setExtraNoticeOpen] = useState(false);
   const [extraNoticeData, setExtraNoticeData] = useState({ label: '', extra: 0 });
+  const [minPeoplePromptOpen, setMinPeoplePromptOpen] = useState(false);
+  const [minPeoplePromptMenu, setMinPeoplePromptMenu] = useState<any>(null);
+  const [minPeoplePromptGuestCount, setMinPeoplePromptGuestCount] = useState<number>(0);
   const extraNoticeRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
-    const isAnyModalOpen = termsModalOpen || bankDetailsOpen || productDetailsOpen || extraNoticeOpen;
+    const isAnyModalOpen = termsModalOpen || bankDetailsOpen || productDetailsOpen || extraNoticeOpen || minPeoplePromptOpen;
     if (!isAnyModalOpen) return;
     if (typeof document === 'undefined') return;
 
@@ -613,7 +620,7 @@ export default function OrderPage() {
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [termsModalOpen, bankDetailsOpen, productDetailsOpen, extraNoticeOpen]);
+  }, [termsModalOpen, bankDetailsOpen, productDetailsOpen, extraNoticeOpen, minPeoplePromptOpen]);
   const [postalLookupError, setPostalLookupError] = useState('');
   const [postalLookupLoading, setPostalLookupLoading] = useState(false);
   const [cityLookupOptions, setCityLookupOptions] = useState<any[]>([]);
@@ -709,6 +716,55 @@ export default function OrderPage() {
         updateOrderData('eventDate', '');
       }
     }
+  };
+  const closeMinPeoplePrompt = () => {
+    setMinPeoplePromptOpen(false);
+    setMinPeoplePromptMenu(null);
+    setMinPeoplePromptGuestCount(0);
+  };
+  const openMinPeoplePrompt = (menu: any, guestCount: number) => {
+    setMinPeoplePromptMenu(menu);
+    setMinPeoplePromptGuestCount(guestCount);
+    setMinPeoplePromptOpen(true);
+  };
+  const finalizeMenuSelection = (menu: any) => {
+    setQuantities({});
+    setPendingMenuId(menu.id);
+    setOrderData((prev: any) => {
+      const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
+      if (previousSelected === Number(menu.id)) {
+        return { ...prev, selectedMenu: Number(menu.id) };
+      }
+      return {
+        ...prev,
+        selectedMenu: Number(menu.id),
+        selectedStarters: [],
+        selectedMains: [],
+        selectedSides: [],
+        selectedDesserts: [],
+        selectedDrinks: []
+      };
+    });
+    setCurrentStep((prev) => Math.min(prev + 1, stepsConfig.length));
+  };
+  const handleMenuCardClick = (menu: any) => {
+    if (!menu.isActive) return;
+    if (shouldBlockProgress) {
+      showNotification('error', blockedMessage, 3000);
+      return;
+    }
+    if (!validateStepsUpTo(currentStep - 1)) {
+      return;
+    }
+
+    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const menuMinPeople = Number(menu.minPeople) || 0;
+    if (guestCount > 0 && menuMinPeople > guestCount) {
+      openMinPeoplePrompt(menu, guestCount);
+      return;
+    }
+
+    finalizeMenuSelection(menu);
   };
   const handlePostalCodeChange = (value: string) => {
     const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 5);
@@ -888,28 +944,28 @@ export default function OrderPage() {
     side: { label: t.productSelection?.sides || 'Sides', icon: Utensils, color: 'text-amber-600' },
     dessert: { label: t.productSelection?.desserts || 'Desserts', icon: Cookie, color: 'text-pink-600' },
     beverage: { label: t.productSelection?.drinks || 'Drinks', icon: Wine, color: 'text-blue-600' },
-    fingerfood: { label: 'Fingerfood', icon: Utensils, color: 'text-amber-700' },
-    canape: { label: 'Canape', icon: Utensils, color: 'text-amber-700' },
-    appetizer: { label: 'Appetizer', icon: Utensils, color: 'text-amber-700' },
-    salad: { label: 'Salad', icon: Leaf, color: 'text-green-700' },
-    soup: { label: 'Soup', icon: Utensils, color: 'text-orange-600' },
-    pasta: { label: 'Pasta', icon: Utensils, color: 'text-orange-700' },
-    seafood: { label: 'Seafood', icon: Fish, color: 'text-sky-600' },
-    meat: { label: 'Meat', icon: Beef, color: 'text-red-700' },
-    vegetarian: { label: 'Vegetarian', icon: Leaf, color: 'text-green-700' },
-    vegan: { label: 'Vegan', icon: Leaf, color: 'text-emerald-700' },
-    glutenfree: { label: 'Gluten-Free', icon: Wheat, color: 'text-amber-700' },
-    dairyfree: { label: 'Dairy-Free', icon: Milk, color: 'text-indigo-600' },
-    spicy: { label: 'Spicy', icon: AlertCircle, color: 'text-red-600' },
-    signature: { label: 'Signature', icon: Award, color: 'text-amber-600' },
-    seasonal: { label: 'Seasonal', icon: Sparkles, color: 'text-amber-600' },
-    kidfriendly: { label: 'Kid-Friendly', icon: Heart, color: 'text-pink-600' },
-    chefspecial: { label: 'Chef-Special', icon: Star, color: 'text-amber-600' },
+    fingerfood: { label: language === 'DE' ? 'Fingerfood' : 'Finger Food', icon: Utensils, color: 'text-amber-700' },
+    canape: { label: language === 'DE' ? 'Canape' : 'Canape', icon: Utensils, color: 'text-amber-700' },
+    appetizer: { label: language === 'DE' ? 'Vorspeise' : 'Appetizer', icon: Utensils, color: 'text-amber-700' },
+    salad: { label: language === 'DE' ? 'Salat' : 'Salad', icon: Leaf, color: 'text-green-700' },
+    soup: { label: language === 'DE' ? 'Suppe' : 'Soup', icon: Utensils, color: 'text-orange-600' },
+    pasta: { label: language === 'DE' ? 'Pasta' : 'Pasta', icon: Utensils, color: 'text-orange-700' },
+    seafood: { label: language === 'DE' ? 'Meeresfruechte' : 'Seafood', icon: Fish, color: 'text-sky-600' },
+    meat: { label: language === 'DE' ? 'Fleisch' : 'Meat', icon: Beef, color: 'text-red-700' },
+    vegetarian: { label: language === 'DE' ? 'Vegetarisch' : 'Vegetarian', icon: Leaf, color: 'text-green-700' },
+    vegan: { label: language === 'DE' ? 'Vegan' : 'Vegan', icon: Leaf, color: 'text-emerald-700' },
+    glutenfree: { label: language === 'DE' ? 'Glutenfrei' : 'Gluten-Free', icon: Wheat, color: 'text-amber-700' },
+    dairyfree: { label: language === 'DE' ? 'Laktosefrei' : 'Dairy-Free', icon: Milk, color: 'text-indigo-600' },
+    spicy: { label: language === 'DE' ? 'Scharf' : 'Spicy', icon: AlertCircle, color: 'text-red-600' },
+    signature: { label: language === 'DE' ? 'Signature' : 'Signature', icon: Award, color: 'text-amber-600' },
+    seasonal: { label: language === 'DE' ? 'Saisonal' : 'Seasonal', icon: Sparkles, color: 'text-amber-600' },
+    kidfriendly: { label: language === 'DE' ? 'Kinderfreundlich' : 'Kid-Friendly', icon: Heart, color: 'text-pink-600' },
+    chefspecial: { label: language === 'DE' ? 'Chef-Special' : 'Chef-Special', icon: Star, color: 'text-amber-600' },
     tapas: { label: 'Tapas', icon: Utensils, color: 'text-amber-700' },
-    bbq: { label: 'BBQ', icon: Utensils, color: 'text-red-700' },
-    breakfast: { label: 'Breakfast', icon: Egg, color: 'text-yellow-700' },
-    brunch: { label: 'Brunch', icon: Egg, color: 'text-yellow-700' }
-  }), [t]);
+    bbq: { label: language === 'DE' ? 'BBQ' : 'BBQ', icon: Utensils, color: 'text-red-700' },
+    breakfast: { label: language === 'DE' ? 'Fruehstueck' : 'Breakfast', icon: Egg, color: 'text-yellow-700' },
+    brunch: { label: language === 'DE' ? 'Brunch' : 'Brunch', icon: Egg, color: 'text-yellow-700' }
+  }), [t, language]);
   const postalCopy = useMemo(() => ({
     state: language === 'DE' ? 'Bundesland' : 'State',
     statePlaceholder: language === 'DE' ? 'Bundesland waehlen' : 'Select state',
@@ -1173,11 +1229,6 @@ export default function OrderPage() {
         if (!hasValidGuestCount) {
           return getGuestCountError();
         }
-        if (totals.total < MIN_ORDER_TOTAL) {
-          return language === 'DE'
-            ? `Mindestbestellwert ${MIN_ORDER_TOTAL.toFixed(2)} erreicht nicht.`
-            : `Minimum order of ${MIN_ORDER_TOTAL.toFixed(2)} required.`;
-        }
         return '';
       case 'checkout':
         if (!orderData.contactInfo.firstName?.trim()) {
@@ -1194,11 +1245,6 @@ export default function OrderPage() {
         }
         if (phoneError) {
           return phoneError;
-        }
-        if (totals.total < MIN_ORDER_TOTAL) {
-          return language === 'DE'
-            ? `Mindestbestellwert ${MIN_ORDER_TOTAL.toFixed(2)} erreicht nicht.`
-            : `Minimum order of ${MIN_ORDER_TOTAL.toFixed(2)} required.`;
         }
         if (!orderData.paymentMethod) {
           return language === 'DE' ? 'Bitte Zahlungsmethode waehlen.' : 'Please select a payment method.';
@@ -1424,7 +1470,10 @@ export default function OrderPage() {
                         type="button"
                         onClick={() => {
                           updateOrderData('serviceId', service.id);
-                          updateOrderData('serviceType', service.name);
+                          updateOrderData(
+                            'serviceType',
+                            language === 'DE' ? (service.nameDe || service.name) : service.name
+                          );
                         }}
                         className={`text-left rounded-xl border overflow-hidden transition-all ${
                           selected ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200 hover:border-amber-300'
@@ -1432,14 +1481,20 @@ export default function OrderPage() {
                       >
                         <div className="h-20 bg-gray-100">
                           {service.image ? (
-                            <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+                            <img
+                              src={service.image}
+                              alt={language === 'DE' ? (service.nameDe || service.name) : service.name}
+                              className="h-full w-full object-cover"
+                            />
                           ) : null}
                         </div>
                         <div className="p-3">
-                          <div className="font-semibold text-gray-900">{service.name}</div>
-                          {service.description ? (
+                          <div className="font-semibold text-gray-900">
+                            {language === 'DE' ? (service.nameDe || service.name) : service.name}
+                          </div>
+                          {(language === 'DE' ? (service.descriptionDe || service.description) : service.description) ? (
                             <div className="text-xs text-gray-600 mt-1 overflow-hidden text-ellipsis">
-                              {service.description}
+                              {language === 'DE' ? (service.descriptionDe || service.description) : service.description}
                             </div>
                           ) : null}
                         </div>
@@ -1516,7 +1571,7 @@ export default function OrderPage() {
           {t.menuSelection.subtitle}
         </p>
       </div>
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
         {menusData.map((menu) => {
           const steps = Array.isArray(menu.steps) ? menu.steps : [];
           const dishesAvailable = Array.isArray(menu.products)
@@ -1525,7 +1580,7 @@ export default function OrderPage() {
             ? menu.menuProducts.length
             : 0;
           const cardClassName =
-            'rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 text-left bg-white shadow-sm hover:shadow-xl ' +
+            'w-full max-w-[26rem] h-[34rem] rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 text-left bg-white shadow-sm hover:shadow-xl flex flex-col ' +
             ((pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null) === Number(menu.id)
               ? 'border-amber-500 ring-2 ring-amber-200'
               : menu.isActive
@@ -1535,42 +1590,14 @@ export default function OrderPage() {
                 <button
                   key={menu.id}
                   type="button"
-                  onClick={() => {
-                  if (!menu.isActive) return;
-                  if (shouldBlockProgress) {
-                    showNotification('error', blockedMessage, 3000);
-                    return;
-                  }
-                  if (!validateStepsUpTo(currentStep - 1)) {
-                    return;
-                  }
-
-                  setQuantities({});
-                  setPendingMenuId(menu.id);
-                  setOrderData((prev: any) => {
-                    const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
-                    if (previousSelected === Number(menu.id)) {
-                      return { ...prev, selectedMenu: Number(menu.id) };
-                    }
-                    return {
-                      ...prev,
-                      selectedMenu: Number(menu.id),
-                      selectedStarters: [],
-                      selectedMains: [],
-                      selectedSides: [],
-                      selectedDesserts: [],
-                      selectedDrinks: []
-                    };
-                  });
-                  setCurrentStep((prev) => Math.min(prev + 1, stepsConfig.length));
-                }}
+                  onClick={() => handleMenuCardClick(menu)}
                   className={cardClassName}
                 >
-              <div className="relative h-44 bg-gray-200">
+              <div className="relative h-44 min-h-44 bg-gray-200 flex-none">
                 {menu.image ? (
                   <img
                     src={menu.image}
-                    alt={menu.name || 'Menu image'}
+                    alt={(language === 'DE' ? (menu.nameDe || menu.name) : menu.name) || 'Menu image'}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -1586,18 +1613,28 @@ export default function OrderPage() {
                   </div>
                 )}
               </div>
-              <div className="p-6 space-y-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{menu.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{menu.description}</p>
-                </div>
-                <div className="space-y-2 text-sm text-gray-700">
+                <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
+                  <div>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {language === 'DE' ? (menu.nameDe || menu.name) : menu.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1 max-h-12 overflow-hidden">
+                    {language === 'DE' ? (menu.descriptionDe || menu.description) : menu.description}
+                  </p>
+                  </div>
+                <div className="space-y-2 text-sm text-gray-700 flex-1 min-h-0 overflow-y-auto pr-1">
                   {steps.map((step: any, index: number) => (
                     <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
                         <Check size={12} />
                       </span>
-                      <span>{step.included} {step.label}</span>
+                      <span>
+                        {step.included}{' '}
+                        {(() => {
+                          const key = normalizeMenuStepKey(step.label);
+                          return key && categoryMeta[key] ? categoryMeta[key].label : step.label;
+                        })()}
+                      </span>
                     </div>
                   ))}
                   <div className="flex items-center gap-2">
@@ -1607,7 +1644,7 @@ export default function OrderPage() {
                     <span>{dishesAvailable} {ui.dishesAvailable}</span>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-gray-200 space-y-1">
+                <div className="pt-4 border-t border-gray-200 space-y-1 mt-auto">
                   <div className="text-2xl font-bold text-gray-900">
                     {menu.price ? ui.fromPerGuest(menu.price) : ui.customPricing}
                   </div>
@@ -1764,18 +1801,24 @@ export default function OrderPage() {
               {/* Included vs Extras */}
               {getCategorySummaryRows().length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Included vs Extras</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                    {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
+                  </h4>
                   <div className="space-y-3">
                     {getCategorySummaryRows().map((row) => (
                       <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                          <span className="text-xs text-gray-500">Included {row.included}</span>
+                          <span className="text-xs text-gray-500">
+                            {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
+                          </span>
                         </div>
                         <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                          <span>Selected: {row.selected}</span>
-                          <span>Extras: {row.extra}</span>
-                          <span className="text-right">Extras cost: €{row.extraCost.toFixed(2)}</span>
+                          <span>{(language === 'DE' ? 'Ausgewaehlt' : 'Selected')}: {row.selected}</span>
+                          <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
+                          <span className="text-right">
+                            {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -1785,7 +1828,9 @@ export default function OrderPage() {
               {/* Accessories Summary */}
               {selectedAccessories.length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Accessories</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                    {language === 'DE' ? 'Zubehoer' : 'Accessories'}
+                  </h4>
                   <div className="space-y-2">
                     {selectedAccessories.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm">
@@ -1804,36 +1849,33 @@ export default function OrderPage() {
               <div className="pt-4 border-t border-gray-200">
                 <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">Menu + Extras Subtotal:</span>
+                    <span className="text-gray-900 font-semibold">
+                      {language === 'DE' ? 'Menue + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                    </span>
                     <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">Extras (paid):</span>
+                    <span className="text-gray-900 font-semibold">
+                      {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
+                    </span>
                     <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
                   </div>
                   {selectedAccessories.length > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">Accessories:</span>
+                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehoer:' : 'Accessories:'}</span>
                       <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">Service Fee:</span>
+                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebuehr:' : 'Service Fee:'}</span>
                     <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
-                    <span>Total:</span>
+                    <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
                     <span>€{total.toFixed(2)}</span>
                   </div>
                   {renderSummaryNav()}
                 </div>
-                {total < MIN_ORDER_TOTAL && (
-                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800 font-medium">
-                      Minimum order of €{MIN_ORDER_TOTAL.toFixed(2)} required. Add more items to continue.
-                    </p>
-                  </div>
-                )}
               </div>
               {/* Quick Navigation */}
               {/* Quick Navigation */}
@@ -1903,7 +1945,7 @@ export default function OrderPage() {
                         {product.image ? (
                           <img
                             src={product.image}
-                            alt={product.name || 'Product image'}
+                            alt={(language === 'DE' ? (product.nameDe || product.name) : product.name) || 'Product image'}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -1917,20 +1959,26 @@ export default function OrderPage() {
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-900">{product.name}</h3>
+                              <h3 className="text-xl font-bold text-gray-900">
+                                {language === 'DE' ? (product.nameDe || product.name) : product.name}
+                              </h3>
                               {!product.available && (
                                 <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-lg">
                                   {ui.notAvailable}
                                 </span>
                               )}
                             </div>
-                            <p className="text-gray-600 mb-4">{product.description}</p>
+                            <p className="text-gray-600 mb-4">
+                              {language === 'DE' ? (product.descriptionDe || product.description) : product.description}
+                            </p>
                             
                             <div className="flex flex-wrap items-center gap-4 mb-4">
                               <div className="text-2xl font-bold text-gray-900">€{product.price}</div>
-                              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Number of Guests {minQuantity}</div>
+                              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                                {language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'} {minQuantity}
+                              </div>
                               <div className="flex flex-wrap items-center gap-2">
-                                {product.allergens.map((allergen, idx) => (
+                                {(language === 'DE' && Array.isArray(product.allergensDe) && product.allergensDe.length > 0 ? product.allergensDe : product.allergens).map((allergen, idx) => (
                                   <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
                                     {allergen}
                                   </span>
@@ -1953,7 +2001,10 @@ export default function OrderPage() {
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
                             <button
-                              onClick={() => updateQuantity(currentCategory, product.id, currentQuantity - 1, minQuantity)}
+                              onClick={() => {
+                                const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
+                                updateQuantity(currentCategory, product.id, base - 1, minQuantity);
+                              }}
                               className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
                               disabled={!product.available}
                             >
@@ -1968,7 +2019,10 @@ export default function OrderPage() {
                               disabled={!product.available}
                             />
                             <button
-                              onClick={() => updateQuantity(currentCategory, product.id, currentQuantity + 1, minQuantity)}
+                              onClick={() => {
+                                const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
+                                updateQuantity(currentCategory, product.id, base + 1, minQuantity);
+                              }}
                               className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
                               disabled={!product.available}
                             >
@@ -2039,7 +2093,6 @@ export default function OrderPage() {
     const foodSubtotal = getFoodExtrasSubtotal();
     const subtotal = menuSubtotal + foodSubtotal;
     const currentSubtotal = subtotal + accessoriesSubtotal + flatServiceFee;
-    const minimumOrder = MIN_ORDER_TOTAL;
 
     const dbAccessories = (accessoriesData || []).map((a: any) => {
       const fallbackUnit = language === 'DE' ? 'pro Stk' : 'each';
@@ -2050,7 +2103,8 @@ export default function OrderPage() {
         details: language === 'DE' ? (a.detailsDe || a.detailsEn) : a.detailsEn,
         price: Number(a.price) || 0,
         unit: (language === 'DE' ? (a.unitDe || a.unitEn) : a.unitEn) || fallbackUnit,
-        minQuantity: Number(a.minQuantity) || 1,
+        quantityMode: a.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT',
+        fixedQuantity: a.fixedQuantity == null ? null : Number(a.fixedQuantity),
         image: a.image || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
       };
     });
@@ -2066,7 +2120,8 @@ export default function OrderPage() {
         details: language === 'DE' ? 'Set enthält nur Teller' : 'Set includes dinner plates only',
         price: 3.50, // More realistic price
         unit: language === 'DE' ? 'pro Teller' : 'per plate',
-        minQuantity: 10,
+        quantityMode: 'GUEST_COUNT',
+        fixedQuantity: null,
         image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
       },
       {
@@ -2078,7 +2133,8 @@ export default function OrderPage() {
         details: language === 'DE' ? 'Polierter Edelstahl' : 'Polished stainless steel',
         price: 2.75, // More realistic price
         unit: language === 'DE' ? 'pro Set' : 'per set',
-        minQuantity: 10,
+        quantityMode: 'GUEST_COUNT',
+        fixedQuantity: null,
         image: 'https://images.unsplash.com/photo-1595435934247-5d33b7f92c70?w=400&h=300&fit=crop'
       },
       {
@@ -2090,7 +2146,8 @@ export default function OrderPage() {
         details: language === 'DE' ? 'Erhältlich in Weiß, Schwarz oder Beige' : 'Available in white, black, or beige',
         price: 1.20, // More realistic price
         unit: language === 'DE' ? 'pro Serviette' : 'per napkin',
-        minQuantity: 20,
+        quantityMode: 'GUEST_COUNT',
+        fixedQuantity: null,
         image: 'https://images.unsplash.com/photo-1583845112203-1aa7e80d8d2c?w=400&h=300&fit=crop'
       },
       {
@@ -2100,7 +2157,8 @@ export default function OrderPage() {
         details: language === 'DE' ? 'Fassungsvermögen 350ml' : '12oz capacity',
         price: 2.25, // More realistic price
         unit: language === 'DE' ? 'pro Glas' : 'per glass',
-        minQuantity: 12,
+        quantityMode: 'GUEST_COUNT',
+        fixedQuantity: null,
         image: 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=400&h=300&fit=crop'
       },
       {
@@ -2112,7 +2170,8 @@ export default function OrderPage() {
         details: language === 'DE' ? 'Keramik, hitzebeständig' : 'Ceramic, heat-resistant',
         price: 8.50, // More realistic price
         unit: language === 'DE' ? 'pro Platte' : 'per platter',
-        minQuantity: 3,
+        quantityMode: 'GUEST_COUNT',
+        fixedQuantity: null,
         image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
       },
       {
@@ -2124,7 +2183,8 @@ export default function OrderPage() {
         details: language === 'DE' ? 'Verschiedene Größen verfügbar' : 'Various sizes available',
         price: 12.00, // More realistic price
         unit: language === 'DE' ? 'pro Tischtuch' : 'per cloth',
-        minQuantity: 1,
+        quantityMode: 'GUEST_COUNT',
+        fixedQuantity: null,
         image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=300&fit=crop'
       }
     ];
@@ -2189,18 +2249,24 @@ export default function OrderPage() {
               {/* Included vs Extras */}
               {getCategorySummaryRows().length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Included vs Extras</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                    {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
+                  </h4>
                   <div className="space-y-3">
                     {getCategorySummaryRows().map((row) => (
                       <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                          <span className="text-xs text-gray-500">Included {row.included}</span>
+                          <span className="text-xs text-gray-500">
+                            {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
+                          </span>
                         </div>
                         <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                          <span>Selected: {row.selected}</span>
-                          <span>Extras: {row.extra}</span>
-                          <span className="text-right">Extras cost: €{row.extraCost.toFixed(2)}</span>
+                          <span>{(language === 'DE' ? 'Ausgewaehlt' : 'Selected')}: {row.selected}</span>
+                          <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
+                          <span className="text-right">
+                            {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -2210,7 +2276,9 @@ export default function OrderPage() {
               {/* Accessories Summary */}
               {selectedAccessories.length > 0 && (
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Accessories</h4>
+                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                    {language === 'DE' ? 'Zubehoer' : 'Accessories'}
+                  </h4>
                   <div className="space-y-2">
                     {selectedAccessories.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm">
@@ -2229,36 +2297,34 @@ export default function OrderPage() {
               <div className="pt-4 border-t border-gray-200">
                 <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">Menu + Extras Subtotal:</span>
+                    <span className="text-gray-900 font-semibold">
+                      {language === 'DE' ? 'Menue + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                    </span>
                     <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">Extras (paid):</span>
+                    <span className="text-gray-900 font-semibold">
+                      {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
+                    </span>
                     <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
                   </div>
                   {selectedAccessories.length > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">Accessories:</span>
+                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehoer:' : 'Accessories:'}</span>
                       <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">Service Fee:</span>
+                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebuehr:' : 'Service Fee:'}</span>
                     <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
-                    <span>Total:</span>
+                    <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
                     <span>€{currentSubtotal.toFixed(2)}</span>
                   </div>
                   {renderSummaryNav()}
                 </div>
-                {currentSubtotal < minimumOrder && (
-                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800 font-medium">
-                      Minimum order of €{minimumOrder.toFixed(2)} required. Add more items to continue.
-                    </p>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
@@ -2295,6 +2361,15 @@ export default function OrderPage() {
               {realisticAccessories.map((accessory) => {
                 const isSelected = selectedAccessories.some(item => item.id === accessory.id);
                 const selectedItem = selectedAccessories.find(item => item.id === accessory.id);
+                const quantityMode = accessory.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+                const baseQuantity = quantityMode === 'FIXED'
+                  ? Math.max(1, Math.max(0, Math.trunc(Number(accessory.fixedQuantity) || 0)) || 1)
+                  : Math.max(1, guestCount || MIN_GUESTS);
+                const effectiveQuantity = isSelected ? Number(selectedItem?.quantity) || baseQuantity : baseQuantity;
+                const displayQuantity = isSelected ? effectiveQuantity : baseQuantity;
+                const quantityLabel = quantityMode === 'FIXED'
+                  ? (language === 'DE' ? 'fest' : 'fixed')
+                  : (language === 'DE' ? 'entspricht Gaesten' : 'matches guests');
                 return (
                   <div key={accessory.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow">
                     <div className="p-6">
@@ -2326,7 +2401,7 @@ export default function OrderPage() {
                                   €{accessory.price.toFixed(2)} {accessory.unit}
                                 </div>
                                 <div className="text-xs font-semibold text-amber-700 mt-1">
-                                  Quantity: {guestCount} (matches guests) | Total: €{(accessory.price * guestCount).toFixed(2)}
+                                  {language === 'DE' ? 'Menge' : 'Quantity'}: {displayQuantity} ({quantityLabel}) | {language === 'DE' ? 'Gesamt' : 'Total'}: €{(accessory.price * displayQuantity).toFixed(2)}
                                 </div>
                               </div>
                             </div>
@@ -2335,7 +2410,7 @@ export default function OrderPage() {
                             <div className="flex flex-col sm:flex-row items-center gap-3">
                               {isSelected && (
                                 <div className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
-                                  Qty: {guestCount}
+                                  {language === 'DE' ? 'Menge' : 'Qty'}: {effectiveQuantity}
                                 </div>
                               )}
                               <button
@@ -2356,10 +2431,13 @@ export default function OrderPage() {
                             <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
                               <div className="flex items-center justify-between">
                                 <span className="text-green-800 font-semibold">
-                                  Added: <span className="text-lg">{guestCount} pcs</span>
+                                  {language === 'DE' ? 'Hinzugefuegt' : 'Added'}:{' '}
+                                  <span className="text-lg">
+                                    {effectiveQuantity} {language === 'DE' ? 'Stk' : 'pcs'}
+                                  </span>
                                 </span>
                                 <span className="text-green-900 font-bold">
-                                  Total: €{(selectedItem.price * guestCount).toFixed(2)}
+                                  {language === 'DE' ? 'Gesamt' : 'Total'}: €{(selectedItem.price * effectiveQuantity).toFixed(2)}
                                 </span>
                               </div>
                             </div>
@@ -2401,7 +2479,7 @@ export default function OrderPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    First Name *
+                    {t.delivery.contact.first} *
                   </label>
                   <input
                     type="text"
@@ -2411,13 +2489,13 @@ export default function OrderPage() {
                       firstName: e.target.value
                     })}
                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                    placeholder="John"
+                    placeholder={language === 'DE' ? 'Max' : 'John'}
                     required
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Last Name *
+                    {t.delivery.contact.last} *
                   </label>
                   <input
                     type="text"
@@ -2427,7 +2505,7 @@ export default function OrderPage() {
                       lastName: e.target.value
                     })}
                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                    placeholder="Doe"
+                    placeholder={language === 'DE' ? 'Mustermann' : 'Doe'}
                     required
                   />
                 </div>
@@ -2435,7 +2513,7 @@ export default function OrderPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Email Address *
+                    {t.delivery.contact.email} *
                   </label>
                   <input
                     type="email"
@@ -2443,7 +2521,7 @@ export default function OrderPage() {
                     onChange={(e) => updateContactInfoField('email', e.target.value)}
                     onBlur={() => handleContactBlur('email')}
                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                    placeholder="john@example.com"
+                    placeholder={language === 'DE' ? 'max@example.com' : 'john@example.com'}
                     required
                   />
                   {contactErrors.email && (
@@ -2452,7 +2530,7 @@ export default function OrderPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    Phone Number *
+                    {t.delivery.contact.phone} *
                   </label>
                   <input
                     type="tel"
@@ -2507,17 +2585,23 @@ export default function OrderPage() {
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
             <div className="flex items-center gap-3 mb-4">
               <FileText size={18} className="text-gray-600" />
-              <h3 className="text-lg font-bold text-gray-900">Special Requests</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                {language === 'DE' ? 'Besondere Wuensche' : 'Special Requests'}
+              </h3>
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              Share dietary restrictions, setup notes, or timing details.
+              {language === 'DE'
+                ? 'Teilen Sie Ernaehrungswuensche, Hinweise zum Aufbau oder Zeitdetails.'
+                : 'Share dietary restrictions, setup notes, or timing details.'}
             </p>
             <textarea
               value={orderData.specialRequests}
               onChange={(e) => updateOrderData('specialRequests', e.target.value)}
               rows={4}
               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
-              placeholder="Any dietary restrictions or special requirements..."
+              placeholder={language === 'DE'
+                ? 'Ernaehrungswuensche oder besondere Anforderungen...'
+                : 'Any dietary restrictions or special requirements...'}
             />
           </div>
         </div>
@@ -2525,29 +2609,31 @@ export default function OrderPage() {
           <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 md:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-5">
               <MapPinIcon size={18} className="text-amber-600" />
-              <h3 className="text-lg font-bold text-gray-900">Delivery Overview</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                {language === 'DE' ? 'Lieferuebersicht' : 'Delivery Overview'}
+              </h3>
             </div>
             <div className="space-y-3 text-sm text-gray-700">
               <div className="flex items-center gap-2">
                 <CalendarIcon size={16} className="text-gray-500" />
-                <span className="font-semibold">Date:</span>
-                <span>{orderData.eventDate || 'Not set'}</span>
+                <span className="font-semibold">{t.eventInfo.date}:</span>
+                <span>{orderData.eventDate || ui.notSpecified}</span>
               </div>
               <div className="flex items-center gap-2">
                 <ClockIcon size={16} className="text-gray-500" />
-                <span className="font-semibold">Time:</span>
-                <span>{orderData.eventTime || 'Not set'}</span>
+                <span className="font-semibold">{t.eventInfo.time}:</span>
+                <span>{orderData.eventTime || ui.notSpecified}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Users size={16} className="text-gray-500" />
-                <span className="font-semibold">Guests:</span>
+                <span className="font-semibold">{t.eventInfo.guests}:</span>
                 <span>{orderData.guestCount || 0}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPinIcon size={16} className="text-gray-500" />
-                <span className="font-semibold">Location:</span>
+                <span className="font-semibold">{t.eventInfo.location}:</span>
                 <span>
-                  {orderData.postalCode || 'Not set'}
+                  {orderData.postalCode || ui.notSpecified}
                   {orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
                 </span>
               </div>
@@ -2555,7 +2641,11 @@ export default function OrderPage() {
             <div className="mt-6 rounded-xl border border-amber-200 bg-white/70 p-4 text-xs text-gray-600">
               <div className="flex items-center gap-2">
                 <Info size={14} className="text-amber-600" />
-                <span>Delivery windows are confirmed after payment.</span>
+                <span>
+                  {language === 'DE'
+                    ? 'Lieferzeitfenster werden nach Zahlung bestaetigt.'
+                    : 'Delivery windows are confirmed after payment.'}
+                </span>
               </div>
             </div>
           </div>
@@ -2591,30 +2681,28 @@ export default function OrderPage() {
         <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
           <div className="flex items-center gap-3 mb-2">
             <Lock size={20} className="text-amber-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Payment Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{t.payment.title}</h2>
           </div>
-          <p className="text-gray-600">
-            Secure payment with SSL encryption
-          </p>
+          <p className="text-gray-600">{t.payment.subtitle}</p>
         </div>
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Order Summary - Right Side */}
           <div className="lg:col-span-1 lg:order-2">
             <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
               
               <div className="space-y-6">
                 {/* Event Info - Fixed text color */}
                 <div className="space-y-4">
-                  <h4 className="font-bold text-gray-900">Event Details</h4>
+                  <h4 className="font-bold text-gray-900">{t.eventInfo.title}</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-black">
                       <CalendarIcon size={16} className="text-gray-500" />
-                      <span className="font-medium">{orderData.eventDate || 'Not set'}</span>
+                      <span className="font-medium">{orderData.eventDate || ui.notSpecified}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-black">
                       <ClockIcon size={16} className="text-gray-500" />
-                      <span className="font-medium">{orderData.eventTime || 'Not set'}</span>
+                      <span className="font-medium">{orderData.eventTime || ui.notSpecified}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-black">
                       <Users size={16} className="text-gray-500" />
@@ -2625,7 +2713,7 @@ export default function OrderPage() {
                     <div className="flex items-center gap-2 text-sm text-black">
                       <MapPinIcon size={16} className="text-gray-500" />
                       <span className="font-medium">
-                        {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                        {orderData.postalCode || ui.notSpecified}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
                       </span>
                     </div>
                   </div>
@@ -2633,7 +2721,9 @@ export default function OrderPage() {
                 
                 {/* Contact Info */}
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">Contact Information</h4>
+                  <h4 className="font-bold text-gray-900 mb-3">
+                    {language === 'DE' ? 'Kontaktinformationen' : 'Contact Information'}
+                  </h4>
                   <div className="space-y-2">
                     <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
                     <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
@@ -2653,32 +2743,42 @@ export default function OrderPage() {
                 
                 {/* Price Breakdown - Fixed to show all values in orange/black */}
                 <div className="pt-4 border-t border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">Price Breakdown</h4>
+                  <h4 className="font-bold text-gray-900 mb-3">
+                    {language === 'DE' ? 'Preisaufstellung' : 'Price Breakdown'}
+                  </h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">Menu + Extras Subtotal:</span>
+                      <span className="text-gray-900 font-semibold">
+                        {language === 'DE' ? 'Menue + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                      </span>
                       <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">Extras (paid):</span>
+                      <span className="text-gray-900 font-semibold">
+                        {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
+                      </span>
                       <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
                     </div>
                     {selectedAccessories.length > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-900 font-semibold">Accessories:</span>
+                        <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehoer:' : 'Accessories:'}</span>
                         <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">Service Fee:</span>
+                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebuehr:' : 'Service Fee:'}</span>
                       <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">VAT ({(vatRate * 100).toFixed(2)}%):</span>
+                      <span className="text-gray-900 font-semibold">
+                        {language === 'DE'
+                          ? `MwSt (${(vatRate * 100).toFixed(2)}%):`
+                          : `VAT (${(vatRate * 100).toFixed(2)}%):`}
+                      </span>
                       <span className="font-bold text-amber-700">€{vatAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
-                      <span>Total:</span>
+                      <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
                       <span>€{grandTotal.toFixed(2)}</span>
                     </div>
                     {renderSummaryNav()}
@@ -2688,18 +2788,24 @@ export default function OrderPage() {
                 {/* Included vs Extras */}
                 {getCategorySummaryRows().length > 0 && (
                   <div className="pt-4 border-t border-gray-200">
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Included vs Extras</h4>
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                      {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
+                    </h4>
                     <div className="space-y-3">
                       {getCategorySummaryRows().map((row) => (
                         <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                            <span className="text-xs text-gray-500">Included {row.included}</span>
+                            <span className="text-xs text-gray-500">
+                              {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
+                            </span>
                           </div>
                           <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                            <span>Selected: {row.selected}</span>
-                            <span>Extras: {row.extra}</span>
-                            <span className="text-right">Extras cost: €{row.extraCost.toFixed(2)}</span>
+                            <span>{(language === 'DE' ? 'Ausgewaehlt' : 'Selected')}: {row.selected}</span>
+                            <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
+                            <span className="text-right">
+                              {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
+                            </span>
                           </div>
                         </div>
                       ))}
@@ -2711,8 +2817,14 @@ export default function OrderPage() {
                   <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                     <Shield size={20} className="text-green-600" />
                     <div>
-                      <p className="text-sm font-medium text-green-800">Secure Payment</p>
-                      <p className="text-xs text-green-600">SSL Encrypted â€¢ GDPR Compliant</p>
+                      <p className="text-sm font-medium text-green-800">
+                        {language === 'DE' ? 'Sichere Zahlung' : 'Secure Payment'}
+                      </p>
+                      <p className="text-xs text-green-600">
+                        {language === 'DE'
+                          ? 'SSL-verschluesselt \u2022 DSGVO-konform'
+                          : 'SSL Encrypted \u2022 GDPR Compliant'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2726,31 +2838,33 @@ export default function OrderPage() {
                 {/* Payment Method Selection - Fixed text color */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">Select Payment Method</h3>
-                    <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">Step 3</span>
+                    <h3 className="text-lg font-bold text-gray-900">{t.payment.method}</h3>
+                    <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">
+                      {language === 'DE' ? 'Schritt 3' : 'Step 3'}
+                    </span>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {[
                       {
                         id: 'credit-card',
-                        label: 'Credit Card',
-                        description: 'Instant confirmation and secure checkout.',
+                        label: language === 'DE' ? 'Kreditkarte' : 'Credit Card',
+                        description: language === 'DE' ? 'Sofortige Bestaetigung und sicherer Checkout.' : 'Instant confirmation and secure checkout.',
                         icon: CreditCard,
-                        badge: 'Fast'
+                        badge: language === 'DE' ? 'Schnell' : 'Fast'
                       },
                       {
                         id: 'paypal',
                         label: 'PayPal',
-                        description: 'Use your PayPal balance or linked card.',
+                        description: language === 'DE' ? 'Nutzen Sie PayPal-Guthaben oder die verknuepfte Karte.' : 'Use your PayPal balance or linked card.',
                         icon: null,
-                        badge: 'Popular'
+                        badge: language === 'DE' ? 'Beliebt' : 'Popular'
                       },
                       {
                         id: 'bank-transfer',
-                        label: 'Bank Transfer',
-                        description: 'We will display our bank details.',
+                        label: language === 'DE' ? 'Bankueberweisung' : 'Bank Transfer',
+                        description: language === 'DE' ? 'Wir zeigen Ihnen unsere Bankdaten an.' : 'We will display our bank details.',
                         icon: Building2,
-                        badge: 'Manual'
+                        badge: language === 'DE' ? 'Manuell' : 'Manual'
                       }
                     ].map((method) => {
                       const isSelected = orderData.paymentMethod === method.id;
@@ -2769,30 +2883,38 @@ export default function OrderPage() {
                               : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
                           }`}
                         >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <span className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${
+                          <div className="flex items-start justify-between mb-3 gap-3">
+                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                              <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
                                 isSelected ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
                               }`}>
                                 {method.icon ? <method.icon size={22} /> : <span className="text-sm font-bold">PP</span>}
                               </span>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-base font-semibold text-gray-900">{method.label}</span>
-                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                  <span className="min-w-0 break-words text-base font-semibold leading-snug text-gray-900">
+                                    {method.label}
+                                  </span>
+                                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
                                     {method.badge}
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-600">{method.description}</p>
+                                <p className="mt-0.5 break-words text-sm leading-snug text-gray-600">
+                                  {method.description}
+                                </p>
                               </div>
                             </div>
                             {isSelected && (
                               <CheckCircle size={20} className="text-amber-600" />
                             )}
                           </div>
-                          <div className="flex items-center justify-between text-xs font-medium text-gray-500">
-                            <span>{isSelected ? 'Selected' : 'Tap to select'}</span>
-                            <span className="text-amber-600 group-hover:text-amber-700">Details</span>
+                          <div className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-gray-500">
+                            <span className="min-w-0 break-words">
+                              {isSelected
+                                ? (language === 'DE' ? 'Ausgewaehlt' : 'Selected')
+                                : (language === 'DE' ? 'Antippen zum Auswaehlen' : 'Tap to select')}
+                            </span>
+                            <span className="shrink-0 text-amber-600 group-hover:text-amber-700">Details</span>
                           </div>
                         </button>
                       );
@@ -2899,7 +3021,7 @@ export default function OrderPage() {
                         onClick={() => setTermsModalOpen(true)}
                         className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
                       >
-                        Read full Terms and Conditions
+                      {language === 'DE' ? 'AGB & Bedingungen lesen' : 'Read full Terms and Conditions'}
                       </button>
                     </div>
                   </div>
@@ -3021,7 +3143,9 @@ export default function OrderPage() {
     const quantityKey = `${category}_${product.id}`;
     const minQuantity = getMinOrderQuantity(product);
     const requestedQuantity = quantities[quantityKey] || 0;
-    const quantity = requestedQuantity <= 0 ? minQuantity : Math.max(minQuantity, requestedQuantity);
+    const quantityInOrder = getProductQuantityInOrder(category, product);
+    const defaultQuantity = quantityInOrder > 0 ? quantityInOrder : minQuantity;
+    const quantity = requestedQuantity <= 0 ? defaultQuantity : Math.max(minQuantity, requestedQuantity);
     const productWithQuantity = { ...product, quantity, category };
     
     const categoryKey = getSelectionKey(category, product);
@@ -3053,8 +3177,18 @@ export default function OrderPage() {
     updateOrderData(categoryKey, updatedSelection);
   };
   const toggleAccessory = (accessory) => {
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    const targetQuantity = Math.max(1, guestCount || MIN_GUESTS);
+    const getAccessoryTargetQuantity = (value: any) => {
+      const guestCount = parseInt(orderData.guestCount, 10) || 0;
+      const guestTarget = Math.max(1, guestCount || MIN_GUESTS);
+      const quantityMode = value?.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+      if (quantityMode === 'FIXED') {
+        const fixedQuantity = value?.fixedQuantity == null ? 0 : Number(value.fixedQuantity);
+        const fixedTarget = Math.max(0, Math.trunc(fixedQuantity));
+        return Math.max(1, fixedTarget || 1);
+      }
+      return guestTarget;
+    };
+    const targetQuantity = getAccessoryTargetQuantity(accessory);
     setSelectedAccessories(prev => {
       if (prev.some(item => item.id === accessory.id)) {
         return prev.filter(item => item.id !== accessory.id);
@@ -3064,19 +3198,18 @@ export default function OrderPage() {
   };
   const updateAccessoryQuantity = (id, quantity) => {
     setSelectedAccessories(prev => {
-      const guestCount = parseInt(orderData.guestCount, 10) || 0;
-      const targetQuantity = Math.max(1, guestCount || MIN_GUESTS);
-      const parsedQuantity = Number.isFinite(quantity) ? quantity : targetQuantity;
+      const parsedQuantity = Number.isFinite(quantity) ? quantity : 0;
       if (parsedQuantity <= 0) {
         return prev.filter(item => item.id !== id);
       }
-      return prev.map(item => item.id === id ? { ...item, quantity: targetQuantity } : item);
+      return prev.map(item => item.id === id ? { ...item, quantity: parsedQuantity } : item);
     });
   };
   useEffect(() => {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
     if (!guestCount) return;
     setSelectedAccessories((prev) => prev.map((item) => {
+      if (item?.quantityMode === 'FIXED') return item;
       const targetQuantity = Math.max(1, guestCount || MIN_GUESTS);
       return item.quantity === targetQuantity ? item : { ...item, quantity: targetQuantity };
     }));
@@ -3238,11 +3371,72 @@ export default function OrderPage() {
           </div>
         </div>
       )}
+      {minPeoplePromptOpen && minPeoplePromptMenu && (
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900">{t.menuMinPeoplePrompt.title}</h3>
+              <button
+                type="button"
+                onClick={closeMinPeoplePrompt}
+                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                aria-label={ui.close}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
+              <p className="font-semibold text-gray-900">{minPeoplePromptMenu.name}</p>
+              <p>
+                {t.menuMinPeoplePrompt.description(
+                  Number(minPeoplePromptMenu.minPeople) || 0,
+                  minPeoplePromptGuestCount
+                )}
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const menuMin = Number(minPeoplePromptMenu.minPeople) || 0;
+                  closeMinPeoplePrompt();
+                  if (menuMin > 0) {
+                    handleGuestCountChange(String(menuMin));
+                  }
+                  finalizeMenuSelection(minPeoplePromptMenu);
+                }}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+              >
+                {t.menuMinPeoplePrompt.useMenuMin(Number(minPeoplePromptMenu.minPeople) || 0)}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  closeMinPeoplePrompt();
+                  finalizeMenuSelection(minPeoplePromptMenu);
+                }}
+                className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50"
+              >
+                {t.menuMinPeoplePrompt.keepSelected(minPeoplePromptGuestCount)}
+              </button>
+              <button
+                type="button"
+                onClick={closeMinPeoplePrompt}
+                className="px-4 py-2 text-sm font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              >
+                {t.menuMinPeoplePrompt.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {termsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">Terms and Conditions</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                {language === 'DE' ? 'AGB & Bedingungen' : 'Terms and Conditions'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setTermsModalOpen(false)}
@@ -3253,30 +3447,48 @@ export default function OrderPage() {
             </div>
             <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
               <p>
-                Please review the full terms below. These terms are provided for convenience and should be updated to match your official policy.
+                {language === 'DE'
+                  ? 'Bitte lesen Sie die folgenden Bedingungen. Dieser Text dient als Beispiel und sollte an Ihre offiziellen Richtlinien angepasst werden.'
+                  : 'Please review the full terms below. These terms are provided for convenience and should be updated to match your official policy.'}
               </p>
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">Booking and Payment</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  {language === 'DE' ? 'Buchung und Zahlung' : 'Booking and Payment'}
+                </h4>
                 <p>
-                  Orders are confirmed once payment is received. Prices include the selected items and services listed in your order summary.
+                  {language === 'DE'
+                    ? 'Bestellungen werden bestaetigt, sobald die Zahlung eingegangen ist. Preise beinhalten die ausgewaehlten Speisen und Leistungen in Ihrer Bestelluebersicht.'
+                    : 'Orders are confirmed once payment is received. Prices include the selected items and services listed in your order summary.'}
                 </p>
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">Cancellations</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  {language === 'DE' ? 'Stornierungen' : 'Cancellations'}
+                </h4>
                 <p>
-                  Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Late cancellations may be subject to fees.
+                  {language === 'DE'
+                    ? 'Stornierungen mindestens 48 Stunden vor dem Termin koennen voll erstattet werden. Spaetere Stornierungen koennen mit Gebuehren verbunden sein.'
+                    : 'Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Late cancellations may be subject to fees.'}
                 </p>
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">Delivery</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  {language === 'DE' ? 'Lieferung' : 'Delivery'}
+                </h4>
                 <p>
-                  Delivery windows are confirmed after payment and may vary based on scheduling availability and location.
+                  {language === 'DE'
+                    ? 'Lieferzeitfenster werden nach Zahlung bestaetigt und koennen je nach Verfuegbarkeit und Standort variieren.'
+                    : 'Delivery windows are confirmed after payment and may vary based on scheduling availability and location.'}
                 </p>
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">Privacy</h4>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                  {language === 'DE' ? 'Datenschutz' : 'Privacy'}
+                </h4>
                 <p>
-                  We only use your information to fulfill your order and communicate about your event. Please contact us for data requests.
+                  {language === 'DE'
+                    ? 'Wir verwenden Ihre Angaben ausschliesslich zur Abwicklung Ihrer Bestellung und zur Kommunikation rund um Ihr Event. Kontaktieren Sie uns fuer Datenanfragen.'
+                    : 'We only use your information to fulfill your order and communicate about your event. Please contact us for data requests.'}
                 </p>
               </div>
             </div>
@@ -3363,7 +3575,7 @@ export default function OrderPage() {
                   {productDetailsItem.image ? (
                     <img
                       src={productDetailsItem.image}
-                      alt={productDetailsItem.name || 'Product image'}
+                      alt={(language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name) || 'Product image'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -3374,8 +3586,12 @@ export default function OrderPage() {
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <h4 className="text-xl font-bold text-gray-900">{productDetailsItem.name}</h4>
-                    <p className="text-gray-600 mt-2">{productDetailsItem.description || ui.noDescription}</p>
+                    <h4 className="text-xl font-bold text-gray-900">
+                      {language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name}
+                    </h4>
+                    <p className="text-gray-600 mt-2">
+                      {(language === 'DE' ? (productDetailsItem.descriptionDe || productDetailsItem.description) : productDetailsItem.description) || ui.noDescription}
+                    </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 text-sm">
                     <div className="rounded-lg border border-gray-200 p-3">
@@ -3383,14 +3599,8 @@ export default function OrderPage() {
                       <p className="text-base font-semibold text-gray-900">€{productDetailsItem.price}</p>
                     </div>
                     <div className="rounded-lg border border-gray-200 p-3">
-                      <p className="text-gray-500">Number of Guests</p>
+                      <p className="text-gray-500">{language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'}</p>
                       <p className="text-base font-semibold text-gray-900">{getMinOrderQuantity(productDetailsItem)}</p>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 p-3">
-                      <p className="text-gray-500">{ui.preparationTime}</p>
-                      <p className="text-base font-semibold text-gray-900">
-                        {productDetailsItem.preparationTime ? `${productDetailsItem.preparationTime} min` : ui.notSpecified}
-                      </p>
                     </div>
                     <div className="rounded-lg border border-gray-200 p-3">
                       <p className="text-gray-500">{ui.availability}</p>
@@ -3399,30 +3609,42 @@ export default function OrderPage() {
                       </p>
                     </div>
                   </div>
-                  {Array.isArray(productDetailsItem.ingredients) && productDetailsItem.ingredients.length > 0 && (
+                  {(() => {
+                    const ingredients = language === 'DE' && Array.isArray(productDetailsItem.ingredientsDe) && productDetailsItem.ingredientsDe.length > 0
+                      ? productDetailsItem.ingredientsDe
+                      : productDetailsItem.ingredients;
+                    if (!Array.isArray(ingredients) || ingredients.length === 0) return null;
+                    return (
                     <div>
                       <p className="text-sm font-semibold text-gray-900 mb-2">{ui.ingredients}</p>
                       <div className="flex flex-wrap gap-2">
-                        {productDetailsItem.ingredients.map((ingredient, idx) => (
+                        {ingredients.map((ingredient, idx) => (
                           <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
                             {ingredient}
                           </span>
                         ))}
                       </div>
                     </div>
-                  )}
-                  {Array.isArray(productDetailsItem.allergens) && productDetailsItem.allergens.length > 0 && (
+                    );
+                  })()}
+                  {(() => {
+                    const allergens = language === 'DE' && Array.isArray(productDetailsItem.allergensDe) && productDetailsItem.allergensDe.length > 0
+                      ? productDetailsItem.allergensDe
+                      : productDetailsItem.allergens;
+                    if (!Array.isArray(allergens) || allergens.length === 0) return null;
+                    return (
                     <div>
                       <p className="text-sm font-semibold text-gray-900 mb-2">{ui.allergens}</p>
                       <div className="flex flex-wrap gap-2">
-                        {productDetailsItem.allergens.map((allergen, idx) => (
+                        {allergens.map((allergen, idx) => (
                           <span key={idx} className="px-2 py-1 bg-red-50 text-red-700 text-xs font-medium rounded">
                             {allergen}
                           </span>
                         ))}
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -3445,7 +3667,9 @@ export default function OrderPage() {
         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
           <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">Extras notice</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                {language === 'DE' ? 'Hinweis zu Extras' : 'Extras notice'}
+              </h3>
               <button
                 type="button"
                 onClick={() => setExtraNoticeOpen(false)}
@@ -3456,11 +3680,25 @@ export default function OrderPage() {
             </div>
             <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 space-y-3">
               <p>
-                You have selected more dishes than the included amount for <span className="font-semibold">{extraNoticeData.label}</span>.
+                {language === 'DE' ? (
+                  <>
+                    Sie haben mehr Gerichte als die enthaltene Menge fuer{' '}
+                    <span className="font-semibold">{extraNoticeData.label}</span> ausgewaehlt.
+                  </>
+                ) : (
+                  <>
+                    You have selected more dishes than the included amount for{' '}
+                    <span className="font-semibold">{extraNoticeData.label}</span>.
+                  </>
+                )}
               </p>
               <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
-                <p className="text-sm text-amber-800 font-semibold">Extra dishes: {extraNoticeData.extra}</p>
-                <p className="text-xs text-amber-700 mt-1">Extras will be added to your total.</p>
+                <p className="text-sm text-amber-800 font-semibold">
+                  {language === 'DE' ? 'Extra Gerichte:' : 'Extra dishes:'} {extraNoticeData.extra}
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  {language === 'DE' ? 'Extras werden zu Ihrer Gesamtsumme hinzugefuegt.' : 'Extras will be added to your total.'}
+                </p>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
@@ -3469,7 +3707,7 @@ export default function OrderPage() {
                 onClick={() => setExtraNoticeOpen(false)}
                 className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
               >
-                Ok, got it
+                {language === 'DE' ? 'Verstanden' : 'Ok, got it'}
               </button>
             </div>
           </div>

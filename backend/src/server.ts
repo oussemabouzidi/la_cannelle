@@ -16,6 +16,7 @@ import favoriteRoutes from './routes/favorites';
 import contactRoutes from './routes/contact';
 import accessoryRoutes from './routes/accessories';
 import serviceRoutes from './routes/services';
+import todoRoutes from './routes/todos';
 import { ensureUploadsDir } from './utils/uploads';
 
 const app = express();
@@ -72,6 +73,7 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/accessories', accessoryRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/todos', todoRoutes);
 
 // Error handling
 app.use(errorHandler);

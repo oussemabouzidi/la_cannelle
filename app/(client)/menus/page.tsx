@@ -409,15 +409,19 @@ export default function MenusPage() {
 
   const menuHighlights = useMemo(() => {
     const toHighlightItem = (
-      item: { id: number; name: string; description?: string; image?: string } | null | undefined
+      item: { id: number; name: string; nameDe?: string | null; description?: string; descriptionDe?: string | null; image?: string } | null | undefined
     ): MenuHighlightItem | null => {
       if (!item || item.id == null || !item.name) {
         return null;
       }
+      const name = language === 'DE' ? (item.nameDe || item.name) : item.name;
+      const description = language === 'DE'
+        ? (item.descriptionDe || item.description)
+        : item.description;
       return {
         id: item.id,
-        name: item.name,
-        description: item.description,
+        name,
+        description,
         image: item.image,
       };
     };
@@ -425,6 +429,10 @@ export default function MenusPage() {
     if (menus.length) {
       const productMap = new Map(products.map((product) => [product.id, product]));
       return (menus || []).map((menu) => {
+        const localizedName = language === 'DE' ? (menu.nameDe || menu.name) : menu.name;
+        const localizedDescription = language === 'DE'
+          ? (menu.descriptionDe || menu.description)
+          : menu.description;
         let items: MenuHighlightItem[] = [];
         if (menu.menuProducts && menu.menuProducts.length) {
           items = menu.menuProducts
@@ -440,6 +448,8 @@ export default function MenusPage() {
           || '/images/home_image.jpeg';
         return {
           ...menu,
+          name: localizedName,
+          description: localizedDescription,
           items,
           coverImage
         };
@@ -447,10 +457,27 @@ export default function MenusPage() {
     }
 
     const sourceItems = products.length
-      ?products.map((product) => ({
-          ...product,
-          category: product.menuCategory || product.category || 'general',
-        }))
+      ? products.map((product) => {
+          const rawCategory = (product.category || '').toString().toLowerCase().replace(/[^a-z]/g, '');
+          const categoryMap: Record<string, string> = {
+            starter: 'starters',
+            starters: 'starters',
+            main: 'mains',
+            mains: 'mains',
+            side: 'sides',
+            sides: 'sides',
+            dessert: 'desserts',
+            desserts: 'desserts',
+            beverage: 'drinks',
+            beverages: 'drinks',
+            drink: 'drinks',
+            drinks: 'drinks',
+          };
+          return {
+            ...product,
+            category: categoryMap[rawCategory] || 'general',
+          };
+        })
       : fallbackMenuItems;
 
     const groupedItems = sourceItems.reduce((acc, item) => {
@@ -465,7 +492,9 @@ export default function MenusPage() {
     return Object.entries(groupedItems).map(([category, items], index) => {
       const coverImage = items.find((item) => item.image)?.image || '/images/home_image.jpeg';
       const description = items.length
-        ?items.slice(0, 3).map((item) => item.name).join(', ')
+        ? items.slice(0, 3).map((item: any) => (
+          language === 'DE' ? (item.nameDe || item.name) : item.name
+        )).join(', ')
         : '';
       return {
         id: -(index + 1),
@@ -492,6 +521,94 @@ export default function MenusPage() {
       : Array.isArray(menu.menuProducts)
       ?menu.menuProducts.length
       : 0;
+
+    const normalizeCategoryValue = (value?: string) => (
+      value ? value.toLowerCase().replace(/[^a-z]/g, '') : ''
+    );
+
+    const normalizeMenuStepKey = (label?: string) => {
+      if (!label) return '';
+      const normalized = normalizeCategoryValue(label);
+      const aliases: Record<string, string> = {
+        starter: 'starter',
+        starters: 'starter',
+        main: 'main',
+        mains: 'main',
+        entree: 'main',
+        side: 'side',
+        sides: 'side',
+        dessert: 'dessert',
+        desserts: 'dessert',
+        drink: 'beverage',
+        drinks: 'beverage',
+        beverage: 'beverage',
+        beverages: 'beverage'
+      };
+      return aliases[normalized] || normalized;
+    };
+
+    const stepLabelFor = (label?: string) => {
+      const key = normalizeMenuStepKey(label);
+      if (!key) return label || '';
+      const labels = language === 'DE'
+        ? {
+            fingerfood: 'Fingerfood',
+            starter: 'Vorspeisen',
+            main: 'Hauptgaenge',
+            side: 'Beilagen',
+            dessert: 'Desserts',
+            beverage: 'Getraenke',
+            canape: 'Canape',
+            appetizer: 'Vorspeise',
+            salad: 'Salat',
+            soup: 'Suppe',
+            pasta: 'Pasta',
+            seafood: 'Meeresfruechte',
+            meat: 'Fleisch',
+            vegetarian: 'Vegetarisch',
+            vegan: 'Vegan',
+            glutenfree: 'Glutenfrei',
+            dairyfree: 'Laktosefrei',
+            spicy: 'Scharf',
+            signature: 'Signature',
+            seasonal: 'Saisonal',
+            kidfriendly: 'Kinderfreundlich',
+            chefspecial: 'Chef-Special',
+            tapas: 'Tapas',
+            bbq: 'BBQ',
+            breakfast: 'Fruehstueck',
+            brunch: 'Brunch'
+          }
+        : {
+            fingerfood: 'Finger Food',
+            starter: 'Starters',
+            main: 'Mains',
+            side: 'Sides',
+            dessert: 'Desserts',
+            beverage: 'Drinks',
+            canape: 'Canape',
+            appetizer: 'Appetizer',
+            salad: 'Salad',
+            soup: 'Soup',
+            pasta: 'Pasta',
+            seafood: 'Seafood',
+            meat: 'Meat',
+            vegetarian: 'Vegetarian',
+            vegan: 'Vegan',
+            glutenfree: 'Gluten-Free',
+            dairyfree: 'Dairy-Free',
+            spicy: 'Spicy',
+            signature: 'Signature',
+            seasonal: 'Seasonal',
+            kidfriendly: 'Kid-Friendly',
+            chefspecial: 'Chef-Special',
+            tapas: 'Tapas',
+            bbq: 'BBQ',
+            breakfast: 'Breakfast',
+            brunch: 'Brunch'
+          };
+      return (labels as any)[key] || (label || '');
+    };
     return (
       <div
         role="button"
@@ -521,7 +638,7 @@ export default function MenusPage() {
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
                     <Check size={12} />
                   </span>
-                  <span>{step.included} {step.label}</span>
+                  <span>{step.included} {stepLabelFor(step.label)}</span>
                 </div>
               ))}
               <div className="flex items-center gap-2">
@@ -591,7 +708,11 @@ export default function MenusPage() {
             <div className="relative h-full flex flex-col justify-end p-4 sm:p-6 text-white">
 
 
-              <h3 className="text-3xl font-bold font-elegant mb-2">{selectedMenu?.name}</h3>
+              <h3 className="text-3xl font-bold font-elegant mb-2">
+                {language === 'DE'
+                  ? (selectedMenu?.nameDe || selectedMenu?.name)
+                  : selectedMenu?.name}
+              </h3>
               {priceLabel && (
                 <p className="text-sm font-semibold text-amber-200">
                   {t.menuHighlights.priceLabel} €{priceLabel}
@@ -600,8 +721,14 @@ export default function MenusPage() {
             </div>
           </div>
           <div className="p-4 sm:p-6">
-            {selectedMenu?.description && (
-              <p className="text-gray-700 text-sm leading-relaxed mb-6">{selectedMenu.description}</p>
+            {(language === 'DE'
+              ? (selectedMenu?.descriptionDe || selectedMenu?.description)
+              : selectedMenu?.description) && (
+              <p className="text-gray-700 text-sm leading-relaxed mb-6">
+                {language === 'DE'
+                  ? (selectedMenu?.descriptionDe || selectedMenu?.description)
+                  : selectedMenu?.description}
+              </p>
             )}
             <div>
               <h4 className="text-lg font-semibold text-gray-900 mb-3">{t.menuHighlights.includes}</h4>

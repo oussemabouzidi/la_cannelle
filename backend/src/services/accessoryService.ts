@@ -1,6 +1,15 @@
 import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
 import { normalizeImageValue } from '../utils/uploads';
+import { translationService } from './translationService';
+import { translationBackfillService } from './translationBackfillService';
+
+const isDeeplAutoTranslateOnReadEnabled = () => {
+  const raw = process.env.DEEPL_AUTO_TRANSLATE_ON_READ;
+  if (raw === undefined) return true;
+  const normalized = String(raw).trim().toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes';
+};
 
 const toOptionalString = (value: unknown) => {
   if (value === null || value === undefined) return undefined;
@@ -40,7 +49,8 @@ export type AccessoryCreateInput = {
   unitEn?: string | null;
   unitDe?: string | null;
   price: number;
-  minQuantity?: number;
+  quantityMode?: 'GUEST_COUNT' | 'FIXED';
+  fixedQuantity?: number | null;
   image?: string | null;
   isActive?: boolean;
 };
@@ -64,10 +74,16 @@ export const accessoryService = {
       ];
     }
 
-    return prisma.accessory.findMany({
+    const accessories = await prisma.accessory.findMany({
       where,
       orderBy: { updatedAt: 'desc' }
     });
+
+    if (isDeeplAutoTranslateOnReadEnabled()) {
+      await translationBackfillService.backfillAccessoriesDe(accessories as any);
+    }
+
+    return accessories;
   },
 
   async getAccessoryById(id: number) {
@@ -75,6 +91,11 @@ export const accessoryService = {
     if (!accessory) {
       throw new AppError('Accessory not found', 404);
     }
+
+    if (isDeeplAutoTranslateOnReadEnabled()) {
+      await translationBackfillService.backfillAccessoriesDe([accessory] as any);
+    }
+
     return accessory;
   },
 
@@ -84,22 +105,49 @@ export const accessoryService = {
     if (!nameEn) throw new AppError('nameEn is required', 400);
     if (!descriptionEn) throw new AppError('descriptionEn is required', 400);
 
+    const pendingTranslations: Array<{ key: 'nameDe' | 'descriptionDe' | 'detailsDe'; text: string }> = [];
+    const providedNameDe = toOptionalString(data.nameDe);
+    const providedDescriptionDe = toOptionalText(data.descriptionDe);
+    const providedDetailsDe = toOptionalText(data.detailsDe);
+    const detailsEn = toOptionalText(data.detailsEn);
+
+    if (!providedNameDe) pendingTranslations.push({ key: 'nameDe', text: nameEn });
+    if (!providedDescriptionDe) pendingTranslations.push({ key: 'descriptionDe', text: descriptionEn });
+    if (!providedDetailsDe && detailsEn) pendingTranslations.push({ key: 'detailsDe', text: detailsEn });
+
+    const translated = pendingTranslations.length
+      ? await translationService.translateTexts(pendingTranslations.map(item => item.text), { targetLang: 'DE' })
+      : null;
+    const translationMap = new Map<string, string>();
+    if (translated) {
+      pendingTranslations.forEach((item, index) => {
+        translationMap.set(item.key, translated[index] ?? '');
+      });
+    }
+
     const price = toNumber(data.price, 'price');
-    const minQuantity = Math.max(1, data.minQuantity ? toInt(data.minQuantity, 'minQuantity') : 1);
+    const quantityMode = data.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+    const fixedQuantity = data.fixedQuantity === null || data.fixedQuantity === undefined
+      ? null
+      : Math.max(1, toInt(data.fixedQuantity, 'fixedQuantity'));
+    if (quantityMode === 'FIXED' && !fixedQuantity) {
+      throw new AppError('fixedQuantity is required when quantityMode is FIXED', 400);
+    }
     const image = await normalizeImageValue(toOptionalString(data.image), { prefix: 'accessory' });
 
     return prisma.accessory.create({
       data: {
         nameEn,
-        nameDe: toOptionalString(data.nameDe),
+        nameDe: providedNameDe ?? (translationMap.get('nameDe') || null),
         descriptionEn,
-        descriptionDe: toOptionalText(data.descriptionDe),
-        detailsEn: toOptionalText(data.detailsEn),
-        detailsDe: toOptionalText(data.detailsDe),
+        descriptionDe: providedDescriptionDe ?? (translationMap.get('descriptionDe') || null),
+        detailsEn: detailsEn ?? null,
+        detailsDe: providedDetailsDe ?? (translationMap.get('detailsDe') || null),
         unitEn: toOptionalString(data.unitEn),
         unitDe: toOptionalString(data.unitDe),
         price,
-        minQuantity,
+        quantityMode,
+        fixedQuantity: quantityMode === 'FIXED' ? fixedQuantity : null,
         image,
         isActive: data.isActive ?? true
       }
@@ -124,10 +172,56 @@ export const accessoryService = {
     }
     if (data.isActive !== undefined) update.isActive = Boolean(data.isActive);
     if (data.price !== undefined) update.price = toNumber(data.price, 'price');
-    if (data.minQuantity !== undefined) update.minQuantity = Math.max(1, toInt(data.minQuantity, 'minQuantity'));
+    if (data.quantityMode !== undefined) {
+      update.quantityMode = data.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+    }
+    if (data.fixedQuantity !== undefined) {
+      update.fixedQuantity = data.fixedQuantity === null
+        ? null
+        : Math.max(1, toInt(data.fixedQuantity, 'fixedQuantity'));
+    }
 
     if (Object.keys(update).length === 0) {
       return existing;
+    }
+
+    const pendingTranslations: Array<{ key: 'nameDe' | 'descriptionDe' | 'detailsDe'; text: string }> = [];
+    const nextNameEn = update.nameEn ?? existing.nameEn;
+    const nextDescriptionEn = update.descriptionEn ?? existing.descriptionEn;
+    const nextDetailsEn = update.detailsEn ?? existing.detailsEn;
+    const nextNameDe = update.nameDe ?? existing.nameDe ?? null;
+    const nextDescriptionDe = update.descriptionDe ?? existing.descriptionDe ?? null;
+    const nextDetailsDe = update.detailsDe ?? existing.detailsDe ?? null;
+
+    if (update.nameEn !== undefined && update.nameDe === undefined && !nextNameDe && nextNameEn) {
+      pendingTranslations.push({ key: 'nameDe', text: nextNameEn });
+    }
+    if (update.descriptionEn !== undefined && update.descriptionDe === undefined && !nextDescriptionDe && nextDescriptionEn) {
+      pendingTranslations.push({ key: 'descriptionDe', text: nextDescriptionEn });
+    }
+    if (update.detailsEn !== undefined && update.detailsDe === undefined && !nextDetailsDe && nextDetailsEn) {
+      pendingTranslations.push({ key: 'detailsDe', text: nextDetailsEn });
+    }
+
+    if (pendingTranslations.length > 0) {
+      const translated = await translationService.translateTexts(
+        pendingTranslations.map(item => item.text),
+        { targetLang: 'DE' }
+      );
+      if (translated) {
+        pendingTranslations.forEach((item, index) => {
+          update[item.key] = translated[index] ?? null;
+        });
+      }
+    }
+
+    const nextQuantityMode = update.quantityMode ?? existing.quantityMode;
+    const nextFixedQuantity = update.fixedQuantity ?? existing.fixedQuantity ?? null;
+    if (nextQuantityMode === 'FIXED' && !nextFixedQuantity) {
+      throw new AppError('fixedQuantity is required when quantityMode is FIXED', 400);
+    }
+    if (nextQuantityMode === 'GUEST_COUNT') {
+      update.fixedQuantity = null;
     }
 
     if (update.nameEn !== undefined && !update.nameEn) {

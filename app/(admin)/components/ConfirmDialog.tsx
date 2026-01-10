@@ -44,7 +44,7 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto">
       <button
         type="button"
-        aria-label="Close"
+        aria-label={cancelText}
         className="fixed inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onCancel}
       />

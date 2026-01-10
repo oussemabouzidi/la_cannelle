@@ -152,6 +152,11 @@ Once your database is set up:
    npm run seed
    ```
 
+   Or restore from a SQL dump (defaults to `../../backup.sql` from `backend/`):
+   ```bash
+   npm run seed:backup
+   ```
+
 4. **Start the Server:**
    ```bash
    npm run dev

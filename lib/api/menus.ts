@@ -4,7 +4,9 @@ import type { Service } from './services';
 export interface Menu {
   id: number;
   name: string;
+  nameDe?: string | null;
   description: string;
+  descriptionDe?: string | null;
   isActive: boolean;
   startDate?: string;
   endDate?: string;

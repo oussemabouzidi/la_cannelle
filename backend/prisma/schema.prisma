@@ -56,6 +56,11 @@ enum ServiceOccasion {
   BOTH
 }
 
+enum AccessoryQuantityMode {
+  GUEST_COUNT
+  FIXED
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -87,18 +92,21 @@ model User {
 model Product {
   id                Int             @id @default(autoincrement())
   name              String
+  nameDe            String?
   description       String          @db.Text
+  descriptionDe     String?         @db.Text
   category          ProductCategory
-  menuCategory      String // starters, mains, sides, desserts, drinks
   price             Float
   cost              Float
   available         Boolean         @default(true)
   minOrderQuantity  Int //@default(5)
   tier              Json?
-  preparationTime   Int // in minutes
   ingredients       Json?
+  ingredientsDe     Json?
   allergens         Json?
+  allergensDe       Json?
   productCategories Json? // vegetarian, vegan, gluten-free, etc.
+  productCategoriesDe Json?
   image             String?        @db.LongText
   popularity        Int             @default(0)
   createdAt         DateTime        @default(now())
@@ -115,7 +123,9 @@ model Product {
 model Menu {
   id          Int       @id @default(autoincrement())
   name        String
+  nameDe      String?
   description String    @db.Text
+  descriptionDe String? @db.Text
   isActive    Boolean   @default(true)
   startDate   DateTime?
   endDate     DateTime?
@@ -136,8 +146,10 @@ model Menu {
 model Service {
   id        Int            @id @default(autoincrement())
   name      String
+  nameDe    String?
   occasion  ServiceOccasion
   description String?      @db.Text
+  descriptionDe String?    @db.Text
   image     String?        @db.LongText
   isActive  Boolean        @default(true)
   createdAt DateTime       @default(now())
@@ -282,11 +294,22 @@ model Accessory {
   unitEn        String?
   unitDe        String?
   price         Float
-  minQuantity   Int      @default(1)
+  quantityMode  AccessoryQuantityMode @default(GUEST_COUNT)
+  fixedQuantity Int?
   image         String?  @db.LongText
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@map("accessories")
+}
+
+model Todo {
+  id        Int      @id @default(autoincrement())
+  text      String   @db.Text
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("todos")
 }

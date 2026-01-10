@@ -14,6 +14,7 @@ import AdminLanguageToggle from '../components/AdminLanguageToggle';
 import AdminLayout from '../components/AdminLayout';
 import { ordersApi, Order } from '@/lib/api/orders';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
+import { formatIsoDate, formatIsoDateTime, formatTimeHHmm } from '@/lib/utils/datetime';
 
 
 export default function AdminOrders() {
@@ -187,8 +188,8 @@ export default function AdminOrders() {
         contact: order.contactEmail,
         phone: order.phone,
         eventType: order.eventType,
-        eventDate: order.eventDate,
-        eventTime: order.eventTime,
+        eventDate: formatIsoDate(order.eventDate),
+        eventTime: formatTimeHHmm(order.eventTime),
         guests: order.guests,
         location: order.location,
         menuTier: order.menuTier?.toLowerCase(),
@@ -196,7 +197,7 @@ export default function AdminOrders() {
         status: order.status.toLowerCase(),
         payment: order.paymentStatus.toLowerCase(),
         specialRequests: order.specialRequests,
-        createdAt: order.createdAt,
+        createdAt: formatIsoDateTime(order.createdAt),
         dishes: order.items?.map((it) => ({
           name: it.name,
           quantity: it.quantity,
@@ -442,6 +443,8 @@ export default function AdminOrders() {
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={language === 'DE' ? 'de-DE' : 'en-US'}
+      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
     >
           {/* Filters and Search */}
           <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6 ${

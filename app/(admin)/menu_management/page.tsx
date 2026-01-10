@@ -24,7 +24,9 @@ import { servicesApi, type Service } from '@/lib/api/services';
 type MenuType = {
   id: number;
   name: string;
+  nameDe?: string | null;
   description: string;
+  descriptionDe?: string | null;
   isActive: boolean;
   startDate?: string;
   endDate?: string;
@@ -38,23 +40,27 @@ type MenuType = {
 
 type MenuStep = {
   label: string;
+  labelDe?: string | null;
   included: number;
 };
 
 type MenuItem = {
   id: number;
   name: string;
+  nameDe?: string | null;
   description: string;
+  descriptionDe?: string | null;
   category: string;
-  menuCategory: string;
   price: number;
   cost: number;
   available: boolean;
   tier: string[];
-  preparationTime: number;
   ingredients: string[];
+  ingredientsDe?: string[] | null;
   allergens: string[];
+  allergensDe?: string[] | null;
   productCategories: string[];
+  productCategoriesDe?: string[] | null;
   menus: number[];
   image: string;
   popularity: number;
@@ -92,6 +98,16 @@ export default function AdminMenuManagement() {
   const [confirmDeleteMenuId, setConfirmDeleteMenuId] = useState<number | null>(null);
   const { language, toggleLanguage } = useTranslation('admin');
   const locale = language === 'DE' ? 'de-DE' : 'en-US';
+  const isDE = language === 'DE';
+
+  const getMenuDisplayName = (menu: Pick<MenuType, 'name' | 'nameDe'>) => (isDE ? (menu.nameDe || menu.name) : menu.name);
+  const getMenuDisplayDescription = (menu: Pick<MenuType, 'description' | 'descriptionDe'>) =>
+    isDE ? (menu.descriptionDe || menu.description) : menu.description;
+  const getProductDisplayName = (item: Pick<MenuItem, 'name' | 'nameDe'>) => (isDE ? (item.nameDe || item.name) : item.name);
+  const getProductDisplayDescription = (item: Pick<MenuItem, 'description' | 'descriptionDe'>) =>
+    isDE ? (item.descriptionDe || item.description) : item.description;
+  const getServiceDisplayName = (service: Pick<Service, 'name' | 'nameDe'>) =>
+    isDE ? (service.nameDe || service.name) : service.name;
   const copy = {
     EN: {
       nav: {
@@ -125,6 +141,8 @@ export default function AdminMenuManagement() {
         ends: 'Ends',
         noImage: 'No image',
         noImageAvailable: 'No Image Available',
+        previewAlt: 'Preview',
+        menuPreviewAlt: 'Menu preview',
         untitledMenu: 'Untitled menu',
         noDescription: 'No description',
         noDescriptionProvided: 'No description provided.',
@@ -141,10 +159,14 @@ export default function AdminMenuManagement() {
         uploadImage: 'Upload image',
         imageUrl: 'Or Enter Image URL',
         name: 'Name',
+        nameEn: 'Name (EN)',
+        nameDe: 'Name (DE)',
         category: 'Category',
         menuSection: 'Menu Section',
         type: 'Type',
         description: 'Description',
+        descriptionEn: 'Description (EN)',
+        descriptionDe: 'Description (DE)',
         sellingPrice: 'Selling Price (€)',
         cost: 'Cost (€)',
         prepTime: 'Prep Time (min)',
@@ -195,13 +217,15 @@ export default function AdminMenuManagement() {
         editMenuTitle: 'Edit menu',
         archiveItemTitle: 'Archive Item',
         deleteItemTitle: 'Delete Item',
+        restoreItemTitle: 'Restore Item',
+        removeIngredientTitle: 'Remove ingredient',
       },
       filters: {
         allCategories: 'All Categories',
         starters: 'Starters',
         mains: 'Main Courses',
         desserts: 'Desserts',
-        beverages: 'Beverages',
+        drinks: 'Drinks',
         sides: 'Sides',
         allMenus: 'All Menus',
         unassigned: 'Not in any menu',
@@ -214,7 +238,7 @@ export default function AdminMenuManagement() {
         starter: 'Starter',
         main: 'Main Course',
         dessert: 'Dessert',
-        beverage: 'Beverage',
+        drink: 'Drink',
         side: 'Side',
       },
       placeholders: {
@@ -225,7 +249,6 @@ export default function AdminMenuManagement() {
         prepTime: '15',
         ingredients: 'e.g., Atlantic salmon, lemon, butter',
         menuName: 'Menu name',
-        menuCategory: 'e.g., seasonal, luxury',
         menuType: 'fixed, tasting, themed',
         menuDescription: 'Describe this menu',
         stepLabel: 'e.g., Starters',
@@ -272,6 +295,8 @@ export default function AdminMenuManagement() {
         ends: 'Endet',
         noImage: 'Kein Bild',
         noImageAvailable: 'Kein Bild verfuegbar',
+        previewAlt: 'Vorschau',
+        menuPreviewAlt: 'Menue-Vorschau',
         untitledMenu: 'Unbenanntes Menue',
         noDescription: 'Keine Beschreibung',
         noDescriptionProvided: 'Keine Beschreibung vorhanden.',
@@ -288,10 +313,14 @@ export default function AdminMenuManagement() {
         uploadImage: 'Bild hochladen',
         imageUrl: 'Oder Bild-URL eingeben',
         name: 'Name',
+        nameEn: 'Name (EN)',
+        nameDe: 'Name (DE)',
         category: 'Kategorie',
         menuSection: 'Menueabschnitt',
         type: 'Typ',
         description: 'Beschreibung',
+        descriptionEn: 'Beschreibung (EN)',
+        descriptionDe: 'Beschreibung (DE)',
         sellingPrice: 'Verkaufspreis (€)',
         cost: 'Kosten (€)',
         prepTime: 'Vorbereitungszeit (Min)',
@@ -342,13 +371,15 @@ export default function AdminMenuManagement() {
         editMenuTitle: 'Menue bearbeiten',
         archiveItemTitle: 'Artikel archivieren',
         deleteItemTitle: 'Artikel loeschen',
+        restoreItemTitle: 'Artikel wiederherstellen',
+        removeIngredientTitle: 'Zutat entfernen',
       },
       filters: {
         allCategories: 'Alle Kategorien',
         starters: 'Vorspeisen',
         mains: 'Hauptgerichte',
         desserts: 'Desserts',
-        beverages: 'Getraenke',
+        drinks: 'Getraenke',
         sides: 'Beilagen',
         allMenus: 'Alle Menues',
         unassigned: 'In keinem Menue',
@@ -361,7 +392,7 @@ export default function AdminMenuManagement() {
         starter: 'Vorspeise',
         main: 'Hauptgericht',
         dessert: 'Dessert',
-        beverage: 'Getraenk',
+        drink: 'Getraenk',
         side: 'Beilage',
       },
       placeholders: {
@@ -372,7 +403,6 @@ export default function AdminMenuManagement() {
         prepTime: '15',
         ingredients: 'z.B. Atlantischer Lachs, Zitrone, Butter',
         menuName: 'Menue-Name',
-        menuCategory: 'z.B. saisonal, luxus',
         menuType: 'fest, tasting, thematisch',
         menuDescription: 'Dieses Menue beschreiben',
         stepLabel: 'z.B. Vorspeisen',
@@ -405,15 +435,12 @@ export default function AdminMenuManagement() {
     setIsVisible(true);
   }, []);
 
-  const menuCategories = [
-    'starters', 'mains', 'sides', 'desserts', 'drinks', 'accessories'
-  ];
   const menuStepCategories = [
     { value: 'starter', label: language === 'DE' ? 'Vorspeise' : 'Starter' },
     { value: 'main', label: language === 'DE' ? 'Hauptgang' : 'Main' },
     { value: 'side', label: language === 'DE' ? 'Beilage' : 'Side' },
     { value: 'dessert', label: language === 'DE' ? 'Dessert' : 'Dessert' },
-    { value: 'beverage', label: language === 'DE' ? 'Getraenk' : 'Beverage' },
+    { value: 'beverage', label: language === 'DE' ? 'Getraenke' : 'Drinks' },
     { value: 'fingerfood', label: language === 'DE' ? 'Fingerfood' : 'Fingerfood' },
     { value: 'canape', label: language === 'DE' ? 'Canape' : 'Canape' },
     { value: 'appetizer', label: language === 'DE' ? 'Appetizer' : 'Appetizer' },
@@ -442,7 +469,8 @@ export default function AdminMenuManagement() {
     { label: 'starter', included: 0 },
     { label: 'main', included: 0 },
     { label: 'side', included: 0 },
-    { label: 'dessert', included: 0 }
+    { label: 'dessert', included: 0 },
+    { label: 'beverage', included: 0 }
   ];
 
   const buildDefaultMenuSteps = () => defaultMenuSteps.map(step => ({ ...step }));
@@ -465,7 +493,9 @@ export default function AdminMenuManagement() {
   const normalizeMenu = (menu: any): MenuType => ({
     id: menu.id,
     name: menu.name,
+    nameDe: menu.nameDe ?? null,
     description: menu.description || '',
+    descriptionDe: menu.descriptionDe ?? null,
     isActive: !!menu.isActive,
     startDate: menu.startDate || undefined,
     endDate: menu.endDate || undefined,
@@ -481,6 +511,7 @@ export default function AdminMenuManagement() {
     steps: Array.isArray(menu.steps)
       ? menu.steps.map((step: any) => ({
            label: typeof step?.label === 'string' ? step.label : '',
+           labelDe: typeof step?.labelDe === 'string' ? step.labelDe : null,
            included: Number.isFinite(step?.included) ? step.included : 0
          })).filter((step: MenuStep) => step.label)
       : []
@@ -491,13 +522,21 @@ export default function AdminMenuManagement() {
       className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto"
       onClick={onClose}
     >
+      {(() => {
+        const displayName = language === 'DE' ? (menu.nameDe || menu.name) : menu.name;
+        const displayDescription = language === 'DE'
+          ? (menu.descriptionDe || menu.description)
+          : menu.description;
+        const getStepLabel = (step: MenuStep) => (language === 'DE' ? (step.labelDe || step.label) : step.label);
+
+        return (
       <div
         className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center px-4 sm:px-6 py-4 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{menu.name}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{displayName}</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
             <X size={20} />
@@ -505,7 +544,7 @@ export default function AdminMenuManagement() {
         </div>
         <div className="grid md:grid-cols-2 gap-0 flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 space-y-3">
-            <p className="text-gray-700 leading-relaxed">{menu.description || t.menu.noDescriptionProvided}</p>
+            <p className="text-gray-700 leading-relaxed">{displayDescription || t.menu.noDescriptionProvided}</p>
             <div className="flex flex-wrap gap-2 text-sm text-gray-600">
               <span className={`px-3 py-1 rounded-full font-semibold ${menu.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                 {menu.isActive ? t.actions.active : t.actions.inactive}
@@ -521,11 +560,11 @@ export default function AdminMenuManagement() {
             ) : null}
             {menu.steps && menu.steps.length > 0 && (
               <div className="mt-2">
-                <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">{t.menu.menuSteps}</p>
+                <p className="text-xs uppercase tracking-wide text-gray-700 mb-2">{t.menu.menuSteps}</p>
                 <ul className="space-y-1 text-sm text-gray-700">
                   {menu.steps.map((step, index) => (
                     <li key={`step-${index}`} className="flex items-center justify-between">
-                      <span>{step.label}</span>
+                      <span>{getStepLabel(step)}</span>
                       <span className="font-semibold text-gray-900">{step.included}</span>
                     </li>
                   ))}
@@ -543,31 +582,36 @@ export default function AdminMenuManagement() {
           <div className="p-4 sm:p-6 bg-gray-50">
             <div className="aspect-video w-full bg-white border border-gray-200 rounded-xl overflow-hidden">
               {menu.image ? (
-                <img src={menu.image} alt={menu.name} className="w-full h-full object-cover" />
+                <img src={menu.image} alt={displayName} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">{t.menu.noImage}</div>
+                <div className="w-full h-full flex items-center justify-center text-gray-700">{t.menu.noImage}</div>
               )}
             </div>
           </div>
         </div>
       </div>
+        );
+      })()}
     </div>
   );
 
   const normalizeProduct = (product: any): MenuItem => ({
     id: product.id,
     name: product.name,
+    nameDe: product.nameDe ?? null,
     description: product.description || '',
+    descriptionDe: product.descriptionDe ?? null,
     category: (product.category || '').toLowerCase(),
-    menuCategory: product.menuCategory || '',
     price: product.price ?? 0,
     cost: product.cost ?? 0,
     available: !!product.available,
     tier: Array.isArray(product.tier) ? product.tier : product.tier ? [product.tier] : [],
-    preparationTime: product.preparationTime ?? 0,
     ingredients: Array.isArray(product.ingredients) ? product.ingredients : [],
+    ingredientsDe: Array.isArray(product.ingredientsDe) ? product.ingredientsDe : null,
     allergens: Array.isArray(product.allergens) ? product.allergens : [],
+    allergensDe: Array.isArray(product.allergensDe) ? product.allergensDe : null,
     productCategories: Array.isArray(product.productCategories) ? product.productCategories : [],
+    productCategoriesDe: Array.isArray(product.productCategoriesDe) ? product.productCategoriesDe : null,
     menus: product.menus
       ? product.menus
       : product.menuProducts
@@ -636,14 +680,14 @@ export default function AdminMenuManagement() {
 
 const [newItem, setNewItem] = useState<NewItemState>({
     name: '',
+    nameDe: '',
     description: '',
+    descriptionDe: '',
     category: 'starter',
-    menuCategory: 'starters',
     price: 0,
     cost: 0,
     available: true,
     tier: [],
-    preparationTime: 15,
     ingredients: [''],
     allergens: [],
     productCategories: [],
@@ -654,7 +698,9 @@ const [newItem, setNewItem] = useState<NewItemState>({
   // New menu form state
   const [newMenu, setNewMenu] = useState<NewMenuState>({
     name: '',
+    nameDe: '',
     description: '',
+    descriptionDe: '',
     isActive: true,
     startDate: '',
     endDate: '',
@@ -668,8 +714,9 @@ const [newItem, setNewItem] = useState<NewItemState>({
 
   // Filter menu items
   const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const query = searchTerm.toLowerCase().trim();
+    const matchesSearch = !query
+      || [item.name, item.nameDe || '', item.description, item.descriptionDe || ''].join(' ').toLowerCase().includes(query);
     const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
     const matchesMenu = menuFilter === 'all' || 
                        (menuFilter === 'unassigned' && item.menus.length === 0) ||
@@ -699,7 +746,14 @@ const [newItem, setNewItem] = useState<NewItemState>({
     const base = itemData || newItem;
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
-        const created = await productsApi.createProduct(base as any);
+        const created = await productsApi.createProduct({
+          ...(base as any),
+          nameDe: typeof (base as any).nameDe === 'string' && (base as any).nameDe.trim() ? (base as any).nameDe.trim() : undefined,
+          descriptionDe:
+            typeof (base as any).descriptionDe === 'string' && (base as any).descriptionDe.trim()
+              ? (base as any).descriptionDe.trim()
+              : undefined,
+        } as any);
         const normalized = normalizeProduct(created);
         setMenuItems([...menuItems, normalized]);
 
@@ -729,7 +783,15 @@ const [newItem, setNewItem] = useState<NewItemState>({
     if (!oldItem) return;
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
-        const payload = { ...updatedItem, menuIds: updatedItem.menus };
+        const payload = {
+          ...updatedItem,
+          menuIds: updatedItem.menus,
+          nameDe: typeof updatedItem.nameDe === 'string' && updatedItem.nameDe.trim() ? updatedItem.nameDe.trim() : undefined,
+          descriptionDe:
+            typeof updatedItem.descriptionDe === 'string' && updatedItem.descriptionDe.trim()
+              ? updatedItem.descriptionDe.trim()
+              : undefined,
+        };
         const saved = await productsApi.updateProduct(updatedItem.id, payload as any);
         const normalized = normalizeProduct(saved);
 
@@ -765,8 +827,29 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const addMenu = async (menuData?: NewMenuState | MenuType) => {
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
-        const payload = menuData || newMenu;
-        await menusApi.createMenu({ ...(payload as any), serviceIds: (payload as any).services } as any);
+        const payload: any = { ...(menuData || newMenu) };
+        if (typeof payload.nameDe === 'string') {
+          const trimmed = payload.nameDe.trim();
+          if (!trimmed) delete payload.nameDe;
+          else payload.nameDe = trimmed;
+        }
+        if (typeof payload.descriptionDe === 'string') {
+          const trimmed = payload.descriptionDe.trim();
+          if (!trimmed) delete payload.descriptionDe;
+          else payload.descriptionDe = trimmed;
+        }
+        if (Array.isArray(payload.steps)) {
+          payload.steps = payload.steps.map((step: any) => {
+            const next = { ...step };
+            if (typeof next.labelDe === 'string') {
+              const trimmed = next.labelDe.trim();
+              if (!trimmed) delete next.labelDe;
+              else next.labelDe = trimmed;
+            }
+            return next;
+          });
+        }
+        await menusApi.createMenu({ ...payload, serviceIds: payload.services } as any);
         await loadMenusAndProducts();
         setShowAddMenuForm(false);
         if (!menuData) {
@@ -784,7 +867,29 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const updateMenu = async (updatedMenu: MenuType) => {
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
-        const saved = await menusApi.updateMenu(updatedMenu.id, { ...(updatedMenu as any), serviceIds: updatedMenu.services } as any);
+        const payload: any = { ...(updatedMenu as any), serviceIds: updatedMenu.services };
+        if (typeof payload.nameDe === 'string') {
+          const trimmed = payload.nameDe.trim();
+          if (!trimmed) delete payload.nameDe;
+          else payload.nameDe = trimmed;
+        }
+        if (typeof payload.descriptionDe === 'string') {
+          const trimmed = payload.descriptionDe.trim();
+          if (!trimmed) delete payload.descriptionDe;
+          else payload.descriptionDe = trimmed;
+        }
+        if (Array.isArray(payload.steps)) {
+          payload.steps = payload.steps.map((step: any) => {
+            const next = { ...step };
+            if (typeof next.labelDe === 'string') {
+              const trimmed = next.labelDe.trim();
+              if (!trimmed) delete next.labelDe;
+              else next.labelDe = trimmed;
+            }
+            return next;
+          });
+        }
+        const saved = await menusApi.updateMenu(updatedMenu.id, payload);
         const normalized = normalizeMenu(saved);
         setMenus(menus.map(menu =>
           menu.id === normalized.id ? normalized : menu
@@ -931,14 +1036,14 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const resetNewItemForm = () => {
     setNewItem({
       name: '',
+      nameDe: '',
       description: '',
+      descriptionDe: '',
       category: 'starter',
-      menuCategory: 'starters',
       price: 0,
       cost: 0,
       available: true,
       tier: [],
-      preparationTime: 15,
       ingredients: [''],
       allergens: [],
       productCategories: [],
@@ -950,7 +1055,9 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const resetNewMenuForm = () => {
     setNewMenu({
       name: '',
+      nameDe: '',
       description: '',
+      descriptionDe: '',
       isActive: true,
       startDate: '',
       endDate: '',
@@ -965,7 +1072,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
 
   const getMenuName = (menuId: number) => {
     const menu = menus.find(m => m.id === menuId);
-    return menu ? menu.name : 'Unknown Menu';
+    return menu ? getMenuDisplayName(menu) : (isDE ? 'Unbekanntes Menue' : 'Unknown Menu');
   };
 
   const viewMenuDetails = (menu: MenuType) => {
@@ -993,7 +1100,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
           <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center">
             <div className="text-center">
               <Utensils className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">{t.menu.noImageAvailable}</p>
+              <p className="text-gray-700 text-sm">{t.menu.noImageAvailable}</p>
             </div>
           </div>
         ) : (
@@ -1069,7 +1176,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
                       {localImagePreview ? (
                         <img 
                           src={localImagePreview} 
-                          alt="Preview" 
+                          alt={t.menu.previewAlt}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -1107,11 +1214,21 @@ const [newItem, setNewItem] = useState<NewItemState>({
               <div className="md:col-span-3 space-y-6">
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
                     <input
                       type="text"
                       value={localItem.name}
                       onChange={(e) => handleLocalSave({ ...localItem, name: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                      placeholder={t.placeholders.dishName}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
+                    <input
+                      type="text"
+                      value={localItem.nameDe || ''}
+                      onChange={(e) => handleLocalSave({ ...localItem, nameDe: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                       placeholder={t.placeholders.dishName}
                     />
@@ -1126,38 +1243,36 @@ const [newItem, setNewItem] = useState<NewItemState>({
                       <option value="starter">{t.categories.starter}</option>
                       <option value="main">{t.categories.main}</option>
                       <option value="dessert">{t.categories.dessert}</option>
-                      <option value="beverage">{t.categories.beverage}</option>
+                      <option value="drink">{t.categories.drink}</option>
                       <option value="side">{t.categories.side}</option>
-                    </select>
+                  </select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
+                    <textarea
+                      value={localItem.description}
+                      onChange={(e) => handleLocalSave({ ...localItem, description: e.target.value })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                      placeholder={t.placeholders.dishDescription}
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSection}</label>
-                    <select
-                      value={localItem.menuCategory}
-                      onChange={(e) => handleLocalSave({ ...localItem, menuCategory: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-                    >
-                      {menuCategories.map(category => (
-                        <option key={category} value={category} className="capitalize">
-                          {category}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
+                    <textarea
+                      value={localItem.descriptionDe || ''}
+                      onChange={(e) => handleLocalSave({ ...localItem, descriptionDe: e.target.value })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                      placeholder={t.placeholders.dishDescription}
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
-                  <textarea
-                    value={localItem.description}
-                    onChange={(e) => handleLocalSave({ ...localItem, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.dishDescription}
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.sellingPrice}</label>
                     <input
@@ -1180,17 +1295,6 @@ const [newItem, setNewItem] = useState<NewItemState>({
                       placeholder={t.placeholders.price}
                       min="0"
                       step="0.01"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.prepTime}</label>
-                    <input
-                      type="number"
-                      value={localItem.preparationTime}
-                      onChange={(e) => handleLocalSave({ ...localItem, preparationTime: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder={t.placeholders.prepTime}
-                      min="1"
                     />
                   </div>
                 </div>
@@ -1235,7 +1339,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
                             htmlFor={`menu-${menu.id}`}
                             className="text-sm text-gray-700 cursor-pointer"
                           >
-                            {menu.name}
+                            {getMenuDisplayName(menu)}
                           </label>
                           <span className={`text-xs px-2 py-1 rounded ${
                             menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
@@ -1261,14 +1365,14 @@ const [newItem, setNewItem] = useState<NewItemState>({
                       const menu = menus.find(m => m.id === menuId);
                       if (!menu) return null;
                       const steps = Array.isArray(menu.steps) ? menu.steps : [];
-                      return (
-                        <div key={menuId} className="rounded-lg border border-gray-200 bg-white p-3">
-                          <p className="text-sm font-semibold text-gray-900 mb-2">{menu.name}</p>
+                       return (
+                         <div key={menuId} className="rounded-lg border border-gray-200 bg-white p-3">
+                          <p className="text-sm font-semibold text-gray-900 mb-2">{getMenuDisplayName(menu)}</p>
                           {steps.length > 0 ? (
                             <div className="space-y-1 text-sm text-gray-700">
                               {steps.map((step: MenuStep, index: number) => (
                                 <div key={`menu-${menuId}-step-${index}`} className="flex items-center justify-between">
-                                  <span>{step.label}</span>
+                                  <span>{isDE ? (step.labelDe || step.label) : step.label}</span>
                                   <span className="font-semibold text-gray-900">{step.included}</span>
                                 </div>
                               ))}
@@ -1351,7 +1455,7 @@ const AddFormModal = () => {
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                   <div className="aspect-square w-full overflow-hidden rounded-lg mb-4">
                     {localItem.image ? (
-                      <img src={localItem.image} alt="Preview" className="w-full h-full object-cover" />
+                      <img src={localItem.image} alt={t.menu.previewAlt} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-lg">
                         <Camera className="w-12 h-12 text-gray-400" />
@@ -1386,11 +1490,21 @@ const AddFormModal = () => {
             <div className="md:col-span-3 space-y-6">
               <div className="grid md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
                   <input
                     type="text"
                     value={localItem.name}
                     onChange={(e) => setLocalItem({ ...localItem, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.dishName}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
+                  <input
+                    type="text"
+                    value={localItem.nameDe || ''}
+                    onChange={(e) => setLocalItem({ ...localItem, nameDe: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder={t.placeholders.dishName}
                   />
@@ -1405,38 +1519,36 @@ const AddFormModal = () => {
                     <option value="starter">{t.categories.starter}</option>
                     <option value="main">{t.categories.main}</option>
                     <option value="dessert">{t.categories.dessert}</option>
-                    <option value="beverage">{t.categories.beverage}</option>
+                    <option value="drink">{t.categories.drink}</option>
                     <option value="side">{t.categories.side}</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.menuSection}</label>
-                  <select
-                    value={localItem.menuCategory}
-                    onChange={(e) => setLocalItem({ ...localItem, menuCategory: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-                  >
-                    {menuCategories.map(category => (
-                      <option key={category} value={category} className="capitalize">
-                        {category}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
+                  <textarea
+                    value={localItem.description}
+                    onChange={(e) => setLocalItem({ ...localItem, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.dishDescription}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
+                  <textarea
+                    value={localItem.descriptionDe || ''}
+                    onChange={(e) => setLocalItem({ ...localItem, descriptionDe: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.dishDescription}
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
-                <textarea
-                  value={localItem.description}
-                  onChange={(e) => setLocalItem({ ...localItem, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                  placeholder={t.placeholders.dishDescription}
-                />
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.sellingPrice}</label>
                   <input
@@ -1459,17 +1571,6 @@ const AddFormModal = () => {
                     placeholder={t.placeholders.price}
                     min="0"
                     step="0.01"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.prepTime}</label>
-                  <input
-                    type="number"
-                    value={localItem.preparationTime}
-                    onChange={(e) => setLocalItem({ ...localItem, preparationTime: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.prepTime}
-                    min="1"
                   />
                 </div>
               </div>
@@ -1518,7 +1619,7 @@ const AddFormModal = () => {
                           className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                         />
                         <label htmlFor={`new-menu-${menu.id}`} className="text-sm text-gray-700 cursor-pointer">
-                          {menu.name}
+                          {getMenuDisplayName(menu)}
                         </label>
                       </div>
                     ))}
@@ -1573,7 +1674,7 @@ const AddFormModal = () => {
                             }))
                           }
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Remove ingredient"
+                          title={t.actions.removeIngredientTitle}
                         >
                           <X size={16} />
                         </button>
@@ -1652,7 +1753,7 @@ const AddMenuFormModal = () => {
   const addMenuStep = () => {
     setLocalMenuState({
       ...localMenuState,
-      steps: [...(localMenuState.steps || []), { label: '', included: 0 }]
+      steps: [...(localMenuState.steps || []), { label: '', labelDe: '', included: 0 }]
     });
   };
 
@@ -1687,7 +1788,7 @@ const AddMenuFormModal = () => {
               <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuImage}</label>
               <div className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-white border border-gray-200">
                 {localMenuImagePreview ? (
-                  <img src={localMenuImagePreview} alt="Menu preview" className="w-full h-full object-cover" />
+                  <img src={localMenuImagePreview} alt={t.menu.menuPreviewAlt} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Camera className="w-10 h-10 text-gray-300" />
@@ -1719,11 +1820,21 @@ const AddMenuFormModal = () => {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
                   <input
                     type="text"
                     value={localMenuState.name}
                     onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuName}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
+                  <input
+                    type="text"
+                    value={(localMenuState as any).nameDe || ''}
+                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), nameDe: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder={t.placeholders.menuName}
                   />
@@ -1793,11 +1904,11 @@ const AddMenuFormModal = () => {
                           />
                           <div className="h-10 w-10 rounded-md bg-gray-100 overflow-hidden shrink-0">
                             {service.image ? (
-                              <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+                              <img src={service.image} alt={getServiceDisplayName(service)} className="h-full w-full object-cover" />
                             ) : null}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-semibold text-gray-900 truncate">{service.name}</div>
+                            <div className="font-semibold text-gray-900 truncate">{getServiceDisplayName(service)}</div>
                             <div className="text-xs text-gray-600">{service.occasion}</div>
                           </div>
                         </label>
@@ -1807,15 +1918,27 @@ const AddMenuFormModal = () => {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
-                <textarea
-                  value={localMenuState.description}
-                  onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                  placeholder={t.placeholders.menuDescription}
-                />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
+                  <textarea
+                    value={localMenuState.description}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuDescription}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
+                  <textarea
+                    value={(localMenuState as any).descriptionDe || ''}
+                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), descriptionDe: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuDescription}
+                  />
+                </div>
               </div>
 
               <div>
@@ -1826,7 +1949,7 @@ const AddMenuFormModal = () => {
                       <select
                         value={step.label}
                         onChange={(e) => updateMenuStep(index, { label: e.target.value })}
-                        className="col-span-12 sm:col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                        className="col-span-12 sm:col-span-5 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                       >
                         <option value="">{t.placeholders.stepLabel}</option>
                         {menuStepCategories.map((option) => (
@@ -1836,16 +1959,23 @@ const AddMenuFormModal = () => {
                         ))}
                       </select>
                       <input
+                        type="text"
+                        value={step.labelDe || ''}
+                        onChange={(e) => updateMenuStep(index, { labelDe: e.target.value })}
+                        className="col-span-12 sm:col-span-4 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        placeholder={isDE ? 'Schrittname (DE)' : 'Step name (DE)'}
+                      />
+                      <input
                         type="number"
                         value={step.included}
                         onChange={(e) => updateMenuStep(index, { included: parseInt(e.target.value, 10) || 0 })}
-                        className="col-span-12 sm:col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        className="col-span-12 sm:col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                         min="0"
                       />
                       <button
                         type="button"
                         onClick={() => removeMenuStep(index)}
-                        className="col-span-12 sm:col-span-2 w-fit justify-self-end sm:justify-self-auto p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="col-span-12 sm:col-span-1 w-fit justify-self-end sm:justify-self-auto p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         aria-label={t.actions.deleteItemTitle}
                       >
                         <XCircle size={18} />
@@ -1937,7 +2067,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
   const addMenuStep = () => {
     setLocalMenuState({
       ...localMenuState,
-      steps: [...(localMenuState.steps || []), { label: '', included: 0 }]
+      steps: [...(localMenuState.steps || []), { label: '', labelDe: '', included: 0 }]
     });
   };
 
@@ -1973,7 +2103,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
               <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuImage}</label>
               <div className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-white border border-gray-200">
                 {localMenuImagePreview ? (
-                  <img src={localMenuImagePreview} alt="Menu preview" className="w-full h-full object-cover" />
+                  <img src={localMenuImagePreview} alt={t.menu.menuPreviewAlt} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Camera className="w-10 h-10 text-gray-300" />
@@ -2005,11 +2135,21 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
                   <input
                     type="text"
                     value={localMenuState.name}
                     onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuName}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
+                  <input
+                    type="text"
+                    value={(localMenuState as any).nameDe || ''}
+                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), nameDe: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder={t.placeholders.menuName}
                   />
@@ -2079,11 +2219,11 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                           />
                           <div className="h-10 w-10 rounded-md bg-gray-100 overflow-hidden shrink-0">
                             {service.image ? (
-                              <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+                              <img src={service.image} alt={getServiceDisplayName(service)} className="h-full w-full object-cover" />
                             ) : null}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-semibold text-gray-900 truncate">{service.name}</div>
+                            <div className="font-semibold text-gray-900 truncate">{getServiceDisplayName(service)}</div>
                             <div className="text-xs text-gray-600">{service.occasion}</div>
                           </div>
                         </label>
@@ -2093,15 +2233,27 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
-                <textarea
-                  value={localMenuState.description}
-                  onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                  placeholder={t.placeholders.menuDescription}
-                />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
+                  <textarea
+                    value={localMenuState.description}
+                    onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuDescription}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
+                  <textarea
+                    value={(localMenuState as any).descriptionDe || ''}
+                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), descriptionDe: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder={t.placeholders.menuDescription}
+                  />
+                </div>
               </div>
 
               <div>
@@ -2112,7 +2264,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                       <select
                         value={step.label}
                         onChange={(e) => updateMenuStep(index, { label: e.target.value })}
-                        className="col-span-12 sm:col-span-7 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                        className="col-span-12 sm:col-span-5 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                       >
                         <option value="">{t.placeholders.stepLabel}</option>
                         {menuStepCategories.map((option) => (
@@ -2122,16 +2274,23 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                         ))}
                       </select>
                       <input
+                        type="text"
+                        value={step.labelDe || ''}
+                        onChange={(e) => updateMenuStep(index, { labelDe: e.target.value })}
+                        className="col-span-12 sm:col-span-4 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        placeholder={isDE ? 'Schrittname (DE)' : 'Step name (DE)'}
+                      />
+                      <input
                         type="number"
                         value={step.included}
                         onChange={(e) => updateMenuStep(index, { included: parseInt(e.target.value, 10) || 0 })}
-                        className="col-span-12 sm:col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                        className="col-span-12 sm:col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                         min="0"
                       />
                       <button
                         type="button"
                         onClick={() => removeMenuStep(index)}
-                        className="col-span-12 sm:col-span-2 w-fit justify-self-end sm:justify-self-auto p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="col-span-12 sm:col-span-1 w-fit justify-self-end sm:justify-self-auto p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         aria-label={t.actions.deleteItemTitle}
                       >
                         <XCircle size={18} />
@@ -2187,6 +2346,11 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
 };
 
 const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean }) => (
+  (() => {
+    const displayName = getMenuDisplayName(menu) || t.menu.untitledMenu;
+    const displayDescription = getMenuDisplayDescription(menu) || '';
+
+    return (
   <div
     role="button"
     tabIndex={0}
@@ -2204,12 +2368,12 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
   >
     <div className="flex items-start gap-3">
       <div className="h-14 w-14 rounded-xl overflow-hidden border border-gray-200 bg-white flex-shrink-0">
-        <ImageWithFallback src={menu.image} alt={menu.name || t.menu.untitledMenu} className="h-14 w-14" />
+        <ImageWithFallback src={menu.image} alt={displayName} className="h-14 w-14" />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h4 className="text-lg font-semibold text-gray-900 truncate">{menu.name || t.menu.untitledMenu}</h4>
+          <h4 className="text-lg font-semibold text-gray-900 truncate">{displayName}</h4>
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className={`px-2 py-1 text-xs rounded-full ${
               menu.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -2239,7 +2403,7 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 line-clamp-2">{menu.description || t.menu.noDescription}</p>
+        <p className="text-sm text-gray-600 line-clamp-2">{displayDescription || t.menu.noDescription}</p>
         <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
           <span>
             {menu.services?.length
@@ -2253,6 +2417,8 @@ const MenuCard = ({ menu, isSelected }: { menu: MenuType; isSelected: boolean })
       </div>
     </div>
   </div>
+    );
+  })()
 );
 
 const ProductCard = ({ item }: { item: MenuItem }) => (
@@ -2265,15 +2431,12 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       <div className="relative h-48 w-full overflow-hidden">
         <ImageWithFallback 
           src={item.image}
-          alt={item.name}
+          alt={getProductDisplayName(item)}
           className="w-full h-full"
         />
         <div className="absolute top-4 left-4 flex flex-col gap-1">
           <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium capitalize text-gray-700">
             {item.category}
-          </span>
-          <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium capitalize text-gray-700">
-            {item.menuCategory}
           </span>
         </div>
         <div className="absolute top-4 right-4">
@@ -2291,11 +2454,9 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       <div className="p-6">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{getProductDisplayName(item)}</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm text-gray-600 capitalize">{item.category}</span>
-              <span className="text-sm text-gray-400">|</span>
-              <span className="text-sm text-gray-600">{item.preparationTime} min</span>
             </div>
           </div>
           <div className="text-right">
@@ -2304,19 +2465,21 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           </div>
         </div>
         
-        <p className="text-sm text-gray-700 line-clamp-2 mb-4">{item.description}</p>
+        <p className="text-sm text-gray-700 line-clamp-2 mb-4">{getProductDisplayDescription(item)}</p>
 
         {/* Product Categories */}
         <div className="mb-3">
           <div className="flex flex-wrap gap-1">
-            {item.productCategories.slice(0, 3).map((category: string) => (
+            {(isDE && item.productCategoriesDe?.length ? item.productCategoriesDe : item.productCategories)
+              .slice(0, 3)
+              .map((category: string) => (
               <span key={category} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs capitalize">
                 {category.replace('-', ' ')}
               </span>
             ))}
-            {item.productCategories.length > 3 && (
+            {(isDE && item.productCategoriesDe?.length ? item.productCategoriesDe : item.productCategories).length > 3 && (
               <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
-                +{item.productCategories.length - 3}
+                +{(isDE && item.productCategoriesDe?.length ? item.productCategoriesDe : item.productCategories).length - 3}
               </span>
             )}
           </div>
@@ -2328,12 +2491,12 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           <div className="flex flex-wrap gap-1">
             {item.menus.slice(0, 2).map((menuId: number) => {
               const menu = menus.find(m => m.id === menuId);
-              return menu ? (
-                <span key={menuId} className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs">
-                  {menu.name}
-                </span>
-              ) : null;
-            })}
+                return menu ? (
+                  <span key={menuId} className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs">
+                   {getMenuDisplayName(menu)}
+                  </span>
+                ) : null;
+              })}
             {item.menus.length > 2 && (
               <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
                 +{item.menus.length - 2}
@@ -2400,7 +2563,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             <button
               onClick={() => restoreMenuItem(item.id)}
               className="px-3 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium flex items-center gap-1"
-              title="Restore Item"
+              title={t.actions.restoreItemTitle}
             >
               <CheckCircle size={14} />
             </button>
@@ -2461,6 +2624,8 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
+      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
       headerMeta={
         <div className="flex items-center gap-4">
           <button
@@ -2570,7 +2735,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 <option value="starter">{t.filters.starters}</option>
                 <option value="main">{t.filters.mains}</option>
                 <option value="dessert">{t.filters.desserts}</option>
-                <option value="beverage">{t.filters.beverages}</option>
+                <option value="drink">{t.filters.drinks}</option>
                 <option value="side">{t.filters.sides}</option>
               </select>
 
@@ -2583,7 +2748,7 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 <option value="unassigned">{t.filters.unassigned}</option>
                 {menus.map(menu => (
                   <option key={menu.id} value={menu.id}>
-                    {menu.name}
+                    {getMenuDisplayName(menu)}
                   </option>
                 ))}
               </select>
@@ -2654,23 +2819,11 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-bold text-gray-900 font-elegant">
-                      {selectedMenu ? `${selectedMenu.name} - Products` : 'All Products'}
+                      {selectedMenu
+                        ? `${getMenuDisplayName(selectedMenu)} - ${isDE ? 'Produkte' : 'Products'}`
+                        : (isDE ? 'Alle Produkte' : 'All Products')}
                     </h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">{t.menu.menuSections}</span>
-                      <div className="flex flex-wrap gap-1">
-                        {menuCategories.slice(0, 3).map(category => (
-                          <span key={category} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs capitalize">
-                            {category}
-                          </span>
-                        ))}
-                        {menuCategories.length > 3 && (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
-                            +{menuCategories.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+
                   </div>
                 <p className="text-gray-600 text-sm mt-1">
                     {selectedMenu

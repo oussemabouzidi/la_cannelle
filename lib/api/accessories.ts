@@ -11,7 +11,8 @@ export interface Accessory {
   unitEn?: string | null;
   unitDe?: string | null;
   price: number;
-  minQuantity: number;
+  quantityMode?: 'GUEST_COUNT' | 'FIXED';
+  fixedQuantity?: number | null;
   image?: string | null;
   isActive: boolean;
   createdAt: string;

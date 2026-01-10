@@ -16,8 +16,12 @@ export default function LoadingOverlay({ open, label = 'Loading...', minDuration
 
   useEffect(() => {
     if (open) {
-      setVisible(true);
-      setShownAt(Date.now());
+      if (!visible) {
+        setVisible(true);
+      }
+      if (shownAt === null) {
+        setShownAt(Date.now());
+      }
       return;
     }
 

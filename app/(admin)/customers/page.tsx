@@ -97,6 +97,7 @@ export default function Customers() {
         noCustomers: 'No customers found matching your criteria',
         recentOrders: 'Recent Orders',
         orderNumber: 'Order',
+        orderTypeFallback: 'Order',
         noItems: 'No items',
         noOrders: 'No orders found',
         viewProfile: 'View Profile',
@@ -164,6 +165,7 @@ export default function Customers() {
         noCustomers: 'Keine Kunden gefunden, die den Kriterien entsprechen',
         recentOrders: 'Letzte Bestellungen',
         orderNumber: 'Bestellung',
+        orderTypeFallback: 'Bestellung',
         noItems: 'Keine Artikel',
         noOrders: 'Keine Bestellungen gefunden',
         viewProfile: 'Profil ansehen',
@@ -441,6 +443,8 @@ export default function Customers() {
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
+      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
     >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -674,7 +678,7 @@ export default function Customers() {
                                   {t.status[order.status as keyof typeof t.status] ?? order.status}
                                 </span>
                                 <span className="text-xs text-gray-600 capitalize">
-                                  {order.serviceType || order.eventType || order.status || 'order'}
+                                  {order.serviceType || order.eventType || order.status || t.labels.orderTypeFallback}
                                 </span>
                               </div>
                             </div>

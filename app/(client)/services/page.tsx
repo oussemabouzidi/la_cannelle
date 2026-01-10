@@ -241,8 +241,13 @@ export default function ServicesPage() {
               
               {/* Image Placeholder */}
               <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
-                <div className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 flex items-center justify-center">
-                  <img src="/images/services/office.jpg"/>
+                <div className="bg-gradient-to-br from-amber-100 to-amber-200 h-48 overflow-hidden">
+                  <img
+                    src="/images/services/office.jpg"
+                    alt={t.officeCatering.title}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
               </div>
             </div>
@@ -298,8 +303,13 @@ export default function ServicesPage() {
               
               {/* Image Placeholder */}
               <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
-                <div className="bg-gradient-to-br from-amber-200 to-amber-300 h-48 flex items-center justify-center">
-                  <img src="/images/services/event.jpg" />
+                <div className="bg-gradient-to-br from-amber-200 to-amber-300 h-48 overflow-hidden">
+                  <img
+                    src="/images/services/event.jpg"
+                    alt={t.eventCatering.title}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
               </div>
             </div>
@@ -327,9 +337,14 @@ export default function ServicesPage() {
               
               {/* Image Placeholder */}
               <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
-                <div className="bg-gradient-to-br from-pink-100 to-amber-100 h-48 flex items-center justify-center">
-<img src="/images/services/weddings.jpg" />                
-</div>
+                <div className="bg-gradient-to-br from-pink-100 to-amber-100 h-48 overflow-hidden">
+                  <img
+                    src="/images/services/weddings.jpg"
+                    alt={t.weddings.title}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
               </div>
             </div>
             
@@ -384,9 +399,14 @@ export default function ServicesPage() {
               
               {/* Image Placeholder */}
               <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
-                <div className="bg-gradient-to-br from-blue-100 to-amber-100 h-48 flex items-center justify-center">
-<img src="/images/services/corporate.jpg" alt=""/>                
-</div>
+                <div className="bg-gradient-to-br from-blue-100 to-amber-100 h-48 overflow-hidden">
+                  <img
+                    src="/images/services/corporate.jpg"
+                    alt={t.corporateEvents.title}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
               </div>
             </div>
           </div>

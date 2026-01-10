@@ -55,6 +55,11 @@ JWT_EXPIRES_IN="7d"
 PORT=3001
 NODE_ENV=development
 
+# DeepL (optional, for auto-translating content)
+DEEPL_AUTH_KEY="your-deepl-free-api-key"
+DEEPL_API_URL="https://api-free.deepl.com/v2/translate"
+DEEPL_AUTO_TRANSLATE_ON_READ="true"
+
 # CORS
 FRONTEND_URL="http://localhost:3000"
 ```
@@ -75,10 +80,23 @@ FRONTEND_URL="http://localhost:3000"
    ```bash
    npm run prisma:migrate
    ```
+   If you are developing and need Prisma to create a new migration from schema changes, use:
+   ```bash
+   npm run prisma:migrate:dev
+   ```
 
 4. Seed the database:
    ```bash
    npm run seed
+   ```
+
+   Or restore from a SQL dump (defaults to `../../backup.sql` from `backend/`):
+   ```bash
+   npm run seed:backup
+   ```
+   You can also pass a custom file:
+   ```bash
+   npm run seed:backup -- --file "C:\\path\\to\\backup.sql"
    ```
 
 ### 4. Start the Server
@@ -224,7 +242,6 @@ All errors are handled by the error middleware and return JSON responses:
 
 ## Notes
 
-- Minimum order amount: €388.80 (enforced in order creation)
 - Service fee: Configurable per order (default: €48.90)
 - Order statuses: PENDING, CONFIRMED, PREPARATION, DELIVERY, COMPLETED, CANCELLED
 - Payment statuses: PENDING, PAID, REFUNDED

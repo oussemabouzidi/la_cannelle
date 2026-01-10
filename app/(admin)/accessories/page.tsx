@@ -36,7 +36,8 @@ type FormState = {
   description: string;
   details: string;
   price: string;
-  minQuantity: string;
+  quantityMode: 'GUEST_COUNT' | 'FIXED';
+  fixedQuantity: string;
   image: string;
   isActive: boolean;
 };
@@ -46,7 +47,8 @@ const emptyForm = (): FormState => ({
   description: '',
   details: '',
   price: '0',
-  minQuantity: '1',
+  quantityMode: 'GUEST_COUNT',
+  fixedQuantity: '',
   image: '',
   isActive: true
 });
@@ -102,7 +104,7 @@ export default function AdminAccessories() {
         image: isDE ? 'Bild' : 'Image',
         name: isDE ? 'Name' : 'Name',
         price: isDE ? 'Preis' : 'Price',
-        minQty: isDE ? 'Min. Menge' : 'Min Qty',
+        quantityRule: isDE ? 'Mengenregel' : 'Quantity rule',
         status: isDE ? 'Status' : 'Status',
         updated: isDE ? 'Aktualisiert' : 'Updated',
         actions: isDE ? 'Aktionen' : 'Actions'
@@ -121,6 +123,7 @@ export default function AdminAccessories() {
         editTitle: isDE ? 'Zubehoer bearbeiten' : 'Edit Accessory',
         save: isDE ? 'Speichern' : 'Save',
         cancel: isDE ? 'Abbrechen' : 'Cancel',
+        previewAlt: isDE ? 'Vorschau' : 'Preview',
         english: isDE ? 'Englisch' : 'English',
         german: isDE ? 'Deutsch' : 'German',
         required: isDE ? 'Pflichtfeld' : 'Required'
@@ -130,7 +133,10 @@ export default function AdminAccessories() {
         description: isDE ? 'Beschreibung' : 'Description',
         details: isDE ? 'Details' : 'Details',
         price: isDE ? 'Preis' : 'Price',
-        minQuantity: isDE ? 'Mindestmenge' : 'Minimum quantity',
+        quantityMode: isDE ? 'Mengenregel' : 'Quantity rule',
+        quantityModeGuest: isDE ? 'Wie Gaesteanzahl (Bestellung)' : 'Same as guest count (order)',
+        quantityModeFixed: isDE ? 'Feste Menge' : 'Fixed quantity',
+        fixedQuantity: isDE ? 'Feste Menge' : 'Fixed quantity',
         image: isDE ? 'Bild (URL oder Upload)' : 'Image (URL or upload)',
         imageUrl: isDE ? 'Bild URL' : 'Image URL',
         upload: isDE ? 'Bild hochladen' : 'Upload image',
@@ -201,7 +207,8 @@ export default function AdminAccessories() {
       description: accessory.descriptionDe || accessory.descriptionEn || '',
       details: accessory.detailsDe || accessory.detailsEn || '',
       price: String(accessory.price ?? 0),
-      minQuantity: String(accessory.minQuantity ?? 1),
+      quantityMode: accessory.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT',
+      fixedQuantity: accessory.fixedQuantity != null ? String(accessory.fixedQuantity) : '',
       image: accessory.image || '',
       isActive: Boolean(accessory.isActive)
     });
@@ -227,6 +234,9 @@ export default function AdminAccessories() {
     if (!form.name.trim() || !form.description.trim()) {
       return;
     }
+    if (form.quantityMode === 'FIXED' && !(Number(form.fixedQuantity) > 0)) {
+      return;
+    }
 
     const name = form.name.trim();
     const description = form.description.trim();
@@ -242,7 +252,8 @@ export default function AdminAccessories() {
       unitEn: null,
       unitDe: null,
       price: Number(form.price),
-      minQuantity: Number(form.minQuantity),
+      quantityMode: form.quantityMode,
+      fixedQuantity: form.quantityMode === 'FIXED' ? Number(form.fixedQuantity) : null,
       image: form.image.trim() || null,
       isActive: form.isActive
     };
@@ -304,6 +315,8 @@ export default function AdminAccessories() {
       adminRoleLabel={language === 'DE' ? 'Administrator' : 'Administrator'}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
+      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
       headerMeta={
         <div className="flex items-center gap-3">
           <button
@@ -389,7 +402,7 @@ export default function AdminAccessories() {
                         {copy.table.price}
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        {copy.table.minQty}
+                        {copy.table.quantityRule}
                       </th>
                       <th className="text-left px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
                         {copy.table.status}
@@ -416,24 +429,33 @@ export default function AdminAccessories() {
                         </td>
                       </tr>
                     ) : (
-                      filteredAccessories.map((a) => (
-                        <tr key={a.id} className="hover:bg-amber-50/50">
-                          <td className="px-6 py-4">
-                            <div className="h-12 w-12 rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={a.image || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop'}
-                                alt={a.nameDe || a.nameEn}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            </div>
+                        filteredAccessories.map((a) => (
+                          (() => {
+                            const displayName = language === 'DE'
+                              ? (a.nameDe || a.nameEn)
+                              : (a.nameEn || a.nameDe || '');
+                            return (
+                          <tr key={a.id} className="hover:bg-amber-50/50">
+                            <td className="px-6 py-4">
+                              <div className="h-12 w-12 rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={a.image || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop'}
+                                  alt={displayName}
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="font-semibold text-gray-900">{displayName}</div>
+                            </td>
+                            <td className="px-6 py-4 text-gray-800">EUR {Number(a.price).toFixed(2)}</td>
+                          <td className="px-6 py-4 text-gray-800 text-sm">
+                            {a.quantityMode === 'FIXED'
+                              ? `${copy.fields.quantityModeFixed}: ${a.fixedQuantity ?? '-'}`
+                              : copy.fields.quantityModeGuest}
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="font-semibold text-gray-900">{a.nameDe || a.nameEn}</div>
-                          </td>
-                          <td className="px-6 py-4 text-gray-800">EUR {Number(a.price).toFixed(2)}</td>
-                          <td className="px-6 py-4 text-gray-800">{a.minQuantity}</td>
                           <td className="px-6 py-4">
                             {a.isActive ? (
                               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-800 border border-green-200">
@@ -469,8 +491,10 @@ export default function AdminAccessories() {
                               </button>
                             </div>
                           </td>
-                        </tr>
-                      ))
+                          </tr>
+                            );
+                          })()
+                        ))
                     )}
                   </tbody>
                 </table>
@@ -482,7 +506,7 @@ export default function AdminAccessories() {
         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto">
           <button
             type="button"
-            aria-label="Close"
+            aria-label={copy.modal.cancel}
             className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeModal}
           />
@@ -540,14 +564,36 @@ export default function AdminAccessories() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-gray-800">{copy.fields.minQuantity}</label>
-                  <input
-                    value={form.minQuantity}
-                    onChange={(e) => setForm((p) => ({ ...p, minQuantity: e.target.value }))}
-                    inputMode="numeric"
-                    className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
-                  />
+                  <label className="text-sm font-semibold text-gray-800">{copy.fields.quantityMode}</label>
+                  <select
+                    value={form.quantityMode}
+                    onChange={(e) => {
+                      const next = (e.target.value === 'FIXED' ? 'FIXED' : 'GUEST_COUNT') as FormState['quantityMode'];
+                      setForm((p) => ({
+                        ...p,
+                        quantityMode: next,
+                        fixedQuantity: next === 'FIXED' ? (p.fixedQuantity || '1') : ''
+                      }));
+                    }}
+                    className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900"
+                  >
+                    <option value="GUEST_COUNT">{copy.fields.quantityModeGuest}</option>
+                    <option value="FIXED">{copy.fields.quantityModeFixed}</option>
+                  </select>
                 </div>
+
+                {form.quantityMode === 'FIXED' && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-800">{copy.fields.fixedQuantity}</label>
+                    <input
+                      value={form.fixedQuantity}
+                      onChange={(e) => setForm((p) => ({ ...p, fixedQuantity: e.target.value }))}
+                      inputMode="numeric"
+                      className="mt-2 w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 bg-white text-gray-900 placeholder:text-gray-500"
+                      placeholder="1"
+                    />
+                  </div>
+                )}
 
                 <div className="md:col-span-2">
                   <label className="text-sm font-semibold text-gray-800">{copy.fields.image}</label>
@@ -570,7 +616,7 @@ export default function AdminAccessories() {
                   {form.image.trim() && (
                     <div className="mt-3 h-44 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={form.image.trim()} alt="Preview" className="w-full h-full object-cover" />
+                      <img src={form.image.trim()} alt={copy.modal.previewAlt} className="w-full h-full object-cover" />
                     </div>
                   )}
                 </div>
@@ -599,7 +645,12 @@ export default function AdminAccessories() {
               </button>
               <button
                 onClick={saveAccessory}
-                disabled={saving || !form.name.trim() || !form.description.trim()}
+                disabled={
+                  saving
+                  || !form.name.trim()
+                  || !form.description.trim()
+                  || (form.quantityMode === 'FIXED' && !(Number(form.fixedQuantity) > 0))
+                }
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Save className="w-4 h-4" />

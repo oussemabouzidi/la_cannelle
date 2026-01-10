@@ -31,6 +31,13 @@ type OrderTranslations = {
     dateConstraintLarge: string;
   };
   menuSelection: { title: string; subtitle: string };
+  menuMinPeoplePrompt: {
+    title: string;
+    description: (menuMinGuests: number, selectedGuests: number) => string;
+    useMenuMin: (menuMinGuests: number) => string;
+    keepSelected: (selectedGuests: number) => string;
+    cancel: string;
+  };
   productSelection: {
     orderSummary: string;
     starters: string;
@@ -61,7 +68,6 @@ type OrderTranslations = {
       details?: string;
       price: number;
       unit: string;
-      minQuantity: number;
     }[];
   };
   delivery: {
@@ -122,6 +128,14 @@ const en: OrderTranslations = {
     dateConstraintLarge: 'Earliest selectable date is {date} (72h lead time for groups of 100 or more guests).',
   },
   menuSelection: { title: 'Menu selection', subtitle: 'Pick a curated menu' },
+  menuMinPeoplePrompt: {
+    title: 'Guest count for this menu',
+    description: (menuMinGuests, selectedGuests) =>
+      `This menu has a minimum of ${menuMinGuests} guests. Do you want to continue with ${menuMinGuests} guests or keep your selected ${selectedGuests}?`,
+    useMenuMin: (menuMinGuests) => `Use ${menuMinGuests} guests (menu minimum)`,
+    keepSelected: (selectedGuests) => `Keep ${selectedGuests} guests`,
+    cancel: 'Cancel',
+  },
   productSelection: {
     orderSummary: 'Order summary',
     starters: 'Starters',
@@ -153,7 +167,6 @@ const en: OrderTranslations = {
         details: 'Collected after the event.',
         price: 3.0,
         unit: '/ guest',
-        minQuantity: 10,
       },
       {
         id: 'eco-disposables',
@@ -162,7 +175,6 @@ const en: OrderTranslations = {
         details: 'Great for outdoor events.',
         price: 1.5,
         unit: '/ guest',
-        minQuantity: 10,
       },
       {
         id: 'glassware',
@@ -171,7 +183,6 @@ const en: OrderTranslations = {
         details: 'Includes washing and pickup.',
         price: 1.8,
         unit: '/ guest',
-        minQuantity: 10,
       },
       {
         id: 'table-linens',
@@ -180,7 +191,6 @@ const en: OrderTranslations = {
         details: 'Pressed and delivered.',
         price: 1.2,
         unit: '/ guest',
-        minQuantity: 10,
       },
       {
         id: 'serving-utensils',
@@ -189,7 +199,6 @@ const en: OrderTranslations = {
         details: 'Included with menu.',
         price: 0,
         unit: '',
-        minQuantity: 1,
       },
     ],
   },
@@ -251,6 +260,14 @@ const de: OrderTranslations = {
     dateConstraintLarge: 'Erstes auswaehlbares Datum ist {date} (72h Vorlaufzeit fuer Gruppen ab 100 Gaesten).',
   },
   menuSelection: { title: 'Menueauswahl', subtitle: 'Waehlen Sie ein kuratiertes Menue' },
+  menuMinPeoplePrompt: {
+    title: 'Gaesteanzahl fuer dieses Menue',
+    description: (menuMinGuests, selectedGuests) =>
+      `Dieses Menue hat ein Minimum von ${menuMinGuests} Gaesten. Moechten Sie mit ${menuMinGuests} Gaesten fortfahren oder Ihre Auswahl (${selectedGuests}) behalten?`,
+    useMenuMin: (menuMinGuests) => `Mit ${menuMinGuests} Gaesten fortfahren (Menue-Minimum)`,
+    keepSelected: (selectedGuests) => `Bei ${selectedGuests} Gaesten bleiben`,
+    cancel: 'Abbrechen',
+  },
   productSelection: {
     orderSummary: 'Bestelluebersicht',
     starters: 'Vorspeisen',
@@ -282,7 +299,6 @@ const de: OrderTranslations = {
         details: 'Wird nach dem Event abgeholt.',
         price: 3.0,
         unit: '/ Gast',
-        minQuantity: 10,
       },
       {
         id: 'eco-disposables',
@@ -291,7 +307,6 @@ const de: OrderTranslations = {
         details: 'Ideal fuer Outdoor-Events.',
         price: 1.5,
         unit: '/ Gast',
-        minQuantity: 10,
       },
       {
         id: 'glassware',
@@ -300,7 +315,6 @@ const de: OrderTranslations = {
         details: 'Inklusive Reinigung und Abholung.',
         price: 1.8,
         unit: '/ Gast',
-        minQuantity: 10,
       },
       {
         id: 'table-linens',
@@ -309,7 +323,6 @@ const de: OrderTranslations = {
         details: 'Gepresst und geliefert.',
         price: 1.2,
         unit: '/ Gast',
-        minQuantity: 10,
       },
       {
         id: 'serving-utensils',
@@ -318,14 +331,13 @@ const de: OrderTranslations = {
         details: 'Im Menue enthalten.',
         price: 0,
         unit: '',
-        minQuantity: 1,
       },
     ],
   },
   delivery: {
     title: 'Lieferdetails',
     subtitle: 'Wie erreichen wir Sie?',
-    contact: { first: 'Vorname', last: 'Nachname', email: 'E-Mail', phone: 'Telefonnummer', company: 'Firma (optional)' },
+    contact: { first: 'Vorname', last: 'Nachname', email: 'E-Mail-Adresse', phone: 'Telefonnummer', company: 'Firma (optional)' },
     requests: 'Besondere Wuensche',
   },
   payment: {
@@ -345,4 +357,3 @@ export const orderTranslations: Record<Language, OrderTranslations> = {
   EN: en,
   DE: de,
 };
-

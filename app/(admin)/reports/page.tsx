@@ -111,6 +111,8 @@ export default function AdminReports() {
       adminRoleLabel={isDE ? 'Administrator' : 'Administrator'}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
+      openMenuLabel={isDE ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={isDE ? 'Menue schliessen' : 'Close menu'}
       headerMeta={
         <button
           onClick={loadReports}

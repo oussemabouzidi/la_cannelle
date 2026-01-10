@@ -1,6 +1,15 @@
 import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
 import { normalizeImageValue } from '../utils/uploads';
+import { translationService } from './translationService';
+import { translationBackfillService } from './translationBackfillService';
+
+const isDeeplAutoTranslateOnReadEnabled = () => {
+  const raw = process.env.DEEPL_AUTO_TRANSLATE_ON_READ;
+  if (raw === undefined) return true;
+  const normalized = String(raw).trim().toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes';
+};
 
 export const menuService = {
   async getMenus(filters?: {
@@ -18,7 +27,9 @@ export const menuService = {
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search } },
-        { description: { contains: filters.search } }
+        { nameDe: { contains: filters.search } },
+        { description: { contains: filters.search } },
+        { descriptionDe: { contains: filters.search } }
       ];
     }
 
@@ -31,7 +42,9 @@ export const menuService = {
     const select: any = {
       id: true,
       name: true,
+      nameDe: true,
       description: true,
+      descriptionDe: true,
       isActive: true,
       startDate: true,
       endDate: true,
@@ -55,6 +68,11 @@ export const menuService = {
       }
     });
 
+    if (isDeeplAutoTranslateOnReadEnabled()) {
+      await translationBackfillService.backfillMenusDe(menus as any);
+      await translationBackfillService.backfillMenuStepsDe(menus as any);
+    }
+
     return menus;
   },
 
@@ -62,7 +80,9 @@ export const menuService = {
     const select: any = {
       id: true,
       name: true,
+      nameDe: true,
       description: true,
+      descriptionDe: true,
       isActive: true,
       startDate: true,
       endDate: true,
@@ -87,12 +107,19 @@ export const menuService = {
       throw new AppError('Menu not found', 404);
     }
 
+    if (isDeeplAutoTranslateOnReadEnabled()) {
+      await translationBackfillService.backfillMenusDe([menu] as any);
+      await translationBackfillService.backfillMenuStepsDe([menu] as any);
+    }
+
     return menu;
   },
 
   async createMenu(data: {
     name: string;
+    nameDe?: string | null;
     description: string;
+    descriptionDe?: string | null;
     isActive?: boolean;
     startDate?: Date;
     endDate?: Date;
@@ -106,17 +133,65 @@ export const menuService = {
   }) {
     const image = await normalizeImageValue(data.image, { prefix: 'menu' });
 
+    const providedNameDe = typeof data.nameDe === 'string' ? data.nameDe.trim() : '';
+    const providedDescriptionDe = typeof data.descriptionDe === 'string' ? data.descriptionDe.trim() : '';
+
+    const toTranslate: Array<{ key: 'nameDe' | 'descriptionDe'; text: string }> = [];
+    if (!providedNameDe) toTranslate.push({ key: 'nameDe', text: data.name });
+    if (!providedDescriptionDe) toTranslate.push({ key: 'descriptionDe', text: data.description });
+
+    const translated = toTranslate.length
+      ? await translationService.translateTexts(toTranslate.map(item => item.text), { targetLang: 'DE' })
+      : null;
+    const translatedMap = new Map<string, string>();
+    if (translated) {
+      toTranslate.forEach((item, index) => {
+        translatedMap.set(item.key, translated[index] ?? '');
+      });
+    }
+
+    const nameDe = providedNameDe || (translatedMap.get('nameDe') || null);
+    const descriptionDe = providedDescriptionDe || (translatedMap.get('descriptionDe') || null);
+
+    let steps = data.steps ?? undefined;
+    if (Array.isArray(steps)) {
+      const stepTargets: Array<{ index: number; text: string }> = [];
+      steps.forEach((step: any, index: number) => {
+        const label = typeof step?.label === 'string' ? step.label.trim() : '';
+        if (!label) return;
+        const labelDe = typeof step?.labelDe === 'string' ? step.labelDe.trim() : '';
+        if (labelDe) return;
+        stepTargets.push({ index, text: label });
+      });
+
+      if (stepTargets.length > 0) {
+        const translatedSteps = await translationService.translateTexts(stepTargets.map(s => s.text), { targetLang: 'DE' });
+        if (translatedSteps) {
+          const nextSteps = steps.map((step: any) => (step && typeof step === 'object' ? { ...step } : step));
+          stepTargets.forEach((target, idx) => {
+            const step = nextSteps[target.index];
+            if (step && typeof step === 'object') {
+              nextSteps[target.index] = { ...step, labelDe: translatedSteps[idx] ?? null };
+            }
+          });
+          steps = nextSteps;
+        }
+      }
+    }
+
     const menu = await prisma.menu.create({
       data: {
         name: data.name,
+        nameDe,
         description: data.description,
+        descriptionDe,
         isActive: data.isActive ?? true,
         startDate: data.startDate,
         endDate: data.endDate,
         price: data.price,
         image,
         minPeople: data.minPeople ?? null,
-        steps: data.steps ?? undefined,
+        steps,
         menuProducts: data.productIds ? {
           create: data.productIds.map(productId => ({ productId }))
         } : undefined,
@@ -161,6 +236,31 @@ export const menuService = {
 
     if (updateData.image !== undefined) {
       updateData.image = await normalizeImageValue(updateData.image, { prefix: 'menu' });
+    }
+
+    const toTranslate: Array<{ key: 'nameDe' | 'descriptionDe'; text: string }> = [];
+    if (updateData.name !== undefined && updateData.nameDe === undefined) {
+      const name = String(updateData.name || '').trim();
+      if (name) {
+        toTranslate.push({ key: 'nameDe', text: name });
+      }
+    }
+    if (updateData.description !== undefined && updateData.descriptionDe === undefined) {
+      const description = String(updateData.description || '').trim();
+      if (description) {
+        toTranslate.push({ key: 'descriptionDe', text: description });
+      }
+    }
+    if (toTranslate.length > 0) {
+      const translated = await translationService.translateTexts(
+        toTranslate.map(item => item.text),
+        { targetLang: 'DE' }
+      );
+      if (translated) {
+        toTranslate.forEach((item, index) => {
+          updateData[item.key] = translated[index] ?? null;
+        });
+      }
     }
 
     const menu = await prisma.menu.update({

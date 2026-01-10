@@ -440,6 +440,8 @@ export default function SystemControl() {
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
+      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
     >
       <style jsx global>{`
         .calendar-input {

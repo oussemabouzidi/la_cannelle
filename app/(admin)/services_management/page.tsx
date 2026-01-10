@@ -30,8 +30,10 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 type FormState = {
   id?: number;
   name: string;
+  nameDe: string;
   occasion: ServiceOccasion;
   description: string;
+  descriptionDe: string;
   image: string;
   isActive: boolean;
 };
@@ -39,8 +41,10 @@ type FormState = {
 function getEmptyForm(): FormState {
   return {
     name: '',
+    nameDe: '',
     occasion: 'BOTH',
     description: '',
+    descriptionDe: '',
     image: '',
     isActive: true
   };
@@ -88,16 +92,22 @@ export default function AdminServicesManagement() {
       errors: {
         failedLoad: isDE ? 'Services konnten nicht geladen werden.' : 'Failed to load services',
         failedSave: isDE ? 'Service konnte nicht gespeichert werden.' : 'Failed to save service',
-        failedDelete: isDE ? 'Service konnte nicht geloescht werden.' : 'Failed to delete service'
+        failedDelete: isDE ? 'Service konnte nicht geloescht werden.' : 'Failed to delete service',
+        failedUpdate: isDE ? 'Service konnte nicht aktualisiert werden.' : 'Failed to update service'
+      },
+      labels: {
+        serviceImageAlt: isDE ? 'Service-Bild' : 'Service image'
       },
       modal: {
         createTitle: isDE ? 'Service erstellen' : 'Create service',
         editTitle: isDE ? 'Service bearbeiten' : 'Edit service'
       },
       fields: {
-        name: isDE ? 'Name' : 'Name',
+        name: isDE ? 'Name (EN)' : 'Name (EN)',
+        nameDe: isDE ? 'Name (DE)' : 'Name (DE)',
         occasion: isDE ? 'Anlass' : 'Occasion',
-        description: isDE ? 'Beschreibung' : 'Description',
+        description: isDE ? 'Beschreibung (EN)' : 'Description (EN)',
+        descriptionDe: isDE ? 'Beschreibung (DE)' : 'Description (DE)',
         image: isDE ? 'Bild (URL oder Upload)' : 'Image (URL or upload)',
         imageUrl: isDE ? 'Bild-URL' : 'Image URL',
         upload: isDE ? 'Bild hochladen' : 'Upload image',
@@ -149,7 +159,9 @@ export default function AdminServicesManagement() {
     return services.filter((s) => {
       const matchesSearch = !q
         || s.name.toLowerCase().includes(q)
-        || (s.description || '').toLowerCase().includes(q);
+        || (s.nameDe || '').toLowerCase().includes(q)
+        || (s.description || '').toLowerCase().includes(q)
+        || (s.descriptionDe || '').toLowerCase().includes(q);
       const matchesOccasion = occasionFilter === 'ALL' || s.occasion === occasionFilter;
       return matchesSearch && matchesOccasion;
     });
@@ -193,8 +205,10 @@ export default function AdminServicesManagement() {
     setForm({
       id: service.id,
       name: service.name,
+      nameDe: service.nameDe || '',
       occasion: service.occasion,
       description: service.description || '',
+      descriptionDe: service.descriptionDe || '',
       image: service.image || '',
       isActive: service.isActive
     });
@@ -215,11 +229,13 @@ export default function AdminServicesManagement() {
     try {
       setSaving(true);
       setError('');
-      const payload = {
+      const payload: Partial<Service> = {
         name: form.name.trim(),
+        nameDe: form.nameDe.trim() || null,
         occasion: form.occasion,
-        description: form.description.trim(),
-        image: form.image.trim(),
+        description: form.description.trim() || null,
+        descriptionDe: form.descriptionDe.trim() || null,
+        image: form.image.trim() || null,
         isActive: form.isActive
       };
       if (form.id) {
@@ -260,7 +276,7 @@ export default function AdminServicesManagement() {
         await servicesApi.updateService(service.id, { isActive: !service.isActive } as any);
         setServices((prev) => prev.map((s) => (s.id === service.id ? { ...s, isActive: !s.isActive } : s)));
       } catch (e: any) {
-        setError(e?.message || 'Failed to update service');
+        setError(e?.message || t.errors.failedUpdate);
       }
     });
   };
@@ -279,6 +295,8 @@ export default function AdminServicesManagement() {
       adminRoleLabel={isDE ? 'Administrator' : 'Administrator'}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
+      openMenuLabel={isDE ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={isDE ? 'Menue schliessen' : 'Close menu'}
       headerMeta={
         <div className="flex items-center gap-3">
           <button
@@ -350,17 +368,21 @@ export default function AdminServicesManagement() {
           ) : (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map((service) => (
+                (() => {
+                  const displayName = isDE ? (service.nameDe || service.name) : service.name;
+                  const displayDescription = isDE ? (service.descriptionDe || service.description) : service.description;
+                  return (
                 <div key={service.id} className="rounded-2xl border border-gray-200 overflow-hidden bg-white">
                   <div className="h-32 bg-gray-100">
                     {service.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={service.image} alt={service.name} className="h-full w-full object-cover" />
+                      <img src={service.image} alt={displayName} className="h-full w-full object-cover" />
                     ) : null}
                   </div>
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="font-bold text-gray-900 truncate">{service.name}</div>
+                        <div className="font-bold text-gray-900 truncate">{displayName}</div>
                       </div>
                       <span
                         className={`shrink-0 px-2 py-1 rounded-full text-xs font-semibold ${
@@ -382,9 +404,9 @@ export default function AdminServicesManagement() {
                       </button>
                     </div>
 
-                    {service.description ? (
+                    {displayDescription ? (
                       <p className="mt-3 text-sm text-gray-700 overflow-hidden text-ellipsis">
-                        {service.description}
+                        {displayDescription}
                       </p>
                     ) : null}
 
@@ -408,6 +430,8 @@ export default function AdminServicesManagement() {
                     </div>
                   </div>
                 </div>
+                  );
+                })()
               ))}
             </div>
           )}
@@ -439,12 +463,24 @@ export default function AdminServicesManagement() {
 
             <div className="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">{t.fields.name}</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-                />
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">{t.fields.name}</label>
+                    <input
+                      value={form.name}
+                      onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">{t.fields.nameDe}</label>
+                    <input
+                      value={form.nameDe}
+                      onChange={(e) => setForm((prev) => ({ ...prev, nameDe: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -477,13 +513,26 @@ export default function AdminServicesManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">{t.fields.description}</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-                />
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">{t.fields.description}</label>
+                    <textarea
+                      value={form.description}
+                      onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-900 mb-2">{t.fields.descriptionDe}</label>
+                    <textarea
+                      value={form.descriptionDe}
+                      onChange={(e) => setForm((prev) => ({ ...prev, descriptionDe: e.target.value }))}
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid md:grid-cols-[180px_1fr] gap-4 items-start">
@@ -492,7 +541,7 @@ export default function AdminServicesManagement() {
                   <div className="aspect-[4/3] w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
                     {form.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={form.image} alt={form.name || 'Service image'} className="w-full h-full object-cover" />
+                      <img src={form.image} alt={form.name || t.labels.serviceImageAlt} className="w-full h-full object-cover" />
                     ) : null}
                   </div>
                 </div>
@@ -503,7 +552,7 @@ export default function AdminServicesManagement() {
                       value={form.image}
                       onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-                      placeholder="https://..."
+                      placeholder={isDE ? 'https://beispiel.de/bild.jpg' : 'https://example.com/image.jpg'}
                     />
                   </div>
                   <div>

@@ -20,6 +20,8 @@ type AdminLayoutProps = {
   languageToggle: React.ReactNode;
   locale?: string;
   headerMeta?: React.ReactNode;
+  openMenuLabel?: string;
+  closeMenuLabel?: string;
   children: React.ReactNode;
 };
 
@@ -31,6 +33,8 @@ export default function AdminLayout({
   languageToggle,
   locale = 'en-US',
   headerMeta,
+  openMenuLabel = 'Open menu',
+  closeMenuLabel = 'Close menu',
   children
 }: AdminLayoutProps) {
   const router = useRouter();
@@ -68,7 +72,7 @@ export default function AdminLayout({
   const sidebarTransformClass = mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-stone-100 overflow-x-hidden text-gray-900">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -99,7 +103,7 @@ export default function AdminLayout({
               onClick={() => setMobileSidebarOpen(false)}
               className="p-2 rounded-lg hover:bg-gray-100 lg:hidden"
               type="button"
-              aria-label="Close menu"
+              aria-label={closeMenuLabel}
             >
               <X size={20} />
             </button>
@@ -159,7 +163,7 @@ export default function AdminLayout({
                 onClick={() => setMobileSidebarOpen(true)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden"
                 type="button"
-                aria-label="Open menu"
+                aria-label={openMenuLabel}
               >
                 <Menu size={20} />
               </button>

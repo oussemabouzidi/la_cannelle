@@ -5,8 +5,10 @@ export type ServiceOccasion = 'BUSINESS' | 'PRIVATE' | 'BOTH';
 export interface Service {
   id: number;
   name: string;
+  nameDe?: string | null;
   occasion: ServiceOccasion;
   description?: string | null;
+  descriptionDe?: string | null;
   image?: string | null;
   isActive: boolean;
   createdAt: string;

@@ -25,9 +25,12 @@ import {
   LogOut,
   BarChart3,
   ShoppingBag,
-  Briefcase
+  Briefcase,
+  ListChecks,
+  Trash2
 } from 'lucide-react';
 import { dashboardApi, DashboardStats } from '@/lib/api/dashboard';
+import { todosApi, Todo } from '@/lib/api/todos';
 
 export default function AdminDashboard() {
   const [isVisible, setIsVisible] = useState(false);
@@ -68,12 +71,17 @@ export default function AdminDashboard() {
         growthLabel: 'from yesterday',
       },
       sections: {
-        todaysEvents: "Today's Events",
+        todos: 'Todo list',
         recentOrders: 'Recent Orders',
       },
       labels: {
         guests: 'guests',
         viewAllOrders: 'View All Orders',
+        addTodoPlaceholder: 'Add a todo...',
+        addTodo: 'Add',
+        emptyTodos: 'No todos yet.',
+        deleteTodo: 'Delete todo',
+        emptyRecentOrders: 'No recent orders yet.',
       },
       messages: {
         loading: 'Loading dashboard data...',
@@ -117,12 +125,17 @@ export default function AdminDashboard() {
         growthLabel: 'seit gestern',
       },
       sections: {
-        todaysEvents: 'Heutige Events',
+        todos: 'To-do Liste',
         recentOrders: 'Letzte Bestellungen',
       },
       labels: {
         guests: 'Gaeste',
         viewAllOrders: 'Alle Bestellungen ansehen',
+        addTodoPlaceholder: 'Neues To-do...',
+        addTodo: 'Hinzufuegen',
+        emptyTodos: 'Noch keine To-dos.',
+        deleteTodo: 'To-do loeschen',
+        emptyRecentOrders: 'Noch keine Bestellungen.',
       },
       messages: {
         loading: 'Dashboard-Daten werden geladen...',
@@ -142,6 +155,28 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todosLoading, setTodosLoading] = useState(true);
+  const [todosError, setTodosError] = useState<string | null>(null);
+  const [newTodoText, setNewTodoText] = useState('');
+
+  useEffect(() => {
+    const loadTodos = async () => {
+      try {
+        setTodosLoading(true);
+        setTodosError(null);
+        const items = await todosApi.getTodos();
+        setTodos(items);
+      } catch (err) {
+        console.error('Failed to load todos', err);
+        setTodosError(language === 'DE' ? 'To-dos konnten nicht geladen werden.' : 'Unable to load todos right now.');
+      } finally {
+        setTodosLoading(false);
+      }
+    };
+    loadTodos();
   }, []);
 
   useEffect(() => {
@@ -175,8 +210,41 @@ export default function AdminDashboard() {
   const formatNumber = (value?: number) => (
     typeof value === 'number' ? value.toLocaleString(locale) : '--'
   );
-  const todaysEvents = data?.todaysEvents ?? [];
   const recentOrders = data?.recentOrders ?? [];
+  const incompleteTodos = todos.filter(item => !item.completed).length;
+
+  const addTodo = async () => {
+    const text = newTodoText.trim();
+    if (!text) return;
+    try {
+      const created = await todosApi.createTodo({ text });
+      setTodos(prev => [created, ...prev]);
+      setNewTodoText('');
+    } catch (err) {
+      console.error('Failed to create todo', err);
+      setTodosError(language === 'DE' ? 'To-do konnte nicht gespeichert werden.' : 'Unable to save todo.');
+    }
+  };
+
+  const toggleTodo = async (todo: Todo) => {
+    try {
+      const updated = await todosApi.updateTodo(todo.id, { completed: !todo.completed });
+      setTodos(prev => prev.map(item => (item.id === updated.id ? updated : item)));
+    } catch (err) {
+      console.error('Failed to update todo', err);
+      setTodosError(language === 'DE' ? 'To-do konnte nicht aktualisiert werden.' : 'Unable to update todo.');
+    }
+  };
+
+  const deleteTodo = async (id: number) => {
+    try {
+      await todosApi.deleteTodo(id);
+      setTodos(prev => prev.filter(item => item.id !== id));
+    } catch (err) {
+      console.error('Failed to delete todo', err);
+      setTodosError(language === 'DE' ? 'To-do konnte nicht geloescht werden.' : 'Unable to delete todo.');
+    }
+  };
 
   return (
     <AdminLayout
@@ -186,6 +254,8 @@ export default function AdminDashboard() {
       adminRoleLabel={t.admin.role}
       languageToggle={<AdminLanguageToggle language={language} onToggle={toggleLanguage} />}
       locale={locale}
+      openMenuLabel={language === 'DE' ? 'Menue oeffnen' : 'Open menu'}
+      closeMenuLabel={language === 'DE' ? 'Menue schliessen' : 'Close menu'}
     >
       <style jsx global>{`
         @keyframes fadeInUp {
@@ -311,37 +381,76 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Today's Events */}
+            {/* Todo list */}
             <div className={`bg-white rounded-2xl p-6 shadow-sm border border-stone-100 backdrop-blur-sm ${
               isVisible ? 'animate-fade-in-up' : 'opacity-0'
             }`} style={{ animationDelay: '400ms' }}>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 font-elegant">{t.sections.todaysEvents}</h2>
-                <Calendar className="text-gray-400" size={20} />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 font-elegant">{t.sections.todos}</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {incompleteTodos} {language === 'DE' ? 'offen' : 'open'}
+                  </p>
+                </div>
+                <ListChecks className="text-gray-400" size={20} />
               </div>
-              
-              <div className="space-y-4">
-                {todaysEvents.length === 0 ? (
-                  <p className="text-sm text-gray-500">No events scheduled for today.</p>
+               
+              <div className="flex gap-3 mb-4">
+                <input
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  placeholder={t.labels.addTodoPlaceholder}
+                  className="flex-1 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addTodo();
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addTodo}
+                  disabled={!newTodoText.trim()}
+                  className="px-5 py-3 rounded-xl bg-gray-900 text-white hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t.labels.addTodo}
+                </button>
+              </div>
+
+              {todosError && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {todosError}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {todosLoading ? (
+                  <p className="text-sm text-gray-500">{language === 'DE' ? 'To-dos werden geladen...' : 'Loading todos...'}</p>
+                ) : todos.length === 0 ? (
+                  <p className="text-sm text-gray-500">{t.labels.emptyTodos}</p>
                 ) : (
-                  todaysEvents.map((event) => (
-                    <div key={event.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-3 h-3 rounded-full ${
-                          event.status === 'confirmed' ? 'bg-green-500' : 'bg-amber-500'
-                        }`}></div>
-                        <div>
-                          <p className="font-semibold text-gray-900">{event.client}</p>
-                          <p className="text-sm text-gray-600">{event.time} - {event.guests} {t.labels.guests}</p>
-                        </div>
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        event.status === 'confirmed' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {t.status[event.status as keyof typeof t.status] ?? event.status}
-                      </span>
+                  todos.map((todo) => (
+                    <div
+                      key={todo.id}
+                      className="flex items-center justify-between gap-3 p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors"
+                    >
+                      <label className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={todo.completed}
+                          onChange={() => toggleTodo(todo)}
+                          className="h-5 w-5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span className={`text-sm font-semibold truncate ${todo.completed ? 'text-gray-900 line-through' : 'text-gray-900'}`}>
+                          {todo.text}
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => deleteTodo(todo.id)}
+                        className="p-2 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        aria-label={t.labels.deleteTodo}
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   ))
                 )}
@@ -359,7 +468,7 @@ export default function AdminDashboard() {
               
               <div className="space-y-4">
                 {recentOrders.length === 0 ? (
-                  <p className="text-sm text-gray-500">No recent orders yet.</p>
+                  <p className="text-sm text-gray-500">{t.labels.emptyRecentOrders}</p>
                 ) : (
                   recentOrders.map((order) => (
                     <div key={order.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-xl hover:bg-amber-50 transition-colors">

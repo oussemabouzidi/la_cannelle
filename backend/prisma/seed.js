@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -7,7 +7,7 @@ const client_1 = require("@prisma/client");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const prisma = new client_1.PrismaClient();
 async function main() {
-    console.log('🌱 Seeding database...');
+    console.log('ðŸŒ± Seeding database...');
     // Create admin user
     const adminPassword = await bcryptjs_1.default.hash('admin123', 10);
     const admin = await prisma.user.upsert({
@@ -21,7 +21,7 @@ async function main() {
             role: client_1.UserRole.ADMIN
         }
     });
-    console.log('✅ Created admin user:', admin.email);
+    console.log('âœ… Created admin user:', admin.email);
     // Create sample client
     const clientPassword = await bcryptjs_1.default.hash('client123', 10);
     const client = await prisma.user.upsert({
@@ -40,19 +40,17 @@ async function main() {
             allergies: ['Shellfish']
         }
     });
-    console.log('✅ Created client user:', client.email);
+    console.log('âœ… Created client user:', client.email);
     // Create products
     const products = [
         {
             name: 'Truffle Mushroom Risotto',
             description: 'Arborio rice with seasonal wild mushrooms, white truffle oil, and Parmigiano-Reggiano',
             category: client_1.ProductCategory.MAIN,
-            menuCategory: 'mains',
             price: 24,
             cost: 8,
             available: true,
             tier: [client_1.MenuTier.PREMIUM, client_1.MenuTier.LUXURY],
-            preparationTime: 25,
             ingredients: ['Arborio rice', 'Wild mushrooms', 'White truffle oil', 'Parmigiano-Reggiano', 'Vegetable stock'],
             allergens: ['Dairy'],
             productCategories: ['vegetarian', 'signature'],
@@ -62,12 +60,10 @@ async function main() {
             name: 'Herb-crusted Rack of Lamb',
             description: 'New Zealand lamb with rosemary crust, mint jus, and roasted root vegetables',
             category: client_1.ProductCategory.MAIN,
-            menuCategory: 'mains',
             price: 38,
             cost: 15,
             available: true,
             tier: [client_1.MenuTier.LUXURY],
-            preparationTime: 35,
             ingredients: ['New Zealand lamb', 'Fresh rosemary', 'Mint', 'Root vegetables', 'Red wine jus'],
             allergens: [],
             productCategories: ['meat', 'chef-special'],
@@ -77,12 +73,10 @@ async function main() {
             name: 'Seared Scallops',
             description: 'Day boat scallops with orange reduction, micro greens, and crispy prosciutto',
             category: client_1.ProductCategory.STARTER,
-            menuCategory: 'starters',
             price: 28,
             cost: 12,
             available: true,
             tier: [client_1.MenuTier.PREMIUM, client_1.MenuTier.LUXURY],
-            preparationTime: 20,
             ingredients: ['Fresh scallops', 'Orange', 'Micro greens', 'Prosciutto', 'Butter'],
             allergens: ['Shellfish', 'Dairy'],
             productCategories: ['seafood', 'spicy'],
@@ -92,12 +86,10 @@ async function main() {
             name: 'Heirloom Tomato Burrata Salad',
             description: 'Colorful heirloom tomatoes with fresh burrata, basil oil, and balsamic reduction',
             category: client_1.ProductCategory.STARTER,
-            menuCategory: 'starters',
             price: 18,
             cost: 6,
             available: true,
             tier: [client_1.MenuTier.ESSENTIAL, client_1.MenuTier.PREMIUM, client_1.MenuTier.LUXURY],
-            preparationTime: 15,
             ingredients: ['Heirloom tomatoes', 'Burrata cheese', 'Fresh basil', 'Balsamic vinegar', 'Olive oil'],
             allergens: ['Dairy'],
             productCategories: ['vegetarian', 'salad', 'seasonal'],
@@ -107,12 +99,10 @@ async function main() {
             name: 'Chocolate Fondant',
             description: 'Warm chocolate cake with liquid center and fresh raspberry sauce',
             category: client_1.ProductCategory.DESSERT,
-            menuCategory: 'desserts',
             price: 16,
             cost: 4,
             available: true,
             tier: [client_1.MenuTier.PREMIUM, client_1.MenuTier.LUXURY],
-            preparationTime: 18,
             ingredients: ['Dark chocolate', 'Butter', 'Eggs', 'Sugar', 'Raspberries'],
             allergens: ['Dairy', 'Eggs'],
             productCategories: ['dessert', 'signature'],
@@ -122,12 +112,10 @@ async function main() {
             name: 'Grilled Salmon',
             description: 'Atlantic salmon with lemon butter sauce and seasonal vegetables',
             category: client_1.ProductCategory.MAIN,
-            menuCategory: 'mains',
             price: 32,
             cost: 12,
             available: true,
             tier: [client_1.MenuTier.PREMIUM, client_1.MenuTier.LUXURY],
-            preparationTime: 22,
             ingredients: ['Atlantic salmon', 'Lemon', 'Butter', 'Asparagus', 'Baby potatoes'],
             allergens: ['Fish', 'Dairy'],
             productCategories: ['seafood', 'gluten-free'],
@@ -136,12 +124,13 @@ async function main() {
     ];
     const createdProducts = [];
     for (const productData of products) {
+        const normalizedProductData = productData;
         const product = await prisma.product.create({
-            data: productData
+            data: normalizedProductData
         });
         createdProducts.push(product);
     }
-    console.log(`✅ Created ${createdProducts.length} products`);
+    console.log(`âœ… Created ${createdProducts.length} products`);
     // Create menus
     const springMenu = await prisma.menu.create({
         data: {
@@ -177,7 +166,7 @@ async function main() {
             }
         }
     });
-    console.log('✅ Created menus');
+    console.log('âœ… Created menus');
     // Create sample orders
     const order1 = await prisma.order.create({
         data: {
@@ -189,7 +178,7 @@ async function main() {
             eventDate: new Date('2024-12-20'),
             eventTime: '12:30 PM',
             guests: 45,
-            location: 'TechCorp HQ, Düsseldorf',
+            location: 'TechCorp HQ, DÃ¼sseldorf',
             menuTier: client_1.MenuTier.PREMIUM,
             total: 3375,
             subtotal: 3326.10,
@@ -226,7 +215,7 @@ async function main() {
             eventDate: new Date('2024-12-22'),
             eventTime: '4:00 PM',
             guests: 120,
-            location: 'Schloss Benrath, Düsseldorf',
+            location: 'Schloss Benrath, DÃ¼sseldorf',
             menuTier: client_1.MenuTier.LUXURY,
             total: 14400,
             subtotal: 14351.10,
@@ -254,7 +243,7 @@ async function main() {
             }
         }
     });
-    console.log('✅ Created sample orders');
+    console.log('âœ… Created sample orders');
     // Create system status
     await prisma.systemStatus.upsert({
         where: { id: 1 },
@@ -269,7 +258,7 @@ async function main() {
             enableAutoPause: true
         }
     });
-    console.log('✅ Created system status');
+    console.log('âœ… Created system status');
     // Create closed dates
     await prisma.closedDate.createMany({
         data: [
@@ -285,12 +274,12 @@ async function main() {
             }
         ]
     });
-    console.log('✅ Created closed dates');
-    console.log('🎉 Seeding completed!');
+    console.log('âœ… Created closed dates');
+    console.log('ðŸŽ‰ Seeding completed!');
 }
 main()
     .catch((e) => {
-    console.error('❌ Seeding failed:', e);
+    console.error('âŒ Seeding failed:', e);
     process.exit(1);
 })
     .finally(async () => {

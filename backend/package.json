@@ -8,9 +8,11 @@
     "build": "tsc",
     "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:migrate:dev": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
+    "seed:backup": "tsx prisma/seed-backup.ts",
     "seed:services": "tsx prisma/seed-services.ts"
   },
   "keywords": [],
