@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
 export async function middleware(req: NextRequest) {
@@ -13,7 +12,10 @@ export async function middleware(req: NextRequest) {
   if (!token) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('next', `${req.nextUrl.pathname}${req.nextUrl.search}`)
+    url.searchParams.set(
+      'next',
+      `${req.nextUrl.pathname}${req.nextUrl.search}`
+    )
     return NextResponse.redirect(url)
   }
 
@@ -24,7 +26,10 @@ export async function middleware(req: NextRequest) {
   } catch {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('next', `${req.nextUrl.pathname}${req.nextUrl.search}`)
+    url.searchParams.set(
+      'next',
+      `${req.nextUrl.pathname}${req.nextUrl.search}`
+    )
     return NextResponse.redirect(url)
   }
 }
