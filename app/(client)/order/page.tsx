@@ -403,6 +403,7 @@ export default function OrderPage() {
   const { t, language, toggleLanguage, setLanguage: setAppLanguage } = useTranslation('order');
   const commonA11y = commonTranslations[language].accessibility;
   const [currentStep, setCurrentStep] = useState(1);
+  const [currentMenuSubStep, setCurrentMenuSubStep] = useState(0); // For menu item selection within menu step
   const [isVisible, setIsVisible] = useState(false);
   const [quantities, setQuantities] = useState({});
   const [selectedAccessories, setSelectedAccessories] = useState<any[]>([]);
@@ -745,27 +746,30 @@ export default function OrderPage() {
         selectedDrinks: []
       };
     });
-    setCurrentStep((prev) => Math.min(prev + 1, stepsConfig.length));
+    setCurrentStep(2); // Move to menu step (which now includes item selection)
   };
   const handleMenuCardClick = (menu: any) => {
-    if (!menu.isActive) return;
-    if (shouldBlockProgress) {
-      showNotification('error', blockedMessage, 3000);
-      return;
-    }
-    if (!validateStepsUpTo(currentStep - 1)) {
-      return;
-    }
+  if (!menu.isActive) return;
+  
+  const isBlocked = isOrderingPaused || (isClosedDate && currentStep >= 1);
+  if (isBlocked) {
+    showNotification('error', blockedMessage, 3000);
+    return;
+  }
+  
+  if (!validateStepsUpTo(currentStep - 1)) {
+    return;
+  }
 
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    const menuMinPeople = Number(menu.minPeople) || 0;
-    if (guestCount > 0 && menuMinPeople > guestCount) {
-      openMinPeoplePrompt(menu, guestCount);
-      return;
-    }
+  const guestCount = parseInt(orderData.guestCount, 10) || 0;
+  const menuMinPeople = Number(menu.minPeople) || 0;
+  if (guestCount > 0 && menuMinPeople > guestCount) {
+    openMinPeoplePrompt(menu, guestCount);
+    return;
+  }
 
-    finalizeMenuSelection(menu);
-  };
+  finalizeMenuSelection(menu);
+};
   const handlePostalCodeChange = (value: string) => {
     const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 5);
     updateOrderData('postalCode', digitsOnly);
@@ -888,6 +892,7 @@ export default function OrderPage() {
   const isClosedDate = !!closedDateEntry;
   const isOrderingPaused = !!systemStatus?.orderingPaused;
   const orderBlocked = isClosedDate || isOrderingPaused;
+  const shouldBlockProgress = isOrderingPaused || (isClosedDate && currentStep >= 1);
   const blockedMessage = useMemo(() => {
     if (isOrderingPaused) {
       const reason = systemStatus?.pauseReason ? ` (${systemStatus.pauseReason})` : '';
@@ -995,10 +1000,17 @@ export default function OrderPage() {
     lookupPostalCodesByCity,
     lookupPostalCode
   };
+  
+  // Get dynamic menu steps for the selected menu
   const dynamicMenuSteps = useMemo(() => {
+    if (!orderData.selectedMenu && !pendingMenuId) return [];
+    
     const selectedMenu = menusData.find(
-      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu) || m.id === pendingMenuId
     );
+    
+    if (!selectedMenu) return [];
+    
     const rawSteps = Array.isArray(selectedMenu?.steps) ? selectedMenu.steps : [];
     const mapped = rawSteps
       .map((step: any, index: number) => {
@@ -1019,7 +1031,10 @@ export default function OrderPage() {
         };
       })
       .filter(Boolean) as Array<{ key: string; categoryKey: string; label: string; icon: any; color: string; included: number }>;
+    
     if (mapped.length) return mapped;
+    
+    // Default categories if no steps defined
     return categoryOrder.map((key) => ({
       key,
       categoryKey: key,
@@ -1028,22 +1043,22 @@ export default function OrderPage() {
       color: categoryMeta[key].color,
       included: 0
     }));
-  }, [menusData, orderData.selectedMenu, categoryMeta, categoryOrder]);
-  const nonCoreStepCategories = useMemo(() => {
-    const set = new Set<string>();
-    dynamicMenuSteps.forEach((step) => {
-      const key = step.categoryKey || step.key;
-      if (!categoryOrder.includes(key)) {
-        set.add(key);
-      }
-    });
-    return set;
-  }, [dynamicMenuSteps, categoryOrder]);
+  }, [menusData, orderData.selectedMenu, pendingMenuId, categoryMeta, categoryOrder]);
+  
+  // Main steps configuration - only 4 main steps now
+  const stepsConfig = useMemo(() => ([
+    { key: 'event', label: language === 'DE' ? 'Eventdetails' : 'Event Details' },
+    { key: 'menu', label: language === 'DE' ? 'Menüauswahl' : 'Menu Selection' },
+    { key: 'accessories', label: language === 'DE' ? 'Zubehör' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
+    { key: 'checkout', label: language === 'DE' ? 'Lieferung & Zahlung' : 'Delivery & Payment' }
+  ]), [language]);
+  
   const activeCategoryKeys = useMemo(() => {
     const unique = new Set<string>();
     dynamicMenuSteps.forEach(step => unique.add(step.categoryKey || step.key));
     return Array.from(unique);
   }, [dynamicMenuSteps]);
+  
   const stepLabelByKey = useMemo(() => {
     const labels: Record<string, string> = {};
     dynamicMenuSteps.forEach((step) => {
@@ -1051,18 +1066,7 @@ export default function OrderPage() {
     });
     return labels;
   }, [dynamicMenuSteps]);
-  const stepsConfig = useMemo(() => ([
-    { key: 'event', label: language === 'DE' ? 'Eventdetails' : 'Event Details' },
-    { key: 'menu', label: language === 'DE' ? 'Menü' : 'Menu Selection' },
-    ...dynamicMenuSteps,
-    { key: 'accessories', label: language === 'DE' ? 'Zubehör' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
-    { key: 'checkout', label: language === 'DE' ? 'Lieferung & Zahlung' : 'Delivery & Payment' }
-  ]), [language, dynamicMenuSteps]);
-  const firstProductStepIndex = stepsConfig.findIndex(
-    step => activeCategoryKeys.includes((step as any).categoryKey || '')
-  ) + 1;
-  const blockAfterStep = firstProductStepIndex > 0 ? firstProductStepIndex : stepsConfig.length;
-  const shouldBlockProgress = isOrderingPaused || (isClosedDate && currentStep >= blockAfterStep);
+  
   const selectionKeyByCategory: Record<string, string> = {
     starter: 'selectedStarters',
     main: 'selectedMains',
@@ -1070,6 +1074,7 @@ export default function OrderPage() {
     dessert: 'selectedDesserts',
     beverage: 'selectedDrinks'
   };
+  
   const getAllSelectedItems = () => ([
     ...orderData.selectedStarters,
     ...orderData.selectedMains,
@@ -1077,23 +1082,20 @@ export default function OrderPage() {
     ...orderData.selectedDesserts,
     ...orderData.selectedDrinks
   ]);
+  
   const matchesStepCategory = (item: any, categoryKey: string) => {
     const normalizedCategory = normalizeCategoryValue(item.category);
     const categoryTags = Array.isArray(item.productCategories)
       ? item.productCategories.map(normalizeCategoryValue)
       : [];
-    if (categoryOrder.includes(categoryKey)) {
-      if (normalizedCategory !== categoryKey) return false;
-      if (!nonCoreStepCategories.size) return true;
-      const hasTaggedStep = categoryTags.some(tag => nonCoreStepCategories.has(tag));
-      return !hasTaggedStep;
-    }
-    return categoryTags.includes(categoryKey);
+    return normalizedCategory === categoryKey || categoryTags.includes(categoryKey);
   };
+  
   const getItemsForStepCategory = (categoryKey: string) => {
     const allItems = getAllSelectedItems();
     return allItems.filter((item) => matchesStepCategory(item, categoryKey));
   };
+  
   const includedByCategory = useMemo(() => {
     const map: Record<string, number> = {};
     dynamicMenuSteps.forEach((step) => {
@@ -1102,21 +1104,12 @@ export default function OrderPage() {
     });
     return map;
   }, [dynamicMenuSteps]);
-  const cumulativeIncludedByStep = useMemo(() => {
-    const running: Record<string, number> = {};
-    const cumulative: Record<string, number> = {};
-    stepsConfig.forEach((step) => {
-      const categoryKey = (step as any).categoryKey;
-      if (!categoryKey) return;
-      running[categoryKey] = (running[categoryKey] || 0) + Math.max(0, Number((step as any).included) || 0);
-      cumulative[step.key] = running[categoryKey];
-    });
-    return cumulative;
-  }, [stepsConfig]);
+  
   const getCategorySelectionCount = (categoryKey: string) => {
     const items = getItemsForStepCategory(categoryKey);
     return items.length;
   };
+  
   const getCategoryExtrasSubtotal = (categoryKey: string) => {
     const items = getItemsForStepCategory(categoryKey);
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
@@ -1131,13 +1124,14 @@ export default function OrderPage() {
         const extraPortions = Math.max(0, quantity - guestCount);
         return sum + price * extraPortions;
       }
-      // For dishes beyond the included count, all portions are considered extra.
       return sum + price * quantity;
     }, 0);
   };
+  
   const getFoodExtrasSubtotal = () => {
     return activeCategoryKeys.reduce((sum, key) => sum + getCategoryExtrasSubtotal(key), 0);
   };
+  
   const getCategorySummaryRows = () => activeCategoryKeys.map((key) => {
     const included = Math.max(0, Number(includedByCategory[key]) || 0);
     const selected = getCategorySelectionCount(key);
@@ -1152,6 +1146,7 @@ export default function OrderPage() {
       extraCost
     };
   }).filter(row => row.included > 0 || row.selected > 0);
+  
   const getOrderTotals = () => {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
     const flatServiceFee = 48.90;
@@ -1173,33 +1168,22 @@ export default function OrderPage() {
       foodSubtotal: foodExtrasSubtotal
     };
   };
+  
   useEffect(() => {
     setCurrentStep(prev => (prev > stepsConfig.length ? stepsConfig.length : prev));
   }, [stepsConfig.length]);
+  
   const getStepValidationError = (step: number) => {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
     const hasValidGuestCount = guestCount >= MIN_GUESTS;
     const hasValidPostal = /^\d{5}$/.test(orderData.postalCode || '');
-    const totals = getOrderTotals();
     const contactEmail = (orderData.contactInfo.email || '').trim();
     const contactPhone = (orderData.contactInfo.phone || '').trim();
     const companyName = (orderData.contactInfo.company || '').trim();
     const emailError = validateEmailValue(contactEmail);
     const phoneError = validatePhoneValue(contactPhone);
     const stepKey = stepsConfig[step - 1]?.key;
-    const stepCategory = (stepsConfig[step - 1] as any)?.categoryKey || '';
-    if (activeCategoryKeys.includes(stepCategory)) {
-      const requiredCount = Math.max(0, Number(cumulativeIncludedByStep[stepKey]) || 0);
-      if (requiredCount > 0) {
-        const selectedCount = getCategorySelectionCount(stepCategory);
-        if (selectedCount < requiredCount) {
-          return language === 'DE'
-            ? `Bitte mindestens ${requiredCount} Gerichte in ${stepsConfig[step - 1]?.label} wählen.`
-            : `Please select at least ${requiredCount} dishes for ${stepsConfig[step - 1]?.label}.`;
-        }
-      }
-      return '';
-    }
+    
     switch (stepKey) {
       case 'event':
         if (!orderData.businessType) {
@@ -1269,6 +1253,7 @@ export default function OrderPage() {
         return '';
     }
   };
+  
   const applyValidationErrors = (step: number) => {
     const stepKey = stepsConfig[step - 1]?.key;
     if (stepKey === 'event' || stepKey === 'accessories') {
@@ -1306,6 +1291,7 @@ export default function OrderPage() {
       }
     }
   };
+  
   const getFirstInvalidStep = (maxStep: number) => {
     for (let step = 1; step <= maxStep; step += 1) {
       const error = getStepValidationError(step);
@@ -1315,6 +1301,7 @@ export default function OrderPage() {
     }
     return null;
   };
+  
   const validateStepsUpTo = (maxStep: number) => {
     const invalid = getFirstInvalidStep(maxStep);
     if (invalid) {
@@ -1327,58 +1314,72 @@ export default function OrderPage() {
     }
     return true;
   };
+  
   const handleStepChange = (targetStep: number) => {
     if (targetStep <= currentStep) {
       setCurrentStep(targetStep);
       return;
     }
-    if (shouldBlockProgress) {
+    
+    const isBlocked = isOrderingPaused || (isClosedDate && currentStep >= 1);
+    if (isBlocked) {
       showNotification('error', blockedMessage, 3000);
       return;
     }
+    
     if (!validateStepsUpTo(targetStep - 1)) {
       return;
     }
     setCurrentStep(targetStep);
   };
+  
   const canNavigateToStep = (targetStep: number) => {
-    if (targetStep <= currentStep) {
-      return true;
-    }
-    if (shouldBlockProgress) {
-      return false;
-    }
-    return !getFirstInvalidStep(targetStep - 1);
-  };
+  if (targetStep <= currentStep) {
+    return true;
+  }
+  
+  const isBlocked = isOrderingPaused || (isClosedDate && currentStep >= 1);
+  if (isBlocked) {
+    return false;
+  }
+  return !getFirstInvalidStep(targetStep - 1);
+};
+  
   const canProceedToNext = !getFirstInvalidStep(currentStep);
-  const renderSummaryNav = () => (
-    <div className="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-amber-200">
-      <button
-        onClick={prevStep}
-        disabled={currentStep === 1}
-        className={`px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center transition-colors ${
-          currentStep === 1
-            ? 'text-gray-400 cursor-not-allowed'
-            : 'text-gray-700 hover:text-amber-700 hover:bg-amber-50'
-        }`}
-      >
-        <ChevronLeft size={16} className="mr-1" />
-        {t.buttons.back}
-      </button>
-      <button
-        onClick={nextStep}
-        disabled={shouldBlockProgress}
-        className={`px-5 py-2 text-sm font-semibold rounded-lg inline-flex items-center shadow-sm transition-colors ${
-          shouldBlockProgress
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-amber-600 text-white hover:bg-amber-700'
-        }`}
-      >
-        {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
-        <ChevronRight size={16} className="ml-1" />
-      </button>
-    </div>
-  );
+  
+  const renderSummaryNav = () => {
+    // Check if ordering is blocked
+    const isBlocked = isOrderingPaused || (isClosedDate && currentStep >= 1);
+    
+    return (
+      <div className="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-amber-200">
+        <button
+          onClick={prevStep}
+          disabled={currentStep === 1}
+          className={`px-4 py-2 text-sm font-semibold rounded-lg inline-flex items-center transition-colors ${
+            currentStep === 1
+              ? 'text-gray-400 cursor-not-allowed'
+              : 'text-gray-700 hover:text-amber-700 hover:bg-amber-50'
+          }`}
+        >
+          <ChevronLeft size={16} className="mr-1" />
+          {t.buttons.back}
+        </button>
+        <button
+          onClick={nextStep}
+          disabled={isBlocked}
+          className={`px-5 py-2 text-sm font-semibold rounded-lg inline-flex items-center shadow-sm transition-colors ${
+            isBlocked
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-amber-600 text-white hover:bg-amber-700'
+          }`}
+        >
+          {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
+          <ChevronRight size={16} className="ml-1" />
+        </button>
+      </div>
+    );
+  };
 
   // Step 1: Event Details
   const Step1 = () => {
@@ -1404,6 +1405,34 @@ export default function OrderPage() {
     const occasionServices = (servicesData || [])
       .filter((service) => service.isActive)
       .filter((service) => !occasion || service.occasion === occasion || service.occasion === 'BOTH');
+    
+    // Check if "Büffet" exists in service names and fix it
+    const fixedServices = occasionServices.map(service => {
+      if (language === 'DE' && service.nameDe === 'Büffet') {
+        return { ...service, nameDe: 'Buffet' };
+      }
+      if (service.name === 'Büffet') {
+        return { ...service, name: 'Buffet' };
+      }
+      return service;
+    });
+
+    // Handle service selection toggle
+    const handleServiceClick = (service) => {
+      const serviceName = language === 'DE' ? (service.nameDe || service.name) : service.name;
+      const isCurrentlySelected = String(orderData.serviceId) === String(service.id);
+      
+      if (isCurrentlySelected) {
+        // Deselect if clicking the same service
+        updateOrderData('serviceId', '');
+        updateOrderData('serviceType', '');
+      } else {
+        // Select new service
+        updateOrderData('serviceId', service.id);
+        updateOrderData('serviceType', serviceName);
+      }
+    };
+
     return (
       <div className="space-y-6">
         <div className="grid gap-4">
@@ -1456,51 +1485,136 @@ export default function OrderPage() {
                 </div>
               </div>
 
-              {occasionServices.length === 0 ? (
+              {fixedServices.length === 0 ? (
                 <div className="text-sm text-gray-600">
                   {language === 'DE' ? 'Keine Services verf\u00fcgbar.' : 'No services available.'}
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {occasionServices.map((service) => {
+                  {fixedServices.map((service) => {
                     const selected = String(orderData.serviceId) === String(service.id);
+                    const serviceName = language === 'DE' ? (service.nameDe || service.name) : service.name;
+                    const serviceDescription = language === 'DE' ? (service.descriptionDe || service.description) : service.description;
+                    
                     return (
                       <button
                         key={service.id}
                         type="button"
-                        onClick={() => {
-                          updateOrderData('serviceId', service.id);
-                          updateOrderData(
-                            'serviceType',
-                            language === 'DE' ? (service.nameDe || service.name) : service.name
-                          );
-                        }}
-                        className={`text-left rounded-xl border overflow-hidden transition-all ${
-                          selected ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200 hover:border-amber-300'
+                        onClick={() => handleServiceClick(service)}
+                        className={`group text-center rounded-xl border overflow-hidden transition-all ${
+                          selected 
+                            ? 'border-amber-500 ring-2 ring-amber-200 bg-amber-50' 
+                            : 'border-gray-200 hover:border-amber-300 hover:shadow-sm bg-white'
                         }`}
                       >
                         <div className="h-20 bg-gray-100">
                           {service.image ? (
                             <img
                               src={service.image}
-                              alt={language === 'DE' ? (service.nameDe || service.name) : service.name}
+                              alt={serviceName}
                               className="h-full w-full object-cover"
                             />
                           ) : null}
                         </div>
                         <div className="p-3">
-                          <div className="font-semibold text-gray-900">
-                            {language === 'DE' ? (service.nameDe || service.name) : service.name}
+                          <div className="font-semibold text-gray-900 flex items-center justify-center gap-1">
+                            {serviceName}
+                            {selected && (
+                              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                              </svg>
+                            )}
                           </div>
-                          {(language === 'DE' ? (service.descriptionDe || service.description) : service.description) ? (
-                            <div className="text-xs text-gray-600 mt-1 overflow-hidden text-ellipsis">
-                              {language === 'DE' ? (service.descriptionDe || service.description) : service.description}
+                          
+                          {/* Description appears only when service is selected */}
+                          {selected && serviceDescription && (
+                            <div className="text-xs text-gray-600 mt-2 pt-2 border-t border-gray-100 animate-fadeIn">
+                              {serviceDescription}
                             </div>
-                          ) : null}
+                          )}
+                          
+                          {/* Show hint when not selected but has description */}
+                          {!selected && serviceDescription && (
+                            <div className="text-xs text-gray-400 mt-2 italic">
+                              {language === 'DE' ? 'Klicken zum Auswählen' : 'Click to select'}
+                            </div>
+                          )}
+                          
+                          {/* Show when no description exists */}
+                          {!serviceDescription && (
+                            <div className="text-xs text-gray-400 mt-2 italic">
+                              {language === 'DE' ? 'Keine Beschreibung verfügbar' : 'No description available'}
+                            </div>
+                          )}
+                          
+                          {/* Show deselect hint when selected */}
+                          {selected && (
+                            <div className="text-xs text-amber-600 mt-2 font-medium">
+                              {language === 'DE' ? 'Erneut klicken zum Abwählen' : 'Click again to deselect'}
+                            </div>
+                          )}
                         </div>
                       </button>
                     );
                   })}
+                </div>
+              )}
+              
+              {/* Show selected service description in a separate section below the grid */}
+              {orderData.serviceId && (
+                <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-100">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className="text-sm font-semibold text-amber-800 mb-1">
+                          {language === 'DE' ? 'Ausgewählter Service' : 'Selected Service'}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateOrderData('serviceId', '');
+                            updateOrderData('serviceType', '');
+                          }}
+                          className="text-xs text-amber-700 hover:text-amber-900 flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          {language === 'DE' ? 'Abwählen' : 'Deselect'}
+                        </button>
+                      </div>
+                      {(() => {
+                        const selectedService = fixedServices.find(
+                          service => String(service.id) === String(orderData.serviceId)
+                        );
+                        if (selectedService) {
+                          const description = language === 'DE' 
+                            ? (selectedService.descriptionDe || selectedService.description)
+                            : selectedService.description;
+                          
+                          if (description) {
+                            return (
+                              <p className="text-sm text-amber-700">
+                                {description}
+                              </p>
+                            );
+                          }
+                        }
+                        return (
+                          <p className="text-sm text-amber-600 italic">
+                            {language === 'DE' 
+                              ? 'Keine weitere Beschreibung verfügbar.' 
+                              : 'No further description available.'}
+                          </p>
+                        );
+                      })()}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1559,1536 +1673,1549 @@ export default function OrderPage() {
       </div>
     );
   };
-  // Step 4: Menu + Service selection
-  const Step4 = () => {
-    return (
-      <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          {t.menuSelection.title}
-        </h2>
-        <p className="text-gray-600 text-lg">
-          {t.menuSelection.subtitle}
-        </p>
-      </div>
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
-        {menusData.map((menu) => {
-          const steps = Array.isArray(menu.steps) ? menu.steps : [];
-          const dishesAvailable = Array.isArray(menu.products)
-            ? menu.products.length
-            : Array.isArray(menu.menuProducts)
-            ? menu.menuProducts.length
-            : 0;
-          const cardClassName =
-            'w-full max-w-[26rem] h-[34rem] rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 text-left bg-white shadow-sm hover:shadow-xl flex flex-col ' +
-            ((pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null) === Number(menu.id)
-              ? 'border-amber-500 ring-2 ring-amber-200'
-              : menu.isActive
-              ? 'hover:border-amber-300'
-              : 'bg-gray-50 opacity-70 cursor-not-allowed');
-          return (
-                <button
-                  key={menu.id}
-                  type="button"
-                  onClick={() => handleMenuCardClick(menu)}
-                  className={cardClassName}
-                >
-              <div className="relative h-44 min-h-44 bg-gray-200 flex-none">
-                {menu.image ? (
-                  <img
-                    src={menu.image}
-                    alt={(language === 'DE' ? (menu.nameDe || menu.name) : menu.name) || 'Menu image'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
-                    {ui.noImage}
-                  </div>
-                )}
-                {!menu.isActive && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg px-4 py-2 bg-red-600 rounded-lg">
-                      {language === 'DE' ? 'Derzeit nicht verfügbar' : 'Currently Unavailable'}
-                    </span>
-                  </div>
-                )}
-              </div>
-                <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
-                  <div>
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    {language === 'DE' ? (menu.nameDe || menu.name) : menu.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1 max-h-12 overflow-hidden">
-                    {language === 'DE' ? (menu.descriptionDe || menu.description) : menu.description}
-                  </p>
-                  </div>
-                <div className="space-y-2 text-sm text-gray-700 flex-1 min-h-0 overflow-y-auto pr-1">
-                  {steps.map((step: any, index: number) => (
-                    <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
-                        <Check size={12} />
-                      </span>
-                      <span>
-                        {step.included}{' '}
-                        {(() => {
-                          const key = normalizeMenuStepKey(step.label);
-                          return key && categoryMeta[key] ? categoryMeta[key].label : step.label;
-                        })()}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
-                      <Check size={12} />
-                    </span>
-                    <span>{dishesAvailable} {ui.dishesAvailable}</span>
-                  </div>
-                </div>
-                <div className="pt-4 border-t border-gray-200 space-y-1 mt-auto">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {menu.price ? ui.fromPerGuest(menu.price) : ui.customPricing}
-                  </div>
-                  <div className="text-xs text-gray-500">{ui.exclVat}</div>
-                  {menu.minPeople ? (
-                    <div className="text-sm font-semibold text-gray-700">{ui.guestMinimum(menu.minPeople)}</div>
-                  ) : null}
-                </div>
-                <div className="pt-2">
-                  <div className="w-full rounded-xl bg-amber-400/80 px-4 py-3 text-center text-sm font-semibold text-white">
-                    {ui.selectFood}
-                  </div>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      </div>
-     );
-   };
-  // Step 5-9: Product Selection by Category
-  const Step5 = () => {
-    const stepKey = stepsConfig[currentStep - 1]?.key;
-    const stepCategory = (stepsConfig[currentStep - 1] as any)?.categoryKey || '';
-    const currentCategory = activeCategoryKeys.includes(stepCategory) ? stepCategory : '';
-    if (!currentCategory) {
-      return null;
-    }
+  
+  // Step 2: Menu Selection (with sub-steps for categories)
+  const Step2 = () => {
+    const [showMenuSelection, setShowMenuSelection] = useState(!orderData.selectedMenu && !pendingMenuId);
     
-    const activeMenuId = pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null;
-    const selectedMenu = menusData.find(
-      m => (activeMenuId != null) && Number(m.id) === activeMenuId
-    );
-    const products = menuItemsData
-      .filter(item => matchesStepCategory(item, currentCategory))
-      .filter(item => {
-        if (!selectedMenu) return true;
-        const productIds = selectedMenu.products || [];
-        return productIds.includes(item.id);
-      });
-    const includedTotal = Math.max(0, Number(includedByCategory[currentCategory]) || 0);
-    const stepIncluded = Math.max(0, Number((stepsConfig[currentStep - 1] as any)?.included) || 0);
-    const requiredCount = Math.max(0, Number(cumulativeIncludedByStep[stepKey]) || 0);
-    const selectedCount = getCategorySelectionCount(currentCategory);
-    const extraCount = Math.max(0, selectedCount - includedTotal);
-    const categoryTitle = stepsConfig[currentStep - 1]?.label
-      || categoryMeta[currentCategory]?.label
-      || currentCategory?.charAt(0).toUpperCase() + currentCategory?.slice(1);
-    const categorySubtitle = t.productSelection?.subtitles?.[currentCategory] || '';
-    // Calculate totals for order overview
-    const calculateSubtotal = () => {
-      const menuPrice = selectedMenu?.price || 0;
-      const guestCount = parseInt(orderData.guestCount) || 0;
-      const foodSubtotal = getFoodExtrasSubtotal();
-      const menuSubtotal = menuPrice * guestCount;
-      
-      return menuSubtotal + foodSubtotal;
-    };
-    
-    const calculateAccessoriesSubtotal = () => {
-      return selectedAccessories.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    };
-    
-    const subtotal = calculateSubtotal();
-    const accessoriesSubtotal = calculateAccessoriesSubtotal();
-    const flatServiceFee = 48.90;
-    const total = subtotal + accessoriesSubtotal + flatServiceFee;
-    
-    const selectedMenuObj = selectedMenu;
-    
-    return (
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Order Overview - Right Side */}
-        <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">{t.productSelection.orderSummary}</h3>
-              <button
-                onClick={() => setOrderSummaryVisible(!orderSummaryVisible)}
-                className="lg:hidden"
-              >
-                {orderSummaryVisible ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </button>
-            </div>
-            
-            <div className={`${orderSummaryVisible ? 'block' : 'hidden lg:block'} space-y-6`}>
-              {/* Event Info Summary */}
-              <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/70 p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-gray-800">{t.eventInfo.date}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
-                  <span className="font-semibold text-gray-900">
-                    {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Menu Summary */}
-              {selectedMenuObj && (
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-gray-900">{selectedMenuObj.name}</h4>
-                    <span className="text-amber-700 font-bold">€{selectedMenuObj.price}</span>
-                  </div>
-                  <p className="text-gray-700 text-sm mb-3">{selectedMenuObj.description}</p>
-                  <div className="text-sm text-gray-800">
-                    {subtotal > 0 && (
-                      <div className="flex justify-between">
-                        <span>Menu Total:</span>
-                        <span className="font-semibold text-gray-900">€{subtotal.toFixed(2)}</span>
+    // If no menu selected yet, show menu selection
+    if (showMenuSelection) {
+      return (
+        <div className="space-y-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              {t.menuSelection.title}
+            </h2>
+            <p className="text-gray-600 text-lg">
+              {t.menuSelection.subtitle}
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
+            {menusData.map((menu) => {
+              const steps = Array.isArray(menu.steps) ? menu.steps : [];
+              const dishesAvailable = Array.isArray(menu.products)
+                ? menu.products.length
+                : Array.isArray(menu.menuProducts)
+                ? menu.menuProducts.length
+                : 0;
+              const cardClassName =
+                'w-full max-w-[26rem] h-[34rem] rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 text-left bg-white shadow-sm hover:shadow-xl flex flex-col ' +
+                ((pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null) === Number(menu.id)
+                  ? 'border-amber-500 ring-2 ring-amber-200'
+                  : menu.isActive
+                  ? 'hover:border-amber-300'
+                  : 'bg-gray-50 opacity-70 cursor-not-allowed');
+              return (
+                    <button
+                      key={menu.id}
+                      type="button"
+                      onClick={() => handleMenuCardClick(menu)}
+                      className={cardClassName}
+                    >
+                  <div className="relative h-44 min-h-44 bg-gray-200 flex-none">
+                    {menu.image ? (
+                      <img
+                        src={menu.image}
+                        alt={(language === 'DE' ? (menu.nameDe || menu.name) : menu.name) || 'Menu image'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                        {ui.noImage}
+                      </div>
+                    )}
+                    {!menu.isActive && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                        <span className="text-white font-bold text-lg px-4 py-2 bg-red-600 rounded-lg">
+                          {language === 'DE' ? 'Derzeit nicht verfügbar' : 'Currently Unavailable'}
+                        </span>
                       </div>
                     )}
                   </div>
-                </div>
-              )}
-              
-              {/* Items Summary */}
-              <div className="pt-4 border-t border-gray-200">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                  {activeCategoryKeys.map((key) => {
-                    const items = getItemsForStepCategory(key);
-                    const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
-                    if (!items.length) return null;
-                    return (
-                      <div key={key} className="mb-3">
-                        <h5 className="text-sm font-semibold text-gray-800 mb-2">{title}</h5>
-                        <div className="space-y-2 pl-3">
-                          {items.map((item, itemIdx) => (
-                            <div key={itemIdx} className="flex justify-between items-center text-sm">
-                              <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-600">x{item.quantity}</span>
-                                <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                    <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
+                      <div>
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        {language === 'DE' ? (menu.nameDe || menu.name) : menu.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1 max-h-12 overflow-hidden">
+                        {language === 'DE' ? (menu.descriptionDe || menu.description) : menu.description}
+                      </p>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-
-              {/* Included vs Extras */}
-              {getCategorySummaryRows().length > 0 && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                    {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
-                  </h4>
-                  <div className="space-y-3">
-                    {getCategorySummaryRows().map((row) => (
-                      <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                          <span className="text-xs text-gray-500">
-                            {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
+                    <div className="space-y-2 text-sm text-gray-700 flex-1 min-h-0 overflow-y-auto pr-1">
+                      {steps.map((step: any, index: number) => (
+                        <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                            <Check size={12} />
+                          </span>
+                          <span>
+                            {step.included}{' '}
+                            {(() => {
+                              const key = normalizeMenuStepKey(step.label);
+                              return key && categoryMeta[key] ? categoryMeta[key].label : step.label;
+                            })()}
                           </span>
                         </div>
-                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                          <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
-                          <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
-                          <span className="text-right">
-                            {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
-                          </span>
-                        </div>
+                      ))}
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                          <Check size={12} />
+                        </span>
+                        <span>{dishesAvailable} {ui.dishesAvailable}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Accessories Summary */}
-              {selectedAccessories.length > 0 && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                    {language === 'DE' ? 'Zubehör' : 'Accessories'}
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedAccessories.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-800">{item.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600">x{item.quantity}</span>
-                          <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Totals - Fixed to show all values in orange/black */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">
-                      {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
-                    </span>
-                    <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">
-                      {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
-                    </span>
-                    <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
-                  </div>
-                  {selectedAccessories.length > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
-                      <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
                     </div>
-                  )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
-                    <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
-                    <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
-                    <span>€{total.toFixed(2)}</span>
-                  </div>
-                  {renderSummaryNav()}
-                </div>
-              </div>
-              {/* Quick Navigation */}
-              {/* Quick Navigation */}
-              <div className="pt-4 border-t border-gray-200">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Quick Navigation</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {dynamicMenuSteps.map((step) => {
-                    const stepIndex = stepsConfig.findIndex(s => s.key === step.key) + 1;
-                    return (
-                      <button
-                        key={step.key}
-                        onClick={() => handleStepChange(stepIndex)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          currentStep === stepIndex
-                            ? 'bg-amber-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {step.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Product Selection - Left Side */}
-        <div className="lg:col-span-2 lg:order-1">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">
-            {categoryTitle}
-          </h2>
-          {categorySubtitle && (
-            <p className="text-gray-600 text-lg">
-              {categorySubtitle}
-            </p>
-          )}
-          <div className="mt-4 inline-flex flex-wrap items-center justify-center gap-3 rounded-full border border-amber-100 bg-amber-50/70 px-4 py-2 text-sm text-amber-700">
-            <span className="font-semibold">Included (this step): {stepIncluded}</span>
-            <span className="text-amber-300">|</span>
-            <span className="font-semibold">Required so far: {requiredCount}</span>
-            <span className="text-amber-300">|</span>
-            <span className="font-semibold">Selected: {selectedCount}</span>
-            <span className="text-amber-300">|</span>
-            <span className={`font-semibold ${extraCount > 0 ? 'text-amber-900' : ''}`}>
-              Extra: {extraCount}
-            </span>
-          </div>
-          {extraCount > 0 && (
-            <p className="mt-2 text-xs text-amber-700">Extras beyond the included count are charged.</p>
-          )}
-        </div>
-          <div className="space-y-6">
-            {products.map((product) => {
-              const quantityKey = `${currentCategory}_${product.id}`;
-              const quantityInOrder = getProductQuantityInOrder(currentCategory, product);
-              const minQuantity = getMinOrderQuantity(product);
-              const currentQuantity = quantities[quantityKey] || 0;
-              
-              return (
-                <div key={product.id} className="border border-gray-300 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300">
-                  <div className="p-6">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={(language === 'DE' ? (product.nameDe || product.name) : product.name) || 'Product image'}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
-                            {ui.noImage}
-                          </div>
-                        )}
+                    <div className="pt-4 border-t border-gray-200 space-y-1 mt-auto">
+                      <div className="text-2xl font-bold text-gray-900">
+                        {menu.price ? ui.fromPerGuest(menu.price) : ui.customPricing}
                       </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-900">
-                                {language === 'DE' ? (product.nameDe || product.name) : product.name}
-                              </h3>
-                              {!product.available && (
-                                <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-lg">
-                                  {ui.notAvailable}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-gray-600 mb-4">
-                              {language === 'DE' ? (product.descriptionDe || product.description) : product.description}
-                            </p>
-                            
-                            <div className="flex flex-wrap items-center gap-4 mb-4">
-                              <div className="text-2xl font-bold text-gray-900">€{product.price}</div>
-                              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                                {language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'} {minQuantity}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                {(language === 'DE' && Array.isArray(product.allergensDe) && product.allergensDe.length > 0 ? product.allergensDe : product.allergens).map((allergen, idx) => (
-                                  <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
-                                    {allergen}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setProductDetailsItem(product);
-                              setProductDetailsOpen(true);
-                            }}
-                            className="ml-4 shrink-0 px-4 py-2 text-sm font-semibold rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors"
-                          >
-                            {ui.moreInfo}
-                          </button>
-                        </div>
-                        
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
-                            <button
-                              onClick={() => {
-                                const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
-                                updateQuantity(currentCategory, product.id, base - 1, minQuantity);
-                              }}
-                              className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
-                              disabled={!product.available}
-                            >
-                              <Minus size={20} strokeWidth={2.5} className="text-black" />
-                            </button>
-                            <input
-                              type="number"
-                              min="0"
-                              value={currentQuantity}
-                              onChange={(e) => updateQuantity(currentCategory, product.id, parseInt(e.target.value, 10) || 0, minQuantity)}
-                              className="w-16 text-center py-2 text-xl font-bold border-x border-gray-300 bg-white text-gray-900"
-                              disabled={!product.available}
-                            />
-                            <button
-                              onClick={() => {
-                                const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
-                                updateQuantity(currentCategory, product.id, base + 1, minQuantity);
-                              }}
-                              className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
-                              disabled={!product.available}
-                            >
-                              <Plus size={20} strokeWidth={2.5} className="text-black" />
-                            </button>
-                          </div>
-                          
-                          <button
-                            onClick={() => addProductToOrder(currentCategory, product)}
-                            disabled={currentQuantity <= 0 || !product.available}
-                            className={`px-6 py-3 rounded-lg text-base font-semibold transition-colors ${
-                              currentQuantity > 0 && product.available
-                                ? 'bg-gray-900 text-white hover:bg-black'
-                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                            }`}
-                          >
-                            {quantityInOrder > 0 ? ui.updateOrder : ui.addToOrder}
-                          </button>
-                        </div>
-                        
-                        {quantityInOrder > 0 && (
-                          <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                              <span className="text-amber-800 font-semibold">
-                                In order: <span className="text-xl">{quantityInOrder}</span>
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder - 1)}
-                                  className="w-8 h-8 flex items-center justify-center bg-red-100 text-red-800 rounded-full hover:bg-red-200"
-                                >
-                                  <Minus size={16} strokeWidth={2.5} className="text-black" />
-                                </button>
-                                <button
-                                  onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder + 1)}
-                                  className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-800 rounded-full hover:bg-green-200"
-                                >
-                                  <Plus size={16} strokeWidth={2.5} className="text-black" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                      <div className="text-xs text-gray-500">{ui.exclVat}</div>
+                      {menu.minPeople ? (
+                        <div className="text-sm font-semibold text-gray-700">{ui.guestMinimum(menu.minPeople)}</div>
+                      ) : null}
+                    </div>
+                    <div className="pt-2">
+                      <div className="w-full rounded-xl bg-amber-400/80 px-4 py-3 text-center text-sm font-semibold text-white">
+                        {ui.selectFood}
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
-        </div>
-      </div>
-    );
-  };
-  // Step 10: Accessories - Updated with realistic prices and images, removed "Continue without accessory" button
-  const Step10 = () => {
-    const guestCount = parseInt(orderData.guestCount) || 0;
-    const flatServiceFee = 48.90;
-    const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
-    }, 0);
-    
-    const selectedMenuObj = menusData.find(
-      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
-    );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
-
-    const foodSubtotal = getFoodExtrasSubtotal();
-    const subtotal = menuSubtotal + foodSubtotal;
-    const currentSubtotal = subtotal + accessoriesSubtotal + flatServiceFee;
-
-    const dbAccessories = (accessoriesData || []).map((a: any) => {
-      const fallbackUnit = language === 'DE' ? 'pro Stk' : 'each';
-      return {
-        id: a.id,
-        name: language === 'DE' ? (a.nameDe || a.nameEn) : a.nameEn,
-        description: language === 'DE' ? (a.descriptionDe || a.descriptionEn) : a.descriptionEn,
-        details: language === 'DE' ? (a.detailsDe || a.detailsEn) : a.detailsEn,
-        price: Number(a.price) || 0,
-        unit: (language === 'DE' ? (a.unitDe || a.unitEn) : a.unitEn) || fallbackUnit,
-        quantityMode: a.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT',
-        fixedQuantity: a.fixedQuantity == null ? null : Number(a.fixedQuantity),
-        image: a.image || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
-      };
-    });
-    
-    // Realistic accessories with images and updated prices
-    const legacyAccessories = [
-      {
-        id: 1,
-        name: language === 'DE' ? 'Porzellanteller (Premium)' : 'Premium Porcelain Dinner Plates',
-        description: language === 'DE'
-          ? 'Elegante weiße Porzellanteller für formelle Anlässe'
-          : 'Elegant white porcelain plates for formal dining',
-        details: language === 'DE' ? 'Set enthält nur Teller' : 'Set includes dinner plates only',
-        price: 3.50, // More realistic price
-        unit: language === 'DE' ? 'pro Teller' : 'per plate',
-        quantityMode: 'GUEST_COUNT',
-        fixedQuantity: null,
-        image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
-      },
-      {
-        id: 2,
-        name: language === 'DE' ? 'Edelstahl-Besteckset' : 'Stainless Steel Cutlery Set',
-        description: language === 'DE'
-          ? 'Komplettes Besteckset mit Messer, Gabel und Löffel'
-          : 'Complete cutlery set including knife, fork, and spoon',
-        details: language === 'DE' ? 'Polierter Edelstahl' : 'Polished stainless steel',
-        price: 2.75, // More realistic price
-        unit: language === 'DE' ? 'pro Set' : 'per set',
-        quantityMode: 'GUEST_COUNT',
-        fixedQuantity: null,
-        image: 'https://images.unsplash.com/photo-1595435934247-5d33b7f92c70?w=400&h=300&fit=crop'
-      },
-      {
-        id: 3,
-        name: language === 'DE' ? 'Leinenservietten' : 'Linen Napkins',
-        description: language === 'DE'
-          ? 'Hochwertige Leinenservietten in verschiedenen Farben'
-          : 'High-quality linen napkins in various colors',
-        details: language === 'DE' ? 'Erhältlich in Weiß, Schwarz oder Beige' : 'Available in white, black, or beige',
-        price: 1.20, // More realistic price
-        unit: language === 'DE' ? 'pro Serviette' : 'per napkin',
-        quantityMode: 'GUEST_COUNT',
-        fixedQuantity: null,
-        image: 'https://images.unsplash.com/photo-1583845112203-1aa7e80d8d2c?w=400&h=300&fit=crop'
-      },
-      {
-        id: 4,
-        name: language === 'DE' ? 'Weingläser' : 'Wine Glasses',
-        description: language === 'DE' ? 'Klassische, kristallklare Weingläser' : 'Classic crystal-clear wine glasses',
-        details: language === 'DE' ? 'Fassungsvermögen 350ml' : '12oz capacity',
-        price: 2.25, // More realistic price
-        unit: language === 'DE' ? 'pro Glas' : 'per glass',
-        quantityMode: 'GUEST_COUNT',
-        fixedQuantity: null,
-        image: 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=400&h=300&fit=crop'
-      },
-      {
-        id: 5,
-        name: language === 'DE' ? 'Buffet-Servierplatten' : 'Buffet Serving Platters',
-        description: language === 'DE'
-          ? 'Große ovale Servierplatten für Buffet-Aufbau'
-          : 'Large oval serving platters for buffet setup',
-        details: language === 'DE' ? 'Keramik, hitzebeständig' : 'Ceramic, heat-resistant',
-        price: 8.50, // More realistic price
-        unit: language === 'DE' ? 'pro Platte' : 'per platter',
-        quantityMode: 'GUEST_COUNT',
-        fixedQuantity: null,
-        image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
-      },
-      {
-        id: 6,
-        name: language === 'DE' ? 'Tischdecken' : 'Table Cloths',
-        description: language === 'DE'
-          ? 'Elegante Tischwäsche für formelle Events'
-          : 'Elegant table linen for formal events',
-        details: language === 'DE' ? 'Verschiedene Größen verfügbar' : 'Various sizes available',
-        price: 12.00, // More realistic price
-        unit: language === 'DE' ? 'pro Tischtuch' : 'per cloth',
-        quantityMode: 'GUEST_COUNT',
-        fixedQuantity: null,
-        image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=300&fit=crop'
-      }
-    ];
-
-    const realisticAccessories = dbAccessories.length ? dbAccessories : legacyAccessories;
-    
-    return (
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Order Overview - Right Side */}
-        <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
-            
-            <div className="space-y-6">
-              {/* Event Info Summary */}
-              <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/70 p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-gray-800">{t.eventInfo.date}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
-                  <span className="font-semibold text-gray-900">
-                    {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Items Summary */}
-              <div className="pt-4 border-t border-gray-200">
-                <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                  {activeCategoryKeys.map((key) => {
-                    const items = getItemsForStepCategory(key);
-                    const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
-                    if (!items.length) return null;
-                    return (
-                      <div key={key} className="mb-3">
-                        <h5 className="text-sm font-semibold text-gray-800 mb-2">{title}</h5>
-                        <div className="space-y-2 pl-3">
-                          {items.map((item, itemIdx) => (
-                            <div key={itemIdx} className="flex justify-between items-center text-sm">
-                              <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-600">x{item.quantity}</span>
-                                <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-
-              {/* Included vs Extras */}
-              {getCategorySummaryRows().length > 0 && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                    {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
-                  </h4>
-                  <div className="space-y-3">
-                    {getCategorySummaryRows().map((row) => (
-                      <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                          <span className="text-xs text-gray-500">
-                            {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
-                          </span>
-                        </div>
-                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                          <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
-                          <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
-                          <span className="text-right">
-                            {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* Accessories Summary */}
-              {selectedAccessories.length > 0 && (
-                <div className="pt-4 border-t border-gray-200">
-                  <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                    {language === 'DE' ? 'Zubehör' : 'Accessories'}
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedAccessories.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-800">{item.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600">x{item.quantity}</span>
-                          <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {/* Totals - Fixed to show all values in orange/black */}
-              <div className="pt-4 border-t border-gray-200">
-                <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">
-                      {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
-                    </span>
-                    <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">
-                      {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
-                    </span>
-                    <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
-                  </div>
-                  {selectedAccessories.length > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
-                      <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
-                    <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
-                    <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
-                    <span>€{currentSubtotal.toFixed(2)}</span>
-                  </div>
-                  {renderSummaryNav()}
-                </div>
-
-              </div>
-            </div>
           </div>
-        </div>
-        {/* Accessories Selection - Left Side */}
-        <div className="lg:col-span-2 lg:order-1">
-          <div className="space-y-8">
-            {/* Updated Category Title Section - More Compact */}
-            <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                {ui.optionalAccessoriesTitle}
-              </h1>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                {ui.optionalAccessoriesSubtitle}
-              </h2>
-              <div className="inline-flex items-center justify-center gap-3 rounded-full bg-amber-50/70 px-4 py-2 text-sm text-amber-700">
-                <Info size={16} />
-                <span>{ui.optionalAccessoriesHint}</span>
-              </div>
-              <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedAccessories([]);
-                    nextStep();
-                  }}
-                  className="px-6 py-3 rounded-lg text-base font-semibold bg-gray-900 text-white hover:bg-black transition-colors"
-                >
-                  {ui.continueWithoutAccessories}
-                </button>
-              </div>
-            </div>
-            <div className="space-y-6">
-              {realisticAccessories.map((accessory) => {
-                const isSelected = selectedAccessories.some(item => item.id === accessory.id);
-                const selectedItem = selectedAccessories.find(item => item.id === accessory.id);
-                const quantityMode = accessory.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
-                const baseQuantity = quantityMode === 'FIXED'
-                  ? Math.max(1, Math.max(0, Math.trunc(Number(accessory.fixedQuantity) || 0)) || 1)
-                  : Math.max(1, guestCount || MIN_GUESTS);
-                const effectiveQuantity = isSelected ? Number(selectedItem?.quantity) || baseQuantity : baseQuantity;
-                const displayQuantity = isSelected ? effectiveQuantity : baseQuantity;
-                const quantityLabel = quantityMode === 'FIXED'
-                  ? (language === 'DE' ? 'fest' : 'fixed')
-                  : (language === 'DE' ? 'entspricht Gaesten' : 'matches guests');
-                return (
-                  <div key={accessory.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow">
-                    <div className="p-6">
-                      <div className="flex flex-col md:flex-row items-start gap-6">
-                        {/* Image Column */}
-                        <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                          <img
-                            src={accessory.image}
-                            alt={accessory.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                        
-                        {/* Content Column */}
-                        <div className="flex-1">
-                          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-xl font-bold text-gray-900">{accessory.name}</h3>
-                              </div>
-                              <p className="text-gray-600 mb-2">{accessory.description}</p>
-                              {accessory.details && (
-                                <p className="text-gray-500 text-sm">{accessory.details}</p>
-                              )}
-                              
-                              <div className="mt-3">
-                                <div className="text-lg font-bold text-gray-900">
-                                  €{accessory.price.toFixed(2)} {accessory.unit}
-                                </div>
-                                <div className="text-xs font-semibold text-amber-700 mt-1">
-                                  {language === 'DE' ? 'Menge' : 'Quantity'}: {displayQuantity} ({quantityLabel}) | {language === 'DE' ? 'Gesamt' : 'Total'}: €{(accessory.price * displayQuantity).toFixed(2)}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Selection Controls */}
-                            <div className="flex flex-col sm:flex-row items-center gap-3">
-                              {isSelected && (
-                                <div className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
-                                  {language === 'DE' ? 'Menge' : 'Qty'}: {effectiveQuantity}
-                                </div>
-                              )}
-                              <button
-                                onClick={() => toggleAccessory(accessory)}
-                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
-                                  isSelected
-                                    ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                    : 'bg-gray-900 text-white hover:bg-black'
-                                }`}
-                              >
-                                {isSelected ? ui.remove : ui.addToOrder}
-                              </button>
-                            </div>
-                          </div>
-                          
-                          {/* Quantity display when selected */}
-                          {isSelected && (
-                            <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                              <div className="flex items-center justify-between">
-                                <span className="text-green-800 font-semibold">
-                                  {language === 'DE' ? 'Hinzugefuegt' : 'Added'}:{' '}
-                                  <span className="text-lg">
-                                    {effectiveQuantity} {language === 'DE' ? 'Stk' : 'pcs'}
-                                  </span>
-                                </span>
-                                <span className="text-green-900 font-bold">
-                                  {language === 'DE' ? 'Gesamt' : 'Total'}: €{(selectedItem.price * effectiveQuantity).toFixed(2)}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  // Step 11: Delivery + Payment
-  const Step11 = () => (
-    <div className="space-y-10">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">
-          {ui.deliveryPaymentTitle}
-        </h2>
-        <p className="text-gray-600 text-lg">
-          {ui.deliveryPaymentSubtitle}
-        </p>
-      </div>
-      <div className="grid lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-2xl border border-amber-100 bg-white shadow-lg p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <TruckIcon size={20} className="text-amber-600" />
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">{ui.deliveryContactTitle}</h3>
-                <p className="text-sm text-gray-600">{ui.deliveryContactSubtitle}</p>
-              </div>
-            </div>
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    {t.delivery.contact.first} *
-                  </label>
-                  <input
-                    type="text"
-                    value={orderData.contactInfo.firstName}
-                    onChange={(e) => updateOrderData('contactInfo', {
-                      ...orderData.contactInfo,
-                      firstName: e.target.value
-                    })}
-                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                    placeholder={language === 'DE' ? 'Max' : 'John'}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    {t.delivery.contact.last} *
-                  </label>
-                  <input
-                    type="text"
-                    value={orderData.contactInfo.lastName}
-                    onChange={(e) => updateOrderData('contactInfo', {
-                      ...orderData.contactInfo,
-                      lastName: e.target.value
-                    })}
-                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                    placeholder={language === 'DE' ? 'Mustermann' : 'Doe'}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    {t.delivery.contact.email} *
-                  </label>
-                  <input
-                    type="email"
-                    value={orderData.contactInfo.email}
-                    onChange={(e) => updateContactInfoField('email', e.target.value)}
-                    onBlur={() => handleContactBlur('email')}
-                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                    placeholder={language === 'DE' ? 'max@example.com' : 'john@example.com'}
-                    required
-                  />
-                  {contactErrors.email && (
-                    <p className="mt-2 text-sm text-red-600">{contactErrors.email}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">
-                    {t.delivery.contact.phone} *
-                  </label>
-                  <input
-                    type="tel"
-                    value={orderData.contactInfo.phone}
-                    onChange={(e) => updateContactInfoField('phone', e.target.value)}
-                    onBlur={() => handleContactBlur('phone')}
-                    inputMode="tel"
-                    pattern="^\\+?[0-9\\s-]{7,15}$"
-                    className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                    placeholder="+49 123 456 789"
-                    required
-                  />
-                  {contactErrors.phone && (
-                    <p className="mt-2 text-sm text-red-600">{contactErrors.phone}</p>
-                  )}
-                </div>
-              </div>
-              {orderData.businessType === 'business' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
-                      {language === 'DE' ? 'Firmenname *' : 'Company Name *'}
-                    </label>
-                    <input
-                      type="text"
-                      value={orderData.contactInfo.company}
-                      onChange={(e) => updateCompanyName(e.target.value)}
-                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                      placeholder={language === 'DE' ? 'Firmenname' : 'Company name'}
-                      required
-                    />
-                    {companyErrors.name && (
-                      <p className="mt-2 text-sm text-red-600">{companyErrors.name}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">
-                      {language === 'DE' ? 'Firmeninformationen (optional)' : 'Company Information (optional)'}
-                    </label>
-                      <textarea
-                      value={orderData.companyInfo}
-                      onChange={(e) => updateCompanyInfo(e.target.value)}
-                      rows={4}
-                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
-                      placeholder={language === 'DE' ? 'z.B. Branche, Groesse, Standort' : 'e.g. industry, size, location'}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <FileText size={18} className="text-gray-600" />
-              <h3 className="text-lg font-bold text-gray-900">
-                {language === 'DE' ? 'Besondere Wuensche' : 'Special Requests'}
-              </h3>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              {language === 'DE'
-                  ? 'Teilen Sie Ernährungswünsche, Hinweise zum Aufbau oder Zeitdetails.'
-                  : 'Share dietary restrictions, setup notes, or timing details.'}
-              </p>
-            <textarea
-              value={orderData.specialRequests}
-              onChange={(e) => updateOrderData('specialRequests', e.target.value)}
-              rows={4}
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
-              placeholder={language === 'DE'
-                ? 'Ernährungswünsche oder besondere Anforderungen...'
-                : 'Any dietary restrictions or special requirements...'}
-            />
-          </div>
-        </div>
-        <div className="lg:col-span-5">
-          <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 md:p-8 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <MapPinIcon size={18} className="text-amber-600" />
-              <h3 className="text-lg font-bold text-gray-900">
-                {language === 'DE' ? 'Lieferübersicht' : 'Delivery Overview'}
-              </h3>
-            </div>
-            <div className="space-y-3 text-sm text-gray-700">
-              <div className="flex items-center gap-2">
-                <CalendarIcon size={16} className="text-gray-500" />
-                <span className="font-semibold">{t.eventInfo.date}:</span>
-                <span>{orderData.eventDate || ui.notSpecified}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <ClockIcon size={16} className="text-gray-500" />
-                <span className="font-semibold">{t.eventInfo.time}:</span>
-                <span>{orderData.eventTime || ui.notSpecified}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users size={16} className="text-gray-500" />
-                <span className="font-semibold">{t.eventInfo.guests}:</span>
-                <span>{orderData.guestCount || 0}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPinIcon size={16} className="text-gray-500" />
-                <span className="font-semibold">{t.eventInfo.location}:</span>
-                <span>
-                  {orderData.postalCode || ui.notSpecified}
-                  {orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
-                </span>
-              </div>
-            </div>
-            <div className="mt-6 rounded-xl border border-amber-200 bg-white/70 p-4 text-xs text-gray-600">
-              <div className="flex items-center gap-2">
-                <Info size={14} className="text-amber-600" />
-                <span>
-                  {language === 'DE'
-                    ? 'Lieferzeitfenster werden nach Zahlung bestätigt.'
-                    : 'Delivery windows are confirmed after payment.'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="pt-10 border-t border-amber-100">
-        <Step12 />
-      </div>
-    </div>
-  );
-  // Step 12: Payment
-  const Step12 = () => {
-    // Calculate totals
-    const guestCount = parseInt(orderData.guestCount) || 0;
-    const flatServiceFee = 48.90;
-    const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
-    }, 0);
-    
-    const selectedMenuObj = menusData.find(
-      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
-    );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
-    
-    const foodSubtotal = getFoodExtrasSubtotal();
-    const subtotal = menuSubtotal + foodSubtotal;
-    const total = subtotal + accessoriesSubtotal + flatServiceFee;
-    const vatRate = orderData.businessType === 'business' ? 0.19 : 0.07;
-    const vatAmount = total * vatRate;
-    const grandTotal = total + vatAmount;
-    return (
-      <div className="space-y-8">
-        <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Lock size={20} className="text-amber-600" />
-            <h2 className="text-2xl font-bold text-gray-900">{t.payment.title}</h2>
-          </div>
-          <p className="text-gray-600">{t.payment.subtitle}</p>
-        </div>
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Order Summary - Right Side */}
-          <div className="lg:col-span-1 lg:order-2">
-            <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
-              
-              <div className="space-y-6">
-                {/* Event Info - Fixed text color */}
-                <div className="space-y-4">
-                  <h4 className="font-bold text-gray-900">{t.eventInfo.title}</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-black">
-                      <CalendarIcon size={16} className="text-gray-500" />
-                      <span className="font-medium">{orderData.eventDate || ui.notSpecified}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-black">
-                      <ClockIcon size={16} className="text-gray-500" />
-                      <span className="font-medium">{orderData.eventTime || ui.notSpecified}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-black">
-                      <Users size={16} className="text-gray-500" />
-                      <span className="font-medium">
-                        {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-black">
-                      <MapPinIcon size={16} className="text-gray-500" />
-                      <span className="font-medium">
-                        {orderData.postalCode || ui.notSpecified}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Contact Info */}
-                <div className="pt-4 border-t border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">
-                    {language === 'DE' ? 'Kontaktinformationen' : 'Contact Information'}
-                  </h4>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
-                    <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
-                    <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
-                    {orderData.businessType === 'business' && orderData.contactInfo.company && (
-                      <p className="text-sm text-gray-900 font-semibold">
-                        {language === 'DE' ? 'Firma:' : 'Company:'} {orderData.contactInfo.company}
-                      </p>
-                    )}
-                    {orderData.businessType === 'business' && orderData.companyInfo && (
-                      <p className="text-sm text-gray-900 font-semibold">
-                        {language === 'DE' ? 'Firmeninfo:' : 'Company Info:'} {orderData.companyInfo}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Price Breakdown - Fixed to show all values in orange/black */}
-                <div className="pt-4 border-t border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-3">
-                    {language === 'DE' ? 'Preisaufstellung' : 'Price Breakdown'}
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">
-                        {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
-                      </span>
-                      <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">
-                        {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
-                      </span>
-                      <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
-                    </div>
-                    {selectedAccessories.length > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
-                        <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
-                      <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-900 font-semibold">
-                        {language === 'DE'
-                          ? `MwSt (${(vatRate * 100).toFixed(2)}%):`
-                          : `VAT (${(vatRate * 100).toFixed(2)}%):`}
-                      </span>
-                      <span className="font-bold text-amber-700">€{vatAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
-                      <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
-                      <span>€{grandTotal.toFixed(2)}</span>
-                    </div>
-                    {renderSummaryNav()}
-                  </div>
-                </div>
-
-                {/* Included vs Extras */}
-                {getCategorySummaryRows().length > 0 && (
-                  <div className="pt-4 border-t border-gray-200">
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                      {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
-                    </h4>
-                    <div className="space-y-3">
-                      {getCategorySummaryRows().map((row) => (
-                        <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                            <span className="text-xs text-gray-500">
-                              {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
-                            </span>
-                          </div>
-                          <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
-                             <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
-                            <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
-                            <span className="text-right">
-                              {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* Security Badge */}
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                    <Shield size={20} className="text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium text-green-800">
-                        {language === 'DE' ? 'Sichere Zahlung' : 'Secure Payment'}
-                      </p>
-                      <p className="text-xs text-green-600">
-                        {language === 'DE'
-                          ? 'SSL-verschluesselt \u2022 DSGVO-konform'
-                          : 'SSL Encrypted \u2022 GDPR Compliant'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* Payment Form - Left Side */}
-          <div className="lg:col-span-2 lg:order-1">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-              <div className="space-y-6">
-                {/* Payment Method Selection - Fixed text color */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">{t.payment.method}</h3>
-                    <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">
-                      {language === 'DE' ? 'Schritt 3' : 'Step 3'}
-                    </span>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {[
-                      {
-                        id: 'credit-card',
-                        label: language === 'DE' ? 'Kreditkarte' : 'Credit Card',
-                        description: language === 'DE' ? 'Sofortige Bestätigung und sicherer Checkout.' : 'Instant confirmation and secure checkout.',
-                        icon: CreditCard,
-                        badge: language === 'DE' ? 'Schnell' : 'Fast'
-                      },
-                      {
-                        id: 'paypal',
-                        label: 'PayPal',
-                        description: language === 'DE' ? 'Nutzen Sie PayPal-Guthaben oder die verknüpfte Karte.' : 'Use your PayPal balance or linked card.',
-                        icon: null,
-                        badge: language === 'DE' ? 'Beliebt' : 'Popular'
-                      },
-                      {
-                        id: 'bank-transfer',
-                        label: language === 'DE' ? 'Banküberweisung' : 'Bank Transfer',
-                        description: language === 'DE' ? 'Wir zeigen Ihnen unsere Bankdaten an.' : 'We will display our bank details.',
-                        icon: Building2,
-                        badge: language === 'DE' ? 'Manuell' : 'Manual'
-                      }
-                    ].map((method) => {
-                      const isSelected = orderData.paymentMethod === method.id;
-                      return (
-                        <button
-                          key={method.id}
-                          onClick={() => {
-                            updateOrderData('paymentMethod', method.id);
-                            if (method.id === 'bank-transfer') {
-                              setBankDetailsOpen(true);
-                            }
-                          }}
-                          className={`group rounded-2xl border-2 p-5 text-left transition-all duration-300 ${
-                            isSelected
-                              ? 'border-amber-500 bg-amber-50 shadow-md shadow-amber-100'
-                              : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between mb-3 gap-3">
-                            <div className="flex min-w-0 flex-1 items-start gap-3">
-                              <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                                isSelected ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
-                              }`}>
-                                {method.icon ? <method.icon size={22} /> : <span className="text-sm font-bold">PP</span>}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <span className="min-w-0 break-words text-base font-semibold leading-snug text-gray-900">
-                                    {method.label}
-                                  </span>
-                                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                    {method.badge}
-                                  </span>
-                                </div>
-                                <p className="mt-0.5 break-words text-sm leading-snug text-gray-600">
-                                  {method.description}
-                                </p>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <CheckCircle size={20} className="text-amber-600" />
-                            )}
-                          </div>
-                          <div className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-gray-500">
-                            <span className="min-w-0 break-words">
-                              {isSelected
-                                ? (language === 'DE' ? 'Ausgewählt' : 'Selected')
-                                : (language === 'DE' ? 'Antippen zum Auswählen' : 'Tap to select')}
-                            </span>
-                            <span className="shrink-0 text-amber-600 group-hover:text-amber-700">Details</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                {/* Credit Card Form */}
-                {orderData.paymentMethod === 'credit-card' && (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2">
-                        Card Number *
-                      </label>
-                      <div className="relative">
-                        <CreditCard className="absolute left-3 top-3.5 text-gray-400" size={20} />
-                        <input
-                          type="text"
-                          value={orderData.cardDetails.number}
-                          onChange={(e) => updateOrderData('cardDetails', {
-                            ...orderData.cardDetails,
-                            number: e.target.value
-                          })}
-                          className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                          placeholder="1234 5678 9012 3456"
-                          maxLength={19}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                          Expiry Date *
-                        </label>
-                        <input
-                          type="text"
-                          value={orderData.cardDetails.expiry}
-                          onChange={(e) => updateOrderData('cardDetails', {
-                            ...orderData.cardDetails,
-                            expiry: e.target.value
-                          })}
-                          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                          placeholder="MM/YY"
-                          maxLength={5}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                          CVC *
-                        </label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3.5 text-gray-400" size={20} />
-                          <input
-                            type="text"
-                            value={orderData.cardDetails.cvc}
-                            onChange={(e) => updateOrderData('cardDetails', {
-                              ...orderData.cardDetails,
-                              cvc: e.target.value
-                            })}
-                            className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                            placeholder="123"
-                            maxLength={3}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-900 mb-2">
-                        Name on Card *
-                      </label>
-                      <input
-                        type="text"
-                        value={orderData.cardDetails.name}
-                        onChange={(e) => updateOrderData('cardDetails', {
-                          ...orderData.cardDetails,
-                          name: e.target.value
-                        })}
-                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                        placeholder="John Doe"
-                      />
-                    </div>
-                  </div>
-                )}
-                {/* Terms and Conditions */}
-                <div className="pt-6 border-t border-gray-200">
-                  <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/70 p-4">
-                    <input
-                      type="checkbox"
-                      id="terms"
-                      className="mt-1"
-                      checked={termsAccepted}
-                      onChange={(e) => {
-                        setTermsAccepted(e.target.checked);
-                        if (e.target.checked) {
-                          setTermsError('');
-                        }
-                      }}
-                    />
-                    <div>
-                      <label htmlFor="terms" className="text-sm text-gray-900 leading-relaxed">
-                        I agree to the Terms & Conditions and Privacy Policy. I understand that this order is subject to our cancellation policy (48 hours notice for full refund).
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setTermsModalOpen(true)}
-                        className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
-                      >
-                      {language === 'DE' ? 'AGB & Bedingungen lesen' : 'Read full Terms and Conditions'}
-                      </button>
-                    </div>
-                  </div>
-                  {termsError && (
-                    <p className="mt-2 text-sm text-red-600">{termsError}</p>
-                  )}
-                </div>
-                {orderBlocked && (
-                  <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                    {blockedMessage}
-                  </div>
-                )}
-                {/* Submit Button */}
-                <button
-                  onClick={() => {
-                    if (!validateStepsUpTo(stepsConfig.length)) {
-                      return;
-                    }
-                    handleSubmitOrder();
-                  }}
-                  disabled={orderBlocked}
-                  className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  <Lock size={20} />
-                  Pay €{grandTotal.toFixed(2)} Securely
-                </button>
-                {/* Security Assurance */}
-                <div className="text-center pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <Shield size={16} className="text-green-600" />
-                      <span>SSL Secure</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Lock size={16} className="text-blue-600" />
-                      <span>Encrypted</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle size={16} className="text-green-600" />
-                      <span>GDPR Compliant</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  // Helper functions
-  const updateOrderData = (field, value) => {
-    setOrderData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-  const nextStep = () => {
-    if (shouldBlockProgress) {
+       );
+     }
+     
+     // If menu is selected, show category selection
+     return <MenuItemsStep />;
+   };
+   
+   // Menu Items Selection (sub-step within menu step)
+   const MenuItemsStep = () => {
+     const currentCategory = dynamicMenuSteps[currentMenuSubStep]?.categoryKey || '';
+     
+     if (!currentCategory) {
+       return (
+         <div className="text-center py-12">
+           <h3 className="text-xl font-bold text-gray-900 mb-4">
+             {language === 'DE' ? 'Menüauswahl abgeschlossen' : 'Menu Selection Complete'}
+           </h3>
+           <button
+             onClick={() => setCurrentStep(3)}
+             className="px-6 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors"
+           >
+             {language === 'DE' ? 'Weiter zu Zubehör' : 'Continue to Accessories'}
+           </button>
+         </div>
+       );
+     }
+     
+     const activeMenuId = pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null;
+     const selectedMenu = menusData.find(
+       m => (activeMenuId != null) && Number(m.id) === activeMenuId
+     );
+     
+     const products = menuItemsData
+       .filter(item => matchesStepCategory(item, currentCategory))
+       .filter(item => {
+         if (!selectedMenu) return true;
+         const productIds = selectedMenu.products || [];
+         return productIds.includes(item.id);
+       });
+     
+     const includedTotal = Math.max(0, Number(includedByCategory[currentCategory]) || 0);
+     const stepIncluded = Math.max(0, Number(dynamicMenuSteps[currentMenuSubStep]?.included) || 0);
+     const selectedCount = getCategorySelectionCount(currentCategory);
+     const extraCount = Math.max(0, selectedCount - includedTotal);
+     
+     const categoryTitle = dynamicMenuSteps[currentMenuSubStep]?.label
+       || categoryMeta[currentCategory]?.label
+       || currentCategory?.charAt(0).toUpperCase() + currentCategory?.slice(1);
+     
+     // Sub-step navigation
+     const nextSubStep = () => {
+       if (currentMenuSubStep < dynamicMenuSteps.length - 1) {
+         setCurrentMenuSubStep(currentMenuSubStep + 1);
+       } else {
+         setCurrentStep(3); // Move to accessories
+       }
+     };
+     
+     const prevSubStep = () => {
+       if (currentMenuSubStep > 0) {
+         setCurrentMenuSubStep(currentMenuSubStep - 1);
+       } else {
+         // Go back to menu selection
+         setShowMenuSelection?.(true);
+       }
+     };
+     
+     return (
+       <div className="grid lg:grid-cols-3 gap-8">
+         {/* Order Overview - Right Side */}
+         <div className="lg:col-span-1 lg:order-2">
+           <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
+             <div className="flex items-center justify-between mb-6">
+               <h3 className="text-xl font-bold text-gray-900">{t.productSelection.orderSummary}</h3>
+               <button
+                 onClick={() => setOrderSummaryVisible(!orderSummaryVisible)}
+                 className="lg:hidden"
+               >
+                 {orderSummaryVisible ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+               </button>
+             </div>
+             
+             <div className={`${orderSummaryVisible ? 'block' : 'hidden lg:block'} space-y-6`}>
+               {/* Event Info Summary */}
+               <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/70 p-4">
+                 <div className="flex items-center justify-between text-sm">
+                   <span className="font-semibold text-gray-800">{t.eventInfo.date}:</span>
+                   <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
+                 </div>
+                 <div className="flex items-center justify-between text-sm">
+                   <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
+                   <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
+                 </div>
+                 <div className="flex items-center justify-between text-sm">
+                   <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
+                   <span className="font-semibold text-gray-900">
+                     {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                   </span>
+                 </div>
+               </div>
+               
+               {/* Menu Summary */}
+               {selectedMenu && (
+                 <div className="pt-4 border-t border-gray-200">
+                   <div className="flex items-center justify-between mb-3">
+                     <h4 className="font-bold text-gray-900">{selectedMenu.name}</h4>
+                     <span className="text-amber-700 font-bold">€{selectedMenu.price}</span>
+                   </div>
+                   <p className="text-gray-700 text-sm mb-3">{selectedMenu.description}</p>
+                 </div>
+               )}
+               
+               {/* Category Sub-steps Navigation */}
+               <div className="pt-4 border-t border-gray-200">
+                 <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                   {language === 'DE' ? 'Menükategorien' : 'Menu Categories'}
+                 </h4>
+                 <div className="space-y-2">
+                   {dynamicMenuSteps.map((step, index) => {
+                     const isCurrent = index === currentMenuSubStep;
+                     const isCompleted = index < currentMenuSubStep;
+                     const Icon = step.icon;
+                     
+                     return (
+                       <button
+                         key={step.key}
+                         onClick={() => setCurrentMenuSubStep(index)}
+                         className={`w-full text-left p-3 rounded-lg transition-colors ${
+                           isCurrent
+                             ? 'bg-amber-100 border border-amber-300'
+                             : isCompleted
+                             ? 'bg-green-50 border border-green-200'
+                             : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                         }`}
+                       >
+                         <div className="flex items-center gap-3">
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                             isCurrent ? 'bg-amber-600' : isCompleted ? 'bg-green-600' : 'bg-gray-300'
+                           }`}>
+                             <Icon size={16} className="text-white" />
+                           </div>
+                           <div className="flex-1">
+                             <div className="flex justify-between items-center">
+                               <span className={`font-medium ${isCurrent ? 'text-amber-800' : 'text-gray-700'}`}>
+                                 {step.label}
+                               </span>
+                               {isCompleted && (
+                                 <Check size={16} className="text-green-600" />
+                               )}
+                             </div>
+                             <div className="text-xs text-gray-500 mt-1">
+                               {language === 'DE' ? 'Inklusive:' : 'Included:'} {step.included}
+                             </div>
+                           </div>
+                         </div>
+                       </button>
+                     );
+                   })}
+                 </div>
+               </div>
+               
+               {/* Items Summary */}
+               <div className="pt-4 border-t border-gray-200">
+                 <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
+                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                   {activeCategoryKeys.map((key) => {
+                     const items = getItemsForStepCategory(key);
+                     const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
+                     if (!items.length) return null;
+                     return (
+                       <div key={key} className="mb-3">
+                         <h5 className="text-sm font-semibold text-gray-800 mb-2">{title}</h5>
+                         <div className="space-y-2 pl-3">
+                           {items.map((item, itemIdx) => (
+                             <div key={itemIdx} className="flex justify-between items-center text-sm">
+                               <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
+                               <div className="flex items-center gap-2">
+                                 <span className="text-gray-600">x{item.quantity}</span>
+                                 <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               </div>
+               
+               {/* Included vs Extras */}
+               {getCategorySummaryRows().length > 0 && (
+                 <div className="pt-4 border-t border-gray-200">
+                   <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                     {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
+                   </h4>
+                   <div className="space-y-3">
+                     {getCategorySummaryRows().map((row) => (
+                       <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                         <div className="flex items-center justify-between">
+                           <span className="text-sm font-semibold text-gray-800">{row.label}</span>
+                           <span className="text-xs text-gray-500">
+                             {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
+                           </span>
+                         </div>
+                         <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                           <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
+                           <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
+                           <span className="text-right">
+                             {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
+                           </span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+               
+               {/* Navigation Buttons */}
+               <div className="pt-4 border-t border-gray-200">
+                 <div className="flex justify-between gap-3">
+                   <button
+                     onClick={prevSubStep}
+                     className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                   >
+                     {language === 'DE' ? 'Zurück' : 'Back'}
+                   </button>
+                   <button
+                     onClick={nextSubStep}
+                     className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+                   >
+                     {currentMenuSubStep === dynamicMenuSteps.length - 1
+                       ? (language === 'DE' ? 'Weiter zu Zubehör' : 'Continue to Accessories')
+                       : (language === 'DE' ? 'Weiter' : 'Next')}
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+         
+         {/* Product Selection - Left Side */}
+         <div className="lg:col-span-2 lg:order-1">
+           <div className="mb-6">
+             <div className="flex items-center justify-between mb-4">
+               <div>
+                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                   {categoryTitle}
+                 </h2>
+                 <p className="text-gray-600">
+                   {language === 'DE' 
+                     ? `Wählen Sie aus den verfügbaren Optionen für ${categoryTitle.toLowerCase()}`
+                     : `Select from available options for ${categoryTitle.toLowerCase()}`
+                   }
+                 </p>
+               </div>
+               <div className="text-sm text-gray-500">
+                 {currentMenuSubStep + 1} / {dynamicMenuSteps.length}
+               </div>
+             </div>
+             
+             <div className="inline-flex flex-wrap items-center justify-center gap-3 rounded-full border border-amber-100 bg-amber-50/70 px-4 py-2 text-sm text-amber-700">
+               <span className="font-semibold">Included: {stepIncluded}</span>
+               <span className="text-amber-300">|</span>
+               <span className="font-semibold">Selected: {selectedCount}</span>
+               <span className="text-amber-300">|</span>
+               <span className={`font-semibold ${extraCount > 0 ? 'text-amber-900' : ''}`}>
+                 Extra: {extraCount}
+               </span>
+             </div>
+             {extraCount > 0 && (
+               <p className="mt-2 text-xs text-amber-700">
+                 {language === 'DE' 
+                   ? 'Extras über die enthaltene Menge hinaus werden berechnet.'
+                   : 'Extras beyond the included count are charged.'}
+               </p>
+             )}
+           </div>
+           
+           <div className="space-y-6">
+             {products.map((product) => {
+               const quantityKey = `${currentCategory}_${product.id}`;
+               const quantityInOrder = getProductQuantityInOrder(currentCategory, product);
+               const minQuantity = getMinOrderQuantity(product);
+               const currentQuantity = quantities[quantityKey] || 0;
+               
+               return (
+                 <div key={product.id} className="border border-gray-300 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300">
+                   <div className="p-6">
+                     <div className="flex flex-col md:flex-row gap-6">
+                       <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                         {product.image ? (
+                           <img
+                             src={product.image}
+                             alt={(language === 'DE' ? (product.nameDe || product.name) : product.name) || 'Product image'}
+                             className="w-full h-full object-cover"
+                           />
+                         ) : (
+                           <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                             {ui.noImage}
+                           </div>
+                         )}
+                       </div>
+                       
+                       <div className="flex-1 min-w-0">
+                         <div className="flex justify-between items-start mb-4">
+                           <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-3 mb-2">
+                               <h3 className="text-xl font-bold text-gray-900">
+                                 {language === 'DE' ? (product.nameDe || product.name) : product.name}
+                               </h3>
+                               {!product.available && (
+                                 <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-lg">
+                                   {ui.notAvailable}
+                                 </span>
+                               )}
+                             </div>
+                             <p className="text-gray-600 mb-4">
+                               {language === 'DE' ? (product.descriptionDe || product.description) : product.description}
+                             </p>
+                             
+                             <div className="flex flex-wrap items-center gap-4 mb-4">
+                               <div className="text-2xl font-bold text-gray-900">€{product.price}</div>
+                               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                                 {language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'} {minQuantity}
+                               </div>
+                               <div className="flex flex-wrap items-center gap-2">
+                                 {(language === 'DE' && Array.isArray(product.allergensDe) && product.allergensDe.length > 0 ? product.allergensDe : product.allergens).map((allergen, idx) => (
+                                   <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                                     {allergen}
+                                   </span>
+                                 ))}
+                               </div>
+                             </div>
+                           </div>
+                           <button
+                             type="button"
+                             onClick={() => {
+                               setProductDetailsItem(product);
+                               setProductDetailsOpen(true);
+                             }}
+                             className="ml-4 shrink-0 px-4 py-2 text-sm font-semibold rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors"
+                           >
+                             {ui.moreInfo}
+                           </button>
+                         </div>
+                         
+                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                           <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                             <button
+                               onClick={() => {
+                                 const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
+                                 updateQuantity(currentCategory, product.id, base - 1, minQuantity);
+                               }}
+                               className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
+                               disabled={!product.available}
+                             >
+                               <Minus size={20} strokeWidth={2.5} className="text-black" />
+                             </button>
+                             <input
+                               type="number"
+                               min="0"
+                               value={currentQuantity}
+                               onChange={(e) => updateQuantity(currentCategory, product.id, parseInt(e.target.value, 10) || 0, minQuantity)}
+                               className="w-16 text-center py-2 text-xl font-bold border-x border-gray-300 bg-white text-gray-900"
+                               disabled={!product.available}
+                             />
+                             <button
+                               onClick={() => {
+                                 const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
+                                 updateQuantity(currentCategory, product.id, base + 1, minQuantity);
+                               }}
+                               className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
+                               disabled={!product.available}
+                             >
+                               <Plus size={20} strokeWidth={2.5} className="text-black" />
+                             </button>
+                           </div>
+                           
+                           <button
+                             onClick={() => addProductToOrder(currentCategory, product)}
+                             disabled={currentQuantity <= 0 || !product.available}
+                             className={`px-6 py-3 rounded-lg text-base font-semibold transition-colors ${
+                               currentQuantity > 0 && product.available
+                                 ? 'bg-gray-900 text-white hover:bg-black'
+                                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                             }`}
+                           >
+                             {quantityInOrder > 0 ? ui.updateOrder : ui.addToOrder}
+                           </button>
+                         </div>
+                         
+                         {quantityInOrder > 0 && (
+                           <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                               <span className="text-amber-800 font-semibold">
+                                 In order: <span className="text-xl">{quantityInOrder}</span>
+                               </span>
+                               <div className="flex items-center gap-2">
+                                 <button
+                                   onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder - 1)}
+                                   className="w-8 h-8 flex items-center justify-center bg-red-100 text-red-800 rounded-full hover:bg-red-200"
+                                 >
+                                   <Minus size={16} strokeWidth={2.5} className="text-black" />
+                                 </button>
+                                 <button
+                                   onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder + 1)}
+                                   className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-800 rounded-full hover:bg-green-200"
+                                 >
+                                   <Plus size={16} strokeWidth={2.5} className="text-black" />
+                                 </button>
+                               </div>
+                             </div>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               );
+             })}
+             
+             {products.length === 0 && (
+               <div className="text-center py-12 border border-gray-200 rounded-xl bg-gray-50">
+                 <p className="text-gray-600">
+                   {language === 'DE' 
+                     ? `Keine ${categoryTitle.toLowerCase()} verfügbar für dieses Menü.`
+                     : `No ${categoryTitle.toLowerCase()} available for this menu.`
+                   }
+                 </p>
+               </div>
+             )}
+           </div>
+         </div>
+       </div>
+     );
+   };
+   
+   // Step 3: Accessories
+   const Step3 = () => {
+     const guestCount = parseInt(orderData.guestCount) || 0;
+     const flatServiceFee = 48.90;
+     const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
+       return sum + (item.price * item.quantity);
+     }, 0);
+     
+     const selectedMenuObj = menusData.find(
+       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+     );
+     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+     
+     const foodSubtotal = getFoodExtrasSubtotal();
+     const subtotal = menuSubtotal + foodSubtotal;
+     const currentSubtotal = subtotal + accessoriesSubtotal + flatServiceFee;
+     
+     const dbAccessories = (accessoriesData || []).map((a: any) => {
+       const fallbackUnit = language === 'DE' ? 'pro Stk' : 'each';
+       return {
+         id: a.id,
+         name: language === 'DE' ? (a.nameDe || a.nameEn) : a.nameEn,
+         description: language === 'DE' ? (a.descriptionDe || a.descriptionEn) : a.descriptionEn,
+         details: language === 'DE' ? (a.detailsDe || a.detailsEn) : a.detailsEn,
+         price: Number(a.price) || 0,
+         unit: (language === 'DE' ? (a.unitDe || a.unitEn) : a.unitEn) || fallbackUnit,
+         quantityMode: a.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT',
+         fixedQuantity: a.fixedQuantity == null ? null : Number(a.fixedQuantity),
+         image: a.image || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
+       };
+     });
+     
+     // Realistic accessories with images and updated prices
+     const legacyAccessories = [
+       {
+         id: 1,
+         name: language === 'DE' ? 'Porzellanteller (Premium)' : 'Premium Porcelain Dinner Plates',
+         description: language === 'DE'
+           ? 'Elegante weiße Porzellanteller für formelle Anlässe'
+           : 'Elegant white porcelain plates for formal dining',
+         details: language === 'DE' ? 'Set enthält nur Teller' : 'Set includes dinner plates only',
+         price: 3.50, // More realistic price
+         unit: language === 'DE' ? 'pro Teller' : 'per plate',
+         quantityMode: 'GUEST_COUNT',
+         fixedQuantity: null,
+         image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
+       },
+       {
+         id: 2,
+         name: language === 'DE' ? 'Edelstahl-Besteckset' : 'Stainless Steel Cutlery Set',
+         description: language === 'DE'
+           ? 'Komplettes Besteckset mit Messer, Gabel und Löffel'
+           : 'Complete cutlery set including knife, fork, and spoon',
+         details: language === 'DE' ? 'Polierter Edelstahl' : 'Polished stainless steel',
+         price: 2.75, // More realistic price
+         unit: language === 'DE' ? 'pro Set' : 'per set',
+         quantityMode: 'GUEST_COUNT',
+         fixedQuantity: null,
+         image: 'https://images.unsplash.com/photo-1595435934247-5d33b7f92c70?w=400&h=300&fit=crop'
+       },
+       {
+         id: 3,
+         name: language === 'DE' ? 'Leinenservietten' : 'Linen Napkins',
+         description: language === 'DE'
+           ? 'Hochwertige Leinenservietten in verschiedenen Farben'
+           : 'High-quality linen napkins in various colors',
+         details: language === 'DE' ? 'Erhältlich in Weiß, Schwarz oder Beige' : 'Available in white, black, or beige',
+         price: 1.20, // More realistic price
+         unit: language === 'DE' ? 'pro Serviette' : 'per napkin',
+         quantityMode: 'GUEST_COUNT',
+         fixedQuantity: null,
+         image: 'https://images.unsplash.com/photo-1583845112203-1aa7e80d8d2c?w=400&h=300&fit=crop'
+       },
+       {
+         id: 4,
+         name: language === 'DE' ? 'Weingläser' : 'Wine Glasses',
+         description: language === 'DE' ? 'Klassische, kristallklare Weingläser' : 'Classic crystal-clear wine glasses',
+         details: language === 'DE' ? 'Fassungsvermögen 350ml' : '12oz capacity',
+         price: 2.25, // More realistic price
+         unit: language === 'DE' ? 'pro Glas' : 'per glass',
+         quantityMode: 'GUEST_COUNT',
+         fixedQuantity: null,
+         image: 'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=400&h=300&fit=crop'
+       },
+       {
+         id: 5,
+         name: language === 'DE' ? 'Buffet-Servierplatten' : 'Buffet Serving Platters',
+         description: language === 'DE'
+           ? 'Große ovale Servierplatten für Buffet-Aufbau'
+           : 'Large oval serving platters for buffet setup',
+         details: language === 'DE' ? 'Keramik, hitzebeständig' : 'Ceramic, heat-resistant',
+         price: 8.50, // More realistic price
+         unit: language === 'DE' ? 'pro Platte' : 'per platter',
+         quantityMode: 'GUEST_COUNT',
+         fixedQuantity: null,
+         image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
+       },
+       {
+         id: 6,
+         name: language === 'DE' ? 'Tischdecken' : 'Table Cloths',
+         description: language === 'DE'
+           ? 'Elegante Tischwäsche für formelle Events'
+           : 'Elegant table linen for formal events',
+         details: language === 'DE' ? 'Verschiedene Größen verfügbar' : 'Various sizes available',
+         price: 12.00, // More realistic price
+         unit: language === 'DE' ? 'pro Tischtuch' : 'per cloth',
+         quantityMode: 'GUEST_COUNT',
+         fixedQuantity: null,
+         image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=300&fit=crop'
+       }
+     ];
+     
+     const realisticAccessories = dbAccessories.length ? dbAccessories : legacyAccessories;
+     
+     return (
+       <div className="grid lg:grid-cols-3 gap-8">
+         {/* Order Overview - Right Side */}
+         <div className="lg:col-span-1 lg:order-2">
+           <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
+             <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
+             
+             <div className="space-y-6">
+               {/* Event Info Summary */}
+               <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/70 p-4">
+                 <div className="flex items-center justify-between text-sm">
+                   <span className="font-semibold text-gray-800">{t.eventInfo.date}:</span>
+                   <span className="font-semibold text-gray-900">{orderData.eventDate || 'Not set'}</span>
+                 </div>
+                 <div className="flex items-center justify-between text-sm">
+                   <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
+                   <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
+                 </div>
+                 <div className="flex items-center justify-between text-sm">
+                   <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
+                   <span className="font-semibold text-gray-900">
+                     {orderData.postalCode || 'Not set'}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                   </span>
+                 </div>
+               </div>
+               
+               {/* Items Summary */}
+               <div className="pt-4 border-t border-gray-200">
+                 <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
+                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                   {activeCategoryKeys.map((key) => {
+                     const items = getItemsForStepCategory(key);
+                     const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
+                     if (!items.length) return null;
+                     return (
+                       <div key={key} className="mb-3">
+                         <h5 className="text-sm font-semibold text-gray-800 mb-2">{title}</h5>
+                         <div className="space-y-2 pl-3">
+                           {items.map((item, itemIdx) => (
+                             <div key={itemIdx} className="flex justify-between items-center text-sm">
+                               <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
+                               <div className="flex items-center gap-2">
+                                 <span className="text-gray-600">x{item.quantity}</span>
+                                 <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
+                               </div>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               </div>
+               
+               {/* Included vs Extras */}
+               {getCategorySummaryRows().length > 0 && (
+                 <div className="pt-4 border-t border-gray-200">
+                   <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                     {language === 'DE' ? 'Inklusive vs. Extras' : 'Included vs Extras'}
+                   </h4>
+                   <div className="space-y-3">
+                     {getCategorySummaryRows().map((row) => (
+                       <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                         <div className="flex items-center justify-between">
+                           <span className="text-sm font-semibold text-gray-800">{row.label}</span>
+                           <span className="text-xs text-gray-500">
+                             {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
+                           </span>
+                         </div>
+                         <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                           <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
+                           <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
+                           <span className="text-right">
+                             {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
+                           </span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+               
+               {/* Accessories Summary */}
+               {selectedAccessories.length > 0 && (
+                 <div className="pt-4 border-t border-gray-200">
+                   <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
+                     {language === 'DE' ? 'Zubehör' : 'Accessories'}
+                   </h4>
+                   <div className="space-y-2">
+                     {selectedAccessories.map((item, idx) => (
+                       <div key={idx} className="flex justify-between items-center text-sm">
+                         <span className="text-gray-800">{item.name}</span>
+                         <div className="flex items-center gap-2">
+                           <span className="text-gray-600">x{item.quantity}</span>
+                           <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+               
+               {/* Totals */}
+               <div className="pt-4 border-t border-gray-200">
+                 <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
+                   <div className="flex justify-between text-sm">
+                     <span className="text-gray-900 font-semibold">
+                       {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                     </span>
+                     <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
+                   </div>
+                   <div className="flex justify-between text-sm">
+                     <span className="text-gray-900 font-semibold">
+                       {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
+                     </span>
+                     <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
+                   </div>
+                   {selectedAccessories.length > 0 && (
+                     <div className="flex justify-between text-sm">
+                       <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
+                       <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
+                     </div>
+                   )}
+                   <div className="flex justify-between text-sm">
+                     <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
+                     <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
+                   </div>
+                   <div className="flex justify-between text-lg font-bold text-gray-900 pt-3 border-t border-amber-200">
+                     <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
+                     <span>€{currentSubtotal.toFixed(2)}</span>
+                   </div>
+                   {renderSummaryNav()}
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+         
+         {/* Accessories Selection - Left Side */}
+         <div className="lg:col-span-2 lg:order-1">
+           <div className="space-y-8">
+             <div className="text-center mb-6">
+               <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                 {ui.optionalAccessoriesTitle}
+               </h1>
+               <h2 className="text-lg font-semibold text-gray-700 mb-4">
+                 {ui.optionalAccessoriesSubtitle}
+               </h2>
+               <div className="inline-flex items-center justify-center gap-3 rounded-full bg-amber-50/70 px-4 py-2 text-sm text-amber-700">
+                 <Info size={16} />
+                 <span>{ui.optionalAccessoriesHint}</span>
+               </div>
+               <div className="mt-4 flex justify-center">
+                 <button
+                   type="button"
+                   onClick={() => {
+                     setSelectedAccessories([]);
+                     nextStep();
+                   }}
+                   className="px-6 py-3 rounded-lg text-base font-semibold bg-gray-900 text-white hover:bg-black transition-colors"
+                 >
+                   {ui.continueWithoutAccessories}
+                 </button>
+               </div>
+             </div>
+             
+             <div className="space-y-6">
+               {realisticAccessories.map((accessory) => {
+                 const isSelected = selectedAccessories.some(item => item.id === accessory.id);
+                 const selectedItem = selectedAccessories.find(item => item.id === accessory.id);
+                 const quantityMode = accessory.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+                 const baseQuantity = quantityMode === 'FIXED'
+                   ? Math.max(1, Math.max(0, Math.trunc(Number(accessory.fixedQuantity) || 0)) || 1)
+                   : Math.max(1, guestCount || MIN_GUESTS);
+                 const effectiveQuantity = isSelected ? Number(selectedItem?.quantity) || baseQuantity : baseQuantity;
+                 const displayQuantity = isSelected ? effectiveQuantity : baseQuantity;
+                 const quantityLabel = quantityMode === 'FIXED'
+                   ? (language === 'DE' ? 'fest' : 'fixed')
+                   : (language === 'DE' ? 'entspricht Gaesten' : 'matches guests');
+                 
+                 return (
+                   <div key={accessory.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow">
+                     <div className="p-6">
+                       <div className="flex flex-col md:flex-row items-start gap-6">
+                         {/* Image Column */}
+                         <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                           <img
+                             src={accessory.image}
+                             alt={accessory.name}
+                             className="w-full h-full object-cover"
+                             loading="lazy"
+                           />
+                         </div>
+                         
+                         {/* Content Column */}
+                         <div className="flex-1">
+                           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                             <div className="flex-1">
+                               <div className="flex items-center gap-3 mb-2">
+                                 <h3 className="text-xl font-bold text-gray-900">{accessory.name}</h3>
+                               </div>
+                               <p className="text-gray-600 mb-2">{accessory.description}</p>
+                               {accessory.details && (
+                                 <p className="text-gray-500 text-sm">{accessory.details}</p>
+                               )}
+                               
+                               <div className="mt-3">
+                                 <div className="text-lg font-bold text-gray-900">
+                                   €{accessory.price.toFixed(2)} {accessory.unit}
+                                 </div>
+                                 <div className="text-xs font-semibold text-amber-700 mt-1">
+                                   {language === 'DE' ? 'Menge' : 'Quantity'}: {displayQuantity} ({quantityLabel}) | {language === 'DE' ? 'Gesamt' : 'Total'}: €{(accessory.price * displayQuantity).toFixed(2)}
+                                 </div>
+                               </div>
+                             </div>
+                             
+                             {/* Selection Controls */}
+                             <div className="flex flex-col sm:flex-row items-center gap-3">
+                               {isSelected && (
+                                 <div className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+                                   {language === 'DE' ? 'Menge' : 'Qty'}: {effectiveQuantity}
+                                 </div>
+                               )}
+                               <button
+                                 onClick={() => toggleAccessory(accessory)}
+                                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+                                   isSelected
+                                     ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                     : 'bg-gray-900 text-white hover:bg-black'
+                                 }`}
+                               >
+                                 {isSelected ? ui.remove : ui.addToOrder}
+                               </button>
+                             </div>
+                           </div>
+                           
+                           {/* Quantity display when selected */}
+                           {isSelected && (
+                             <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                               <div className="flex items-center justify-between">
+                                 <span className="text-green-800 font-semibold">
+                                   {language === 'DE' ? 'Hinzugefuegt' : 'Added'}:{' '}
+                                   <span className="text-lg">
+                                     {effectiveQuantity} {language === 'DE' ? 'Stk' : 'pcs'}
+                                   </span>
+                                 </span>
+                                 <span className="text-green-900 font-bold">
+                                   {language === 'DE' ? 'Gesamt' : 'Total'}: €{(selectedItem.price * effectiveQuantity).toFixed(2)}
+                                 </span>
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
+           </div>
+         </div>
+       </div>
+     );
+   };
+   
+   // Step 4: Delivery + Payment
+   const Step4 = () => (
+     <div className="space-y-10">
+       <div className="text-center mb-8">
+         <h2 className="text-3xl font-bold text-gray-900 mb-3">
+           {ui.deliveryPaymentTitle}
+         </h2>
+         <p className="text-gray-600 text-lg">
+           {ui.deliveryPaymentSubtitle}
+         </p>
+       </div>
+       <div className="grid lg:grid-cols-12 gap-8">
+         <div className="lg:col-span-7 space-y-6">
+           <div className="rounded-2xl border border-amber-100 bg-white shadow-lg p-6 md:p-8">
+             <div className="flex items-center gap-3 mb-6">
+               <TruckIcon size={20} className="text-amber-600" />
+               <div>
+                 <h3 className="text-lg font-bold text-gray-900">{ui.deliveryContactTitle}</h3>
+                 <p className="text-sm text-gray-600">{ui.deliveryContactSubtitle}</p>
+               </div>
+             </div>
+             <div className="space-y-6">
+               <div className="grid md:grid-cols-2 gap-6">
+                 <div>
+                   <label className="block text-sm font-semibold text-gray-900 mb-2">
+                     {t.delivery.contact.first} *
+                   </label>
+                   <input
+                     type="text"
+                     value={orderData.contactInfo.firstName}
+                     onChange={(e) => updateOrderData('contactInfo', {
+                       ...orderData.contactInfo,
+                       firstName: e.target.value
+                     })}
+                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                     placeholder={language === 'DE' ? 'Max' : 'John'}
+                     required
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-semibold text-gray-900 mb-2">
+                     {t.delivery.contact.last} *
+                   </label>
+                   <input
+                     type="text"
+                     value={orderData.contactInfo.lastName}
+                     onChange={(e) => updateOrderData('contactInfo', {
+                       ...orderData.contactInfo,
+                       lastName: e.target.value
+                     })}
+                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                     placeholder={language === 'DE' ? 'Mustermann' : 'Doe'}
+                     required
+                   />
+                 </div>
+               </div>
+               <div className="grid md:grid-cols-2 gap-6">
+                 <div>
+                   <label className="block text-sm font-semibold text-gray-900 mb-2">
+                     {t.delivery.contact.email} *
+                   </label>
+                   <input
+                     type="email"
+                     value={orderData.contactInfo.email}
+                     onChange={(e) => updateContactInfoField('email', e.target.value)}
+                     onBlur={() => handleContactBlur('email')}
+                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                     placeholder={language === 'DE' ? 'max@example.com' : 'john@example.com'}
+                     required
+                   />
+                   {contactErrors.email && (
+                     <p className="mt-2 text-sm text-red-600">{contactErrors.email}</p>
+                   )}
+                 </div>
+                 <div>
+                   <label className="block text-sm font-semibold text-gray-900 mb-2">
+                     {t.delivery.contact.phone} *
+                   </label>
+                   <input
+                     type="tel"
+                     value={orderData.contactInfo.phone}
+                     onChange={(e) => updateContactInfoField('phone', e.target.value)}
+                     onBlur={() => handleContactBlur('phone')}
+                     inputMode="tel"
+                     pattern="^\\+?[0-9\\s-]{7,15}$"
+                     className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                     placeholder="+49 123 456 789"
+                     required
+                   />
+                   {contactErrors.phone && (
+                     <p className="mt-2 text-sm text-red-600">{contactErrors.phone}</p>
+                   )}
+                 </div>
+               </div>
+               {orderData.businessType === 'business' && (
+                 <>
+                   <div>
+                     <label className="block text-sm font-semibold text-gray-900 mb-2">
+                       {language === 'DE' ? 'Firmenname *' : 'Company Name *'}
+                     </label>
+                     <input
+                       type="text"
+                       value={orderData.contactInfo.company}
+                       onChange={(e) => updateCompanyName(e.target.value)}
+                       className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                       placeholder={language === 'DE' ? 'Firmenname' : 'Company name'}
+                       required
+                     />
+                     {companyErrors.name && (
+                       <p className="mt-2 text-sm text-red-600">{companyErrors.name}</p>
+                     )}
+                   </div>
+                   <div>
+                     <label className="block text-sm font-semibold text-gray-900 mb-2">
+                       {language === 'DE' ? 'Firmeninformationen (optional)' : 'Company Information (optional)'}
+                     </label>
+                       <textarea
+                       value={orderData.companyInfo}
+                       onChange={(e) => updateCompanyInfo(e.target.value)}
+                       rows={4}
+                       className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
+                       placeholder={language === 'DE' ? 'z.B. Branche, Groesse, Standort' : 'e.g. industry, size, location'}
+                     />
+                   </div>
+                 </>
+               )}
+             </div>
+           </div>
+           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
+             <div className="flex items-center gap-3 mb-4">
+               <FileText size={18} className="text-gray-600" />
+               <h3 className="text-lg font-bold text-gray-900">
+                 {language === 'DE' ? 'Besondere Wuensche' : 'Special Requests'}
+               </h3>
+             </div>
+             <p className="text-sm text-gray-600 mb-4">
+               {language === 'DE'
+                   ? 'Teilen Sie Ernährungswünsche, Hinweise zum Aufbau oder Zeitdetails.'
+                   : 'Share dietary restrictions, setup notes, or timing details.'}
+               </p>
+             <textarea
+               value={orderData.specialRequests}
+               onChange={(e) => updateOrderData('specialRequests', e.target.value)}
+               rows={4}
+               className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none text-gray-900 placeholder:text-gray-500"
+               placeholder={language === 'DE'
+                 ? 'Ernährungswünsche oder besondere Anforderungen...'
+                 : 'Any dietary restrictions or special requirements...'}
+             />
+           </div>
+         </div>
+         <div className="lg:col-span-5">
+           <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 md:p-8 shadow-sm">
+             <div className="flex items-center gap-3 mb-5">
+               <MapPinIcon size={18} className="text-amber-600" />
+               <h3 className="text-lg font-bold text-gray-900">
+                 {language === 'DE' ? 'Lieferübersicht' : 'Delivery Overview'}
+               </h3>
+             </div>
+             <div className="space-y-3 text-sm text-gray-700">
+               <div className="flex items-center gap-2">
+                 <CalendarIcon size={16} className="text-gray-500" />
+                 <span className="font-semibold">{t.eventInfo.date}:</span>
+                 <span>{orderData.eventDate || ui.notSpecified}</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <ClockIcon size={16} className="text-gray-500" />
+                 <span className="font-semibold">{t.eventInfo.time}:</span>
+                 <span>{orderData.eventTime || ui.notSpecified}</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <Users size={16} className="text-gray-500" />
+                 <span className="font-semibold">{t.eventInfo.guests}:</span>
+                 <span>{orderData.guestCount || 0}</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <MapPinIcon size={16} className="text-gray-500" />
+                 <span className="font-semibold">{t.eventInfo.location}:</span>
+                 <span>
+                   {orderData.postalCode || ui.notSpecified}
+                   {orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                 </span>
+               </div>
+             </div>
+             <div className="mt-6 rounded-xl border border-amber-200 bg-white/70 p-4 text-xs text-gray-600">
+               <div className="flex items-center gap-2">
+                 <Info size={14} className="text-amber-600" />
+                 <span>
+                   {language === 'DE'
+                     ? 'Lieferzeitfenster werden nach Zahlung bestätigt.'
+                     : 'Delivery windows are confirmed after payment.'}
+                 </span>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+       <div className="pt-10 border-t border-amber-100">
+         <PaymentStep />
+       </div>
+     </div>
+   );
+   
+   // Payment Step (within Step 4)
+   const PaymentStep = () => {
+     // Calculate totals
+     const guestCount = parseInt(orderData.guestCount) || 0;
+     const flatServiceFee = 48.90;
+     const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
+       return sum + (item.price * item.quantity);
+     }, 0);
+     
+     const selectedMenuObj = menusData.find(
+       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+     );
+     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+     
+     const foodSubtotal = getFoodExtrasSubtotal();
+     const subtotal = menuSubtotal + foodSubtotal;
+     const total = subtotal + accessoriesSubtotal + flatServiceFee;
+     const vatRate = orderData.businessType === 'business' ? 0.19 : 0.07;
+     const vatAmount = total * vatRate;
+     const grandTotal = total + vatAmount;
+     
+     return (
+       <div className="space-y-8">
+         <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
+           <div className="flex items-center gap-3 mb-2">
+             <Lock size={20} className="text-amber-600" />
+             <h2 className="text-2xl font-bold text-gray-900">{t.payment.title}</h2>
+           </div>
+           <p className="text-gray-600">{t.payment.subtitle}</p>
+         </div>
+         <div className="grid lg:grid-cols-3 gap-8">
+           {/* Order Summary - Right Side */}
+           <div className="lg:col-span-1 lg:order-2">
+             <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+               <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
+               
+               <div className="space-y-6">
+                 {/* Event Info */}
+                 <div className="space-y-4">
+                   <h4 className="font-bold text-gray-900">{t.eventInfo.title}</h4>
+                   <div className="space-y-2">
+                     <div className="flex items-center gap-2 text-sm text-black">
+                       <CalendarIcon size={16} className="text-gray-500" />
+                       <span className="font-medium">{orderData.eventDate || ui.notSpecified}</span>
+                     </div>
+                     <div className="flex items-center gap-2 text-sm text-black">
+                       <ClockIcon size={16} className="text-gray-500" />
+                       <span className="font-medium">{orderData.eventTime || ui.notSpecified}</span>
+                     </div>
+                     <div className="flex items-center gap-2 text-sm text-black">
+                       <Users size={16} className="text-gray-500" />
+                       <span className="font-medium">
+                         {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
+                       </span>
+                     </div>
+                     <div className="flex items-center gap-2 text-sm text-black">
+                       <MapPinIcon size={16} className="text-gray-500" />
+                       <span className="font-medium">
+                         {orderData.postalCode || ui.notSpecified}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                       </span>
+                     </div>
+                   </div>
+                 </div>
+                 
+                 {/* Contact Info */}
+                 <div className="pt-4 border-t border-gray-200">
+                   <h4 className="font-bold text-gray-900 mb-3">
+                     {language === 'DE' ? 'Kontaktinformationen' : 'Contact Information'}
+                   </h4>
+                   <div className="space-y-2">
+                     <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
+                     <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
+                     <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
+                     {orderData.businessType === 'business' && orderData.contactInfo.company && (
+                       <p className="text-sm text-gray-900 font-semibold">
+                         {language === 'DE' ? 'Firma:' : 'Company:'} {orderData.contactInfo.company}
+                       </p>
+                     )}
+                     {orderData.businessType === 'business' && orderData.companyInfo && (
+                       <p className="text-sm text-gray-900 font-semibold">
+                         {language === 'DE' ? 'Firmeninfo:' : 'Company Info:'} {orderData.companyInfo}
+                       </p>
+                     )}
+                   </div>
+                 </div>
+                 
+                 {/* Price Breakdown */}
+                 <div className="pt-4 border-t border-gray-200">
+                   <h4 className="font-bold text-gray-900 mb-3">
+                     {language === 'DE' ? 'Preisaufstellung' : 'Price Breakdown'}
+                   </h4>
+                   <div className="space-y-2">
+                     <div className="flex justify-between text-sm">
+                       <span className="text-gray-900 font-semibold">
+                         {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                       </span>
+                       <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
+                     </div>
+                     <div className="flex justify-between text-sm">
+                       <span className="text-gray-900 font-semibold">
+                         {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
+                       </span>
+                       <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
+                     </div>
+                     {selectedAccessories.length > 0 && (
+                       <div className="flex justify-between text-sm">
+                         <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
+                         <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
+                       </div>
+                     )}
+                     <div className="flex justify-between text-sm">
+                       <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
+                       <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
+                     </div>
+                     <div className="flex justify-between text-sm">
+                       <span className="text-gray-900 font-semibold">
+                         {language === 'DE'
+                           ? `MwSt (${(vatRate * 100).toFixed(2)}%):`
+                           : `VAT (${(vatRate * 100).toFixed(2)}%):`}
+                       </span>
+                       <span className="font-bold text-amber-700">€{vatAmount.toFixed(2)}</span>
+                     </div>
+                     <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
+                       <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
+                       <span>€{grandTotal.toFixed(2)}</span>
+                     </div>
+                     {renderSummaryNav()}
+                   </div>
+                 </div>
+                 
+                 {/* Security Badge */}
+                 <div className="pt-4 border-t border-gray-200">
+                   <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                     <Shield size={20} className="text-green-600" />
+                     <div>
+                       <p className="text-sm font-medium text-green-800">
+                         {language === 'DE' ? 'Sichere Zahlung' : 'Secure Payment'}
+                       </p>
+                       <p className="text-xs text-green-600">
+                         {language === 'DE'
+                           ? 'SSL-verschluesselt \u2022 DSGVO-konform'
+                           : 'SSL Encrypted \u2022 GDPR Compliant'}
+                       </p>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
+           
+           {/* Payment Form - Left Side */}
+           <div className="lg:col-span-2 lg:order-1">
+             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+               <div className="space-y-6">
+                 {/* Payment Method Selection */}
+                 <div>
+                   <div className="flex items-center justify-between mb-4">
+                     <h3 className="text-lg font-bold text-gray-900">{t.payment.method}</h3>
+                     <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">
+                       {language === 'DE' ? 'Schritt 3' : 'Step 3'}
+                     </span>
+                   </div>
+                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                     {[
+                       {
+                         id: 'credit-card',
+                         label: language === 'DE' ? 'Kreditkarte' : 'Credit Card',
+                         description: language === 'DE' ? 'Sofortige Bestätigung und sicherer Checkout.' : 'Instant confirmation and secure checkout.',
+                         icon: CreditCard,
+                         badge: language === 'DE' ? 'Schnell' : 'Fast'
+                       },
+                       {
+                         id: 'paypal',
+                         label: 'PayPal',
+                         description: language === 'DE' ? 'Nutzen Sie PayPal-Guthaben oder die verknüpfte Karte.' : 'Use your PayPal balance or linked card.',
+                         icon: null,
+                         badge: language === 'DE' ? 'Beliebt' : 'Popular'
+                       },
+                       {
+                         id: 'bank-transfer',
+                         label: language === 'DE' ? 'Banküberweisung' : 'Bank Transfer',
+                         description: language === 'DE' ? 'Wir zeigen Ihnen unsere Bankdaten an.' : 'We will display our bank details.',
+                         icon: Building2,
+                         badge: language === 'DE' ? 'Manuell' : 'Manual'
+                       }
+                     ].map((method) => {
+                       const isSelected = orderData.paymentMethod === method.id;
+                       return (
+                         <button
+                           key={method.id}
+                           onClick={() => {
+                             updateOrderData('paymentMethod', method.id);
+                             if (method.id === 'bank-transfer') {
+                               setBankDetailsOpen(true);
+                             }
+                           }}
+                           className={`group rounded-2xl border-2 p-5 text-left transition-all duration-300 ${
+                             isSelected
+                               ? 'border-amber-500 bg-amber-50 shadow-md shadow-amber-100'
+                               : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
+                           }`}
+                         >
+                           <div className="flex items-start justify-between mb-3 gap-3">
+                             <div className="flex min-w-0 flex-1 items-start gap-3">
+                               <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                                 isSelected ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                               }`}>
+                                 {method.icon ? <method.icon size={22} /> : <span className="text-sm font-bold">PP</span>}
+                               </span>
+                               <div className="min-w-0 flex-1">
+                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                   <span className="min-w-0 break-words text-base font-semibold leading-snug text-gray-900">
+                                     {method.label}
+                                   </span>
+                                   <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                     {method.badge}
+                                   </span>
+                                 </div>
+                                 <p className="mt-0.5 break-words text-sm leading-snug text-gray-600">
+                                   {method.description}
+                                 </p>
+                               </div>
+                             </div>
+                             {isSelected && (
+                               <CheckCircle size={20} className="text-amber-600" />
+                             )}
+                           </div>
+                           <div className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-gray-500">
+                             <span className="min-w-0 break-words">
+                               {isSelected
+                                 ? (language === 'DE' ? 'Ausgewählt' : 'Selected')
+                                 : (language === 'DE' ? 'Antippen zum Auswählen' : 'Tap to select')}
+                             </span>
+                             <span className="shrink-0 text-amber-600 group-hover:text-amber-700">Details</span>
+                           </div>
+                         </button>
+                       );
+                     })}
+                   </div>
+                 </div>
+                 
+                 {/* Credit Card Form */}
+                 {orderData.paymentMethod === 'credit-card' && (
+                   <div className="space-y-6">
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-900 mb-2">
+                         Card Number *
+                       </label>
+                       <div className="relative">
+                         <CreditCard className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                         <input
+                           type="text"
+                           value={orderData.cardDetails.number}
+                           onChange={(e) => updateOrderData('cardDetails', {
+                             ...orderData.cardDetails,
+                             number: e.target.value
+                           })}
+                           className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                           placeholder="1234 5678 9012 3456"
+                           maxLength={19}
+                         />
+                       </div>
+                     </div>
+                     <div className="grid md:grid-cols-2 gap-6">
+                       <div>
+                         <label className="block text-sm font-semibold text-gray-900 mb-2">
+                           Expiry Date *
+                         </label>
+                         <input
+                           type="text"
+                           value={orderData.cardDetails.expiry}
+                           onChange={(e) => updateOrderData('cardDetails', {
+                             ...orderData.cardDetails,
+                             expiry: e.target.value
+                           })}
+                           className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                           placeholder="MM/YY"
+                           maxLength={5}
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-sm font-semibold text-gray-900 mb-2">
+                           CVC *
+                         </label>
+                         <div className="relative">
+                           <Lock className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                           <input
+                             type="text"
+                             value={orderData.cardDetails.cvc}
+                             onChange={(e) => updateOrderData('cardDetails', {
+                               ...orderData.cardDetails,
+                               cvc: e.target.value
+                             })}
+                             className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                             placeholder="123"
+                             maxLength={3}
+                           />
+                         </div>
+                       </div>
+                     </div>
+                     <div>
+                       <label className="block text-sm font-semibold text-gray-900 mb-2">
+                         Name on Card *
+                       </label>
+                       <input
+                         type="text"
+                         value={orderData.cardDetails.name}
+                         onChange={(e) => updateOrderData('cardDetails', {
+                           ...orderData.cardDetails,
+                           name: e.target.value
+                         })}
+                         className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                         placeholder="John Doe"
+                       />
+                     </div>
+                   </div>
+                 )}
+                 
+                 {/* Terms and Conditions */}
+                 <div className="pt-6 border-t border-gray-200">
+                   <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/70 p-4">
+                     <input
+                       type="checkbox"
+                       id="terms"
+                       className="mt-1"
+                       checked={termsAccepted}
+                       onChange={(e) => {
+                         setTermsAccepted(e.target.checked);
+                         if (e.target.checked) {
+                           setTermsError('');
+                         }
+                       }}
+                     />
+                     <div>
+                       <label htmlFor="terms" className="text-sm text-gray-900 leading-relaxed">
+                         I agree to the Terms & Conditions and Privacy Policy. I understand that this order is subject to our cancellation policy (48 hours notice for full refund).
+                       </label>
+                       <button
+                         type="button"
+                         onClick={() => setTermsModalOpen(true)}
+                         className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
+                       >
+                       {language === 'DE' ? 'AGB & Bedingungen lesen' : 'Read full Terms and Conditions'}
+                       </button>
+                     </div>
+                   </div>
+                   {termsError && (
+                     <p className="mt-2 text-sm text-red-600">{termsError}</p>
+                   )}
+                 </div>
+                 
+                 {orderBlocked && (
+                   <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                     {blockedMessage}
+                   </div>
+                 )}
+                 
+                 {/* Submit Button */}
+                 <button
+                   onClick={() => {
+                     if (!validateStepsUpTo(stepsConfig.length)) {
+                       return;
+                     }
+                     handleSubmitOrder();
+                   }}
+                   disabled={orderBlocked}
+                   className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                 >
+                   <Lock size={20} />
+                   Pay €{grandTotal.toFixed(2)} Securely
+                 </button>
+                 
+                 {/* Security Assurance */}
+                 <div className="text-center pt-4 border-t border-gray-200">
+                   <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
+                     <div className="flex items-center gap-2">
+                       <Shield size={16} className="text-green-600" />
+                       <span>SSL Secure</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <Lock size={16} className="text-blue-600" />
+                       <span>Encrypted</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <CheckCircle size={16} className="text-green-600" />
+                       <span>GDPR Compliant</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
+     );
+   };
+   
+   // Helper functions
+   const updateOrderData = (field, value) => {
+     setOrderData(prev => ({
+       ...prev,
+       [field]: value
+     }));
+   };
+   
+    const nextStep = () => {
+    const isBlocked = isOrderingPaused || (isClosedDate && currentStep >= 1);
+    if (isBlocked) {
       showNotification('error', blockedMessage, 3000);
       return;
     }
-    const stepKey = stepsConfig[currentStep - 1]?.key;
-    if (!validateStepsUpTo(currentStep)) {
-      return;
-    }
-    if (stepKey === 'menu' && pendingMenuId) {
+    
+    if (currentStep === 2 && pendingMenuId) {
+      // In menu step with pending menu selection
       setQuantities({});
       setOrderData((prev: any) => {
         const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
@@ -3106,745 +3233,771 @@ export default function OrderPage() {
         };
       });
     }
+    
     if (currentStep === stepsConfig.length) {
       handleSubmitOrder();
       return;
     }
+    
     setCurrentStep(prev => Math.min(prev + 1, stepsConfig.length));
-  };
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
-  const getMinOrderQuantity = (_product) => {
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    return Math.max(1, guestCount || MIN_GUESTS);
-  };
-  const updateQuantity = (category, productId, quantity, minQuantity = 1) => {
-    const parsedQuantity = Number.isFinite(quantity) ? quantity : 0;
-    const clamped = parsedQuantity <= 0 ? 0 : Math.max(minQuantity, parsedQuantity);
-    setQuantities(prev => ({
-      ...prev,
-      [`${category}_${productId}`]: clamped
-    }));
-  };
-  const showNotification = (type: 'success' | 'error', message: string, duration = 2500) => {
-    setNotification({ type, message });
-    if (duration > 0) {
-      setTimeout(() => setNotification(null), duration);
-    }
-  };
-  const getSelectionKey = (categoryKey: string, product?: any) => {
-    const normalizedProductCategory = normalizeCategoryValue(product?.category);
-    return selectionKeyByCategory[normalizedProductCategory]
-      || selectionKeyByCategory[categoryKey]
-      || '';
-  };
-  const addProductToOrder = (category, product) => {
-    const quantityKey = `${category}_${product.id}`;
-    const minQuantity = getMinOrderQuantity(product);
-    const requestedQuantity = quantities[quantityKey] || 0;
-    const quantityInOrder = getProductQuantityInOrder(category, product);
-    const defaultQuantity = quantityInOrder > 0 ? quantityInOrder : minQuantity;
-    const quantity = requestedQuantity <= 0 ? defaultQuantity : Math.max(minQuantity, requestedQuantity);
-    const productWithQuantity = { ...product, quantity, category };
-    
-    const categoryKey = getSelectionKey(category, product);
-    if (!categoryKey) return;
-    const updatedSelection = orderData[categoryKey]?.filter(p => p.id !== product.id) || [];
-    updateOrderData(categoryKey, [...updatedSelection, productWithQuantity]);
-    setQuantities(prev => ({ ...prev, [quantityKey]: 0 }));
-  };
-  const getProductQuantityInOrder = (category, product) => {
-    const categoryKey = getSelectionKey(category, product);
-    if (!categoryKey) return 0;
-    const selected = orderData[categoryKey]?.find(p => p.id === product.id);
-    return selected ? selected.quantity : 0;
-  };
-  const updateProductQuantityInOrder = (category, product, newQuantity) => {
-    const categoryKey = getSelectionKey(category, product);
-    if (!categoryKey) return;
-    const selectedProduct = orderData[categoryKey]?.find(p => p.id === product.id);
-    const minQuantity = getMinOrderQuantity(selectedProduct);
-    if (newQuantity <= 0 || newQuantity < minQuantity) {
-      const updatedSelection = orderData[categoryKey]?.filter(p => p.id !== product.id) || [];
-      updateOrderData(categoryKey, updatedSelection);
-      return;
-    }
-    const updatedSelection = orderData[categoryKey]?.map(item =>
-      item.id === product.id ? { ...item, quantity: newQuantity } : item
-    ) || [];
-    
-    updateOrderData(categoryKey, updatedSelection);
-  };
-  const toggleAccessory = (accessory) => {
-    const getAccessoryTargetQuantity = (value: any) => {
-      const guestCount = parseInt(orderData.guestCount, 10) || 0;
-      const guestTarget = Math.max(1, guestCount || MIN_GUESTS);
-      const quantityMode = value?.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
-      if (quantityMode === 'FIXED') {
-        const fixedQuantity = value?.fixedQuantity == null ? 0 : Number(value.fixedQuantity);
-        const fixedTarget = Math.max(0, Math.trunc(fixedQuantity));
-        return Math.max(1, fixedTarget || 1);
-      }
-      return guestTarget;
     };
-    const targetQuantity = getAccessoryTargetQuantity(accessory);
-    setSelectedAccessories(prev => {
-      if (prev.some(item => item.id === accessory.id)) {
-        return prev.filter(item => item.id !== accessory.id);
-      }
-      return [...prev, { ...accessory, quantity: targetQuantity }];
-    });
-  };
-  const updateAccessoryQuantity = (id, quantity) => {
-    setSelectedAccessories(prev => {
-      const parsedQuantity = Number.isFinite(quantity) ? quantity : 0;
-      if (parsedQuantity <= 0) {
-        return prev.filter(item => item.id !== id);
-      }
-      return prev.map(item => item.id === id ? { ...item, quantity: parsedQuantity } : item);
-    });
-  };
-  useEffect(() => {
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    if (!guestCount) return;
-    setSelectedAccessories((prev) => prev.map((item) => {
-      if (item?.quantityMode === 'FIXED') return item;
-      const targetQuantity = Math.max(1, guestCount || MIN_GUESTS);
-      return item.quantity === targetQuantity ? item : { ...item, quantity: targetQuantity };
-    }));
-  }, [orderData.guestCount]);
-  const handleSubmitOrder = async () => {
-    // Check if ordering is paused
-    if (systemStatus?.orderingPaused) {
-      showNotification('error', language === 'DE'
-        ? 'Bestellungen sind aktuell pausiert. Bitte später erneut versuchen.'
-        : 'Ordering is currently paused. Please try again later.', 3000);
-      return;
-    }
-    if (isClosedDate) {
-      showNotification('error', language === 'DE'
-        ? 'Das ausgewählte Datum ist geschlossen. Bitte wählen Sie ein anderes Datum.'
-        : 'The selected date is closed. Please choose another date.', 3000);
-      return;
-    }
-    const contactEmail = (orderData.contactInfo.email || '').trim();
-    const contactPhone = (orderData.contactInfo.phone || '').trim();
-    const emailError = validateEmailValue(contactEmail);
-    const phoneError = validatePhoneValue(contactPhone);
-    setContactErrors({ email: emailError, phone: phoneError });
-    if (emailError || phoneError) {
-      showNotification('error', language === 'DE'
-        ? 'Bitte gültige Kontaktdaten angeben.'
-        : 'Please provide valid contact details.', 3000);
-      return;
-    }
-    const companyName = (orderData.contactInfo.company || '').trim();
-    const companyInfo = (orderData.companyInfo || '').trim();
-    const baseRequests = (orderData.specialRequests || '').trim();
-    const companyDetailParts: string[] = [];
-    if (orderData.businessType === 'business') {
-      if (companyName) companyDetailParts.push(`Company: ${companyName}`);
-      if (companyInfo) companyDetailParts.push(`Company Info: ${companyInfo}`);
-    }
-    const companyDetails = companyDetailParts.join('\n');
-
-    const accessoriesLines = selectedAccessories
-      .map((item: any) => `- ${item.name} x${item.quantity} (€${Number(item.price).toFixed(2)} each)`)
-      .join('\n');
-    const accessoriesDetails = accessoriesLines ? `Accessories:\n${accessoriesLines}` : '';
-
-    const mergedRequests = [companyDetails, accessoriesDetails, baseRequests].filter(Boolean).join('\n\n');
-    // Calculate totals
-    const guestCount = parseInt(orderData.guestCount) || 0;
-    const flatServiceFee = 48.90;
-    const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
-    }, 0);
-    
-    const selectedMenuObj = menusData.find(
-      m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
-    );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
-    
-    const foodItems = [
-      ...orderData.selectedStarters,
-      ...orderData.selectedMains,
-      ...orderData.selectedSides,
-      ...orderData.selectedDesserts,
-      ...orderData.selectedDrinks
-    ];
-    
-    const foodSubtotal = getFoodExtrasSubtotal();
-    const subtotal = menuSubtotal + foodSubtotal;
-    const total = subtotal + accessoriesSubtotal + flatServiceFee;
-    
-    // Prepare order items
-    const orderItems = foodItems.map(item => ({
-      productId: item.id,
-      quantity: item.quantity,
-      price: item.price,
-      name: item.name
-    }));
-    try {
-      const order = await ordersApi.createOrder({
-        clientName: `${orderData.contactInfo.firstName || ''} ${orderData.contactInfo.lastName || ''}`.trim() || 'Guest',
-        contactEmail,
-        phone: contactPhone,
-        eventType: orderData.serviceType || orderData.businessType || 'Custom',
-        eventDate: orderData.eventDate || new Date().toISOString(),
-        eventTime: orderData.eventTime || '',
-        guests: guestCount,
-        location: orderData.location || orderData.postalCode || '',
-        menuTier: orderData.menuTier,
-        specialRequests: mergedRequests,
-        businessType: orderData.businessType,
-        serviceType: orderData.serviceType,
-        serviceId: orderData.serviceId ? Number(orderData.serviceId) : undefined,
-        postalCode: orderData.postalCode,
-        items: orderItems,
-        subtotal: subtotal,
-        serviceFee: flatServiceFee,
-        total: total
-      });
-      
-      showNotification('success', 'Order placed successfully! Order ID: ' + order.id, 2000);
-      setTimeout(() => {
-        window.location.href = '/home';
-      }, 2000);
-    } catch (error: any) {
-      showNotification('error', 'Failed to place order: ' + (error.message || 'Unknown error'), 3500);
-    }
-  };
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
-  const handleBackToHome = () => {
-    window.location.href = '/home';
-  };
-  const getStepComponent = () => {
-    const stepKey = stepsConfig[currentStep - 1]?.key;
-    const stepCategory = (stepsConfig[currentStep - 1] as any)?.categoryKey || '';
-    if (stepKey === 'event') return Step1;
-    if (stepKey === 'menu') return Step4;
-    if (stepKey === 'accessories') return Step10;
-    if (stepKey === 'checkout') return Step11;
-    if (activeCategoryKeys.includes(stepCategory)) return Step5;
-    return Step1;
-  };
-  const renderCurrentStep = getStepComponent();
-  const currentStepKey = stepsConfig[currentStep - 1]?.key;
-  const currentStepCategory = (stepsConfig[currentStep - 1] as any)?.categoryKey || '';
-  useEffect(() => {
-    if (!currentStepCategory || !activeCategoryKeys.includes(currentStepCategory)) return;
-    const includedTotal = Math.max(0, Number(includedByCategory[currentStepCategory]) || 0);
-    const selectedCount = getCategorySelectionCount(currentStepCategory);
-    const extraCount = Math.max(0, selectedCount - includedTotal);
-    const previous = extraNoticeRef.current[currentStepCategory] || 0;
-    if (includedTotal > 0 && previous === 0 && extraCount > 0) {
-      const label = stepsConfig[currentStep - 1]?.label
-        || categoryMeta[currentStepCategory]?.label
-        || currentStepCategory?.charAt(0).toUpperCase() + currentStepCategory?.slice(1);
-      setExtraNoticeData({ label, extra: extraCount });
-      setExtraNoticeOpen(true);
-    }
-    extraNoticeRef.current[currentStepCategory] = extraCount;
-  }, [
-    currentStepCategory,
-    activeCategoryKeys,
-    includedByCategory,
-    stepsConfig,
-    categoryMeta,
-    orderData.selectedStarters,
-    orderData.selectedMains,
-    orderData.selectedSides,
-    orderData.selectedDesserts,
-    orderData.selectedDrinks
-  ]);
-  const showHeaderNav = true;
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
-      {notification && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-            {notification.message}
-          </div>
-        </div>
-      )}
-      {minPeoplePromptOpen && minPeoplePromptMenu && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">{t.menuMinPeoplePrompt.title}</h3>
-              <button
-                type="button"
-                onClick={closeMinPeoplePrompt}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                aria-label={ui.close}
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
-              <p className="font-semibold text-gray-900">{minPeoplePromptMenu.name}</p>
-              <p>
-                {t.menuMinPeoplePrompt.description(
-                  Number(minPeoplePromptMenu.minPeople) || 0,
-                  minPeoplePromptGuestCount
-                )}
-              </p>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const menuMin = Number(minPeoplePromptMenu.minPeople) || 0;
-                  closeMinPeoplePrompt();
-                  if (menuMin > 0) {
-                    handleGuestCountChange(String(menuMin));
-                  }
-                  finalizeMenuSelection(minPeoplePromptMenu);
-                }}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
-              >
-                {t.menuMinPeoplePrompt.useMenuMin(Number(minPeoplePromptMenu.minPeople) || 0)}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMinPeoplePrompt();
-                  finalizeMenuSelection(minPeoplePromptMenu);
-                }}
-                className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50"
-              >
-                {t.menuMinPeoplePrompt.keepSelected(minPeoplePromptGuestCount)}
-              </button>
-              <button
-                type="button"
-                onClick={closeMinPeoplePrompt}
-                className="px-4 py-2 text-sm font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              >
-                {t.menuMinPeoplePrompt.cancel}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {termsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">
-                {language === 'DE' ? 'AGB & Bedingungen' : 'Terms and Conditions'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setTermsModalOpen(false)}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
-              <p>
-                {language === 'DE'
-                  ? 'Bitte lesen Sie die folgenden Bedingungen. Dieser Text dient als Beispiel und sollte an Ihre offiziellen Richtlinien angepasst werden.'
-                  : 'Please review the full terms below. These terms are provided for convenience and should be updated to match your official policy.'}
-              </p>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                  {language === 'DE' ? 'Buchung und Zahlung' : 'Booking and Payment'}
-                </h4>
-                <p>
-                  {language === 'DE'
-                    ? 'Bestellungen werden bestätigt, sobald die Zahlung eingegangen ist. Preise beinhalten die ausgewählten Speisen und Leistungen in Ihrer Bestellübersicht.'
-                    : 'Orders are confirmed once payment is received. Prices include the selected items and services listed in your order summary.'}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                  {language === 'DE' ? 'Stornierungen' : 'Cancellations'}
-                </h4>
-                <p>
-                  {language === 'DE'
-                    ? 'Stornierungen mindestens 48 Stunden vor dem Termin können voll erstattet werden. Spätere Stornierungen können mit Gebühren verbunden sein.'
-                    : 'Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Late cancellations may be subject to fees.'}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                  {language === 'DE' ? 'Lieferung' : 'Delivery'}
-                </h4>
-                <p>
-                  {language === 'DE'
-                    ? 'Lieferzeitfenster werden nach Zahlung bestätigt und können je nach Verfügbarkeit und Standort variieren.'
-                    : 'Delivery windows are confirmed after payment and may vary based on scheduling availability and location.'}
-                </p>
-              </div>
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                  {language === 'DE' ? 'Datenschutz' : 'Privacy'}
-                </h4>
-                <p>
-                  {language === 'DE'
-                    ? 'Wir verwenden Ihre Angaben ausschließlich zur Abwicklung Ihrer Bestellung und zur Kommunikation rund um Ihr Event. Kontaktieren Sie uns für Datenanfragen.'
-                    : 'We only use your information to fulfill your order and communicate about your event. Please contact us for data requests.'}
-                </p>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setTermsModalOpen(false)}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
-              >
-                {ui.close}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {bankDetailsOpen && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">{ui.bankTransferTitle}</h3>
-              <button
-                type="button"
-                onClick={() => setBankDetailsOpen(false)}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="px-6 py-5 flex-1 overflow-y-auto space-y-4 text-sm text-gray-700">
-              <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
-                <p className="font-semibold text-gray-900">{ui.bankTransferIntro}</p>
-                <p className="mt-2 text-xs text-gray-600">{ui.bankTransferReference}</p>
-              </div>
-              <div className="grid gap-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
-                  <span className="text-gray-500">{ui.accountName}</span>
-                  <span className="font-semibold text-gray-900 break-all sm:text-right">La Cannelle Catering</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
-                  <span className="text-gray-500">IBAN</span>
-                  <span className="font-semibold text-gray-900 break-all sm:text-right">DE00 0000 0000 0000 0000 00</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
-                  <span className="text-gray-500">BIC/SWIFT</span>
-                  <span className="font-semibold text-gray-900 break-all sm:text-right">DEUTDEFFXXX</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
-                  <span className="text-gray-500">{ui.bank}</span>
-                  <span className="font-semibold text-gray-900 break-words sm:text-right">{ui.yourBankName}</span>
-                </div>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setBankDetailsOpen(false)}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
-              >
-                {ui.close}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {productDetailsOpen && productDetailsItem && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">{ui.productDetailsTitle}</h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setProductDetailsOpen(false);
-                  setProductDetailsItem(null);
-                }}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="px-5 py-5 flex-1 overflow-y-auto">
-              <div className="grid gap-5 md:grid-cols-[180px,1fr]">
-                <div className="w-full h-40 rounded-xl bg-gray-100 overflow-hidden">
-                  {productDetailsItem.image ? (
-                    <img
-                      src={productDetailsItem.image}
-                      alt={(language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name) || 'Product image'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
-                      {ui.noImage}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="text-xl font-bold text-gray-900">
-                      {language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name}
-                    </h4>
-                    <p className="text-gray-600 mt-2">
-                      {(language === 'DE' ? (productDetailsItem.descriptionDe || productDetailsItem.description) : productDetailsItem.description) || ui.noDescription}
-                    </p>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-2 text-sm">
-                    <div className="rounded-lg border border-gray-200 p-3">
-                      <p className="text-gray-500">{ui.price}</p>
-                      <p className="text-base font-semibold text-gray-900">€{productDetailsItem.price}</p>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 p-3">
-                      <p className="text-gray-500">{language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'}</p>
-                      <p className="text-base font-semibold text-gray-900">{getMinOrderQuantity(productDetailsItem)}</p>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 p-3">
-                      <p className="text-gray-500">{ui.availability}</p>
-                      <p className="text-base font-semibold text-gray-900">
-                        {productDetailsItem.available ? ui.available : ui.notAvailableShort}
-                      </p>
-                    </div>
-                  </div>
-                  {(() => {
-                    const ingredients = language === 'DE' && Array.isArray(productDetailsItem.ingredientsDe) && productDetailsItem.ingredientsDe.length > 0
-                      ? productDetailsItem.ingredientsDe
-                      : productDetailsItem.ingredients;
-                    if (!Array.isArray(ingredients) || ingredients.length === 0) return null;
-                    return (
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 mb-2">{ui.ingredients}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {ingredients.map((ingredient, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
-                            {ingredient}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    );
-                  })()}
-                  {(() => {
-                    const allergens = language === 'DE' && Array.isArray(productDetailsItem.allergensDe) && productDetailsItem.allergensDe.length > 0
-                      ? productDetailsItem.allergensDe
-                      : productDetailsItem.allergens;
-                    if (!Array.isArray(allergens) || allergens.length === 0) return null;
-                    return (
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900 mb-2">{ui.allergens}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {allergens.map((allergen, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-red-50 text-red-700 text-xs font-medium rounded">
-                            {allergen}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setProductDetailsOpen(false);
-                  setProductDetailsItem(null);
-                }}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
-              >
-                {ui.close}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {extraNoticeOpen && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900">
-                {language === 'DE' ? 'Hinweis zu Extras' : 'Extras notice'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setExtraNoticeOpen(false)}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 space-y-3">
-              <p>
-                {language === 'DE' ? (
-                  <>
-                    Sie haben mehr Gerichte als die enthaltene Menge für{' '}
-                    <span className="font-semibold">{extraNoticeData.label}</span> ausgewählt.
-                  </>
-                ) : (
-                  <>
-                    You have selected more dishes than the included amount for{' '}
-                    <span className="font-semibold">{extraNoticeData.label}</span>.
-                  </>
-                )}
-              </p>
-              <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
-                <p className="text-sm text-amber-800 font-semibold">
-                  {language === 'DE' ? 'Extra Gerichte:' : 'Extra dishes:'} {extraNoticeData.extra}
-                </p>
-                <p className="text-xs text-amber-700 mt-1">
-                  {language === 'DE' ? 'Extras werden zu Ihrer Gesamtsumme hinzugefuegt.' : 'Extras will be added to your total.'}
-                </p>
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setExtraNoticeOpen(false)}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
-              >
-                {language === 'DE' ? 'Verstanden' : 'Ok, got it'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fade-in-up {
-          animation: fadeInUp 0.6s ease-out;
-        }
-        
-        body {
-          font-family: 'Inter', sans-serif;
-        }
-        
-        .step-item {
-          opacity: 0.4;
-          transition: all 0.3s ease;
-        }
-        
-        .step-item:hover {
-          opacity: 0.8;
-        }
-        
-        .step-item.active {
-          opacity: 1;
-        }
-        
-        .border-3 {
-          border-width: 3px;
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: #f1f1f1;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: #d97706;
-          border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: #b45309;
-        }
-        /* Ensure input text is visible */
-        input, textarea {
-          color: #111827 !important;
-        }
-        input::placeholder, textarea::placeholder {
-          color: #6b7280 !important;
-        }
-        /* Make all minus and plus buttons black */
-        button .text-black, svg.text-black {
-          color: #000 !important;
-        }
-        
-        /* Ensure icons are black when they have the text-black class */
-        .text-black {
-          color: #000 !important;
-        }
-      `}</style>
-      {/* Enhanced Top Navigation with Steps */}
-      <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Language Row */}
-          <div className="flex justify-between items-center py-2">
-            <button
-              onClick={handleBackToHome}
-              className="inline-flex items-center text-xs font-medium text-gray-700 hover:text-amber-600 transition-colors"
-            >
-              <ArrowLeft size={14} className="mr-1" />
-              {t.buttons.backToHome}
-            </button>
-            
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={toggleLanguage}
-                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="px-3 py-1.5 text-xs font-medium border border-amber-300 text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors inline-flex items-center"
-              >
-                <img
-                  src={
-                    language === 'EN'
-                      ? '/images/language/Flag_of_United_Kingdom-4096x2048.png'
-                      : '/images/language/Flag_of_Germany-4096x2453.png'
-                  }
-                  alt={language === 'EN' ? commonA11y.englishFlagAlt : commonA11y.germanFlagAlt}
-                  className="h-3.5 w-auto mr-1"
-                />
-                {language === 'EN' ? 'EN' : 'DE'}
-              </button>
-            </div>
-          </div>
-          
-          {/* Steps Progress Bar */}
-          <div className="border-t border-gray-100 pt-2 pb-3">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-900">
-                {stepsConfig[currentStep - 1]?.label}
-              </span>
-              {showHeaderNav && (
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={prevStep}
-                    disabled={currentStep === 1}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md inline-flex items-center transition-colors ${
-                      currentStep === 1
-                        ? 'text-gray-400 cursor-not-allowed'
-                        : 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
-                    }`}
-                  >
-                    <ChevronLeft size={14} className="mr-1" />
-                    {t.buttons.back}
-                  </button>
-                  
+   
+   const prevStep = () => {
+     if (currentStep === 2 && currentMenuSubStep > 0) {
+       // Go back within menu sub-steps
+       setCurrentMenuSubStep(currentMenuSubStep - 1);
+     } else {
+       setCurrentStep(prev => Math.max(prev - 1, 1));
+     }
+   };
+   
+   const getMinOrderQuantity = (_product) => {
+     const guestCount = parseInt(orderData.guestCount, 10) || 0;
+     return Math.max(1, guestCount || MIN_GUESTS);
+   };
+   
+   const updateQuantity = (category, productId, quantity, minQuantity = 1) => {
+     const parsedQuantity = Number.isFinite(quantity) ? quantity : 0;
+     const clamped = parsedQuantity <= 0 ? 0 : Math.max(minQuantity, parsedQuantity);
+     setQuantities(prev => ({
+       ...prev,
+       [`${category}_${productId}`]: clamped
+     }));
+   };
+   
+   const showNotification = (type: 'success' | 'error', message: string, duration = 2500) => {
+     setNotification({ type, message });
+     if (duration > 0) {
+       setTimeout(() => setNotification(null), duration);
+     }
+   };
+   
+   const getSelectionKey = (categoryKey: string, product?: any) => {
+     const normalizedProductCategory = normalizeCategoryValue(product?.category);
+     return selectionKeyByCategory[normalizedProductCategory]
+       || selectionKeyByCategory[categoryKey]
+       || '';
+   };
+   
+   const addProductToOrder = (category, product) => {
+     const quantityKey = `${category}_${product.id}`;
+     const minQuantity = getMinOrderQuantity(product);
+     const requestedQuantity = quantities[quantityKey] || 0;
+     const quantityInOrder = getProductQuantityInOrder(category, product);
+     const defaultQuantity = quantityInOrder > 0 ? quantityInOrder : minQuantity;
+     const quantity = requestedQuantity <= 0 ? defaultQuantity : Math.max(minQuantity, requestedQuantity);
+     const productWithQuantity = { ...product, quantity, category };
+     
+     const categoryKey = getSelectionKey(category, product);
+     if (!categoryKey) return;
+     const updatedSelection = orderData[categoryKey]?.filter(p => p.id !== product.id) || [];
+     updateOrderData(categoryKey, [...updatedSelection, productWithQuantity]);
+     setQuantities(prev => ({ ...prev, [quantityKey]: 0 }));
+   };
+   
+   const getProductQuantityInOrder = (category, product) => {
+     const categoryKey = getSelectionKey(category, product);
+     if (!categoryKey) return 0;
+     const selected = orderData[categoryKey]?.find(p => p.id === product.id);
+     return selected ? selected.quantity : 0;
+   };
+   
+   const updateProductQuantityInOrder = (category, product, newQuantity) => {
+     const categoryKey = getSelectionKey(category, product);
+     if (!categoryKey) return;
+     const selectedProduct = orderData[categoryKey]?.find(p => p.id === product.id);
+     const minQuantity = getMinOrderQuantity(selectedProduct);
+     if (newQuantity <= 0 || newQuantity < minQuantity) {
+       const updatedSelection = orderData[categoryKey]?.filter(p => p.id !== product.id) || [];
+       updateOrderData(categoryKey, updatedSelection);
+       return;
+     }
+     const updatedSelection = orderData[categoryKey]?.map(item =>
+       item.id === product.id ? { ...item, quantity: newQuantity } : item
+     ) || [];
+     
+     updateOrderData(categoryKey, updatedSelection);
+   };
+   
+   const toggleAccessory = (accessory) => {
+     const getAccessoryTargetQuantity = (value: any) => {
+       const guestCount = parseInt(orderData.guestCount, 10) || 0;
+       const guestTarget = Math.max(1, guestCount || MIN_GUESTS);
+       const quantityMode = value?.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+       if (quantityMode === 'FIXED') {
+         const fixedQuantity = value?.fixedQuantity == null ? 0 : Number(value.fixedQuantity);
+         const fixedTarget = Math.max(0, Math.trunc(fixedQuantity));
+         return Math.max(1, fixedTarget || 1);
+       }
+       return guestTarget;
+     };
+     const targetQuantity = getAccessoryTargetQuantity(accessory);
+     setSelectedAccessories(prev => {
+       if (prev.some(item => item.id === accessory.id)) {
+         return prev.filter(item => item.id !== accessory.id);
+       }
+       return [...prev, { ...accessory, quantity: targetQuantity }];
+     });
+   };
+   
+   const updateAccessoryQuantity = (id, quantity) => {
+     setSelectedAccessories(prev => {
+       const parsedQuantity = Number.isFinite(quantity) ? quantity : 0;
+       if (parsedQuantity <= 0) {
+         return prev.filter(item => item.id !== id);
+       }
+       return prev.map(item => item.id === id ? { ...item, quantity: parsedQuantity } : item);
+     });
+   };
+   
+   useEffect(() => {
+     const guestCount = parseInt(orderData.guestCount, 10) || 0;
+     if (!guestCount) return;
+     setSelectedAccessories((prev) => prev.map((item) => {
+       if (item?.quantityMode === 'FIXED') return item;
+       const targetQuantity = Math.max(1, guestCount || MIN_GUESTS);
+       return item.quantity === targetQuantity ? item : { ...item, quantity: targetQuantity };
+     }));
+   }, [orderData.guestCount]);
+   
+   const handleSubmitOrder = async () => {
+     // Check if ordering is paused
+     if (systemStatus?.orderingPaused) {
+       showNotification('error', language === 'DE'
+         ? 'Bestellungen sind aktuell pausiert. Bitte später erneut versuchen.'
+         : 'Ordering is currently paused. Please try again later.', 3000);
+       return;
+     }
+     
+     if (isClosedDate) {
+       showNotification('error', language === 'DE'
+         ? 'Das ausgewählte Datum ist geschlossen. Bitte wählen Sie ein anderes Datum.'
+         : 'The selected date is closed. Please choose another date.', 3000);
+       return;
+     }
+     
+     const contactEmail = (orderData.contactInfo.email || '').trim();
+     const contactPhone = (orderData.contactInfo.phone || '').trim();
+     const emailError = validateEmailValue(contactEmail);
+     const phoneError = validatePhoneValue(contactPhone);
+     setContactErrors({ email: emailError, phone: phoneError });
+     
+     if (emailError || phoneError) {
+       showNotification('error', language === 'DE'
+         ? 'Bitte gültige Kontaktdaten angeben.'
+         : 'Please provide valid contact details.', 3000);
+       return;
+     }
+     
+     const companyName = (orderData.contactInfo.company || '').trim();
+     const companyInfo = (orderData.companyInfo || '').trim();
+     const baseRequests = (orderData.specialRequests || '').trim();
+     
+     const companyDetailParts: string[] = [];
+     if (orderData.businessType === 'business') {
+       if (companyName) companyDetailParts.push(`Company: ${companyName}`);
+       if (companyInfo) companyDetailParts.push(`Company Info: ${companyInfo}`);
+     }
+     const companyDetails = companyDetailParts.join('\n');
+     
+     const accessoriesLines = selectedAccessories
+       .map((item: any) => `- ${item.name} x${item.quantity} (€${Number(item.price).toFixed(2)} each)`)
+       .join('\n');
+     const accessoriesDetails = accessoriesLines ? `Accessories:\n${accessoriesLines}` : '';
+     
+     const mergedRequests = [companyDetails, accessoriesDetails, baseRequests].filter(Boolean).join('\n\n');
+     
+     // Calculate totals
+     const guestCount = parseInt(orderData.guestCount) || 0;
+     const flatServiceFee = 48.90;
+     const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
+       return sum + (item.price * item.quantity);
+     }, 0);
+     
+     const selectedMenuObj = menusData.find(
+       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
+     );
+     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+     
+     const foodItems = [
+       ...orderData.selectedStarters,
+       ...orderData.selectedMains,
+       ...orderData.selectedSides,
+       ...orderData.selectedDesserts,
+       ...orderData.selectedDrinks
+     ];
+     
+     const foodSubtotal = getFoodExtrasSubtotal();
+     const subtotal = menuSubtotal + foodSubtotal;
+     const total = subtotal + accessoriesSubtotal + flatServiceFee;
+     
+     // Prepare order items
+     const orderItems = foodItems.map(item => ({
+       productId: item.id,
+       quantity: item.quantity,
+       price: item.price,
+       name: item.name
+     }));
+     
+     try {
+       const order = await ordersApi.createOrder({
+         clientName: `${orderData.contactInfo.firstName || ''} ${orderData.contactInfo.lastName || ''}`.trim() || 'Guest',
+         contactEmail,
+         phone: contactPhone,
+         eventType: orderData.serviceType || orderData.businessType || 'Custom',
+         eventDate: orderData.eventDate || new Date().toISOString(),
+         eventTime: orderData.eventTime || '',
+         guests: guestCount,
+         location: orderData.location || orderData.postalCode || '',
+         menuTier: orderData.menuTier,
+         specialRequests: mergedRequests,
+         businessType: orderData.businessType,
+         serviceType: orderData.serviceType,
+         serviceId: orderData.serviceId ? Number(orderData.serviceId) : undefined,
+         postalCode: orderData.postalCode,
+         items: orderItems,
+         subtotal: subtotal,
+         serviceFee: flatServiceFee,
+         total: total
+       });
+       
+       showNotification('success', 'Order placed successfully! Order ID: ' + order.id, 2000);
+       setTimeout(() => {
+         window.location.href = '/home';
+       }, 2000);
+     } catch (error: any) {
+       showNotification('error', 'Failed to place order: ' + (error.message || 'Unknown error'), 3500);
+     }
+   };
+   
+   useEffect(() => {
+     setIsVisible(true);
+   }, []);
+   
+   const handleBackToHome = () => {
+     window.location.href = '/home';
+   };
+   
+   const getStepComponent = () => {
+     const stepKey = stepsConfig[currentStep - 1]?.key;
+     
+     switch (stepKey) {
+       case 'event':
+         return Step1;
+       case 'menu':
+         return Step2;
+       case 'accessories':
+         return Step3;
+       case 'checkout':
+         return Step4;
+       default:
+         return Step1;
+     }
+   };
+   
+   const renderCurrentStep = getStepComponent();
+   
+   // Reset menu sub-step when leaving menu step
+   useEffect(() => {
+     if (currentStep !== 2) {
+       setCurrentMenuSubStep(0);
+     }
+   }, [currentStep]);
+   
+   const showHeaderNav = true;
+   
+   return (
+     <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
+       {notification && (
+         <div className="fixed bottom-6 right-6 z-50">
+           <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+             {notification.message}
+           </div>
+         </div>
+       )}
+       
+       {minPeoplePromptOpen && minPeoplePromptMenu && (
+         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+           <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
+             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+               <h3 className="text-lg font-bold text-gray-900">{t.menuMinPeoplePrompt.title}</h3>
+               <button
+                 type="button"
+                 onClick={closeMinPeoplePrompt}
+                 className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                 aria-label={ui.close}
+               >
+                 <X size={18} />
+               </button>
+             </div>
+             <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
+               <p className="font-semibold text-gray-900">{minPeoplePromptMenu.name}</p>
+               <p>
+                 {t.menuMinPeoplePrompt.description(
+                   Number(minPeoplePromptMenu.minPeople) || 0,
+                   minPeoplePromptGuestCount
+                 )}
+               </p>
+             </div>
+             <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-end gap-3">
+               <button
+                 type="button"
+                 onClick={() => {
+                   const menuMin = Number(minPeoplePromptMenu.minPeople) || 0;
+                   closeMinPeoplePrompt();
+                   if (menuMin > 0) {
+                     handleGuestCountChange(String(menuMin));
+                   }
+                   finalizeMenuSelection(minPeoplePromptMenu);
+                 }}
+                 className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+               >
+                 {t.menuMinPeoplePrompt.useMenuMin(Number(minPeoplePromptMenu.minPeople) || 0)}
+               </button>
+               <button
+                 type="button"
+                 onClick={() => {
+                   closeMinPeoplePrompt();
+                   finalizeMenuSelection(minPeoplePromptMenu);
+                 }}
+                 className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50"
+               >
+                 {t.menuMinPeoplePrompt.keepSelected(minPeoplePromptGuestCount)}
+               </button>
+               <button
+                 type="button"
+                 onClick={closeMinPeoplePrompt}
+                 className="px-4 py-2 text-sm font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+               >
+                 {t.menuMinPeoplePrompt.cancel}
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+       
+       {termsModalOpen && (
+         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+           <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
+             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+               <h3 className="text-lg font-bold text-gray-900">
+                 {language === 'DE' ? 'AGB & Bedingungen' : 'Terms and Conditions'}
+               </h3>
+               <button
+                 type="button"
+                 onClick={() => setTermsModalOpen(false)}
+                 className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+               >
+                 <X size={18} />
+               </button>
+             </div>
+             <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
+               <p>
+                 {language === 'DE'
+                   ? 'Bitte lesen Sie die folgenden Bedingungen. Dieser Text dient als Beispiel und sollte an Ihre offiziellen Richtlinien angepasst werden.'
+                   : 'Please review the full terms below. These terms are provided for convenience and should be updated to match your official policy.'}
+               </p>
+               <div>
+                 <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                   {language === 'DE' ? 'Buchung und Zahlung' : 'Booking and Payment'}
+                 </h4>
+                 <p>
+                   {language === 'DE'
+                     ? 'Bestellungen werden bestätigt, sobald die Zahlung eingegangen ist. Preise beinhalten die ausgewählten Speisen und Leistungen in Ihrer Bestellübersicht.'
+                     : 'Orders are confirmed once payment is received. Prices include the selected items and services listed in your order summary.'}
+                 </p>
+               </div>
+               <div>
+                 <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                   {language === 'DE' ? 'Stornierungen' : 'Cancellations'}
+                 </h4>
+                 <p>
+                   {language === 'DE'
+                     ? 'Stornierungen mindestens 48 Stunden vor dem Termin können voll erstattet werden. Spätere Stornierungen können mit Gebühren verbunden sein.'
+                     : 'Cancellations made at least 48 hours before the scheduled event are eligible for a full refund. Late cancellations may be subject to fees.'}
+                 </p>
+               </div>
+               <div>
+                 <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                   {language === 'DE' ? 'Lieferung' : 'Delivery'}
+                 </h4>
+                 <p>
+                   {language === 'DE'
+                     ? 'Lieferzeitfenster werden nach Zahlung bestätigt und können je nach Verfügbarkeit und Standort variieren.'
+                     : 'Delivery windows are confirmed after payment and may vary based on scheduling availability and location.'}
+                 </p>
+               </div>
+               <div>
+                 <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                   {language === 'DE' ? 'Datenschutz' : 'Privacy'}
+                 </h4>
+                 <p>
+                   {language === 'DE'
+                     ? 'Wir verwenden Ihre Angaben ausschließlich zur Abwicklung Ihrer Bestellung und zur Kommunikation rund um Ihr Event. Kontaktieren Sie uns für Datenanfragen.'
+                     : 'We only use your information to fulfill your order and communicate about your event. Please contact us for data requests.'}
+                 </p>
+               </div>
+             </div>
+             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+               <button
+                 type="button"
+                 onClick={() => setTermsModalOpen(false)}
+                 className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+               >
+                 {ui.close}
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+       
+       {bankDetailsOpen && (
+         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+           <div className="w-full max-w-xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
+             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+               <h3 className="text-lg font-bold text-gray-900">{ui.bankTransferTitle}</h3>
+               <button
+                 type="button"
+                 onClick={() => setBankDetailsOpen(false)}
+                 className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+               >
+                 <X size={18} />
+               </button>
+             </div>
+             <div className="px-6 py-5 flex-1 overflow-y-auto space-y-4 text-sm text-gray-700">
+               <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
+                 <p className="font-semibold text-gray-900">{ui.bankTransferIntro}</p>
+                 <p className="mt-2 text-xs text-gray-600">{ui.bankTransferReference}</p>
+               </div>
+               <div className="grid gap-3">
+                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
+                   <span className="text-gray-500">{ui.accountName}</span>
+                   <span className="font-semibold text-gray-900 break-all sm:text-right">La Cannelle Catering</span>
+                 </div>
+                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
+                   <span className="text-gray-500">IBAN</span>
+                   <span className="font-semibold text-gray-900 break-all sm:text-right">DE00 0000 0000 0000 0000 00</span>
+                 </div>
+                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
+                   <span className="text-gray-500">BIC/SWIFT</span>
+                   <span className="font-semibold text-gray-900 break-all sm:text-right">DEUTDEFFXXX</span>
+                 </div>
+                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 rounded-lg border border-gray-200 p-3">
+                   <span className="text-gray-500">{ui.bank}</span>
+                   <span className="font-semibold text-gray-900 break-words sm:text-right">{ui.yourBankName}</span>
+                 </div>
+               </div>
+             </div>
+             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+               <button
+                 type="button"
+                 onClick={() => setBankDetailsOpen(false)}
+                 className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+               >
+                 {ui.close}
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+       
+       {productDetailsOpen && productDetailsItem && (
+         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+           <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
+             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+               <h3 className="text-lg font-bold text-gray-900">{ui.productDetailsTitle}</h3>
+               <button
+                 type="button"
+                 onClick={() => {
+                   setProductDetailsOpen(false);
+                   setProductDetailsItem(null);
+                 }}
+                 className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+               >
+                 <X size={18} />
+               </button>
+             </div>
+             <div className="px-5 py-5 flex-1 overflow-y-auto">
+               <div className="grid gap-5 md:grid-cols-[180px,1fr]">
+                 <div className="w-full h-40 rounded-xl bg-gray-100 overflow-hidden">
+                   {productDetailsItem.image ? (
+                     <img
+                       src={productDetailsItem.image}
+                       alt={(language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name) || 'Product image'}
+                       className="w-full h-full object-cover"
+                     />
+                   ) : (
+                     <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                       {ui.noImage}
+                     </div>
+                   )}
+                 </div>
+                 <div className="space-y-3">
+                   <div>
+                     <h4 className="text-xl font-bold text-gray-900">
+                       {language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name}
+                     </h4>
+                     <p className="text-gray-600 mt-2">
+                       {(language === 'DE' ? (productDetailsItem.descriptionDe || productDetailsItem.description) : productDetailsItem.description) || ui.noDescription}
+                     </p>
+                   </div>
+                   <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                     <div className="rounded-lg border border-gray-200 p-3">
+                       <p className="text-gray-500">{ui.price}</p>
+                       <p className="text-base font-semibold text-gray-900">€{productDetailsItem.price}</p>
+                     </div>
+                     <div className="rounded-lg border border-gray-200 p-3">
+                       <p className="text-gray-500">{language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'}</p>
+                       <p className="text-base font-semibold text-gray-900">{getMinOrderQuantity(productDetailsItem)}</p>
+                     </div>
+                     <div className="rounded-lg border border-gray-200 p-3">
+                       <p className="text-gray-500">{ui.availability}</p>
+                       <p className="text-base font-semibold text-gray-900">
+                         {productDetailsItem.available ? ui.available : ui.notAvailableShort}
+                       </p>
+                     </div>
+                   </div>
+                   {(() => {
+                     const ingredients = language === 'DE' && Array.isArray(productDetailsItem.ingredientsDe) && productDetailsItem.ingredientsDe.length > 0
+                       ? productDetailsItem.ingredientsDe
+                       : productDetailsItem.ingredients;
+                     if (!Array.isArray(ingredients) || ingredients.length === 0) return null;
+                     return (
+                     <div>
+                       <p className="text-sm font-semibold text-gray-900 mb-2">{ui.ingredients}</p>
+                       <div className="flex flex-wrap gap-2">
+                         {ingredients.map((ingredient, idx) => (
+                           <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                             {ingredient}
+                           </span>
+                         ))}
+                       </div>
+                     </div>
+                     );
+                   })()}
+                   {(() => {
+                     const allergens = language === 'DE' && Array.isArray(productDetailsItem.allergensDe) && productDetailsItem.allergensDe.length > 0
+                       ? productDetailsItem.allergensDe
+                       : productDetailsItem.allergens;
+                     if (!Array.isArray(allergens) || allergens.length === 0) return null;
+                     return (
+                     <div>
+                       <p className="text-sm font-semibold text-gray-900 mb-2">{ui.allergens}</p>
+                       <div className="flex flex-wrap gap-2">
+                         {allergens.map((allergen, idx) => (
+                           <span key={idx} className="px-2 py-1 bg-red-50 text-red-700 text-xs font-medium rounded">
+                             {allergen}
+                           </span>
+                         ))}
+                       </div>
+                     </div>
+                     );
+                   })()}
+                 </div>
+               </div>
+             </div>
+             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+               <button
+                 type="button"
+                 onClick={() => {
+                   setProductDetailsOpen(false);
+                   setProductDetailsItem(null);
+                 }}
+                 className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+               >
+                 {ui.close}
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+       
+       {extraNoticeOpen && (
+         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+           <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
+             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+               <h3 className="text-lg font-bold text-gray-900">
+                 {language === 'DE' ? 'Hinweis zu Extras' : 'Extras notice'}
+               </h3>
+               <button
+                 type="button"
+                 onClick={() => setExtraNoticeOpen(false)}
+                 className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+               >
+                 <X size={18} />
+               </button>
+             </div>
+             <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 space-y-3">
+               <p>
+                 {language === 'DE' ? (
+                   <>
+                     Sie haben mehr Gerichte als die enthaltene Menge für{' '}
+                     <span className="font-semibold">{extraNoticeData.label}</span> ausgewählt.
+                   </>
+                 ) : (
+                   <>
+                     You have selected more dishes than the included amount for{' '}
+                     <span className="font-semibold">{extraNoticeData.label}</span>.
+                   </>
+                 )}
+               </p>
+               <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4">
+                 <p className="text-sm text-amber-800 font-semibold">
+                   {language === 'DE' ? 'Extra Gerichte:' : 'Extra dishes:'} {extraNoticeData.extra}
+                 </p>
+                 <p className="text-xs text-amber-700 mt-1">
+                   {language === 'DE' ? 'Extras werden zu Ihrer Gesamtsumme hinzugefuegt.' : 'Extras will be added to your total.'}
+                 </p>
+               </div>
+             </div>
+             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+               <button
+                 type="button"
+                 onClick={() => setExtraNoticeOpen(false)}
+                 className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+               >
+                 {language === 'DE' ? 'Verstanden' : 'Ok, got it'}
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+       
+       <style jsx global>{`
+         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+         
+         @keyframes fadeInUp {
+           from {
+             opacity: 0;
+             transform: translateY(20px);
+           }
+           to {
+             opacity: 1;
+             transform: translateY(0);
+           }
+         }
+         
+         .animate-fade-in-up {
+           animation: fadeInUp 0.6s ease-out;
+         }
+         
+         body {
+           font-family: 'Inter', sans-serif;
+         }
+         
+         .step-item {
+           opacity: 0.4;
+           transition: all 0.3s ease;
+         }
+         
+         .step-item:hover {
+           opacity: 0.8;
+         }
+         
+         .step-item.active {
+           opacity: 1;
+         }
+         
+         .border-3 {
+           border-width: 3px;
+         }
+         
+         /* Custom scrollbar */
+         ::-webkit-scrollbar {
+           width: 6px;
+         }
+         
+         ::-webkit-scrollbar-track {
+           background: #f1f1f1;
+         }
+         
+         ::-webkit-scrollbar-thumb {
+           background: #d97706;
+           border-radius: 3px;
+         }
+         
+         ::-webkit-scrollbar-thumb:hover {
+           background: #b45309;
+         }
+         
+         /* Ensure input text is visible */
+         input, textarea {
+           color: #111827 !important;
+         }
+         input::placeholder, textarea::placeholder {
+           color: #6b7280 !important;
+         }
+         
+         /* Make all minus and plus buttons black */
+         button .text-black, svg.text-black {
+           color: #000 !important;
+         }
+         
+         /* Ensure icons are black when they have the text-black class */
+         .text-black {
+           color: #000 !important;
+         }
+       `}</style>
+       
+       {/* Enhanced Top Navigation with Steps */}
+       <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+           {/* Language Row */}
+           <div className="flex justify-between items-center py-2">
+             <button
+               onClick={handleBackToHome}
+               className="inline-flex items-center text-xs font-medium text-gray-700 hover:text-amber-600 transition-colors"
+             >
+               <ArrowLeft size={14} className="mr-1" />
+               {t.buttons.backToHome}
+             </button>
+             
+             <div className="flex items-center space-x-2">
+               <button
+                 onClick={toggleLanguage}
+                 aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
+                 className="px-3 py-1.5 text-xs font-medium border border-amber-300 text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors inline-flex items-center"
+               >
+                 <img
+                   src={
+                     language === 'EN'
+                       ? '/images/language/Flag_of_United_Kingdom-4096x2048.png'
+                       : '/images/language/Flag_of_Germany-4096x2453.png'
+                   }
+                   alt={language === 'EN' ? commonA11y.englishFlagAlt : commonA11y.germanFlagAlt}
+                   className="h-3.5 w-auto mr-1"
+                 />
+                 {language === 'EN' ? 'EN' : 'DE'}
+               </button>
+             </div>
+           </div>
+           
+           {/* Steps Progress Bar */}
+           <div className="border-t border-gray-100 pt-2 pb-3">
+             <div className="flex items-center justify-between mb-3">
+               <span className="text-xs font-semibold text-gray-900">
+                 {stepsConfig[currentStep - 1]?.label}
+               </span>
+               {showHeaderNav && (
+                 <div className="flex items-center space-x-1">
+                   <button
+                     onClick={prevStep}
+                     disabled={currentStep === 1}
+                     className={`px-3 py-1.5 text-xs font-medium rounded-md inline-flex items-center transition-colors ${
+                       currentStep === 1
+                         ? 'text-gray-400 cursor-not-allowed'
+                         : 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
+                     }`}
+                   >
+                     <ChevronLeft size={14} className="mr-1" />
+                     {t.buttons.back}
+                   </button>
+                   
                   <button
                     onClick={nextStep}
-                    disabled={shouldBlockProgress}
+                    disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
                     className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center shadow-sm ${
-                      shouldBlockProgress
+                      isOrderingPaused || (isClosedDate && currentStep >= 1)
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         : 'bg-amber-600 text-white hover:bg-amber-700'
                     }`}
@@ -3852,78 +4005,128 @@ export default function OrderPage() {
                     {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
                     <ChevronRight size={14} className="ml-1" />
                   </button>
-                </div>
-              )}
-            </div>
-            {/* Steps Navigation */}
-            <div className="flex items-center justify-start sm:justify-center gap-2 px-2 flex-nowrap overflow-x-auto overscroll-x-contain">
-              {stepsConfig.map((step, index) => {
-                const stepNumber = index + 1;
-                const isCurrent = stepNumber === currentStep;
-                const isCompleted = stepNumber < currentStep;
-                const canNavigate = canNavigateToStep(stepNumber);
-                return (
-                  <React.Fragment key={step.key}>
-                    <button
-                      type="button"
-                      onClick={() => handleStepChange(stepNumber)}
-                      disabled={!canNavigate}
-                      className={`flex flex-col items-center min-w-0 px-1 transition-all duration-300 ${
-                        !canNavigate ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-colors ${
-                          isCompleted
-                            ? 'border-amber-500 bg-amber-500'
-                            : 'border-amber-500 bg-white'
-                        }`}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-white" />
-                      </div>
-                      <span
-                        className={`hidden sm:block text-[11px] font-semibold text-center whitespace-nowrap ${
-                          isCurrent || isCompleted ? 'text-amber-600' : 'text-gray-500'
-                        }`}
-                      >
-                        {step.label}
-                      </span>
-                    </button>
-                    {index < stepsConfig.length - 1 && (
-                      <div
-                        className={`h-0.5 flex-1 min-w-[50px] max-w-[130px] rounded-full transition-colors duration-300 ${
-                          stepNumber < currentStep ? 'bg-amber-500' : 'bg-gray-200'
-                        }`}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Main Content */}
-      <main className="flex-1">
-        <div className="pt-48 pb-16 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            {orderBlocked && (
-              <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {blockedMessage}
-              </div>
-            )}
-            <div className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              {renderCurrentStep ? renderCurrentStep() : null}
-            </div>
-          </div>
-        </div>
-      </main>
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-gray-400 text-lg">&copy; 2025 La Cannelle Catering. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
-  );
+                 </div>
+               )}
+             </div>
+             
+             {/* Steps Navigation - Only 4 main steps now */}
+             <div className="flex items-center justify-start sm:justify-center gap-2 px-2 flex-nowrap overflow-x-auto overscroll-x-contain">
+               {stepsConfig.map((step, index) => {
+                 const stepNumber = index + 1;
+                 const isCurrent = stepNumber === currentStep;
+                 const isCompleted = stepNumber < currentStep;
+                 const canNavigate = canNavigateToStep(stepNumber);
+                 
+                 return (
+                   <React.Fragment key={step.key}>
+                     <button
+                       type="button"
+                       onClick={() => handleStepChange(stepNumber)}
+                       disabled={!canNavigate}
+                       className={`flex flex-col items-center min-w-0 px-1 transition-all duration-300 ${
+                         !canNavigate ? 'opacity-60 cursor-not-allowed' : ''
+                       }`}
+                     >
+                       <div
+                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-colors ${
+                           isCompleted
+                             ? 'border-amber-500 bg-amber-500'
+                             : isCurrent
+                             ? 'border-amber-500 bg-white'
+                             : 'border-gray-300 bg-white'
+                         }`}
+                       >
+                         {isCompleted ? (
+                           <Check size={12} className="text-white" />
+                         ) : (
+                           <span className="w-2 h-2 rounded-full bg-amber-500" />
+                         )}
+                       </div>
+                       <span
+                         className={`hidden sm:block text-[11px] font-semibold text-center whitespace-nowrap ${
+                           isCurrent ? 'text-amber-600' : isCompleted ? 'text-amber-600' : 'text-gray-500'
+                         }`}
+                       >
+                         {step.label}
+                       </span>
+                     </button>
+                     {index < stepsConfig.length - 1 && (
+                       <div
+                         className={`h-0.5 flex-1 min-w-[50px] max-w-[130px] rounded-full transition-colors duration-300 ${
+                           stepNumber < currentStep ? 'bg-amber-500' : 'bg-gray-200'
+                         }`}
+                       />
+                     )}
+                   </React.Fragment>
+                 );
+               })}
+             </div>
+             
+             {/* Menu Sub-steps Indicator (only shown when in menu step) */}
+             {currentStep === 2 && dynamicMenuSteps.length > 0 && (
+               <div className="mt-4 pt-3 border-t border-gray-100">
+                 <div className="flex items-center justify-center gap-1 flex-wrap">
+                   {dynamicMenuSteps.map((step, index) => {
+                     const isCurrent = index === currentMenuSubStep;
+                     const isCompleted = index < currentMenuSubStep;
+                     const Icon = step.icon;
+                     
+                     return (
+                       <React.Fragment key={step.key}>
+                         <button
+                           type="button"
+                           onClick={() => setCurrentMenuSubStep(index)}
+                           className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                             isCurrent
+                               ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                               : isCompleted
+                               ? 'bg-green-100 text-green-800 border border-green-200'
+                               : 'bg-gray-100 text-gray-600 border border-gray-200'
+                           }`}
+                         >
+                           <Icon size={12} className={isCurrent ? 'text-amber-600' : isCompleted ? 'text-green-600' : 'text-gray-500'} />
+                           <span>{step.label}</span>
+                           {isCompleted && (
+                             <Check size={10} className="text-green-600 ml-1" />
+                           )}
+                         </button>
+                         {index < dynamicMenuSteps.length - 1 && (
+                           <div className={`h-0.5 w-4 rounded-full ${
+                             index < currentMenuSubStep ? 'bg-green-500' : 'bg-gray-200'
+                           }`} />
+                         )}
+                       </React.Fragment>
+                     );
+                   })}
+                 </div>
+               </div>
+             )}
+           </div>
+         </div>
+       </div>
+       
+       {/* Main Content */}
+       <main className="flex-1">
+         <div className="pt-48 pb-16 px-4 sm:px-6 lg:px-8">
+           <div className="max-w-6xl mx-auto">
+             {orderBlocked && (
+               <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                 {blockedMessage}
+               </div>
+             )}
+             <div className={`${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+               {renderCurrentStep ? renderCurrentStep() : null}
+             </div>
+           </div>
+         </div>
+       </main>
+       
+       {/* Footer */}
+       <footer className="bg-gray-900 text-white py-12 px-6 lg:px-8">
+         <div className="max-w-7xl mx-auto text-center">
+           <p className="text-gray-400 text-lg">&copy; 2025 La Cannelle Catering. All rights reserved.</p>
+         </div>
+       </footer>
+     </div>
+   );
 }

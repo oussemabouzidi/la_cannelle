@@ -1,6 +1,7 @@
 import type { Language } from '../hooks/useTranslation';
 
 type MenusTranslations = {
+  menuShowcase: any;
   nav: { home: string; about: string; services: string; menus: string; contact: string; connect: string; order: string };
   hero: { title: string; subtitle: string };
   categories: Record<string, string>;

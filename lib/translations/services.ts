@@ -93,6 +93,21 @@ const en = {
     subtitle: 'Let us bring your vision to life with exceptional catering',
     button: 'Order Now',
   },
+  employeeCatering: {
+      title: "Employee Catering",
+      subtitle: "Boost Productivity and Team Morale",
+      description: "Keep your team energized and satisfied with our employee catering services. We deliver delicious and nutritious meals that promote a positive work environment.",
+      features: [
+        "Daily fresh meal deliveries",
+        "Varied menu options for every taste",
+        "Special dietary accommodations",
+        "Regular snacks and beverage supply",
+        "Team lunch packages",
+        "Cost-effective solutions for companies"
+      ]
+  },
+
+
 };
 
 const de: typeof en = {
@@ -187,6 +202,20 @@ const de: typeof en = {
     title: 'Bereit zu starten?',
     subtitle: 'Wir setzen Ihre Vision mit exzellentem Catering um',
     button: 'Jetzt bestellen',
+  },
+  
+  employeeCatering: {  // Add German translations too
+      title: "Mitarbeiter Catering",
+      subtitle: "Produktivität und Teamgeist steigern",
+      description: "Halten Sie Ihr Team mit unserem Mitarbeiter-Catering energiegeladen und zufrieden. Wir liefern leckere und nahrhafte Mahlzeiten, die eine positive Arbeitsumgebung fördern.",
+      features: [
+        "Tägliche frische Mahlzeitenlieferungen",
+        "Abwechslungsreiche Menüoptionen für jeden Geschmack",
+        "Besondere Berücksichtigung von Ernährungsbedürfnissen",
+        "Regelmäßige Snack- und Getränkeversorgung",
+        "Team-Mittagessen-Pakete",
+        "Kosteneffektive Lösungen für Unternehmen"
+      ]
   },
 };
 

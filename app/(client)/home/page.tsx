@@ -1,7 +1,6 @@
 "use client";
 
 
-
 import React, { useState, useEffect } from 'react';
 
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
@@ -17,10 +16,22 @@ import { productsApi, type Product } from '@/lib/api/products';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { ChevronLeft } from 'lucide-react';
+import { useRef } from 'react';
+
 
 
 import { commonTranslations } from '@/lib/translations/common';
 import type { Language } from '@/lib/hooks/useTranslation';
+
+
+import { Clock, ChefHat, Flame } from 'lucide-react';
+
+// Add these imports
+import { useMemo } from 'react';
+import { Check } from 'lucide-react';
+import MenuShowcaseHorizontal from '../components/page';
+
 
 
 
@@ -29,6 +40,94 @@ type HomeTranslation = (typeof import('@/lib/translations/home').homeTranslation
 
 
 export default function CateringHomepage() {
+
+  const scrollContainer = useRef<HTMLDivElement>(null);
+
+
+
+
+  // Add these state variables at the top of your component
+const [selectedMenu, setSelectedMenu] = useState<ApiMenu | null>(null);
+
+// Add this useEffect for data fetching
+useEffect(() => {
+  const loadMenus = async () => {
+    try {
+      setIsLoadingData(true);
+      setFetchError(null);
+      
+      // Fetch menus from backend
+      const menusResult = await menusApi.getMenus({ 
+        includeImages: true
+      });
+
+      const nextMenus = (menusResult || []).map((menu) => ({
+        ...menu,
+        products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+      }));
+
+      setMenus(nextMenus);
+    } catch (error) {
+      console.error('Error loading menus:', error);
+      setFetchError('Failed to load menu items. Please try again later.');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  loadMenus();
+}, []);
+
+useEffect(() => {
+  const loadMenus = async () => {
+    try {
+      setIsLoadingData(true);
+      setFetchError(null);
+      
+      // Fetch menus from backend
+      const menusResult = await menusApi.getMenus({ 
+        includeImages: true,
+        limit: 6
+      });
+
+      const nextMenus = (menusResult || []).map((menu) => ({
+        ...menu,
+        products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+      }));
+
+      setMenus(nextMenus);
+    } catch (error) {
+      console.error('Error loading menus:', error);
+      setFetchError('Failed to load menu items. Please try again later.');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  loadMenus();
+}, []);
+
+// Add this useEffect to handle body overflow when modal is open
+useEffect(() => {
+  if (!selectedMenu) return;
+  document.body.style.overflow = 'hidden';
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, [selectedMenu]);
+
+
+// Add this useEffect to handle body overflow when modal is open
+useEffect(() => {
+  if (!selectedMenu) return;
+  document.body.style.overflow = 'hidden';
+  return () => {
+    document.body.style.overflow = 'unset';
+  };
+}, [selectedMenu]);
+
+  const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
+
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -195,6 +294,9 @@ export default function CateringHomepage() {
     { icon: Users, ...t.company.values.community },
 
   ];
+
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+
 
 
 
@@ -856,7 +958,6 @@ export default function CateringHomepage() {
 
 
         {/* Animated Background Elements */}
-
         <div className="absolute inset-0 overflow-hidden">
 
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl"></div>
@@ -906,6 +1007,8 @@ export default function CateringHomepage() {
 
         </div>
 
+        
+
 
 
         {/* Scroll Indicator */}
@@ -922,239 +1025,48 @@ export default function CateringHomepage() {
 
       </section>
 
+      {/* Brand Banner */}
+      <section className="bg-white py-14 border-t border-gray-100">
 
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
+          <div className="text-center mb-6">
 
-
-
-
-      {/* Quick Menu Categories */}
-
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
-
-        {/* Animated Background */}
-
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 to-stone-100/30"></div>
-
-        <div className="absolute top-10 right-10 w-20 h-20 bg-amber-200/20 rounded-full blur-xl animate-pulse"></div>
-
-        <div className="absolute bottom-10 left-10 w-16 h-16 bg-stone-300/20 rounded-full blur-xl animate-pulse delay-1000"></div>
-
-
-
-        <div className="max-w-7xl mx-auto relative">
-
-          <div className="text-center mb-10">
-
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">{t.quickMenu.title}</h2>
-
-              <p className="text-gray-600 max-w-2xl mx-auto">{t.quickMenu.description}</p>
-
-            </div>
+            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">{t.brandBanner.title}</p>
 
           </div>
 
 
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="relative overflow-hidden py-6">
 
-            {t.quickMenu.categories.map((category, index) => {
+            <div className="flex w-max items-center gap-16 animate-logo-marquee whitespace-nowrap">
 
-              const Icon = quickMenuIcons[index];
-
-              const meta = quickMenuCategoryMeta[index];
-
-              const countLabel = meta ? (language === 'DE' ? meta.countDe : meta.countEn) : '';
-
-              return (
+              {[...brandLogos, ...brandLogos].map((logo, idx) => (
 
                 <div
 
-                  key={index}
+                  key={`${logo.name}-${idx}`}
 
-                  className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 ${isVisible ? 'animate-scale-in' : 'opacity-0'
-
-                    }`}
-
-                  style={{ animationDelay: `${index * 150}ms` }}
+                  className="flex items-center justify-center h-28 md:h-32 px-8 opacity-95 hover:opacity-100 transition-all duration-200"
 
                 >
 
-                  {/* Hover Effect Background */}
-
-                  <div className={`absolute inset-0 bg-gradient-to-br ${meta?.gradient || 'from-amber-200 via-amber-100 to-stone-100'} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
-
-
-
-                  {/* Icon */}
-
-                  <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
-
-                    {Icon ? <Icon className="text-amber-600" size={28} /> : null}
-
-                  </div>
-
-
-
-                  {/* Content */}
-
-                  <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">{category.title}</h3>
-
-                  <p className="text-gray-600 text-xs mb-2">{category.description}</p>
-
-                  {countLabel && (
-
-                    <p className="text-amber-600 font-semibold text-xs">{countLabel}</p>
-
-                  )}
-
-
-
-                  {/* Hover Arrow */}
-
-                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-
-                    <ChevronRight size={16} className="text-amber-600" />
-
-                  </div>
-
-                </div>
-
-              );
-
-            })}
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-
-      {/* Exclusivity Section - Smaller */}
-
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-50 to-amber-50 relative overflow-hidden">
-
-        {/* 3D Floating Elements */}
-
-        <div className="absolute top-10 left-8 w-6 h-6 bg-amber-300/30 rounded-full animate-float"></div>
-
-        <div className="absolute top-20 right-12 w-4 h-4 bg-stone-400/20 rounded-full animate-float delay-500"></div>
-
-        <div className="absolute bottom-12 left-12 w-8 h-8 bg-amber-200/40 rounded-full animate-float delay-1000"></div>
-
-
-
-        <div className="max-w-6xl mx-auto relative">
-
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-
-            {/* Content */}
-
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-slide-in-left' : 'opacity-0 translate-x-10'}`}>
-
-              <div className="max-w-md">
-
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/80 backdrop-blur-sm rounded-full text-amber-700 text-xs font-semibold mb-4 shadow-lg border border-amber-100">
-
-                  <Crown size={14} />
-
-                  {t.exclusivity.subtitle}
-
-                </div>
-
-                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 font-elegant leading-tight">
-
-                  {t.exclusivity.title}
-
-                </h2>
-
-                <p className="text-gray-600 leading-relaxed mb-6">
-
-                  {t.exclusivity.text}
-
-                </p>
-
-
-
-                {/* Interactive Stats */}
-
-                <div className="grid grid-cols-3 gap-4 mb-6">
-
-                  {t.exclusivity.stats.map((stat, index) => (
-
-                    <div key={index} className="text-center group">
-
-                      <div className="bg-white rounded-lg p-3 shadow-lg border border-amber-100 group-hover:shadow-xl transition-all duration-300">
-
-                        <p className="text-lg font-bold text-amber-600 mb-1">{stat.number}</p>
-
-                        <p className="text-xs text-gray-600">{stat.label}</p>
-
-                      </div>
-
-                    </div>
-
-                  ))}
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-
-            {/* Image with 3D Effect */}
-
-            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-right' : 'opacity-0 -translate-x-10'}`}>
-
-              <div className="relative group perspective-1000">
-
-                {/* Main Image with 3D Rotation */}
-
-                <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
-
                   <img
 
-                    src="/images/home_image.jpeg"
+                    src={logo.src}
 
-                    alt="Friends enjoying a lively catering spread"
+                    alt={`${logo.name} logo`}
 
-                    className="w-full h-64 object-cover"
+                    className={`h-16 sm:h-20 md:h-24 w-auto object-contain transition-all duration-200 ${logo.src.endsWith('.svg') ? 'invert' : ''}`}
+
+                    loading="lazy"
 
                   />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-
                 </div>
 
-
-
-                {/* Floating Elements */}
-
-                <div className="absolute -top-3 -right-3 bg-white rounded-xl p-3 shadow-xl border border-amber-100 transform group-hover:scale-110 transition-transform duration-500">
-
-                  <div className="flex items-center gap-2">
-
-                    <Star className="text-amber-600" size={16} />
-
-                    <div>
-
-                      <p className="font-bold text-gray-900 text-xs">{t.exclusivity.badge.title}</p>
-
-                      <p className="text-xs text-amber-600">{t.exclusivity.badge.subtitle}</p>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
+              ))}
 
             </div>
 
@@ -1165,174 +1077,298 @@ export default function CateringHomepage() {
       </section>
 
 
-
-      {/* Interactive Menu Showcase - Smaller */}
-
+      {/* Quick Menu Categories */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 to-stone-100/30"></div>
+      <div className="absolute top-10 right-10 w-20 h-20 bg-amber-200/20 rounded-full blur-xl animate-pulse"></div>
+      <div className="absolute bottom-10 left-10 w-16 h-16 bg-stone-300/20 rounded-full blur-xl animate-pulse delay-1000"></div>
 
-        <div className="max-w-7xl mx-auto">
-
-          <div className="text-center mb-10">
-
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">{t.menuShowcase.title}</h2>
-
-              <p className="text-gray-600 max-w-2xl mx-auto">{t.menuShowcase.description}</p>
-
-            </div>
-
+      <div className="max-w-7xl mx-auto relative">
+        <div className="text-center mb-10">
+          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">
+              {t.quickMenu.title}
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">{t.quickMenu.description}</p>
           </div>
+        </div>
 
-
-
-          {fetchError && !products.length && (
-
-            <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
-
-          )}
-
-          {isLoadingData && !products.length && (
-
-            <LoadingSpinner className="mb-4" label="Loading menu items..." />
-
-          )}
-
-
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            {showcaseItems.map((item, index) => (
-
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {t.quickMenu.categories.map((category, index) => {
+            const Icon = quickMenuIcons[index];
+            const meta = quickMenuCategoryMeta[index];
+            
+            return (
               <div
-
-                key={item.id ?? index}
-
-                className={`group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden ${isVisible ? 'animate-scale-in' : 'opacity-0'
-
-                  }`}
-
-                style={{ animationDelay: `${index * 200}ms` }}
-
+                key={index}
+                className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
+                style={{ animationDelay: `${index * 150}ms` }}
+                onClick={() => setSelectedCategory(index)}
               >
+                {/* Hover Effect Background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${meta?.gradient || 'from-amber-200 via-amber-100 to-stone-100'} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
 
-                {/* Image */}
-
-                <div className="relative h-40 overflow-hidden">
-
-                  <img
-
-                    src={item.image || '/images/home_image.jpeg'}
-
-                    alt={item.name}
-
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-
-                  />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-
-
-
-                  {/* Badges */}
-
-                  {item.popular && (
-
-                    <div className="absolute top-3 left-3 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-
-                      {t.menuShowcase.badges.popular}
-
-                    </div>
-
-                  )}
-
-                  {item.featured && (
-
-                    <div className="absolute top-3 left-3 bg-rose-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-
-                      {t.menuShowcase.badges.featured}
-
-                    </div>
-
-                  )}
-
-
-
-                  {item.price && (
-
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-
-                      <span className="font-bold text-gray-900 text-sm">{item.price}</span>
-
-                    </div>
-
-                  )}
-
+                {/* Icon */}
+                <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
+                  {Icon ? <Icon className="text-amber-600" size={28} /> : null}
                 </div>
-
-
 
                 {/* Content */}
+                <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">
+                  {category.title}
+                </h3>
+                <p className="text-gray-600 text-xs mb-2">{category.description}</p>
 
-                <div className="p-4">
+                {/* Click Indicator */}
+                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                  <ChevronRight size={16} className="text-amber-600" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-                  <div className="flex justify-between items-start mb-2">
+  {/* Modal/Popup for Category Details - Simplified */}
+  {selectedCategory !== null && (
+    <>
+      {/* Backdrop with blur effect */}
+      <div className="fixed inset-0 backdrop-blur-sm bg-white/80 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-amber-100/50">
+          {/* Modal Header */}
+          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-amber-50 to-white">
+            <div className="flex items-center gap-3">
+              <div className="text-amber-600">
+                {quickMenuIcons[selectedCategory] && 
+                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
+                {t.quickMenu.categories[selectedCategory].title}
+              </h3>
+            </div>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+            >
+              <X size={24} />
+            </button>
+          </div>
 
-                    <h3 className="text-lg font-bold text-gray-900 font-elegant">{item.name}</h3>
-
-                  </div>
-
-                  <p className="text-amber-600 text-xs font-semibold mb-2">{item.category || t.quickMenu.title}</p>
-
-                  <p className="text-gray-600 text-xs mb-3">{item.description}</p>
-
-
-
-                  {/* Interactive Button */}
-
-                  <button
-
-                    className="w-full bg-amber-50 text-amber-700 py-2 rounded-lg font-semibold hover:bg-amber-100 transition-all duration-300 transform group-hover:scale-105 flex items-center justify-center gap-2 text-sm"
-
-                    onClick={() => handleOrderClick(item.productIds)}
-
-                  >
-
-                    {t.menuShowcase.viewDetails}
-
-                    <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
-
-                  </button>
-
+          {/* Modal Content - Simplified */}
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="mb-6">
+              <p className="text-gray-700 mb-6 bg-amber-50/50 p-4 rounded-lg">
+                {t.quickMenu.categories[selectedCategory].description}
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    {language === 'EN' ? 'What to Expect' : 'Was Sie erwartet'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'A selection of our finest dishes, carefully prepared with fresh ingredients and traditional techniques.'
+                      : 'Eine Auswahl unserer besten Gerichte, sorgfältig mit frischen Zutaten und traditionellen Techniken zubereitet.'}
+                  </p>
                 </div>
 
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    {language === 'EN' ? 'Highlights' : 'Höhepunkte'}
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                      {language === 'EN' ? 'Fresh, seasonal ingredients' : 'Frische, saisonale Zutaten'}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                      {language === 'EN' ? 'Chef-recommended options' : 'Von unseren Köchen empfohlene Optionen'}
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                      {language === 'EN' ? 'Perfect for sharing' : 'Perfekt zum Teilen'}
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    {language === 'EN' ? 'Best Time to Enjoy' : 'Beste Zeit zum Genießen'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'These dishes are perfect for lunch, dinner, or special occasions. Our chefs recommend pairing with our selected wines.'
+                      : 'Diese Gerichte sind perfekt für Mittagessen, Abendessen oder besondere Anlässe. Unsere Köche empfehlen die Kombination mit unseren ausgewählten Weinen.'}
+                  </p>
+                </div>
               </div>
-
-            ))}
-
+            </div>
           </div>
-
-
-
-          {/* View All Button */}
-
-          <div className="text-center mt-8">
-
-            <button className="px-6 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm" onClick={() => router.push('/menus')}>
-
-              {t.menuShowcase.exploreFull}
-
-              <ChevronRight size={16} />
-
-            </button>
-
-          </div>
-
         </div>
+      </div>
+    </>
+  )}
+</section>
+      {selectedMenuItem && (
+        <>
+          {/* Backdrop with blur effect */}
+          <div className="fixed inset-0 backdrop-blur-md bg-white/90 z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-amber-100/50 animate-scale-in">
+              {/* Close Button */}
+              <button
+                onClick={() => setSelectedMenuItem(null)}
+                className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors shadow-lg border border-gray-200"
+              >
+                <X size={20} className="text-gray-600" />
+              </button>
 
-      </section>
+              {/* Modal Content */}
+              <div className="flex flex-col lg:flex-row">
+                {/* Image Section */}
+                <div className="lg:w-1/2 relative">
+                  <div className="h-64 lg:h-full">
+                    <img
+                      src={selectedMenuItem.image || '/images/home_image.jpeg'}
+                      alt={selectedMenuItem.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  </div>
+                  
+                  {/* Badges on Image */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    {selectedMenuItem.popular && (
+                      <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg">
+                        <Flame size={14} />
+                        {t.menuShowcase.badges.popular}
+                      </div>
+                    )}
+                    {selectedMenuItem.featured && (
+                      <div className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg">
+                        <Star size={14} />
+                        {t.menuShowcase.badges.featured}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Details Section */}
+                <div className="lg:w-1/2 p-6 lg:p-8 overflow-y-auto max-h-[60vh] lg:max-h-[90vh]">
+                  <div className="mb-6">
+                    <p className="text-amber-600 font-semibold text-sm mb-2">
+                      {selectedMenuItem.category || t.quickMenu.title}
+                    </p>
+                    <h2 className="text-3xl font-bold text-gray-900 font-elegant mb-3">
+                      {selectedMenuItem.name}
+                    </h2>
+                    {selectedMenuItem.price && (
+                      <div className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent mb-4">
+                        {selectedMenuItem.price}
+                      </div>
+                    )}
+                    <p className="text-gray-600 mb-6 bg-amber-50/50 p-4 rounded-lg">
+                      {selectedMenuItem.description}
+                    </p>
+                  </div>
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    {selectedMenuItem.prepTime && (
+                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
+                        <Clock size={18} className="text-amber-600" />
+                        <div>
+                          <p className="text-xs text-gray-500">Prep Time</p>
+                          <p className="font-semibold text-gray-800">{selectedMenuItem.prepTime}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedMenuItem.serves && (
+                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
+                        <Users size={18} className="text-amber-600" />
+                        <div>
+                          <p className="text-xs text-gray-500">Serves</p>
+                          <p className="font-semibold text-gray-800">{selectedMenuItem.serves}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedMenuItem.chef && (
+                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
+                        <ChefHat size={18} className="text-amber-600" />
+                        <div>
+                          <p className="text-xs text-gray-500">Chef</p>
+                          <p className="font-semibold text-gray-800">{selectedMenuItem.chef}</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedMenuItem.spiceLevel && (
+                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
+                        <Flame size={18} className="text-amber-600" />
+                        <div>
+                          <p className="text-xs text-gray-500">Spice Level</p>
+                          <p className="font-semibold text-gray-800">{selectedMenuItem.spiceLevel}/5</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ingredients / Highlights */}
+                  {selectedMenuItem.ingredients && (
+                    <div className="mb-6">
+                      <h4 className="font-bold text-gray-900 mb-3 text-lg">
+                        {language === 'EN' ? 'Ingredients' : 'Zutaten'}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedMenuItem.ingredients.map((ingredient: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 rounded-full text-sm border border-amber-200"
+                          >
+                            {ingredient}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Dietary Info */}
+                  {selectedMenuItem.dietary && (
+                    <div className="mb-6">
+                      <h4 className="font-bold text-gray-900 mb-3 text-lg">
+                        {language === 'EN' ? 'Dietary Information' : 'Ernährungsinformationen'}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedMenuItem.dietary.map((tag: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-gradient-to-r from-green-100 to-green-200 text-green-800 rounded-full text-sm border border-green-200"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
 
+
+      <MenuShowcaseHorizontal 
+        limit={6}
+        showViewAll={true}
+        title="Our Featured Menus"
+        description="Discover our carefully crafted culinary experiences"
+      />
 
       {/* Passion Section - Smaller */}
 
@@ -1877,63 +1913,6 @@ export default function CateringHomepage() {
         </div>
 
       </section>
-
-
-
-      {/* Brand Banner */}
-
-      <section className="bg-white py-14 border-t border-gray-100">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          <div className="text-center mb-6">
-
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">{t.brandBanner.title}</p>
-
-          </div>
-
-
-
-          <div className="relative overflow-hidden py-6">
-
-            <div className="flex w-max items-center gap-16 animate-logo-marquee whitespace-nowrap">
-
-              {[...brandLogos, ...brandLogos].map((logo, idx) => (
-
-                <div
-
-                  key={`${logo.name}-${idx}`}
-
-                  className="flex items-center justify-center h-28 md:h-32 px-8 opacity-95 hover:opacity-100 transition-all duration-200"
-
-                >
-
-                  <img
-
-                    src={logo.src}
-
-                    alt={`${logo.name} logo`}
-
-                    className={`h-16 sm:h-20 md:h-24 w-auto object-contain transition-all duration-200 ${logo.src.endsWith('.svg') ? 'invert' : ''}`}
-
-                    loading="lazy"
-
-                  />
-
-                </div>
-
-              ))}
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-
       {/* Footer */}
 
       <footer id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
@@ -2023,20 +2002,7 @@ export default function CateringHomepage() {
           </div>
 
         </div>
-
       </footer>
-
     </div>
-
   );
-
 }
-
-
-
-
-
-
-
-
-
