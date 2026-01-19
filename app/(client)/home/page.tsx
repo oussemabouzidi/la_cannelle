@@ -1078,6 +1078,7 @@ useEffect(() => {
 
 
       {/* Quick Menu Categories */}
+
       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 to-stone-100/30"></div>
