@@ -70,6 +70,7 @@ export const menusTranslations: Record<Language, MenusTranslations> = {
       noMenusAvailable: 'No menus available right now.',
       menusLoadFailed: 'Unable to load menus right now.',
     },
+    menuShowcase: undefined
   },
   DE: {
     nav: {
@@ -111,5 +112,6 @@ export const menusTranslations: Record<Language, MenusTranslations> = {
       noMenusAvailable: 'Aktuell sind keine Menüs verfügbar.',
       menusLoadFailed: 'Menüs konnten gerade nicht geladen werden.',
     },
+    menuShowcase: undefined
   },
 };
