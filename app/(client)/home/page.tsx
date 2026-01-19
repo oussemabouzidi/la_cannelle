@@ -87,7 +87,7 @@ useEffect(() => {
       // Fetch menus from backend
       const menusResult = await menusApi.getMenus({ 
         includeImages: true,
-        limit: 6
+        
       });
 
       const nextMenus = (menusResult || []).map((menu) => ({
