@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -19,7 +19,10 @@ const HOP_BY_HOP_HEADERS = new Set([
   'content-length',
 ]);
 
-const forward = async (req: NextRequest, context: { params: Promise<{ path: string[] }> }) => {
+const forward = async (
+  req: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) => {
   const { path } = await context.params;
   const base = getBackendApiBaseUrl().replace(/\/+$/, '');
   const backendUrl = new URL(`${base}/${path.map(encodeURIComponent).join('/')}`);
