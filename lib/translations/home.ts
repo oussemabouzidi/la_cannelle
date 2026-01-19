@@ -198,6 +198,7 @@ const en: HomeTranslations = {
     hours: { weekdays: 'Mon - Fri: 9:00 - 18:00', saturday: 'Sat: 10:00 - 16:00', sunday: 'Sun: Closed' },
     copyright: '(c) 2025 La Cannelle Catering. All rights reserved.',
   },
+  menuHighlights: undefined
 };
 
 const de: HomeTranslations = {
@@ -337,6 +338,7 @@ const de: HomeTranslations = {
     hours: { weekdays: 'Mo - Fr: 9:00 - 18:00', saturday: 'Sa: 10:00 - 16:00', sunday: 'So: Geschlossen' },
     copyright: '(c) 2025 La Cannelle Catering. Alle Rechte vorbehalten.',
   },
+  menuHighlights: undefined
 };
 
 export const homeTranslations: Record<Language, HomeTranslations> = {
