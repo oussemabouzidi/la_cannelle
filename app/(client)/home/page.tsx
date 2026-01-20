@@ -871,7 +871,6 @@ export default function CateringHomepage() {
 
                 <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
 
-                <a href="/about" className={mobileLinkClass('/about')}>{t.nav.about}</a>
 
                 <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
 
@@ -2163,8 +2162,6 @@ export default function CateringHomepage() {
               <h4 className="font-semibold mb-3 font-elegant text-sm">{t.footer.quickLinksTitle}</h4>
 
               <div className="flex flex-col gap-1">
-
-                <a href="#about" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.about}</a>
 
                 <a href="#services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.services}</a>
 

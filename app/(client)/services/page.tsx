@@ -169,7 +169,6 @@ export default function ServicesPage() {
             <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
               <div className="flex flex-col gap-4">
                 <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
-                <a href="/about" className={mobileLinkClass('/about')}>{t.nav.about}</a>
                 <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
                 <a href="/menus" className={mobileLinkClass('/menus')}>{t.nav.menus}</a>
                 <a href="/contact" className={mobileLinkClass('/contact')}>{t.nav.contact}</a>
