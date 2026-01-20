@@ -56,6 +56,11 @@ type HomeTranslations = {
   journey: { title: string; milestones: { title: string; date: string; description: string }[] };
   services: { title: string; items: { title: string; description: string; icon?: string }[]; cta: string };
   menus: {
+    priceLabel: string;
+    includes: string;
+    noItems: string;
+    loading: string;
+    categoryAll: any;
     viewDetails: any;
     exploreFull: any; title: string; description: string; items: { name: string; desc: string; price?: string }[]; cta: string 
 };

@@ -2,6 +2,7 @@ import { apiClient } from '../api';
 import type { Service } from './services';
 
 export interface Menu {
+  popularity: any;
   id: number;
   name: string;
   nameDe?: string | null;
