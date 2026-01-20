@@ -143,10 +143,10 @@ const de: typeof en = {
     subtitle: 'Maßgeschneiderte Catering-Lösungen für jeden Anlass',
   },
   officeCatering: {
-    title: 'Büro-Catering',
+    title: 'Buro-Catering',
     subtitle: 'Energie für Ihr Team durch Exzellenz',
     description:
-      'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Büro-Catering-Dienstleistungen. Von täglichen Mittagslieferungen bis hin zu Frühstücksmeetings und Nachmittagserfrischungen bieten wir frische, köstliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
+      'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Buro-Catering-Dienstleistungen. Von täglichen Mittagslieferungen bis hin zu Frühstücksmeetings und Nachmittagserfrischungen bieten wir frische, köstliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
     features: [
       'Tägliche Essenslieferprogramme',
       'Frühstücksmeetings und Kaffeeservice',
@@ -203,8 +203,7 @@ const de: typeof en = {
     subtitle: 'Wir setzen Ihre Vision mit exzellentem Catering um',
     button: 'Jetzt bestellen',
   },
-  
-  employeeCatering: {  // Add German translations too
+  employeeCatering: {
       title: "Mitarbeiter Catering",
       subtitle: "Produktivität und Teamgeist steigern",
       description: "Halten Sie Ihr Team mit unserem Mitarbeiter-Catering energiegeladen und zufrieden. Wir liefern leckere und nahrhafte Mahlzeiten, die eine positive Arbeitsumgebung fördern.",

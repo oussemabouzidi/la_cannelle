@@ -848,7 +848,6 @@ export default function MenusPage() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
-              <a href="/about" className={desktopLinkClass('/about')}>{t.nav.about}</a>
               <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
               <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
               <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>

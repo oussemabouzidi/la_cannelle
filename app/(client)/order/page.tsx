@@ -19,7 +19,7 @@ import {
   Home, Check, Shield, Package, Sparkles, Award,
   AlertCircle, Truck as TruckIcon, Clock as ClockIcon,
   Calendar as CalendarIcon, MapPin as MapPinIcon,
-  FileText, Shield as ShieldIcon
+  FileText, Shield as ShieldIcon, Receipt, FileText as FileInvoice
 } from 'lucide-react';
 
 // ============================================================================
@@ -577,6 +577,19 @@ export default function OrderPage() {
       accountName: isDE ? 'Kontoinhaber' : 'Account Name',
       bank: isDE ? 'Bank' : 'Bank',
       yourBankName: isDE ? 'Ihre Bank' : 'Your Bank Name',
+      invoiceTitle: isDE ? 'Rechnung' : 'Invoice',
+      invoiceDescription: isDE 
+        ? 'Sie erhalten eine Rechnung per E-Mail innerhalb von 24 Stunden nach Ihrer Bestellung.'
+        : 'You will receive an invoice via email within 24 hours of placing your order.',
+      invoiceTerms: isDE 
+        ? 'Zahlbar innerhalb von 14 Tagen nach Erhalt der Rechnung.'
+        : 'Payable within 14 days of receiving the invoice.',
+      confirmOrder: isDE ? 'Bestellung bestätigen' : 'Confirm Order',
+      orderSubmitted: isDE ? 'Bestellung abgeschickt' : 'Order Submitted',
+      orderSubmittedMessage: isDE
+        ? 'Vielen Dank! Ihre Bestellung wurde erhalten. Sie erhalten in Kürze eine Bestätigungs-E-Mail mit allen Details.'
+        : 'Thank you! Your order has been received. You will receive a confirmation email shortly with all the details.',
+      paymentMethod: isDE ? 'Zahlungsmethode' : 'Payment Method',
     };
   }, [language]);
   
@@ -1423,23 +1436,26 @@ export default function OrderPage() {
         if (phoneError) {
           return phoneError;
         }
-        if (!orderData.paymentMethod) {
-          return language === 'DE' ? 'Bitte Zahlungsmethode wählen.' : 'Please select a payment method.';
+        // For business orders, we don't require payment method selection
+        if (orderData.businessType !== 'business') {
+          if (!orderData.paymentMethod) {
+            return language === 'DE' ? 'Bitte Zahlungsmethode wählen.' : 'Please select a payment method.';
+          }
+          if (orderData.paymentMethod === 'credit-card') {
+            const { number, expiry, cvc, name } = orderData.cardDetails;
+            const digitsOnly = number.replace(/\s+/g, '');
+            const expiryValid = /^\d{2}\/\d{2}$/.test(expiry);
+            if (!digitsOnly || digitsOnly.length < 12 || !expiryValid || cvc.length < 3 || !name.trim()) {
+              return language === 'DE'
+                ? 'Bitte gültige Kartendaten eingeben.'
+                : 'Please enter valid card details.';
+            }
+          }
         }
         if (!termsAccepted) {
           return language === 'DE'
             ? 'Bitte AGB und Datenschutz akzeptieren.'
             : 'Please accept the terms and privacy policy.';
-        }
-        if (orderData.paymentMethod === 'credit-card') {
-          const { number, expiry, cvc, name } = orderData.cardDetails;
-          const digitsOnly = number.replace(/\s+/g, '');
-          const expiryValid = /^\d{2}\/\d{2}$/.test(expiry);
-          if (!digitsOnly || digitsOnly.length < 12 || !expiryValid || cvc.length < 3 || !name.trim()) {
-            return language === 'DE'
-              ? 'Bitte gültige Kartendaten eingeben.'
-              : 'Please enter valid card details.';
-          }
         }
         return '';
       default:
@@ -1661,6 +1677,9 @@ export default function OrderPage() {
       name: item.name
     }));
     
+    // For business orders, set payment method to 'invoice'
+    const paymentMethod = orderData.businessType === 'business' ? 'invoice' : orderData.paymentMethod;
+    
     try {
       const order = await ordersApi.createOrder({
         clientName: `${orderData.contactInfo.firstName || ''} ${orderData.contactInfo.lastName || ''}`.trim() || 'Guest',
@@ -1680,10 +1699,17 @@ export default function OrderPage() {
         items: orderItems,
         subtotal: subtotal,
         serviceFee: flatServiceFee,
-        total: total
+        total: total,
       });
       
-      showNotification('success', 'Order placed successfully! Order ID: ' + order.id, 2000);
+      if (orderData.businessType === 'business') {
+        showNotification('success', language === 'DE'
+          ? 'Bestellung erfolgreich aufgegeben! Sie erhalten in Kürze eine Rechnung per E-Mail.'
+          : 'Order placed successfully! You will receive an invoice via email shortly.', 3000);
+      } else {
+        showNotification('success', 'Order placed successfully! Order ID: ' + order.id, 2000);
+      }
+      
       setTimeout(() => {
         window.location.href = '/home';
       }, 2000);
@@ -1726,7 +1752,7 @@ export default function OrderPage() {
               : 'bg-amber-600 text-white hover:bg-amber-700'
           }`}
         >
-          {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
+          {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
           <ChevronRight size={16} className="ml-1" />
         </button>
       </div>
@@ -2975,371 +3001,287 @@ export default function OrderPage() {
     const grandTotal = total + vatAmount;
     
     const renderPaymentStep = () => {
-      return (
-        <div className="space-y-8">
-          <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-2">
-              <Lock size={20} className="text-amber-600" />
-              <h2 className="text-2xl font-bold text-gray-900">{t.payment.title}</h2>
+      if (orderData.businessType === 'business') {
+        // Business orders - Invoice only
+        return (
+          <div className="space-y-8">
+            <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-2">
+                <FileInvoice size={20} className="text-amber-600" />
+                <h2 className="text-2xl font-bold text-gray-900">{ui.invoiceTitle}</h2>
+              </div>
+              <p className="text-gray-600">{ui.invoiceDescription}</p>
             </div>
-            <p className="text-gray-600">{t.payment.subtitle}</p>
-          </div>
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Order Summary - Right Side */}
-            <div className="lg:col-span-1 lg:order-2">
-              <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
-                
-                <div className="space-y-6">
-                  {/* Event Info */}
-                  <div className="space-y-4">
-                    <h4 className="font-bold text-gray-900">{t.eventInfo.title}</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-black">
-                        <CalendarIcon size={16} className="text-gray-500" />
-                        <span className="font-medium">{orderData.eventDate || ui.notSpecified}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-black">
-                        <ClockIcon size={16} className="text-gray-500" />
-                        <span className="font-medium">{orderData.eventTime || ui.notSpecified}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-black">
-                        <Users size={16} className="text-gray-500" />
-                        <span className="font-medium">
-                          {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-black">
-                        <MapPinIcon size={16} className="text-gray-500" />
-                        <span className="font-medium">
-                          {orderData.postalCode || ui.notSpecified}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Order Summary - Right Side */}
+              <div className="lg:col-span-1 lg:order-2">
+                <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
                   
-                  {/* Contact Info */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <h4 className="font-bold text-gray-900 mb-3">
-                      {language === 'DE' ? 'Kontaktinformationen' : 'Contact Information'}
-                    </h4>
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
-                      <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
-                      <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
-                      {orderData.businessType === 'business' && orderData.contactInfo.company && (
-                        <p className="text-sm text-gray-900 font-semibold">
-                          {language === 'DE' ? 'Firma:' : 'Company:'} {orderData.contactInfo.company}
-                        </p>
-                      )}
-                      {orderData.businessType === 'business' && orderData.companyInfo && (
-                        <p className="text-sm text-gray-900 font-semibold">
-                          {language === 'DE' ? 'Firmeninfo:' : 'Company Info:'} {orderData.companyInfo}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Price Breakdown */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <h4 className="font-bold text-gray-900 mb-3">
-                      {language === 'DE' ? 'Preisaufstellung' : 'Price Breakdown'}
-                    </h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-900 font-semibold">
-                          {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
-                        </span>
-                        <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-900 font-semibold">
-                          {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
-                        </span>
-                        <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
-                      </div>
-                      {selectedAccessories.length > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
-                          <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
+                  <div className="space-y-6">
+                    {/* Event Info */}
+                    <div className="space-y-4">
+                      <h4 className="font-bold text-gray-900">{t.eventInfo.title}</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <CalendarIcon size={16} className="text-gray-500" />
+                          <span className="font-medium">{orderData.eventDate || ui.notSpecified}</span>
                         </div>
-                      )}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
-                        <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <ClockIcon size={16} className="text-gray-500" />
+                          <span className="font-medium">{orderData.eventTime || ui.notSpecified}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <Users size={16} className="text-gray-500" />
+                          <span className="font-medium">
+                            {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <MapPinIcon size={16} className="text-gray-500" />
+                          <span className="font-medium">
+                            {orderData.postalCode || ui.notSpecified}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-900 font-semibold">
-                          {language === 'DE'
-                            ? `MwSt (${(vatRate * 100).toFixed(2)}%):`
-                            : `VAT (${(vatRate * 100).toFixed(2)}%):`}
-                        </span>
-                        <span className="font-bold text-amber-700">€{vatAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
-                        <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
-                        <span>€{grandTotal.toFixed(2)}</span>
-                      </div>
-                      {renderSummaryNav()}
                     </div>
-                  </div>
-                  
-                  {/* Security Badge */}
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                      <Shield size={20} className="text-green-600" />
-                      <div>
-                        <p className="text-sm font-medium text-green-800">
-                          {language === 'DE' ? 'Sichere Zahlung' : 'Secure Payment'}
-                        </p>
-                        <p className="text-xs text-green-600">
-                          {language === 'DE'
-                            ? 'SSL-verschluesselt \u2022 DSGVO-konform'
-                            : 'SSL Encrypted \u2022 GDPR Compliant'}
-                        </p>
+                    
+                    {/* Contact Info */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="font-bold text-gray-900 mb-3">
+                        {language === 'DE' ? 'Kontaktinformationen' : 'Contact Information'}
+                      </h4>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
+                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
+                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
+                        {orderData.businessType === 'business' && orderData.contactInfo.company && (
+                          <p className="text-sm text-gray-900 font-semibold">
+                            {language === 'DE' ? 'Firma:' : 'Company:'} {orderData.contactInfo.company}
+                          </p>
+                        )}
+                        {orderData.businessType === 'business' && orderData.companyInfo && (
+                          <p className="text-sm text-gray-900 font-semibold">
+                            {language === 'DE' ? 'Firmeninfo:' : 'Company Info:'} {orderData.companyInfo}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Price Breakdown */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="font-bold text-gray-900 mb-3">
+                        {language === 'DE' ? 'Preisaufstellung' : 'Price Breakdown'}
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">
+                            {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                          </span>
+                          <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">
+                            {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
+                          </span>
+                          <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
+                        </div>
+                        {selectedAccessories.length > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
+                            <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
+                          <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">
+                            {language === 'DE'
+                              ? `MwSt (${(vatRate * 100).toFixed(2)}%):`
+                              : `VAT (${(vatRate * 100).toFixed(2)}%):`}
+                          </span>
+                          <span className="font-bold text-amber-700">€{vatAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
+                          <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
+                          <span>€{grandTotal.toFixed(2)}</span>
+                        </div>
+                        <div className="pt-3">
+                          <div className="flex items-center gap-2 text-sm text-gray-700">
+                            <FileInvoice size={16} className="text-amber-600" />
+                            <span className="font-semibold">{language === 'DE' ? 'Zahlungsmethode:' : 'Payment Method:'} {language === 'DE' ? 'Rechnung' : 'Invoice'}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">{ui.invoiceTerms}</p>
+                        </div>
+                        {renderSummaryNav()}
+                      </div>
+                    </div>
+                    
+                    {/* Invoice Assurance */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
+                        <FileInvoice size={20} className="text-amber-600" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">
+                            {language === 'DE' ? 'Rechnung wird per E-Mail versendet' : 'Invoice will be sent via email'}
+                          </p>
+                          <p className="text-xs text-amber-600">
+                            {language === 'DE'
+                              ? 'Innerhalb von 24 Stunden nach Bestellung'
+                              : 'Within 24 hours of order placement'}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Payment Form - Left Side */}
-            <div className="lg:col-span-2 lg:order-1">
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-                <div className="space-y-6">
-                  {/* Payment Method Selection */}
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-900">{t.payment.method}</h3>
-                      <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">
-                        {language === 'DE' ? 'Schritt 3' : 'Step 3'}
-                      </span>
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                      {[
-                        {
-                          id: 'credit-card',
-                          label: language === 'DE' ? 'Kreditkarte' : 'Credit Card',
-                          description: language === 'DE' ? 'Sofortige Bestätigung und sicherer Checkout.' : 'Instant confirmation and secure checkout.',
-                          icon: CreditCard,
-                          badge: language === 'DE' ? 'Schnell' : 'Fast'
-                        },
-                        {
-                          id: 'paypal',
-                          label: 'PayPal',
-                          description: language === 'DE' ? 'Nutzen Sie PayPal-Guthaben oder die verknüpfte Karte.' : 'Use your PayPal balance or linked card.',
-                          icon: null,
-                          badge: language === 'DE' ? 'Beliebt' : 'Popular'
-                        },
-                        {
-                          id: 'bank-transfer',
-                          label: language === 'DE' ? 'Banküberweisung' : 'Bank Transfer',
-                          description: language === 'DE' ? 'Wir zeigen Ihnen unsere Bankdaten an.' : 'We will display our bank details.',
-                          icon: Building2,
-                          badge: language === 'DE' ? 'Manuell' : 'Manual'
-                        }
-                      ].map((method) => {
-                        const isSelected = orderData.paymentMethod === method.id;
-                        return (
-                          <button
-                            key={method.id}
-                            onClick={() => {
-                              updateOrderData('paymentMethod', method.id);
-                              if (method.id === 'bank-transfer') {
-                                setBankDetailsOpen(true);
-                              }
-                            }}
-                            className={`group rounded-2xl border-2 p-5 text-left transition-all duration-300 ${
-                              isSelected
-                                ? 'border-amber-500 bg-amber-50 shadow-md shadow-amber-100'
-                                : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between mb-3 gap-3">
-                              <div className="flex min-w-0 flex-1 items-start gap-3">
-                                <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                                  isSelected ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                  {method.icon ? <method.icon size={22} /> : <span className="text-sm font-bold">PP</span>}
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <span className="min-w-0 break-words text-base font-semibold leading-snug text-gray-900">
-                                      {method.label}
-                                    </span>
-                                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                      {method.badge}
-                                    </span>
-                                  </div>
-                                  <p className="mt-0.5 break-words text-sm leading-snug text-gray-600">
-                                    {method.description}
-                                  </p>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <CheckCircle size={20} className="text-amber-600" />
-                              )}
-                            </div>
-                            <div className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-gray-500">
-                              <span className="min-w-0 break-words">
-                                {isSelected
-                                  ? (language === 'DE' ? 'Ausgewählt' : 'Selected')
-                                  : (language === 'DE' ? 'Antippen zum Auswählen' : 'Tap to select')}
-                              </span>
-                              <span className="shrink-0 text-amber-600 group-hover:text-amber-700">Details</span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  
-                  {/* Credit Card Form */}
-                  {orderData.paymentMethod === 'credit-card' && (
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                          Card Number *
-                        </label>
-                        <div className="relative">
-                          <CreditCard className="absolute left-3 top-3.5 text-gray-400" size={20} />
-                          <input
-                            type="text"
-                            value={orderData.cardDetails.number}
-                            onChange={(e) => updateOrderData('cardDetails', {
-                              ...orderData.cardDetails,
-                              number: e.target.value
-                            })}
-                            className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                            placeholder="1234 5678 9012 3456"
-                            maxLength={19}
-                          />
-                        </div>
+              
+              {/* Invoice Information - Left Side */}
+              <div className="lg:col-span-2 lg:order-1">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+                  <div className="space-y-6">
+                    {/* Invoice Details */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">{ui.invoiceTitle}</h3>
+                        <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">
+                          {language === 'DE' ? 'Für Unternehmen' : 'For Businesses'}
+                        </span>
                       </div>
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-900 mb-2">
-                            Expiry Date *
-                          </label>
-                          <input
-                            type="text"
-                            value={orderData.cardDetails.expiry}
-                            onChange={(e) => updateOrderData('cardDetails', {
-                              ...orderData.cardDetails,
-                              expiry: e.target.value
-                            })}
-                            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                            placeholder="MM/YY"
-                            maxLength={5}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-900 mb-2">
-                            CVC *
-                          </label>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-3.5 text-gray-400" size={20} />
-                            <input
-                              type="text"
-                              value={orderData.cardDetails.cvc}
-                              onChange={(e) => updateOrderData('cardDetails', {
-                                ...orderData.cardDetails,
-                                cvc: e.target.value
-                              })}
-                              className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                              placeholder="123"
-                              maxLength={3}
-                            />
+                      
+                      <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 mb-6">
+                        <div className="flex items-start gap-3">
+                          <FileInvoice size={24} className="text-amber-600 mt-1" />
+                          <div>
+                            <h4 className="text-lg font-bold text-gray-900 mb-2">
+                              {language === 'DE' ? 'Rechnungsprozess' : 'Invoice Process'}
+                            </h4>
+                            <ul className="space-y-3 text-gray-700">
+                              <li className="flex items-start gap-2">
+                                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <Check size={12} className="text-green-600" />
+                                </div>
+                                <span>{language === 'DE' ? 'Sie erhalten eine Rechnung per E-Mail innerhalb von 24 Stunden nach Ihrer Bestellung.' : 'You will receive an invoice via email within 24 hours of placing your order.'}</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <Check size={12} className="text-green-600" />
+                                </div>
+                                <span>{language === 'DE' ? 'Die Rechnung enthält alle Bestelldetails und unsere Bankverbindung.' : 'The invoice includes all order details and our bank account information.'}</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <Check size={12} className="text-green-600" />
+                                </div>
+                                <span>{language === 'DE' ? 'Zahlbar innerhalb von 14 Tagen nach Rechnungserhalt.' : 'Payable within 14 days of receiving the invoice.'}</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <Check size={12} className="text-green-600" />
+                                </div>
+                                <span>{language === 'DE' ? 'Alle Preise verstehen sich zzgl. der gesetzlichen MwSt.' : 'All prices are exclusive of applicable VAT.'}</span>
+                              </li>
+                            </ul>
                           </div>
                         </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-2">
-                          Name on Card *
-                        </label>
+                      
+                      {/* Contact Verification */}
+                      <div className="mb-6">
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                          {language === 'DE' ? 'Rechnungsadresse prüfen' : 'Verify Billing Address'}
+                        </h4>
+                        <div className="grid gap-3">
+                          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <span className="text-gray-600">{language === 'DE' ? 'Firmenname' : 'Company Name'}</span>
+                            <span className="font-semibold text-gray-900">{orderData.contactInfo.company || 'Nicht angegeben'}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <span className="text-gray-600">Email</span>
+                            <span className="font-semibold text-gray-900">{orderData.contactInfo.email}</span>
+                          </div>
+                          <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <span className="text-gray-600">{language === 'DE' ? 'Telefon' : 'Phone'}</span>
+                            <span className="font-semibold text-gray-900">{orderData.contactInfo.phone}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Terms and Conditions */}
+                    <div className="pt-6 border-t border-gray-200">
+                      <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/70 p-4">
                         <input
-                          type="text"
-                          value={orderData.cardDetails.name}
-                          onChange={(e) => updateOrderData('cardDetails', {
-                            ...orderData.cardDetails,
-                            name: e.target.value
-                          })}
-                          className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
-                          placeholder="John Doe"
+                          type="checkbox"
+                          id="terms"
+                          className="mt-1"
+                          checked={termsAccepted}
+                          onChange={(e) => {
+                            setTermsAccepted(e.target.checked);
+                            if (e.target.checked) {
+                              setTermsError('');
+                            }
+                          }}
                         />
+                        <div>
+                          <label htmlFor="terms" className="text-sm text-gray-900 leading-relaxed">
+                            {language === 'DE' 
+                              ? 'Ich stimme den AGB und der Datenschutzerklärung zu. Ich bestätige, dass ich die Rechnungsbedingungen verstanden habe (zahlbar innerhalb von 14 Tagen).'
+                              : 'I agree to the Terms & Conditions and Privacy Policy. I confirm that I understand the invoice terms (payable within 14 days).'}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setTermsModalOpen(true)}
+                            className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
+                          >
+                          {language === 'DE' ? 'AGB & Bedingungen lesen' : 'Read full Terms and Conditions'}
+                          </button>
+                        </div>
                       </div>
+                      {termsError && (
+                        <p className="mt-2 text-sm text-red-600">{termsError}</p>
+                      )}
                     </div>
-                  )}
-                  
-                  {/* Terms and Conditions */}
-                  <div className="pt-6 border-t border-gray-200">
-                    <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/70 p-4">
-                      <input
-                        type="checkbox"
-                        id="terms"
-                        className="mt-1"
-                        checked={termsAccepted}
-                        onChange={(e) => {
-                          setTermsAccepted(e.target.checked);
-                          if (e.target.checked) {
-                            setTermsError('');
-                          }
-                        }}
-                      />
-                      <div>
-                        <label htmlFor="terms" className="text-sm text-gray-900 leading-relaxed">
-                          I agree to the Terms & Conditions and Privacy Policy. I understand that this order is subject to our cancellation policy (48 hours notice for full refund).
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setTermsModalOpen(true)}
-                          className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
-                        >
-                        {language === 'DE' ? 'AGB & Bedingungen lesen' : 'Read full Terms and Conditions'}
-                        </button>
+                    
+                    {orderBlocked && (
+                      <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                        {blockedMessage}
                       </div>
-                    </div>
-                    {termsError && (
-                      <p className="mt-2 text-sm text-red-600">{termsError}</p>
                     )}
-                  </div>
-                  
-                  {orderBlocked && (
-                    <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                      {blockedMessage}
-                    </div>
-                  )}
-                  
-                  {/* Submit Button */}
-                  <button
-                    onClick={() => {
-                      if (!validateStepsUpTo(stepsConfig.length)) {
-                        return;
-                      }
-                      handleSubmitOrder();
-                    }}
-                    disabled={orderBlocked}
-                    className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    <Lock size={20} />
-                    Pay €{grandTotal.toFixed(2)} Securely
-                  </button>
-                  
-                  {/* Security Assurance */}
-                  <div className="text-center pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Shield size={16} className="text-green-600" />
-                        <span>SSL Secure</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Lock size={16} className="text-blue-600" />
-                        <span>Encrypted</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle size={16} className="text-green-600" />
-                        <span>GDPR Compliant</span>
+                    
+                    {/* Submit Button */}
+                    <button
+                      onClick={() => {
+                        if (!validateStepsUpTo(stepsConfig.length)) {
+                          return;
+                        }
+                        handleSubmitOrder();
+                      }}
+                      disabled={orderBlocked}
+                      className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <FileInvoice size={20} />
+                      {ui.confirmOrder}
+                    </button>
+                    
+                    {/* Business Assurance */}
+                    <div className="text-center pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Building2 size={16} className="text-amber-600" />
+                          <span>{language === 'DE' ? 'Für Unternehmen' : 'For Businesses'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileInvoice size={16} className="text-blue-600" />
+                          <span>{language === 'DE' ? 'Rechnung' : 'Invoice'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle size={16} className="text-green-600" />
+                          <span>VAT {vatRate * 100}%</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3347,8 +3289,374 @@ export default function OrderPage() {
               </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      } else {
+        // Private orders - Original payment methods
+        return (
+          <div className="space-y-8">
+            <div className="rounded-2xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-2">
+                <Lock size={20} className="text-amber-600" />
+                <h2 className="text-2xl font-bold text-gray-900">{t.payment.title}</h2>
+              </div>
+              <p className="text-gray-600">{t.payment.subtitle}</p>
+            </div>
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Order Summary - Right Side */}
+              <div className="lg:col-span-1 lg:order-2">
+                <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
+                  
+                  <div className="space-y-6">
+                    {/* Event Info */}
+                    <div className="space-y-4">
+                      <h4 className="font-bold text-gray-900">{t.eventInfo.title}</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <CalendarIcon size={16} className="text-gray-500" />
+                          <span className="font-medium">{orderData.eventDate || ui.notSpecified}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <ClockIcon size={16} className="text-gray-500" />
+                          <span className="font-medium">{orderData.eventTime || ui.notSpecified}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <Users size={16} className="text-gray-500" />
+                          <span className="font-medium">
+                            {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-black">
+                          <MapPinIcon size={16} className="text-gray-500" />
+                          <span className="font-medium">
+                            {orderData.postalCode || ui.notSpecified}{orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Contact Info */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="font-bold text-gray-900 mb-3">
+                        {language === 'DE' ? 'Kontaktinformationen' : 'Contact Information'}
+                      </h4>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
+                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
+                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Price Breakdown */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="font-bold text-gray-900 mb-3">
+                        {language === 'DE' ? 'Preisaufstellung' : 'Price Breakdown'}
+                      </h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">
+                            {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                          </span>
+                          <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">
+                            {language === 'DE' ? 'Extras (kostenpflichtig):' : 'Extras (paid):'}
+                          </span>
+                          <span className="font-bold text-amber-700">€{getFoodExtrasSubtotal().toFixed(2)}</span>
+                        </div>
+                        {selectedAccessories.length > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Zubehör:' : 'Accessories:'}</span>
+                            <span className="font-bold text-amber-700">€{accessoriesSubtotal.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">{language === 'DE' ? 'Servicegebühr:' : 'Service Fee:'}</span>
+                          <span className="font-bold text-amber-700">€{flatServiceFee.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-900 font-semibold">
+                            {language === 'DE'
+                              ? `MwSt (${(vatRate * 100).toFixed(2)}%):`
+                              : `VAT (${(vatRate * 100).toFixed(2)}%):`}
+                          </span>
+                          <span className="font-bold text-amber-700">€{vatAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-300">
+                          <span>{language === 'DE' ? 'Gesamt:' : 'Total:'}</span>
+                          <span>€{grandTotal.toFixed(2)}</span>
+                        </div>
+                        {renderSummaryNav()}
+                      </div>
+                    </div>
+                    
+                    {/* Security Badge */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                        <Shield size={20} className="text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-green-800">
+                            {language === 'DE' ? 'Sichere Zahlung' : 'Secure Payment'}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            {language === 'DE'
+                              ? 'SSL-verschluesselt \u2022 DSGVO-konform'
+                              : 'SSL Encrypted \u2022 GDPR Compliant'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Payment Form - Left Side */}
+              <div className="lg:col-span-2 lg:order-1">
+                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+                  <div className="space-y-6">
+                    {/* Payment Method Selection */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-gray-900">{t.payment.method}</h3>
+                        <span className="text-xs font-semibold text-amber-600 uppercase tracking-[0.2em]">
+                          {language === 'DE' ? 'Schritt 3' : 'Step 3'}
+                        </span>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {[
+                          {
+                            id: 'credit-card',
+                            label: language === 'DE' ? 'Kreditkarte' : 'Credit Card',
+                            description: language === 'DE' ? 'Sofortige Bestätigung und sicherer Checkout.' : 'Instant confirmation and secure checkout.',
+                            icon: CreditCard,
+                            badge: language === 'DE' ? 'Schnell' : 'Fast'
+                          },
+                          {
+                            id: 'paypal',
+                            label: 'PayPal',
+                            description: language === 'DE' ? 'Nutzen Sie PayPal-Guthaben oder die verknüpfte Karte.' : 'Use your PayPal balance or linked card.',
+                            icon: null,
+                            badge: language === 'DE' ? 'Beliebt' : 'Popular'
+                          },
+                          {
+                            id: 'bank-transfer',
+                            label: language === 'DE' ? 'Banküberweisung' : 'Bank Transfer',
+                            description: language === 'DE' ? 'Wir zeigen Ihnen unsere Bankdaten an.' : 'We will display our bank details.',
+                            icon: Building2,
+                            badge: language === 'DE' ? 'Manuell' : 'Manual'
+                          }
+                        ].map((method) => {
+                          const isSelected = orderData.paymentMethod === method.id;
+                          return (
+                            <button
+                              key={method.id}
+                              onClick={() => {
+                                updateOrderData('paymentMethod', method.id);
+                                if (method.id === 'bank-transfer') {
+                                  setBankDetailsOpen(true);
+                                }
+                              }}
+                              className={`group rounded-2xl border-2 p-5 text-left transition-all duration-300 ${
+                                isSelected
+                                  ? 'border-amber-500 bg-amber-50 shadow-md shadow-amber-100'
+                                  : 'border-gray-200 hover:border-amber-300 hover:shadow-sm'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between mb-3 gap-3">
+                                <div className="flex min-w-0 flex-1 items-start gap-3">
+                                  <span className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                                    isSelected ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {method.icon ? <method.icon size={22} /> : <span className="text-sm font-bold">PP</span>}
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                      <span className="min-w-0 break-words text-base font-semibold leading-snug text-gray-900">
+                                        {method.label}
+                                      </span>
+                                      <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        {method.badge}
+                                      </span>
+                                    </div>
+                                    <p className="mt-0.5 break-words text-sm leading-snug text-gray-600">
+                                      {method.description}
+                                    </p>
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <CheckCircle size={20} className="text-amber-600" />
+                                )}
+                              </div>
+                              <div className="flex min-w-0 items-center justify-between gap-3 text-xs font-medium text-gray-500">
+                                <span className="min-w-0 break-words">
+                                  {isSelected
+                                    ? (language === 'DE' ? 'Ausgewählt' : 'Selected')
+                                    : (language === 'DE' ? 'Antippen zum Auswählen' : 'Tap to select')}
+                                </span>
+                                <span className="shrink-0 text-amber-600 group-hover:text-amber-700">Details</span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    {/* Credit Card Form */}
+                    {orderData.paymentMethod === 'credit-card' && (
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-2">
+                            Card Number *
+                          </label>
+                          <div className="relative">
+                            <CreditCard className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                            <input
+                              type="text"
+                              value={orderData.cardDetails.number}
+                              onChange={(e) => updateOrderData('cardDetails', {
+                                ...orderData.cardDetails,
+                                number: e.target.value
+                              })}
+                              className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                              placeholder="1234 5678 9012 3456"
+                              maxLength={19}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                              Expiry Date *
+                            </label>
+                            <input
+                              type="text"
+                              value={orderData.cardDetails.expiry}
+                              onChange={(e) => updateOrderData('cardDetails', {
+                                ...orderData.cardDetails,
+                                expiry: e.target.value
+                              })}
+                              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                              placeholder="MM/YY"
+                              maxLength={5}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                              CVC *
+                            </label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                              <input
+                                type="text"
+                                value={orderData.cardDetails.cvc}
+                                onChange={(e) => updateOrderData('cardDetails', {
+                                  ...orderData.cardDetails,
+                                  cvc: e.target.value
+                                })}
+                                className="w-full pl-10 pr-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                                placeholder="123"
+                                maxLength={3}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-2">
+                            Name on Card *
+                          </label>
+                          <input
+                            type="text"
+                            value={orderData.cardDetails.name}
+                            onChange={(e) => updateOrderData('cardDetails', {
+                              ...orderData.cardDetails,
+                              name: e.target.value
+                            })}
+                            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-black placeholder:text-gray-500"
+                            placeholder="John Doe"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Terms and Conditions */}
+                    <div className="pt-6 border-t border-gray-200">
+                      <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/70 p-4">
+                        <input
+                          type="checkbox"
+                          id="terms"
+                          className="mt-1"
+                          checked={termsAccepted}
+                          onChange={(e) => {
+                            setTermsAccepted(e.target.checked);
+                            if (e.target.checked) {
+                              setTermsError('');
+                            }
+                          }}
+                        />
+                        <div>
+                          <label htmlFor="terms" className="text-sm text-gray-900 leading-relaxed">
+                            I agree to the Terms & Conditions and Privacy Policy. I understand that this order is subject to our cancellation policy (48 hours notice for full refund).
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setTermsModalOpen(true)}
+                            className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
+                          >
+                          {language === 'DE' ? 'AGB & Bedingungen lesen' : 'Read full Terms and Conditions'}
+                          </button>
+                        </div>
+                      </div>
+                      {termsError && (
+                        <p className="mt-2 text-sm text-red-600">{termsError}</p>
+                      )}
+                    </div>
+                    
+                    {orderBlocked && (
+                      <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                        {blockedMessage}
+                      </div>
+                    )}
+                    
+                    {/* Submit Button */}
+                    <button
+                      onClick={() => {
+                        if (!validateStepsUpTo(stepsConfig.length)) {
+                          return;
+                        }
+                        handleSubmitOrder();
+                      }}
+                      disabled={orderBlocked}
+                      className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      <Lock size={20} />
+                      Pay €{grandTotal.toFixed(2)} Securely
+                    </button>
+                    
+                    {/* Security Assurance */}
+                    <div className="text-center pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <Shield size={16} className="text-green-600" />
+                          <span>SSL Secure</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Lock size={16} className="text-blue-600" />
+                          <span>Encrypted</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CheckCircle size={16} className="text-green-600" />
+                          <span>GDPR Compliant</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
     };
     
     return (
@@ -4098,7 +4406,7 @@ export default function OrderPage() {
                      : 'bg-amber-600 text-white hover:bg-amber-700'
                  }`}
                >
-                 {currentStep === stepsConfig.length ? t.buttons.confirm : t.buttons.next}
+                 {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
                  <ChevronRight size={14} className="ml-1" />
                </button>
               </div>
@@ -4199,6 +4507,8 @@ export default function OrderPage() {
           </div>
         </div>
       </div>
+      <br></br>
+      <br></br>
       
       {/* Main Content */}
       <main className="flex-1">

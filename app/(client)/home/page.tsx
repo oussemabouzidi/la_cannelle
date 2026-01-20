@@ -16,7 +16,6 @@ import { productsApi, type Product } from '@/lib/api/products';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { ChevronLeft } from 'lucide-react';
 import { useRef } from 'react';
 
 
@@ -35,8 +34,7 @@ import MenuShowcaseHorizontal from '../components/page';
 
 
 
-type HomeTranslation = (typeof import('@/lib/translations/home').homeTranslations)[Language];
-
+import { homeTranslations } from '@/lib/translations/home';
 
 
 export default function CateringHomepage() {
@@ -44,94 +42,95 @@ export default function CateringHomepage() {
   const scrollContainer = useRef<HTMLDivElement>(null);
 
 
-
-
+  const { language, toggleLanguage } = useTranslation('home');
+  const t = homeTranslations[language]; // Get translation directly
+  
   // Add these state variables at the top of your component
-const [selectedMenu, setSelectedMenu] = useState<ApiMenu | null>(null);
+  const [selectedMenu, setSelectedMenu] = useState<ApiMenu | null>(null);
 
-// Add this useEffect for data fetching
-useEffect(() => {
-  const loadMenus = async () => {
-    try {
-      setIsLoadingData(true);
-      setFetchError(null);
-      
-      // Fetch menus from backend
-      const menusResult = await menusApi.getMenus({ 
-        includeImages: true
-      });
-
-      const nextMenus = (menusResult || []).map((menu) => ({
-        ...menu,
-        products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
-      }));
-
-      setMenus(nextMenus);
-    } catch (error) {
-      console.error('Error loading menus:', error);
-      setFetchError('Failed to load menu items. Please try again later.');
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
-
-  loadMenus();
-}, []);
-
-useEffect(() => {
-  const loadMenus = async () => {
-    try {
-      setIsLoadingData(true);
-      setFetchError(null);
-      
-      // Fetch menus from backend
-      const menusResult = await menusApi.getMenus({ 
-        includeImages: true,
+  // Add this useEffect for data fetching
+  useEffect(() => {
+    const loadMenus = async () => {
+      try {
+        setIsLoadingData(true);
+        setFetchError(null);
         
-      });
+        // Fetch menus from backend
+        const menusResult = await menusApi.getMenus({ 
+          includeImages: true
+        });
 
-      const nextMenus = (menusResult || []).map((menu) => ({
-        ...menu,
-        products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
-      }));
+        const nextMenus = (menusResult || []).map((menu) => ({
+          ...menu,
+          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+        }));
 
-      setMenus(nextMenus);
-    } catch (error) {
-      console.error('Error loading menus:', error);
-      setFetchError('Failed to load menu items. Please try again later.');
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
+        setMenus(nextMenus);
+      } catch (error) {
+        console.error('Error loading menus:', error);
+        setFetchError('Failed to load menu items. Please try again later.');
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
 
-  loadMenus();
-}, []);
+    loadMenus();
+  }, []);
 
-// Add this useEffect to handle body overflow when modal is open
-useEffect(() => {
-  if (!selectedMenu) return;
-  document.body.style.overflow = 'hidden';
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, [selectedMenu]);
+  useEffect(() => {
+    const loadMenus = async () => {
+      try {
+        setIsLoadingData(true);
+        setFetchError(null);
+        
+        // Fetch menus from backend
+        const menusResult = await menusApi.getMenus({ 
+          includeImages: true,
+          
+        });
+
+        const nextMenus = (menusResult || []).map((menu) => ({
+          ...menu,
+          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+        }));
+
+        setMenus(nextMenus);
+      } catch (error) {
+        console.error('Error loading menus:', error);
+        setFetchError('Failed to load menu items. Please try again later.');
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadMenus();
+  }, []);
+
+  // Add this useEffect to handle body overflow when modal is open
+  useEffect(() => {
+    if (!selectedMenu) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedMenu]);
 
 
-// Add this useEffect to handle body overflow when modal is open
-useEffect(() => {
-  if (!selectedMenu) return;
-  document.body.style.overflow = 'hidden';
-  return () => {
-    document.body.style.overflow = 'unset';
-  };
-}, [selectedMenu]);
+  // Add this useEffect to handle body overflow when modal is open
+  useEffect(() => {
+    if (!selectedMenu) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedMenu]);
 
   const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
 
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const { t: rawT, language, toggleLanguage } = useTranslation('home');
+  // const { t: rawT, language, toggleLanguage } = useTranslation('home');
 
   const [isVisible, setIsVisible] = useState(false);
 
@@ -143,9 +142,13 @@ useEffect(() => {
 
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const t = rawT as HomeTranslation;
+  // const t = rawT as HomeTranslation;
 
-
+/*
+  console.log('Translation object structure:', rawT);
+  console.log('Is menus available?', 'menus' in rawT);
+  console.log('Available keys:', Object.keys(rawT || {}));
+*/
 
 
   const commonA11y = commonTranslations[language].accessibility;
@@ -785,7 +788,6 @@ useEffect(() => {
 
               <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
 
-              <a href="/about" className={desktopLinkClass('/about')}>{t.nav.about}</a>
 
               <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
 
@@ -1077,70 +1079,70 @@ useEffect(() => {
       </section>
 
 
-      {/* Quick Menu Categories */}
+{/* Quick Menu Categories */}
 
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 to-stone-100/30"></div>
-      <div className="absolute top-10 right-10 w-20 h-20 bg-amber-200/20 rounded-full blur-xl animate-pulse"></div>
-      <div className="absolute bottom-10 left-10 w-16 h-16 bg-stone-300/20 rounded-full blur-xl animate-pulse delay-1000"></div>
+<section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
+  {/* Animated Background */}
+  <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 to-stone-100/30"></div>
+  <div className="absolute top-10 right-10 w-20 h-20 bg-amber-200/20 rounded-full blur-xl animate-pulse"></div>
+  <div className="absolute bottom-10 left-10 w-16 h-16 bg-stone-300/20 rounded-full blur-xl animate-pulse delay-1000"></div>
 
-      <div className="max-w-7xl mx-auto relative">
-        <div className="text-center mb-10">
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">
-              {t.quickMenu.title}
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">{t.quickMenu.description}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {t.quickMenu.categories.map((category, index) => {
-            const Icon = quickMenuIcons[index];
-            const meta = quickMenuCategoryMeta[index];
-            
-            return (
-              <div
-                key={index}
-                className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
-                style={{ animationDelay: `${index * 150}ms` }}
-                onClick={() => setSelectedCategory(index)}
-              >
-                {/* Hover Effect Background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${meta?.gradient || 'from-amber-200 via-amber-100 to-stone-100'} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
-
-                {/* Icon */}
-                <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
-                  {Icon ? <Icon className="text-amber-600" size={28} /> : null}
-                </div>
-
-                {/* Content */}
-                <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">
-                  {category.title}
-                </h3>
-                <p className="text-gray-600 text-xs mb-2">{category.description}</p>
-
-                {/* Click Indicator */}
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                  <ChevronRight size={16} className="text-amber-600" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+  <div className="max-w-7xl mx-auto relative">
+    <div className="text-center mb-10">
+      <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+        <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">
+          {t.quickMenu.title}
+        </h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">{t.quickMenu.description}</p>
       </div>
+    </div>
 
-  {/* Modal/Popup for Category Details - Simplified */}
-  {selectedCategory !== null && (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {t.quickMenu.categories.map((category, index) => {
+        const Icon = quickMenuIcons[index];
+        const meta = quickMenuCategoryMeta[index];
+        
+        return (
+          <div
+            key={index}
+            className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
+            style={{ animationDelay: `${index * 150}ms` }}
+            onClick={() => setSelectedCategory(index)}
+          >
+            {/* Hover Effect Background */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${meta?.gradient || 'from-amber-200 via-amber-100 to-stone-100'} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
+
+            {/* Icon */}
+            <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
+              {Icon ? <Icon className="text-amber-600" size={28} /> : null}
+            </div>
+
+            {/* Content */}
+            <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">
+              {category.title}
+            </h3>
+            <p className="text-gray-600 text-xs mb-2">{category.description}</p>
+
+            {/* Click Indicator */}
+            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+              <ChevronRight size={16} className="text-amber-600" />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+
+  {/* Modal for Category 0 - Signature Dishes */}
+  {selectedCategory === 0 && (
     <>
-      {/* Backdrop with blur effect */}
-      <div className="fixed inset-0 backdrop-blur-sm bg-white/80 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-amber-100/50">
+      {/* Backdrop with dark blur effect */}
+      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-amber-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-amber-200/30 backdrop-blur-sm">
           {/* Modal Header */}
-          <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-amber-50 to-white">
+          <div className="p-6 border-b border-amber-200/30 flex justify-between items-center bg-gradient-to-r from-amber-100/40 to-white/40">
             <div className="flex items-center gap-3">
-              <div className="text-amber-600">
+              <div className="text-amber-600 bg-white/80 p-2 rounded-lg">
                 {quickMenuIcons[selectedCategory] && 
                   React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
               </div>
@@ -1150,59 +1152,308 @@ useEffect(() => {
             </div>
             <button
               onClick={() => setSelectedCategory(null)}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
           </div>
 
-          {/* Modal Content - Simplified */}
+          {/* Modal Content */}
           <div className="p-6 overflow-y-auto max-h-[60vh]">
             <div className="mb-6">
-              <p className="text-gray-700 mb-6 bg-amber-50/50 p-4 rounded-lg">
+              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-amber-100">
                 {t.quickMenu.categories[selectedCategory].description}
               </p>
               
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">
-                    {language === 'EN' ? 'What to Expect' : 'Was Sie erwartet'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'A selection of our finest dishes, carefully prepared with fresh ingredients and traditional techniques.'
-                      : 'Eine Auswahl unserer besten Gerichte, sorgfältig mit frischen Zutaten und traditionellen Techniken zubereitet.'}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">
-                    {language === 'EN' ? 'Highlights' : 'Höhepunkte'}
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Star size={16} className="text-amber-500" />
+                    {language === 'EN' ? 'Signature Dishes' : 'Signature-Gerichte'}
                   </h4>
                   <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                      {language === 'EN' ? 'Fresh, seasonal ingredients' : 'Frische, saisonale Zutaten'}
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                      {language === 'EN' ? 'Truffle-infused Wild Mushroom Risotto' : 'Trüffel-Wildpilz-Risotto'}
                     </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                      {language === 'EN' ? 'Chef-recommended options' : 'Von unseren Köchen empfohlene Optionen'}
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                      {language === 'EN' ? 'Herb-crusted Rack of Lamb' : 'Kräuterkruste Lammkarree'}
                     </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                      {language === 'EN' ? 'Perfect for sharing' : 'Perfekt zum Teilen'}
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                      {language === 'EN' ? 'Seared Scallops with Citrus Beurre Blanc' : 'Gebratene Jakobsmuscheln mit Zitrus-Beurre Blanc'}
                     </li>
                   </ul>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">
-                    {language === 'EN' ? 'Best Time to Enjoy' : 'Beste Zeit zum Genießen'}
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Award size={16} className="text-amber-500" />
+                    {language === 'EN' ? 'Awards & Recognition' : 'Auszeichnungen'}
                   </h4>
                   <p className="text-gray-600 text-sm">
                     {language === 'EN' 
-                      ? 'These dishes are perfect for lunch, dinner, or special occasions. Our chefs recommend pairing with our selected wines.'
-                      : 'Diese Gerichte sind perfekt für Mittagessen, Abendessen oder besondere Anlässe. Unsere Köche empfehlen die Kombination mit unseren ausgewählten Weinen.'}
+                      ? 'Our signature dishes have been awarded the "Culinary Excellence Award" three years in a row.'
+                      : 'Unsere Signature-Gerichte wurden drei Jahre in Folge mit dem "Culinary Excellence Award" ausgezeichnet.'}
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Clock size={16} className="text-amber-500" />
+                    {language === 'EN' ? 'Preparation Time' : 'Zubereitungszeit'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'Each signature dish requires 30-45 minutes of meticulous preparation by our master chefs.'
+                      : 'Jedes Signature-Gericht erfordert 30-45 Minuten sorgfältiger Zubereitung durch unsere Meisterköche.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+
+  {/* Modal for Category 1 - Chef's Specials */}
+  {selectedCategory === 1 && (
+    <>
+      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-rose-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-rose-200/30 backdrop-blur-sm">
+          <div className="p-6 border-b border-rose-200/30 flex justify-between items-center bg-gradient-to-r from-rose-100/40 to-white/40">
+            <div className="flex items-center gap-3">
+              <div className="text-rose-600 bg-white/80 p-2 rounded-lg">
+                {quickMenuIcons[selectedCategory] && 
+                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
+                {t.quickMenu.categories[selectedCategory].title}
+              </h3>
+            </div>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="mb-6">
+              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-rose-100">
+                {t.quickMenu.categories[selectedCategory].description}
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <ChefHat size={16} className="text-rose-500" />
+                    {language === 'EN' ? 'Chef\'s Creations' : 'Kreationen des Küchenchefs'}
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
+                      {language === 'EN' ? 'Seasonal Market Menu' : 'Saisonale Marktkarte'}
+                    </li>
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
+                      {language === 'EN' ? 'Tasting Experience' : 'Degustationserlebnis'}
+                    </li>
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
+                      {language === 'EN' ? 'Secret Family Recipes' : 'Geheime Familienrezepte'}
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Flame size={16} className="text-rose-500" />
+                    {language === 'EN' ? 'Unique Features' : 'Einzigartige Merkmale'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'Each special is crafted with seasonal ingredients sourced directly from local farms and markets.'
+                      : 'Jedes Special wird mit saisonalen Zutaten zubereitet, die direkt von lokalen Bauernhöfen und Märkten bezogen werden.'}
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Users size={16} className="text-rose-500" />
+                    {language === 'EN' ? 'Recommended For' : 'Empfohlen für'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'Perfect for adventurous food lovers and those seeking unique culinary experiences.'
+                      : 'Perfekt für abenteuerlustige Feinschmecker und diejenigen, die einzigartige kulinarische Erlebnisse suchen.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+
+  {/* Modal for Category 2 - Premium Selection */}
+  {selectedCategory === 2 && (
+    <>
+      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-emerald-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-emerald-200/30 backdrop-blur-sm">
+          <div className="p-6 border-b border-emerald-200/30 flex justify-between items-center bg-gradient-to-r from-emerald-100/40 to-white/40">
+            <div className="flex items-center gap-3">
+              <div className="text-emerald-600 bg-white/80 p-2 rounded-lg">
+                {quickMenuIcons[selectedCategory] && 
+                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
+                {t.quickMenu.categories[selectedCategory].title}
+              </h3>
+            </div>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="mb-6">
+              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-emerald-100">
+                {t.quickMenu.categories[selectedCategory].description}
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Shield size={16} className="text-emerald-500" />
+                    {language === 'EN' ? 'Premium Guarantee' : 'Premium-Garantie'}
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      {language === 'EN' ? 'Wagyu Beef Selection' : 'Wagyu-Rindfleisch-Auswahl'}
+                    </li>
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      {language === 'EN' ? 'Caviar & Champagne Pairing' : 'Kaviar & Champagner-Paarung'}
+                    </li>
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      {language === 'EN' ? 'Aged Gourmet Cheeses' : 'Gereifte Gourmet-Käse'}
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Check size={16} className="text-emerald-500" />
+                    {language === 'EN' ? 'Quality Standards' : 'Qualitätsstandards'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'All ingredients are certified premium quality, sourced from exclusive suppliers worldwide.'
+                      : 'Alle Zutaten sind zertifizierte Premiumqualität, bezogen von exklusiven Lieferanten weltweit.'}
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Target size={16} className="text-emerald-500" />
+                    {language === 'EN' ? 'Perfect For' : 'Perfekt für'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'Corporate events, luxury weddings, and high-profile gatherings requiring exceptional culinary standards.'
+                      : 'Firmenveranstaltungen, Luxus-Hochzeiten und hochkarätige Veranstaltungen mit außergewöhnlichen kulinarischen Standards.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )}
+
+  {/* Modal for Category 3 - Royal Experience */}
+  {selectedCategory === 3 && (
+    <>
+      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-sky-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-sky-200/30 backdrop-blur-sm">
+          <div className="p-6 border-b border-sky-200/30 flex justify-between items-center bg-gradient-to-r from-sky-100/40 to-white/40">
+            <div className="flex items-center gap-3">
+              <div className="text-sky-600 bg-white/80 p-2 rounded-lg">
+                {quickMenuIcons[selectedCategory] && 
+                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
+                {t.quickMenu.categories[selectedCategory].title}
+              </h3>
+            </div>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            <div className="mb-6">
+              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-sky-100">
+                {t.quickMenu.categories[selectedCategory].description}
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Crown size={16} className="text-sky-500" />
+                    {language === 'EN' ? 'Royal Offerings' : 'Königliche Angebote'}
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
+                      {language === 'EN' ? 'Gold Leaf Desserts' : 'Goldblatt-Desserts'}
+                    </li>
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
+                      {language === 'EN' ? 'Truffle & Foie Gras Menu' : 'Trüffel & Foie Gras Menü'}
+                    </li>
+                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
+                      <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
+                      {language === 'EN' ? 'Vintage Wine Pairing' : 'Jahrgangswein-Paarung'}
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Zap size={16} className="text-sky-500" />
+                    {language === 'EN' ? 'Exclusive Experience' : 'Exklusives Erlebnis'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'Personal chef service, tableside preparation, and customized menu development included.'
+                      : 'Persönlicher Küchenchef-Service, Tischzubereitung und individuelle Menüentwicklung inklusive.'}
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Building size={16} className="text-sky-500" />
+                    {language === 'EN' ? 'Service Details' : 'Service-Details'}
+                  </h4>
+                  <p className="text-gray-600 text-sm">
+                    {language === 'EN' 
+                      ? 'Full staff of professional servers, sommelier service, and event coordination provided.'
+                      : 'Vollständiges Personal professioneller Servicemitarbeiter, Sommelier-Service und Eventkoordination werden bereitgestellt.'}
                   </p>
                 </div>
               </div>
@@ -1213,162 +1464,177 @@ useEffect(() => {
     </>
   )}
 </section>
-      {selectedMenuItem && (
-        <>
-          {/* Backdrop with blur effect */}
-          <div className="fixed inset-0 backdrop-blur-md bg-white/90 z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-amber-100/50 animate-scale-in">
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedMenuItem(null)}
-                className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors shadow-lg border border-gray-200"
-              >
-                <X size={20} className="text-gray-600" />
-              </button>
 
-              {/* Modal Content */}
-              <div className="flex flex-col lg:flex-row">
-                {/* Image Section */}
-                <div className="lg:w-1/2 relative">
-                  <div className="h-64 lg:h-full">
-                    <img
-                      src={selectedMenuItem.image || '/images/home_image.jpeg'}
-                      alt={selectedMenuItem.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                  </div>
-                  
-                  {/* Badges on Image */}
-                  <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    {selectedMenuItem.popular && (
-                      <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg">
-                        <Flame size={14} />
-                        {t.menuShowcase.badges.popular}
-                      </div>
-                    )}
-                    {selectedMenuItem.featured && (
-                      <div className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg">
-                        <Star size={14} />
-                        {t.menuShowcase.badges.featured}
-                      </div>
-                    )}
-                  </div>
+{/* Menu Item Modal with blurred background */}
+{selectedMenuItem && (
+  <>
+    <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-gradient-to-br from-white/90 via-amber-50/90 to-white/90 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-amber-200/30 backdrop-blur-sm animate-scale-in">
+        {/* Close Button */}
+        <button
+          onClick={() => setSelectedMenuItem(null)}
+          className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors shadow-lg border border-amber-200"
+        >
+          <X size={20} className="text-gray-600" />
+        </button>
+
+        {/* Modal Content */}
+        <div className="flex flex-col lg:flex-row">
+          {/* Image Section */}
+          <div className="lg:w-1/2 relative">
+            <div className="h-64 lg:h-full">
+              <img
+                src={selectedMenuItem.image || '/images/home_image.jpeg'}
+                alt={selectedMenuItem.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            </div>
+            
+            {/* Badges on Image */}
+            <div className="absolute top-4 left-4 flex flex-col gap-2">
+              {selectedMenuItem.popular && (
+                <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg backdrop-blur-sm">
+                  <Flame size={14} />
+                  {t.menuShowcase.badges.popular}
                 </div>
-
-                {/* Details Section */}
-                <div className="lg:w-1/2 p-6 lg:p-8 overflow-y-auto max-h-[60vh] lg:max-h-[90vh]">
-                  <div className="mb-6">
-                    <p className="text-amber-600 font-semibold text-sm mb-2">
-                      {selectedMenuItem.category || t.quickMenu.title}
-                    </p>
-                    <h2 className="text-3xl font-bold text-gray-900 font-elegant mb-3">
-                      {selectedMenuItem.name}
-                    </h2>
-                    {selectedMenuItem.price && (
-                      <div className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent mb-4">
-                        {selectedMenuItem.price}
-                      </div>
-                    )}
-                    <p className="text-gray-600 mb-6 bg-amber-50/50 p-4 rounded-lg">
-                      {selectedMenuItem.description}
-                    </p>
-                  </div>
-
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    {selectedMenuItem.prepTime && (
-                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
-                        <Clock size={18} className="text-amber-600" />
-                        <div>
-                          <p className="text-xs text-gray-500">Prep Time</p>
-                          <p className="font-semibold text-gray-800">{selectedMenuItem.prepTime}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {selectedMenuItem.serves && (
-                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
-                        <Users size={18} className="text-amber-600" />
-                        <div>
-                          <p className="text-xs text-gray-500">Serves</p>
-                          <p className="font-semibold text-gray-800">{selectedMenuItem.serves}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {selectedMenuItem.chef && (
-                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
-                        <ChefHat size={18} className="text-amber-600" />
-                        <div>
-                          <p className="text-xs text-gray-500">Chef</p>
-                          <p className="font-semibold text-gray-800">{selectedMenuItem.chef}</p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {selectedMenuItem.spiceLevel && (
-                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-lg border border-amber-100">
-                        <Flame size={18} className="text-amber-600" />
-                        <div>
-                          <p className="text-xs text-gray-500">Spice Level</p>
-                          <p className="font-semibold text-gray-800">{selectedMenuItem.spiceLevel}/5</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Ingredients / Highlights */}
-                  {selectedMenuItem.ingredients && (
-                    <div className="mb-6">
-                      <h4 className="font-bold text-gray-900 mb-3 text-lg">
-                        {language === 'EN' ? 'Ingredients' : 'Zutaten'}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedMenuItem.ingredients.map((ingredient: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 rounded-full text-sm border border-amber-200"
-                          >
-                            {ingredient}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Dietary Info */}
-                  {selectedMenuItem.dietary && (
-                    <div className="mb-6">
-                      <h4 className="font-bold text-gray-900 mb-3 text-lg">
-                        {language === 'EN' ? 'Dietary Information' : 'Ernährungsinformationen'}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedMenuItem.dietary.map((tag: string, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-gradient-to-r from-green-100 to-green-200 text-green-800 rounded-full text-sm border border-green-200"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              )}
+              {selectedMenuItem.featured && (
+                <div className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg backdrop-blur-sm">
+                  <Star size={14} />
+                  {t.menuShowcase.badges.featured}
                 </div>
-              </div>
+              )}
             </div>
           </div>
-        </>
-      )}
+
+          {/* Details Section */}
+          <div className="lg:w-1/2 p-6 lg:p-8 overflow-y-auto max-h-[60vh] lg:max-h-[90vh]">
+            <div className="mb-6">
+              <p className="text-amber-600 font-semibold text-sm mb-2">
+                {selectedMenuItem.category || t.quickMenu.title}
+              </p>
+              <h2 className="text-3xl font-bold text-gray-900 font-elegant mb-3">
+                {selectedMenuItem.name}
+              </h2>
+              {selectedMenuItem.price && (
+                <div className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent mb-4">
+                  {selectedMenuItem.price}
+                </div>
+              )}
+              <p className="text-gray-600 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-amber-100">
+                {selectedMenuItem.description}
+              </p>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {selectedMenuItem.prepTime && (
+                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
+                  <Clock size={18} className="text-amber-600" />
+                  <div>
+                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Prep Time' : 'Zubereitungszeit'}</p>
+                    <p className="font-semibold text-gray-800">{selectedMenuItem.prepTime}</p>
+                  </div>
+                </div>
+              )}
+              
+              {selectedMenuItem.serves && (
+                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
+                  <Users size={18} className="text-amber-600" />
+                  <div>
+                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Serves' : 'Portionen'}</p>
+                    <p className="font-semibold text-gray-800">{selectedMenuItem.serves}</p>
+                  </div>
+                </div>
+              )}
+              
+              {selectedMenuItem.chef && (
+                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
+                  <ChefHat size={18} className="text-amber-600" />
+                  <div>
+                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Chef' : 'Küchenchef'}</p>
+                    <p className="font-semibold text-gray-800">{selectedMenuItem.chef}</p>
+                  </div>
+                </div>
+              )}
+              
+              {selectedMenuItem.spiceLevel && (
+                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
+                  <Flame size={18} className="text-amber-600" />
+                  <div>
+                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Spice Level' : 'Schärfegrad'}</p>
+                    <p className="font-semibold text-gray-800">{selectedMenuItem.spiceLevel}/5</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Ingredients / Highlights */}
+            {selectedMenuItem.ingredients && (
+              <div className="mb-6">
+                <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
+                  <Target size={16} className="text-amber-600" />
+                  {language === 'EN' ? 'Ingredients' : 'Zutaten'}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedMenuItem.ingredients.map((ingredient: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-gradient-to-r from-amber-100/70 to-amber-200/70 text-amber-800 rounded-full text-sm border border-amber-200/50 backdrop-blur-sm"
+                    >
+                      {ingredient}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Dietary Info */}
+            {selectedMenuItem.dietary && (
+              <div className="mb-6">
+                <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
+                  <Check size={16} className="text-green-600" />
+                  {language === 'EN' ? 'Dietary Information' : 'Ernährungsinformationen'}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedMenuItem.dietary.map((tag: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-gradient-to-r from-green-100/70 to-green-200/70 text-green-800 rounded-full text-sm border border-green-200/50 backdrop-blur-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Chef's Note */}
+            {selectedMenuItem.chefNote && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-amber-50/50 to-amber-100/30 rounded-lg border border-amber-200/30 backdrop-blur-sm">
+                <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
+                  <ChefHat size={16} />
+                  {language === 'EN' ? "Chef's Note" : "Küchenchef's Notiz"}
+                </h4>
+                <p className="text-amber-700 text-sm italic">{selectedMenuItem.chefNote}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </>
+)}
 
 
 
       <MenuShowcaseHorizontal 
         limit={6}
         showViewAll={true}
-        title="Our Featured Menus"
-        description="Discover our carefully crafted culinary experiences"
+        title={t.menus?.title || "Our Featured Menus"}
+        description={t.menus?.description || "Discover our carefully crafted culinary experiences"}
+        language={language}
       />
 
       {/* Passion Section - Smaller */}
@@ -1790,84 +2056,45 @@ useEffect(() => {
       {/* Featured Menus */}
 
       <section id="menus" className="py-10 px-4 sm:px-6 lg:px-8 bg-white">
-
+        
         <div className="max-w-6xl mx-auto">
-
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} text-center`}>
-
             <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.menus.title}</h2>
-
-            <p className="text-sm text-gray-600 mb-4">A quick peek at what's cooking'compact, curated, ready to order.</p>
-
+            <p className="text-sm text-gray-600 mb-4">{t.menus.description}</p> {/* 使用翻译 */}
           </div>
-
-
 
           {fetchError && !menus.length && (
-
             <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
-
           )}
-
           {isLoadingData && !menus.length && (
-
             <LoadingSpinner className="mb-4" label="Loading featured menus..." />
-
           )}
-
-
 
           <div className="grid md:grid-cols-3 gap-4">
-
             {featuredMenus.map((menu, index) => (
-
               <div
-
                 key={menu.id ?? index}
-
                 className={`bg-amber-50/70 p-5 rounded-xl hover:bg-amber-100 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md border border-amber-100 ${isVisible ? 'animate-scale-in' : 'opacity-0'
-
                   }`}
-
                 style={{ animationDelay: `${index * 150 + 300}ms` }}
-
               >
-
                 <div className="flex items-start justify-between gap-3 mb-2">
-
                   <h3 className="text-lg font-semibold text-gray-900 font-elegant">{menu.name}</h3>
-
                   {menu.price && <span className="text-xs text-amber-700 font-semibold bg-white px-2 py-1 rounded-full shadow-sm">{menu.price}</span>}
-
                 </div>
-
                 <p className="text-gray-600 mb-3 text-sm leading-snug">{menu.desc}</p>
-
                 {menu.price && <p className="text-amber-700 font-semibold text-sm mb-3">From {menu.price}</p>}
-
                 <button
-
                   className="text-amber-700 font-semibold inline-flex items-center gap-2 hover:gap-3 transition-all duration-200 group text-sm"
-
                   onClick={() => handleOrderClick(menu.productIds)}
-
                 >
-
                   {t.menus.cta} <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-
                 </button>
-
               </div>
-
             ))}
-
           </div>
-
         </div>
-
       </section>
-
-
 
       {/* Testimonials */}
 
@@ -1914,6 +2141,7 @@ useEffect(() => {
         </div>
 
       </section>
+
       {/* Footer */}
 
       <footer id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">

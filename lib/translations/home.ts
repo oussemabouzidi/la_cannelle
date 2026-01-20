@@ -55,7 +55,10 @@ type HomeTranslations = {
   };
   journey: { title: string; milestones: { title: string; date: string; description: string }[] };
   services: { title: string; items: { title: string; description: string; icon?: string }[]; cta: string };
-  menus: { title: string; items: { name: string; desc: string; price?: string }[]; cta: string };
+  menus: {
+    viewDetails: any;
+    exploreFull: any; title: string; description: string; items: { name: string; desc: string; price?: string }[]; cta: string 
+};
   testimonials: { title: string; items: { quote: string; name: string; role: string }[] };
   brandBanner: { title: string; subtitle: string };
   footer: {
@@ -174,6 +177,7 @@ const en: HomeTranslations = {
   },
   menus: {
     title: 'Menu snapshots',
+    description: "A quick peek at what's cooking: compact, curated, ready to order.", // 新增的翻译
     items: [
       { name: 'Brunch Social', desc: 'Breakfast favorites and warm dishes.' },
       { name: 'Evening Soiree', desc: 'Finger food and elegant mains.' },
@@ -314,6 +318,7 @@ const de: HomeTranslations = {
   },
   menus: {
     title: 'Menü-Einblicke',
+    description: 'Ein kurzer Einblick in unsere Küche: kompakt, kuratiert und bestellbereit.', // 新增的翻译
     items: [
       { name: 'Brunch Social', desc: 'Frühstücks-Spezialitäten und warme Gerichte.' },
       { name: 'Evening Soiree', desc: 'Fingerfood und elegante Hauptgänge.' },

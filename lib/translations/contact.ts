@@ -1,8 +1,18 @@
 import type { Language } from '../hooks/useTranslation';
 
 const base = {
-  nav: { about: 'About', services: 'Services', menus: 'Menus', contact: 'Contact', connect: 'Connect', order: 'Order Now' },
-  hero: { title: 'Get in Touch', subtitle: "Let's create something extraordinary together" },
+  nav: { 
+    about: 'About', 
+    services: 'Services', 
+    menus: 'Menus', 
+    contact: 'Contact', 
+    connect: 'Connect', 
+    order: 'Order Now' 
+  },
+  hero: { 
+    title: 'Get in Touch', 
+    subtitle: "Let's create something extraordinary together" 
+  },
   quickOrder: {
     title: 'Quick Order',
     subtitle: 'Need immediate assistance? Place a quick order',
@@ -46,12 +56,21 @@ const base = {
       sunday: 'Sunday: Closed',
     },
   },
-  success: { message: 'Thank you for reaching out!' },
+  success: { 
+    message: 'Thank you for reaching out! We will get back to you soon.' 
+  },
   alerts: {
     invalidEmail: 'Please enter a valid email address.',
     invalidPhone: 'Please enter a valid phone number.',
     failedToSend: 'Failed to send. Please try again.',
   },
+  placeholders: {
+    name: 'John Smith',
+    email: 'john@example.com',
+    phone: '+49 123 456 789',
+    guests: '50',
+    message: 'Tell us about your event and any special requirements...',
+  }
 };
 
 export const contactTranslations: Record<Language, typeof base> = {
@@ -66,7 +85,10 @@ export const contactTranslations: Record<Language, typeof base> = {
       connect: 'Verbinden',
       order: 'Jetzt bestellen',
     },
-    hero: { title: 'Kontaktieren Sie uns', subtitle: 'Lassen Sie uns gemeinsam etwas Besonderes schaffen' },
+    hero: { 
+      title: 'Kontaktieren Sie uns', 
+      subtitle: 'Lassen Sie uns gemeinsam etwas Besonderes schaffen' 
+    },
     quickOrder: {
       title: 'Schnellbestellung',
       subtitle: 'Brauchen Sie sofort Hilfe? Geben Sie eine Schnellbestellung auf',
@@ -103,18 +125,29 @@ export const contactTranslations: Record<Language, typeof base> = {
       title: 'Kontaktinformationen',
       phone: '+49 2133 978 2992',
       mobile: '+49 163 599 7062',
+      email: 'booking@la-cannelle.com',
+      address: 'Borsigstraße 2, 41541 Dormagen',
       hours: {
         title: 'Geschäftszeiten',
-        weekdays: 'Montag - Freitag: 9:00 - 18:00',
-        saturday: 'Samstag: 10:00 - 16:00',
+        weekdays: 'Montag - Freitag: 9:00 - 18:00 Uhr',
+        saturday: 'Samstag: 10:00 - 16:00 Uhr',
         sunday: 'Sonntag: Geschlossen',
       },
     },
-    success: { message: 'Danke für Ihre Nachricht!' },
+    success: { 
+      message: 'Vielen Dank für Ihre Nachricht! Wir melden uns bald bei Ihnen.' 
+    },
     alerts: {
       invalidEmail: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
       invalidPhone: 'Bitte geben Sie eine gültige Telefonnummer ein.',
       failedToSend: 'Senden fehlgeschlagen. Bitte versuchen Sie es erneut.',
     },
+    placeholders: {
+      name: 'Max Mustermann',
+      email: 'max@example.com',
+      phone: '+49 123 456 789',
+      guests: '50',
+      message: 'Erzählen Sie uns von Ihrer Veranstaltung und besonderen Anforderungen...',
+    }
   },
 };

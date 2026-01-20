@@ -8,17 +8,34 @@ import { useTranslation } from '@/lib/hooks/useTranslation';
 import { commonTranslations } from '@/lib/translations/common';
 import { contactTranslations } from '@/lib/translations/contact';
 
+// Define InstagramPost interface
+interface InstagramPost {
+  id: string;
+  media_url: string;
+  caption: string;
+  permalink: string;
+  timestamp?: number;
+  media_type?: string;
+  thumbnail_url?: string;
+}
+
 export default function ContactPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t: rawT, language, toggleLanguage } = useTranslation('contact');
 
-  // Translations moved to lib/translations/contact.ts
+  // Cast to the correct type
   const t = rawT as typeof contactTranslations.EN;
   const commonNav = commonTranslations[language].nav;
   const commonFooter = commonTranslations[language].footer;
   const commonA11y = commonTranslations[language].accessibility;
   const [isVisible, setIsVisible] = useState(false);
   const pathname = usePathname();
+
+  // Instagram states with proper typing
+  const [instagramPosts, setInstagramPosts] = useState<InstagramPost[]>([]);
+  const [loadingInstagram, setLoadingInstagram] = useState(true);
+  const [instagramError, setInstagramError] = useState(false);
+  const [hasInstagramPosts, setHasInstagramPosts] = useState(false);
 
   const isActiveHref = (href: string) => {
     if (href === '/home') return pathname === '/' || pathname === '/home';
@@ -30,6 +47,7 @@ export default function ContactPage() {
 
   const mobileLinkClass = (href: string) =>
     `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:translate-x-2`;
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -42,7 +60,37 @@ export default function ContactPage() {
 
   useEffect(() => {
     setIsVisible(true);
+    fetchInstagramData();
   }, []);
+
+  // Instagram data fetching function - SIMPLIFIED
+  const fetchInstagramData = async () => {
+    try {
+      // Try to fetch from your API route
+      const response = await fetch('/api/proxy-instagram');
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.posts && data.posts.length > 0) {
+          setInstagramPosts(data.posts);
+          setHasInstagramPosts(true);
+        } else {
+          setInstagramError(true);
+          setHasInstagramPosts(false);
+        }
+      } else {
+        setInstagramError(true);
+        setHasInstagramPosts(false);
+      }
+    } catch (error) {
+      console.log('Failed to fetch Instagram data:', error);
+      setInstagramError(true);
+      setHasInstagramPosts(false);
+    } finally {
+      setLoadingInstagram(false);
+    }
+  };
 
   const updateFormValue = (name: string, value: string) => {
     setFormData((prev) => ({
@@ -122,128 +170,23 @@ export default function ContactPage() {
     ? t.contactForm.invalidEventDate
     : '';
 
-  // Translations moved to lib/translations/contact.ts
-  const _removedContent = {
-    EN: {
-      nav: {
-        about: 'About',
-        services: 'Services',
-        menus: 'Menus',
-        contact: 'Contact',
-        connect: 'Connect',
-        order: 'Order Now'
-      },
-      hero: {
-        title: 'Get In Touch',
-        subtitle: "Let's create something extraordinary together"
-      },
-      contactForm: {
-        title: 'Send Us a Message',
-        name: 'Full Name',
-        email: 'Email Address',
-        phone: 'Phone Number',
-        eventType: 'Event Type',
-        eventDate: 'Event Date',
-        guests: 'Number of Guests',
-        message: 'Your Message',
-        eventTypes: [
-          'Corporate Event',
-          'Wedding',
-          'Private Party',
-          'Conference',
-          'Product Launch',
-          'Other'
-        ],
-        button: 'Send Message'
-      },
-      contactInfo: {
-        title: 'Contact Information',
-        phone: '02133 978 2992',
-        mobile: '0163 599 7062',
-        email: 'booking@la-cannelle.com',
-        address: 'Borsigstraße 2, 41541 Dormagen',
-        hours: {
-          title: 'Business Hours',
-          weekdays: 'Monday - Friday: 9:00 AM - 6:00 PM',
-          saturday: 'Saturday: 10:00 AM - 4:00 PM',
-          sunday: 'Sunday: Closed'
-        }
-      },
-      quickOrder: {
-        title: 'Quick Order',
-        subtitle: 'Need immediate assistance? Place a quick order',
-        button: 'Quick Order Now'
-      },
-      social: {
-        title: 'Follow Us',
-        instagram: 'Instagram',
-        tiktok: 'TikTok'
-      }
-    },
-    DE: {
-      nav: {
-        about: 'Über uns',
-        services: 'Dienstleistungen',
-        menus: 'Menüs',
-        contact: 'Kontakt',
-        connect: 'Verbinden',
-        order: 'Jetzt bestellen'
-      },
-      hero: {
-        title: 'Kontaktieren Sie Uns',
-        subtitle: 'Lassen Sie uns gemeinsam etwas Außergewöhnliches schaffen'
-      },
-      contactForm: {
-        title: 'Senden Sie Uns eine Nachricht',
-        name: 'Vollständiger Name',
-        email: 'E-Mail-Adresse',
-        phone: 'Telefonnummer',
-        eventType: 'Veranstaltungstyp',
-        eventTypePlaceholder: 'Veranstaltungstyp wählen',
-        eventDate: 'Veranstaltungsdatum',
-        guests: 'Anzahl der Gäste',
-        message: 'Ihre Nachricht',
-        eventTypes: [
-          'Firmenveranstaltung',
-          'Hochzeit',
-          'Private Feier',
-          'Konferenz',
-          'Produkteinführung',
-          'Andere'
-        ],
-        button: 'Nachricht Senden'
-      },
-      contactInfo: {
-        title: 'Kontaktinformationen',
-        phone: '02133 978 2992',
-        mobile: '0163 599 7062',
-        email: 'booking@la-cannelle.com',
-        address: 'Borsigstraße 2, 41541 Dormagen',
-        hours: {
-          title: 'Öffnungszeiten',
-          weekdays: 'Montag - Freitag: 9:00 - 18:00 Uhr',
-          saturday: 'Samstag: 10:00 - 16:00 Uhr',
-          sunday: 'Sonntag: Geschlossen'
-        }
-      },
-      quickOrder: {
-        title: 'Schnellbestellung',
-        subtitle: 'Brauchen Sie sofortige Hilfe? Geben Sie eine Schnellbestellung auf',
-        button: 'Jetzt Schnellbestellung'
-      },
-      social: {
-        title: 'Folgen Sie Uns',
-        instagram: 'Instagram',
-        tiktok: 'TikTok'
-      }
-    }
-  };
-
   const router = useRouter();
 
-const handleOrderClick = () => {
-  router.push('/order');
-};
+  const handleOrderClick = () => {
+    router.push('/order');
+  };
+
+  // Format timestamp to relative time
+  const formatRelativeTime = (timestamp?: number) => {
+    if (!timestamp) return 'Recently';
+    const now = Date.now() / 1000;
+    const diff = now - timestamp;
+    
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+    return 'Recently';
+  };
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
@@ -359,6 +302,27 @@ const handleOrderClick = () => {
         html {
           scroll-behavior: smooth;
         }
+        
+        .instagram-post {
+          position: relative;
+        }
+        
+        .instagram-post::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 50%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          border-radius: 0.5rem;
+        }
+        
+        .instagram-post:hover::after {
+          opacity: 1;
+        }
       `}</style>
 
       {/* Navbar */}
@@ -376,33 +340,32 @@ const handleOrderClick = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               <a href="/home" className={desktopLinkClass('/home')}>{commonNav.home}</a>
-              <a href="/about" className={desktopLinkClass('/about')}>{commonNav.about}</a>
               <a href="/services" className={desktopLinkClass('/services')}>{commonNav.services}</a>
               <a href="/menus" className={desktopLinkClass('/menus')}>{commonNav.menus}</a>
               <a href="/contact" className={desktopLinkClass('/contact')}>{commonNav.contact}</a>
               <button 
-  onClick={toggleLanguage}
-  className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
->
-  {language === 'EN' ? (
-    <>
-      <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
-      English
-    </>
-  ) : (
-    <>
-      <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} /></span>
-      Deutsch
-    </>
-  )}
-</button>
+                onClick={toggleLanguage}
+                className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
+              >
+                {language === 'EN' ? (
+                  <>
+                    <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} /></span>
+                    English
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} /></span>
+                    Deutsch
+                  </>
+                )}
+              </button>
  
-<button 
-  onClick={handleOrderClick}
-  className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
->
-  {t.nav.order}
-</button>
+              <button 
+                onClick={handleOrderClick}
+                className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
+              >
+                {t.nav.order}
+              </button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -497,7 +460,7 @@ const handleOrderClick = () => {
                         onChange={handleInputChange}
                         required
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
-                        placeholder="John Smith"
+                        placeholder={t.placeholders.name}
                       />
                     </div>
                     <div>
@@ -511,7 +474,7 @@ const handleOrderClick = () => {
                         onChange={handleInputChange}
                         required
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
-                        placeholder="john@example.com"
+                        placeholder={t.placeholders.email}
                       />
                     </div>
                   </div>
@@ -532,7 +495,7 @@ const handleOrderClick = () => {
                         inputMode="tel"
                         pattern="^\\+?[0-9\\s-]{7,15}$"
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
-                        placeholder="+49 123 456 789"
+                        placeholder={t.placeholders.phone}
                       />
                     </div>
                     <div>
@@ -586,7 +549,7 @@ const handleOrderClick = () => {
                         inputMode="numeric"
                         pattern="[0-9]*"
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-500"
-                        placeholder="50"
+                        placeholder={t.placeholders.guests}
                       />
                     </div>
                   </div>
@@ -602,7 +565,7 @@ const handleOrderClick = () => {
                       required
                       rows={6}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 resize-none text-gray-900 bg-white placeholder-gray-500"
-                      placeholder="Tell us about your event and any special requirements..."
+                      placeholder={t.placeholders.message}
                     ></textarea>
                   </div>
 
@@ -682,17 +645,141 @@ const handleOrderClick = () => {
                 </button>
               </div>
 
-              {/* Social Media */}
+              {/* Instagram Section */}
               <div className={`bg-white rounded-2xl p-6 border border-stone-200 ${
                 isVisible ? 'animate-fade-in-up' : 'opacity-0'
               }`} style={{ animationDelay: '600ms' }}>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 font-elegant">
+                <h3 className="text-2xl font-bold text-gray-900 mb-6 font-elegant flex items-center gap-3">
+                  <div className="h-6 w-6 rounded-full" style={{ 
+                    background: 'linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)' 
+                  }}>
+                    <svg className="h-6 w-6 p-1" fill="white" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z"/>
+                    </svg>
+                  </div>
                   {t.social.title}
                 </h3>
-                <div className="flex gap-4">
+                
+                <div className="space-y-6">
+                  {/* Instagram Profile Preview */}
+                  <div className="p-4 bg-gradient-to-r from-pink-50 to-amber-50 rounded-xl border border-pink-100">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-pink-400 to-amber-500 flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">LC</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900">@lacannellecatering</h4>
+                        <p className="text-sm text-gray-600">Premium Catering & Events</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 text-sm">
+                      <div className="text-center">
+                        <p className="font-bold text-gray-900">125</p>
+                        <p className="text-gray-600">Posts</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-gray-900">2.4K</p>
+                        <p className="text-gray-600">Followers</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-gray-900">312</p>
+                        <p className="text-gray-600">Following</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Posts Grid */}
+                  {loadingInstagram ? (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3">Loading Instagram posts...</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                          <div key={i} className="aspect-square bg-gray-200 animate-pulse rounded-lg"></div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : hasInstagramPosts && instagramPosts.length > 0 ? (
+                    <>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-3">Recent Posts</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                          {instagramPosts.slice(0, 6).map((post) => (
+                            <a
+                              key={post.id}
+                              href={post.permalink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="aspect-square rounded-lg overflow-hidden instagram-post group"
+                            >
+                              <img
+                                src={post.media_url}
+                                alt={post.caption || 'Instagram post'}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Latest Post Preview */}
+                      {instagramPosts[0] && (
+                        <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-pink-300 to-amber-400 flex items-center justify-center">
+                              <span className="text-white font-bold text-xs">LC</span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">lacannellecatering</p>
+                              <p className="text-xs text-gray-500">
+                                {formatRelativeTime(instagramPosts[0].timestamp)} • Catering Event
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <p className="text-gray-700 text-sm mb-3">
+                            {instagramPosts[0].caption && instagramPosts[0].caption.length > 100 
+                              ? `${instagramPosts[0].caption.substring(0, 100)}...` 
+                              : instagramPosts[0].caption || 'Check out our latest catering creation!'}
+                          </p>
+                          
+                          <div className="aspect-video rounded-lg mb-3 overflow-hidden">
+                            <img
+                              src={instagramPosts[0].media_url}
+                              alt="Latest Instagram post"
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                          
+                          <div className="text-right">
+                            <a 
+                              href={instagramPosts[0].permalink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-amber-700 hover:text-amber-800 font-medium text-sm"
+                            >
+                              View on Instagram →
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-pink-400 to-amber-500 flex items-center justify-center mx-auto mb-4">
+                        <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069z"/>
+                        </svg>
+                      </div>
+                      <p className="text-gray-600 mb-4">Follow us on Instagram to see our latest creations!</p>
+                    </div>
+                  )}
+
+                  {/* Follow Button */}
                   <a 
                     href="https://www.instagram.com/lacannellecatering/" 
-                    className="flex-1 text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"
                     style={{ background: 'linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)' }}
                   >
                     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-white">
@@ -707,7 +794,7 @@ const handleOrderClick = () => {
         </div>
       </section>
 
-      {/* Google Map Section */}
+      {/* Google Map Section - UPDATED to handle ad blockers better */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-stone-50">
         <div className="max-w-7xl mx-auto">
           <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
@@ -719,42 +806,50 @@ const handleOrderClick = () => {
                 {t.location.title}
               </h3>
             </div>
-<div className="h-96 bg-gradient-to-br from-amber-100 to-stone-200 flex items-center justify-center relative">
-  {/* Fallback content that shows when iframe is loading or if there's an error */}
-  <div className="absolute inset-0 flex items-center justify-center bg-amber-100 z-10 iframe-fallback">
-    <div className="text-center">
-      <MapPin size={48} className="text-amber-700 mx-auto mb-4" />
-      <p className="text-xl font-semibold text-gray-900 mb-2">{t.contactInfo.address}</p>
-      <p className="text-gray-600">{t.location.loading}</p>
-      <button className="mt-4 bg-amber-700 text-white px-6 py-2 rounded-lg hover:bg-amber-800 transition-colors">
-        {t.location.openMap}
-      </button>
-    </div>
-  </div>
-  
-  {/* Google Maps iframe with correct JSX attributes */}
-  <iframe 
-    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2498.8334217314505!2d6.776975276284795!3d51.22214423150265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47b8cb10fedecbc9%3A0xa3a5e988315ddb33!2sLa%20Cannelle!5e0!3m2!1sfr!2stn!4v1763137870611!5m2!1sfr!2stn" 
-    width="100%" 
-    height="100%" 
-    style={{ border: 0 }}
-    allowFullScreen
-    loading="lazy"
-    referrerPolicy="no-referrer-when-downgrade"
-    className="absolute inset-0 z-20"
-    onLoad={() => {
-      // Hide fallback when iframe loads
-      const fallback = document.querySelector('.iframe-fallback') as HTMLElement | null;
-      if (fallback) {
-        fallback.style.display = 'none';
-      }
-    }}
-    onError={() => {
-      // Keep fallback visible if iframe fails to load
-      console.error('Google Maps failed to load');
-    }}
-  ></iframe>
-</div>
+            <div className="h-96 bg-gradient-to-br from-amber-100 to-stone-200">
+              {/* Always show map link, hide iframe if blocked */}
+              <div className="h-full w-full relative">
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2498.8334217314505!2d6.776975276284795!3d51.22214423150265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47b8cb10fedecbc9%3A0xa3a5e988315ddb33!2sLa%20Cannelle!5e0!3m2!1sfr!2stn!4v1763137870611!5m2!1sfr!2stn" 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0 z-10"
+                  title="Google Maps location"
+                  onError={() => {
+                    // If iframe fails, show the link instead
+                    const iframe = document.querySelector('iframe[title="Google Maps location"]') as HTMLElement;
+                    if (iframe) {
+                      iframe.style.display = 'none';
+                    }
+                    const link = document.querySelector('.map-link-fallback') as HTMLElement;
+                    if (link) {
+                      link.style.display = 'flex';
+                    }
+                  }}
+                ></iframe>
+                
+                {/* Fallback that shows if iframe is blocked */}
+                <div className="map-link-fallback hidden absolute inset-0 bg-amber-100 z-0 flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <MapPin size={48} className="text-amber-700 mx-auto mb-4" />
+                    <p className="text-xl font-semibold text-gray-900 mb-2">{t.contactInfo.address}</p>
+                    <p className="text-gray-600 mb-4">View location on Google Maps:</p>
+                    <a 
+                      href="https://maps.google.com/?q=Borsigstraße+2,+41541+Dormagen"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block bg-amber-700 text-white px-6 py-2 rounded-lg hover:bg-amber-800 transition-colors"
+                    >
+                      {t.location.openMap}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

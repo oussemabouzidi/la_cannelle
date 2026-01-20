@@ -7,17 +7,21 @@ import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { menusTranslations } from '@/lib/translations/menus';
+import { homeTranslations } from '@/lib/translations/home';
 
 type MenuHighlightItem = {
   id: number;
   name: string;
   description?: string;
   image?: string;
+  price?: number;
 };
 
 type MenuHighlight = ApiMenu & {
   items: MenuHighlightItem[];
   coverImage: string;
+  isPopular?: boolean;
+  isFeatured?: boolean;
 };
 
 interface MenuShowcaseHorizontalProps {
@@ -25,6 +29,7 @@ interface MenuShowcaseHorizontalProps {
   showViewAll?: boolean;
   title?: string;
   description?: string;
+  language?: 'EN' | 'DE';
 }
 
 export default function MenuShowcaseHorizontal({
@@ -32,15 +37,20 @@ export default function MenuShowcaseHorizontal({
   showViewAll = true,
   title,
   description,
+  language: propLanguage,
 }: MenuShowcaseHorizontalProps) {
-  const { language } = useTranslation('menus');
+  const { language: contextLanguage } = useTranslation('menus');
+  const language = propLanguage || contextLanguage;
+  
   const [selectedMenu, setSelectedMenu] = useState<MenuHighlight | null>(null);
   const [isMenuModalClosing, setIsMenuModalClosing] = useState(false);
   const [menus, setMenus] = useState<ApiMenu[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const t = menusTranslations[language];
+  
+  const menuT = menusTranslations[language];
+  const homeT = homeTranslations[language];
 
   useEffect(() => {
     const loadData = async () => {
@@ -69,13 +79,13 @@ export default function MenuShowcaseHorizontal({
         }
 
         if (hasMenuError && hasProductsError) {
-          setFetchError(t.labels.menusLoadFailed);
+          setFetchError(menuT.labels?.menusLoadFailed || homeT.errors?.menusLoadFailed || 'Failed to load menu items');
         }
 
         setMenus(nextMenus);
         setProducts(nextProducts);
       } catch {
-        setFetchError(t.labels.menusLoadFailed);
+        setFetchError(menuT.labels?.menusLoadFailed || homeT.errors?.menusLoadFailed || 'Failed to load menu items');
       } finally {
         setIsLoadingData(false);
       }
@@ -86,7 +96,7 @@ export default function MenuShowcaseHorizontal({
 
   const menuHighlights = useMemo(() => {
     const toHighlightItem = (
-      item: { id: number; name: string; nameDe?: string | null; description?: string; descriptionDe?: string | null; image?: string } | null | undefined
+      item: { id: number; name: string; nameDe?: string | null; description?: string; descriptionDe?: string | null; image?: string; price?: number } | null | undefined
     ): MenuHighlightItem | null => {
       if (!item || item.id == null || !item.name) {
         return null;
@@ -100,6 +110,7 @@ export default function MenuShowcaseHorizontal({
         name,
         description,
         image: item.image,
+        price: item.price,
       };
     };
 
@@ -128,92 +139,171 @@ export default function MenuShowcaseHorizontal({
           name: localizedName,
           description: localizedDescription,
           items,
-          coverImage
+          coverImage,
+          isPopular: menu.popularity ? menu.popularity >= 80 : false,
+          isFeatured: menu.popularity ? menu.popularity >= 60 : false,
         };
       });
       
-      // Apply limit if specified
       return limit ? processedMenus.slice(0, limit) : processedMenus;
     }
 
-    // Fallback data if no menus are available
-    const fallbackMenuItems = [
-      {
-        id: 1,
-        name: 'Truffle-infused Wild Mushroom Risotto',
-        category: 'corporate',
-        description: 'Arborio rice with seasonal wild mushrooms, white truffle oil, and Parmigiano-Reggiano',
-        price: 24,
-        organic: true,
-        preparation: '25 min',
-        image: '/images/risotto.jpg',
-        popularity: 95,
-        dietary: ['Vegetarian', 'Gluten-Free'],
-        chefNote: 'Our signature dish featuring imported Italian truffles'
-      },
-      {
-        id: 2,
-        name: 'Herb-crusted Rack of Lamb',
-        category: 'wedding',
-        description: 'New Zealand lamb with rosemary crust, mint jus, and roasted root vegetables',
-        price: 38,
-        preparation: '35 min',
-        image: '/images/lamb.jpg',
-        popularity: 88,
-        dietary: ['Gluten-Free'],
-        chefNote: 'Premium New Zealand lamb with fresh garden herbs'
-      },
-      {
-        id: 3,
-        name: 'Seared Scallops with Citrus Beurre Blanc',
-        category: 'cocktail',
-        description: 'Day boat scallops with orange reduction, micro greens, and crispy prosciutto',
-        price: 28,
-        organic: true,
-        preparation: '20 min',
-        image: '/images/scallops.jpg',
-        popularity: 92,
-        dietary: ['Gluten-Free'],
-        chefNote: 'Fresh Atlantic scallops with citrus emulsion'
-      },
-      {
-        id: 4,
-        name: 'Heirloom Tomato Burrata Salad',
-        category: 'seasonal',
-        description: 'Colorful heirloom tomatoes with fresh burrata, basil oil, and balsamic reduction',
-        price: 18,
-        organic: true,
-        preparation: '15 min',
-        image: '/images/salad.jpg',
-        popularity: 85,
-        dietary: ['Vegetarian', 'Gluten-Free'],
-        chefNote: 'Farm-fresh heirloom tomatoes with Italian burrata'
-      },
-      {
-        id: 5,
-        name: 'Beef Wellington Canapés',
-        category: 'premium',
-        description: 'Mini beef wellington with mushroom duxelles and puff pastry',
-        price: 22,
-        preparation: '30 min',
-        image: '/images/beef-wellington.jpg',
-        popularity: 90,
-        dietary: [],
-        chefNote: 'Elegant bite-sized version of the classic'
-      },
-      {
-        id: 6,
-        name: 'Chocolate Fondant with Raspberry Coulis',
-        category: 'wedding',
-        description: 'Warm chocolate cake with liquid center and fresh raspberry sauce',
-        price: 16,
-        preparation: '18 min',
-        image: '/images/fondant.jpg',
-        popularity: 94,
-        dietary: ['Vegetarian'],
-        chefNote: 'Decadent chocolate dessert with seasonal berries'
-      }
-    ];
+    const fallbackMenuItems = {
+      EN: [
+        {
+          id: 1,
+          name: 'Truffle-infused Wild Mushroom Risotto',
+          category: 'corporate',
+          description: 'Arborio rice with seasonal wild mushrooms, white truffle oil, and Parmigiano-Reggiano',
+          price: 24,
+          organic: true,
+          preparation: '25 min',
+          image: '/images/risotto.jpg',
+          popularity: 95,
+          dietary: ['Vegetarian', 'Gluten-Free'],
+          chefNote: 'Our signature dish featuring imported Italian truffles'
+        },
+        {
+          id: 2,
+          name: 'Herb-crusted Rack of Lamb',
+          category: 'wedding',
+          description: 'New Zealand lamb with rosemary crust, mint jus, and roasted root vegetables',
+          price: 38,
+          preparation: '35 min',
+          image: '/images/lamb.jpg',
+          popularity: 88,
+          dietary: ['Gluten-Free'],
+          chefNote: 'Premium New Zealand lamb with fresh garden herbs'
+        },
+        {
+          id: 3,
+          name: 'Seared Scallops with Citrus Beurre Blanc',
+          category: 'cocktail',
+          description: 'Day boat scallops with orange reduction, micro greens, and crispy prosciutto',
+          price: 28,
+          organic: true,
+          preparation: '20 min',
+          image: '/images/scallops.jpg',
+          popularity: 92,
+          dietary: ['Gluten-Free'],
+          chefNote: 'Fresh Atlantic scallops with citrus emulsion'
+        },
+        {
+          id: 4,
+          name: 'Heirloom Tomato Burrata Salad',
+          category: 'seasonal',
+          description: 'Colorful heirloom tomatoes with fresh burrata, basil oil, and balsamic reduction',
+          price: 18,
+          organic: true,
+          preparation: '15 min',
+          image: '/images/salad.jpg',
+          popularity: 85,
+          dietary: ['Vegetarian', 'Gluten-Free'],
+          chefNote: 'Farm-fresh heirloom tomatoes with Italian burrata'
+        },
+        {
+          id: 5,
+          name: 'Beef Wellington Canapés',
+          category: 'premium',
+          description: 'Mini beef wellington with mushroom duxelles and puff pastry',
+          price: 22,
+          preparation: '30 min',
+          image: '/images/beef-wellington.jpg',
+          popularity: 90,
+          dietary: [],
+          chefNote: 'Elegant bite-sized version of the classic'
+        },
+        {
+          id: 6,
+          name: 'Chocolate Fondant with Raspberry Coulis',
+          category: 'wedding',
+          description: 'Warm chocolate cake with liquid center and fresh raspberry sauce',
+          price: 16,
+          preparation: '18 min',
+          image: '/images/fondant.jpg',
+          popularity: 94,
+          dietary: ['Vegetarian'],
+          chefNote: 'Decadent chocolate dessert with seasonal berries'
+        }
+      ],
+      DE: [
+        {
+          id: 1,
+          name: 'Trüffel-Wildpilz-Risotto',
+          category: 'corporate',
+          description: 'Arborio-Reis mit saisonalen Wildpilzen, weißem Trüffelöl und Parmigiano-Reggiano',
+          price: 24,
+          organic: true,
+          preparation: '25 min',
+          image: '/images/risotto.jpg',
+          popularity: 95,
+          dietary: ['Vegetarisch', 'Glutenfrei'],
+          chefNote: 'Unser Signature-Gericht mit importierten italienischen Trüffeln'
+        },
+        {
+          id: 2,
+          name: 'Kräuterkruste Lammkarree',
+          category: 'wedding',
+          description: 'Neuseeländisches Lamm mit Rosmarinkruste, Minzjus und geröstetem Wurzelgemüse',
+          price: 38,
+          preparation: '35 min',
+          image: '/images/lamb.jpg',
+          popularity: 88,
+          dietary: ['Glutenfrei'],
+          chefNote: 'Premium-Lamm aus Neuseeland mit frischen Gartenkräutern'
+        },
+        {
+          id: 3,
+          name: 'Gebratene Jakobsmuscheln mit Zitrus-Beurre Blanc',
+          category: 'cocktail',
+          description: 'Frische Jakobsmuscheln mit Orangensoße, Mikrogrün und knusprigem Prosciutto',
+          price: 28,
+          organic: true,
+          preparation: '20 min',
+          image: '/images/scallops.jpg',
+          popularity: 92,
+          dietary: ['Glutenfrei'],
+          chefNote: 'Frische Atlantik-Jakobsmuscheln mit Zitrus-Emulsion'
+        },
+        {
+          id: 4,
+          name: 'Alte Tomatensorten Burrata Salat',
+          category: 'seasonal',
+          description: 'Bunte alte Tomatensorten mit frischer Burrata, Basilikumöl und Balsamico-Reduktion',
+          price: 18,
+          organic: true,
+          preparation: '15 min',
+          image: '/images/salad.jpg',
+          popularity: 85,
+          dietary: ['Vegetarisch', 'Glutenfrei'],
+          chefNote: 'Frische alte Tomatensorten vom Bauernhof mit italienischer Burrata'
+        },
+        {
+          id: 5,
+          name: 'Beef Wellington Canapés',
+          category: 'premium',
+          description: 'Mini Beef Wellington mit Pilz-Duxelles und Blätterteig',
+          price: 22,
+          preparation: '30 min',
+          image: '/images/beef-wellington.jpg',
+          popularity: 90,
+          dietary: [],
+          chefNote: 'Elegante mundgerechte Version des Klassikers'
+        },
+        {
+          id: 6,
+          name: 'Schokoladen-Fondant mit Himbeer-Coulis',
+          category: 'wedding',
+          description: 'Warmer Schokoladenkuchen mit flüssigem Kern und frischer Himbeersauce',
+          price: 16,
+          preparation: '18 min',
+          image: '/images/fondant.jpg',
+          popularity: 94,
+          dietary: ['Vegetarisch'],
+          chefNote: 'Üppiges Schokoladendessert mit saisonalen Beeren'
+        }
+      ]
+    };
 
     const sourceItems = products.length
       ? products.map((product) => {
@@ -237,7 +327,7 @@ export default function MenuShowcaseHorizontal({
             category: categoryMap[rawCategory] || 'general',
           };
         })
-      : fallbackMenuItems;
+      : fallbackMenuItems[language] || fallbackMenuItems.EN;
 
     const groupedItems = sourceItems.reduce((acc, item) => {
       const category = item.category || 'general';
@@ -257,7 +347,7 @@ export default function MenuShowcaseHorizontal({
         : '';
       return {
         id: -(index + 1),
-        name: t.categories[category] || category,
+        name: menuT.categories?.[category] || category,
         description,
         category,
         type: category,
@@ -265,12 +355,14 @@ export default function MenuShowcaseHorizontal({
         items: items
           .map((item) => toHighlightItem(item))
           .filter(Boolean) as MenuHighlightItem[],
-        coverImage
+        coverImage,
+        isPopular: index < 2,
+        isFeatured: index < 3,
       };
     });
     
     return limit ? result.slice(0, limit) : result;
-  }, [menus, products, language, limit]);
+  }, [menus, products, language, limit, menuT.categories]);
 
   useEffect(() => {
     if (!selectedMenu) return;
@@ -322,7 +414,7 @@ export default function MenuShowcaseHorizontal({
                 closeMenuDetails();
               }}
               className="absolute top-4 right-4 z-10 bg-white/90 text-gray-700 hover:text-gray-900 rounded-full p-2 shadow-md transition-colors pointer-events-auto"
-              aria-label="Close menu details"
+              aria-label={language === 'DE' ? 'Menüdetails schließen' : 'Close menu details'}
             >
               <X size={18} />
             </button>
@@ -334,7 +426,7 @@ export default function MenuShowcaseHorizontal({
               </h3>
               {priceLabel && (
                 <p className="text-sm font-semibold text-amber-200">
-                  {t.menuHighlights?.priceLabel || 'Starting at'} €{priceLabel}
+                  {menuT.menuHighlights?.priceLabel || homeT.menus?.priceLabel || (language === 'DE' ? 'Ab' : 'Starting at')} €{priceLabel}
                 </p>
               )}
             </div>
@@ -351,7 +443,7 @@ export default function MenuShowcaseHorizontal({
             )}
             <div>
               <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                {t.menuHighlights?.includes || 'Includes'}
+                {menuT.menuHighlights?.includes || homeT.menus?.includes || (language === 'DE' ? 'Enthält' : 'Includes')}
               </h4>
               {items.length > 0 ?(
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -373,7 +465,7 @@ export default function MenuShowcaseHorizontal({
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">
-                  {t.menuHighlights?.noItems || 'Menu details available upon request.'}
+                  {menuT.menuHighlights?.noItems || homeT.menus?.noItems || (language === 'DE' ? 'Menüdetails auf Anfrage erhältlich.' : 'Menu details available upon request.')}
                 </p>
               )}
             </div>
@@ -388,10 +480,10 @@ export default function MenuShowcaseHorizontal({
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-10">
           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">
-            {title || t.menuHighlights?.title || 'Our Menus'}
+            {title || menuT.menuHighlights?.title || homeT.menus?.title || (language === 'DE' ? 'Unsere Menüs' : 'Our Menus')}
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            {description || t.menuHighlights?.subtitle || 'Explore our signature menus and view the details'}
+            {description || menuT.menuHighlights?.subtitle || homeT.menus?.description || (language === 'DE' ? 'Entdecken Sie unsere ausgewählten Menüs und sehen Sie die Details' : 'Explore our signature menus and view the details')}
           </p>
         </div>
 
@@ -400,19 +492,19 @@ export default function MenuShowcaseHorizontal({
         )}
         
         {isLoadingData && menuHighlights.length === 0 && (
-          <LoadingSpinner className="mb-4" label={t.labels?.loadingMenus || 'Loading menus...'} />
+          <LoadingSpinner 
+            className="mb-4" 
+            label={menuT.labels?.loadingMenus || homeT.menus?.loading || (language === 'DE' ? 'Menüs werden geladen...' : 'Loading menus...')} 
+          />
         )}
 
-        {/* Horizontal Scroll Container */}
         <div className="relative">
           <div className="flex overflow-x-auto pb-6 space-x-6 scrollbar-hide">
             {menuHighlights.map((menu, index) => {
-              // Get first image from menu items for display
               const firstImage = menu.items?.[0]?.image || 
                                 menu.coverImage || 
                                 '/images/home_image.jpeg';
               
-              // Get price from menu or calculate from items
               const displayPrice = menu.price 
                 ? `€${menu.price.toFixed(2)}`
                 : menu.items?.length 
@@ -425,7 +517,6 @@ export default function MenuShowcaseHorizontal({
                   className="flex-shrink-0 w-72 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group"
                   style={{ animationDelay: `${index * 200}ms` }}
                 >
-                  {/* Image */}
                   <div className="relative h-40 overflow-hidden">
                     <img
                       src={firstImage}
@@ -434,15 +525,14 @@ export default function MenuShowcaseHorizontal({
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
 
-                    {/* Popular/Featured Badges */}
                     {menu.isPopular && (
                       <div className="absolute top-3 left-3 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        {t.menuShowcase?.badges?.popular || 'Popular'}
+                        {menuT.menuShowcase?.badges?.popular || homeT.menuShowcase?.badges?.popular || (language === 'DE' ? 'Beliebt' : 'Popular')}
                       </div>
                     )}
                     {menu.isFeatured && (
                       <div className="absolute top-3 left-3 bg-rose-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        {t.menuShowcase?.badges?.featured || 'Featured'}
+                        {menuT.menuShowcase?.badges?.featured || homeT.menuShowcase?.badges?.featured || (language === 'DE' ? 'Empfohlen' : 'Featured')}
                       </div>
                     )}
 
@@ -453,7 +543,6 @@ export default function MenuShowcaseHorizontal({
                     )}
                   </div>
 
-                  {/* Content */}
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-lg font-bold text-gray-900 font-elegant line-clamp-1">
@@ -461,18 +550,17 @@ export default function MenuShowcaseHorizontal({
                       </h3>
                     </div>
                     <p className="text-amber-600 text-xs font-semibold mb-2">
-                      {menu.category || menu.type || t.categories?.all || 'Menu'}
+                      {menu.category || menu.type || menuT.categories?.all || homeT.menus?.categoryAll || (language === 'DE' ? 'Menü' : 'Menu')}
                     </p>
                     <p className="text-gray-600 text-xs mb-3 line-clamp-2">
                       {menu.description}
                     </p>
 
-                    {/* Interactive Button */}
                     <button
                       className="w-full bg-amber-50 text-amber-700 py-2 rounded-lg font-semibold hover:bg-amber-100 transition-all duration-300 transform group-hover:scale-105 flex items-center justify-center gap-2 text-sm"
                       onClick={() => openMenuDetails(menu)}
                     >
-                      {t.menuShowcase?.viewDetails || 'View Details'}
+                      {menuT.menuShowcase?.viewDetails || homeT.menus?.viewDetails || (language === 'DE' ? 'Details anzeigen' : 'View Details')}
                       <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
@@ -481,7 +569,6 @@ export default function MenuShowcaseHorizontal({
             })}
           </div>
 
-          {/* Scroll indicators (optional) */}
           <div className="flex justify-center mt-4 space-x-2">
             {menuHighlights.map((_, index) => (
               <div
@@ -498,14 +585,13 @@ export default function MenuShowcaseHorizontal({
               className="px-6 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm"
               onClick={() => window.location.href = '/menus'}
             >
-              {t.menuShowcase?.exploreFull || 'Explore Full Menu Collection'}
+              {menuT.menuShowcase?.exploreFull || homeT.menus?.exploreFull || (language === 'DE' ? 'Vollständige Menüsammlung erkunden' : 'Explore Full Menu Collection')}
               <ChevronRight size={16} />
             </button>
           </div>
         )}
       </div>
 
-      {/* Menu Details Modal */}
       {selectedMenu && <MenuDetailsModal />}
     </section>
   );
