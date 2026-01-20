@@ -189,6 +189,13 @@ const en: HomeTranslations = {
       { name: 'Family Style', desc: 'Shared platters for lively tables.' },
     ],
     cta: 'Browse menus',
+    priceLabel: '',
+    includes: '',
+    noItems: '',
+    loading: '',
+    categoryAll: undefined,
+    viewDetails: undefined,
+    exploreFull: undefined
   },
   testimonials: {
     title: 'What clients say',
@@ -330,6 +337,13 @@ const de: HomeTranslations = {
       { name: 'Family Style', desc: 'Geteilte Platten für lebendige Tische.' },
     ],
     cta: 'Menüpläne anzeigen',
+    priceLabel: '',
+    includes: '',
+    noItems: '',
+    loading: '',
+    categoryAll: undefined,
+    viewDetails: undefined,
+    exploreFull: undefined
   },
   testimonials: {
     title: 'Stimmen unserer Kunden',
