@@ -32,17 +32,19 @@ export const translationService = {
       return null;
     }
 
-    const payload = new URLSearchParams();
-    payload.set('auth_key', authKey);
-    payload.set('target_lang', options.targetLang);
-    for (const text of texts) {
-      payload.append('text', text);
-    }
+    const payload = {
+      target_lang: options.targetLang,
+      text: texts,
+    };
 
+    // Using fetch with header-based authentication
     const response = await fetch(getDeepLEndpoint(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: payload.toString()
+      headers: {
+        'Content-Type': 'application/json', // Use JSON for the body content
+        'Authorization': `DeepL-Auth-Key ${authKey}`, // Add header-based authentication
+      },
+      body: JSON.stringify(payload), // Send data as JSON
     });
 
     if (!response.ok) {
