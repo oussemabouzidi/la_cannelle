@@ -3,6 +3,7 @@ import { AppError } from '../middleware/errorHandler';
 import { normalizeImageValue } from '../utils/uploads';
 import { translationService } from './translationService';
 import { translationBackfillService } from './translationBackfillService';
+import { DEFAULT_ACCESSORIES } from '../data/defaultAccessories';
 
 const isDeeplAutoTranslateOnReadEnabled = () => {
   const raw = process.env.DEEPL_AUTO_TRANSLATE_ON_READ;
@@ -49,7 +50,7 @@ export type AccessoryCreateInput = {
   unitEn?: string | null;
   unitDe?: string | null;
   price: number;
-  quantityMode?: 'GUEST_COUNT' | 'FIXED';
+  quantityMode?: 'GUEST_COUNT' | 'FIXED' | 'CLIENT';
   fixedQuantity?: number | null;
   image?: string | null;
   isActive?: boolean;
@@ -126,12 +127,22 @@ export const accessoryService = {
     }
 
     const price = toNumber(data.price, 'price');
-    const quantityMode = data.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+    const quantityMode = (() => {
+      if (data.quantityMode === undefined) return 'GUEST_COUNT';
+      if (data.quantityMode === 'GUEST_COUNT' || data.quantityMode === 'FIXED' || data.quantityMode === 'CLIENT') {
+        return data.quantityMode;
+      }
+      throw new AppError('Invalid quantityMode', 400);
+    })();
     const fixedQuantity = data.fixedQuantity === null || data.fixedQuantity === undefined
       ? null
       : Math.max(1, toInt(data.fixedQuantity, 'fixedQuantity'));
     if (quantityMode === 'FIXED' && !fixedQuantity) {
       throw new AppError('fixedQuantity is required when quantityMode is FIXED', 400);
+    }
+    if (quantityMode !== 'FIXED') {
+      // fixedQuantity must be null for guest-based and client-adjustable modes.
+      // (Client quantities are set in the order UI, not here.)
     }
     const image = await normalizeImageValue(toOptionalString(data.image), { prefix: 'accessory' });
 
@@ -146,7 +157,7 @@ export const accessoryService = {
         unitEn: toOptionalString(data.unitEn),
         unitDe: toOptionalString(data.unitDe),
         price,
-        quantityMode,
+        quantityMode: quantityMode as any,
         fixedQuantity: quantityMode === 'FIXED' ? fixedQuantity : null,
         image,
         isActive: data.isActive ?? true
@@ -173,7 +184,11 @@ export const accessoryService = {
     if (data.isActive !== undefined) update.isActive = Boolean(data.isActive);
     if (data.price !== undefined) update.price = toNumber(data.price, 'price');
     if (data.quantityMode !== undefined) {
-      update.quantityMode = data.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+      if (data.quantityMode === 'GUEST_COUNT' || data.quantityMode === 'FIXED' || data.quantityMode === 'CLIENT') {
+        update.quantityMode = data.quantityMode;
+      } else {
+        throw new AppError('Invalid quantityMode', 400);
+      }
     }
     if (data.fixedQuantity !== undefined) {
       update.fixedQuantity = data.fixedQuantity === null
@@ -220,7 +235,7 @@ export const accessoryService = {
     if (nextQuantityMode === 'FIXED' && !nextFixedQuantity) {
       throw new AppError('fixedQuantity is required when quantityMode is FIXED', 400);
     }
-    if (nextQuantityMode === 'GUEST_COUNT') {
+    if (nextQuantityMode !== 'FIXED') {
       update.fixedQuantity = null;
     }
 
@@ -242,5 +257,36 @@ export const accessoryService = {
     if (!existing) throw new AppError('Accessory not found', 404);
     await prisma.accessory.delete({ where: { id } });
     return { deleted: true };
+  },
+
+  async restoreDefaultAccessories() {
+    let created = 0;
+
+    for (const item of DEFAULT_ACCESSORIES) {
+      const existing = await prisma.accessory.findFirst({ where: { nameEn: item.nameEn } });
+      if (existing) continue;
+
+      await prisma.accessory.create({
+        data: {
+          nameEn: item.nameEn,
+          nameDe: item.nameDe,
+          descriptionEn: item.descriptionEn,
+          descriptionDe: item.descriptionDe,
+          detailsEn: item.detailsEn ?? null,
+          detailsDe: item.detailsDe ?? null,
+          unitEn: item.unitEn ?? null,
+          unitDe: item.unitDe ?? null,
+          price: item.price,
+          quantityMode: 'GUEST_COUNT' as any,
+          fixedQuantity: null,
+          image: item.image,
+          isActive: item.isActive
+        }
+      });
+
+      created += 1;
+    }
+
+    return { created, totalDefaults: DEFAULT_ACCESSORIES.length };
   }
 };

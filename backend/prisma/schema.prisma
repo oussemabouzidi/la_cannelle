@@ -59,6 +59,7 @@ enum ServiceOccasion {
 enum AccessoryQuantityMode {
   GUEST_COUNT
   FIXED
+  CLIENT
 }
 
 model User {

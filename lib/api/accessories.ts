@@ -11,7 +11,7 @@ export interface Accessory {
   unitEn?: string | null;
   unitDe?: string | null;
   price: number;
-  quantityMode?: 'GUEST_COUNT' | 'FIXED';
+  quantityMode?: 'GUEST_COUNT' | 'FIXED' | 'CLIENT';
   fixedQuantity?: number | null;
   image?: string | null;
   isActive: boolean;
@@ -54,5 +54,11 @@ export const accessoriesApi = {
     const response = await apiClient.delete<{ deleted?: boolean }>(`/accessories/${id}`);
     if (response.error) throw new Error(response.error);
     return response.data || {};
+  },
+
+  async restoreDefaultAccessories(): Promise<{ created: number; totalDefaults: number }> {
+    const response = await apiClient.post<{ created: number; totalDefaults: number }>('/accessories/restore-defaults', {});
+    if (response.data) return response.data;
+    throw new Error(response.error || 'Failed to restore default accessories');
   }
 };

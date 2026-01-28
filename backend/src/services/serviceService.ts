@@ -4,6 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 import { normalizeImageValue } from '../utils/uploads';
 import { translationService } from './translationService';
 import { translationBackfillService } from './translationBackfillService';
+import { DEFAULT_SERVICES } from '../data/defaultServices';
 
 const isDeeplAutoTranslateOnReadEnabled = () => {
   const raw = process.env.DEEPL_AUTO_TRANSLATE_ON_READ;
@@ -175,5 +176,32 @@ export const serviceService = {
 
   async deleteService(id: number) {
     await prisma.service.delete({ where: { id } });
+  },
+
+  async restoreDefaultServices() {
+    let created = 0;
+
+    for (const item of DEFAULT_SERVICES) {
+      const existing = await prisma.service.findFirst({
+        where: { name: item.name, occasion: item.occasion }
+      });
+      if (existing) continue;
+
+      await prisma.service.create({
+        data: {
+          name: item.name,
+          nameDe: null,
+          occasion: item.occasion,
+          description: item.description,
+          descriptionDe: null,
+          image: item.image,
+          isActive: item.isActive
+        }
+      });
+
+      created += 1;
+    }
+
+    return { created, totalDefaults: DEFAULT_SERVICES.length };
   }
 };

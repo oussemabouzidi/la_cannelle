@@ -13,6 +13,7 @@ router.get('/:id', asyncHandler(accessoryController.getAccessoryById));
 router.use(authenticate);
 router.use(requireAdmin);
 
+router.post('/restore-defaults', asyncHandler(accessoryController.restoreDefaultAccessories));
 router.post('/', asyncHandler(accessoryController.createAccessory));
 router.put('/:id', asyncHandler(accessoryController.updateAccessory));
 router.delete('/:id', asyncHandler(accessoryController.deleteAccessory));

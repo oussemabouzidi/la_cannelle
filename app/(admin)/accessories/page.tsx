@@ -18,7 +18,8 @@ import {
   ShoppingBag,
   CheckCircle,
   AlertCircle,
-  Briefcase
+  Briefcase,
+  BarChart3
 } from 'lucide-react';
 
 import { useTranslation } from '@/lib/hooks/useTranslation';
@@ -36,7 +37,7 @@ type FormState = {
   description: string;
   details: string;
   price: string;
-  quantityMode: 'GUEST_COUNT' | 'FIXED';
+  quantityMode: 'GUEST_COUNT' | 'FIXED' | 'CLIENT';
   fixedQuantity: string;
   image: string;
   isActive: boolean;
@@ -136,6 +137,7 @@ export default function AdminAccessories() {
         quantityMode: isDE ? 'Mengenregel' : 'Quantity rule',
         quantityModeGuest: isDE ? 'Wie Gästeanzahl (Bestellung)' : 'Same as guest count (order)',
         quantityModeFixed: isDE ? 'Feste Menge' : 'Fixed quantity',
+        quantityModeClient: isDE ? 'Vom Kunden wÃ¤hlbar' : 'Client adjustable',
         fixedQuantity: isDE ? 'Feste Menge' : 'Fixed quantity',
         image: isDE ? 'Bild (URL oder Upload)' : 'Image (URL or upload)',
         imageUrl: isDE ? 'Bild URL' : 'Image URL',
@@ -207,7 +209,11 @@ export default function AdminAccessories() {
       description: accessory.descriptionDe || accessory.descriptionEn || '',
       details: accessory.detailsDe || accessory.detailsEn || '',
       price: String(accessory.price ?? 0),
-      quantityMode: accessory.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT',
+      quantityMode: accessory.quantityMode === 'FIXED'
+        ? 'FIXED'
+        : accessory.quantityMode === 'CLIENT'
+        ? 'CLIENT'
+        : 'GUEST_COUNT',
       fixedQuantity: accessory.fixedQuantity != null ? String(accessory.fixedQuantity) : '',
       image: accessory.image || '',
       isActive: Boolean(accessory.isActive)
@@ -304,7 +310,7 @@ export default function AdminAccessories() {
     { id: 'accessories', name: copy.nav.accessories, icon: ShoppingBag, path: '/accessories' },
     { id: 'system', name: copy.nav.system, icon: Clock, path: '/system_control' },
     { id: 'customers', name: copy.nav.customers, icon: Users, path: '/customers' },
-    { id: 'reports', name: copy.nav.reports, icon: DollarSign, path: '/reports' }
+    { id: 'reports', name: copy.nav.reports, icon: BarChart3, path: '/reports' }
   ];
 
   return (
@@ -425,7 +431,9 @@ export default function AdminAccessories() {
                     ) : filteredAccessories.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="px-6 py-10 text-center text-gray-600">
-                          {copy.status.noResults}
+                          <div className="space-y-3">
+                            <div>{copy.status.noResults}</div>
+                          </div>
                         </td>
                       </tr>
                     ) : (
@@ -454,6 +462,8 @@ export default function AdminAccessories() {
                           <td className="px-6 py-4 text-gray-800 text-sm">
                             {a.quantityMode === 'FIXED'
                               ? `${copy.fields.quantityModeFixed}: ${a.fixedQuantity ?? '-'}`
+                              : a.quantityMode === 'CLIENT'
+                              ? copy.fields.quantityModeClient
                               : copy.fields.quantityModeGuest}
                           </td>
                           <td className="px-6 py-4">
@@ -568,7 +578,8 @@ export default function AdminAccessories() {
                   <select
                     value={form.quantityMode}
                     onChange={(e) => {
-                      const next = (e.target.value === 'FIXED' ? 'FIXED' : 'GUEST_COUNT') as FormState['quantityMode'];
+                      const raw = e.target.value;
+                      const next = (raw === 'FIXED' || raw === 'CLIENT' ? raw : 'GUEST_COUNT') as FormState['quantityMode'];
                       setForm((p) => ({
                         ...p,
                         quantityMode: next,
@@ -579,6 +590,7 @@ export default function AdminAccessories() {
                   >
                     <option value="GUEST_COUNT">{copy.fields.quantityModeGuest}</option>
                     <option value="FIXED">{copy.fields.quantityModeFixed}</option>
+                    <option value="CLIENT">{copy.fields.quantityModeClient}</option>
                   </select>
                 </div>
 

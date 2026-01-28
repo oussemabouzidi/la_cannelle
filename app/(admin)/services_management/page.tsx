@@ -364,7 +364,9 @@ export default function AdminServicesManagement() {
           {loading ? (
             <LoadingSpinner className="py-6" label={t.status.loading} />
           ) : filtered.length === 0 ? (
-            <p className="text-sm text-gray-500">{t.status.empty}</p>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500">{t.status.empty}</p>
+            </div>
           ) : (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map((service) => (

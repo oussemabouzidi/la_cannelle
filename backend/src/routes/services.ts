@@ -13,6 +13,7 @@ router.get('/:id', asyncHandler(serviceController.getServiceById));
 router.use(authenticate);
 router.use(requireAdmin);
 
+router.post('/restore-defaults', asyncHandler(serviceController.restoreDefaultServices));
 router.post('/', asyncHandler(serviceController.createService));
 router.put('/:id', asyncHandler(serviceController.updateService));
 router.delete('/:id', asyncHandler(serviceController.deleteService));

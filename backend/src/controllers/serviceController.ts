@@ -36,5 +36,10 @@ export const serviceController = {
     const { id } = req.params;
     await serviceService.deleteService(parseInt(id, 10));
     res.status(204).send();
+  },
+
+  async restoreDefaultServices(_req: AuthRequest, res: Response) {
+    const result = await serviceService.restoreDefaultServices();
+    res.json(result);
   }
 };

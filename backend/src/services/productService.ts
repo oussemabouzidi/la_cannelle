@@ -91,6 +91,9 @@ export const productService = {
       where,
       orderBy: {
         popularity: 'desc'
+      },
+      include: {
+        menuProducts: true
       }
     });
 

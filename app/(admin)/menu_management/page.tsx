@@ -650,6 +650,24 @@ export default function AdminMenuManagement() {
     }
   };
 
+  const restoreLegacyMenus = async () => {
+    if (isLoading || isMutating) return;
+    await runMutation(language === 'DE' ? 'Stelle alte MenÃ¼s wieder her...' : 'Restoring legacy menus...', async () => {
+      try {
+        const result = await menusApi.restoreLegacyMenusFromBackup();
+        await loadMenusAndProducts();
+        showNotification(
+          'success',
+          (language === 'DE'
+            ? `Alte MenÃ¼s wiederhergestellt. MenÃ¼s: ${result.restoredMenus}, Produkte: ${result.restoredProducts}, Services: ${result.restoredServices}, ZubehÃ¶r: ${result.restoredAccessories}`
+            : `Legacy restored. Menus: ${result.restoredMenus}, Products: ${result.restoredProducts}, Services: ${result.restoredServices}, Accessories: ${result.restoredAccessories}`)
+        );
+      } catch (error: any) {
+        showNotification('error', error?.message || (language === 'DE' ? 'Wiederherstellen fehlgeschlagen.' : 'Restore failed.'));
+      }
+    });
+  };
+
   // Load data from backend
   const loadMenusAndProducts = async () => {
     try {
@@ -1118,6 +1136,12 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const EditFormModal = ({ item, onSave, onClose }: { item: MenuItem; onSave: (updatedItem: MenuItem) => void; onClose: () => void }) => {
     const [localItem, setLocalItem] = useState<MenuItem>(item);
     const [localImagePreview, setLocalImagePreview] = useState(item.image);
+    const [priceInput, setPriceInput] = useState(() =>
+      Number.isFinite(item.price) ? String(item.price) : ''
+    );
+    const [costInput, setCostInput] = useState(() =>
+      Number.isFinite(item.cost) ? String(item.cost) : ''
+    );
 
     const handleLocalSave = (updatedItem: MenuItem) => {
       setLocalItem(updatedItem);
@@ -1277,8 +1301,19 @@ const [newItem, setNewItem] = useState<NewItemState>({
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.sellingPrice}</label>
                     <input
                       type="number"
-                      value={localItem.price}
-                      onChange={(e) => handleLocalSave({ ...localItem, price: parseFloat(e.target.value) })}
+                      value={priceInput}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setPriceInput(raw);
+                        const parsed = Number(raw);
+                        if (raw === '') {
+                          handleLocalSave({ ...localItem, price: 0 });
+                          return;
+                        }
+                        if (Number.isFinite(parsed)) {
+                          handleLocalSave({ ...localItem, price: parsed });
+                        }
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                       placeholder={t.placeholders.price}
                       min="0"
@@ -1289,8 +1324,19 @@ const [newItem, setNewItem] = useState<NewItemState>({
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.cost}</label>
                     <input
                       type="number"
-                      value={localItem.cost}
-                      onChange={(e) => handleLocalSave({ ...localItem, cost: parseFloat(e.target.value) })}
+                      value={costInput}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setCostInput(raw);
+                        const parsed = Number(raw);
+                        if (raw === '') {
+                          handleLocalSave({ ...localItem, cost: 0 });
+                          return;
+                        }
+                        if (Number.isFinite(parsed)) {
+                          handleLocalSave({ ...localItem, cost: parsed });
+                        }
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                       placeholder={t.placeholders.price}
                       min="0"
@@ -1388,7 +1434,15 @@ const [newItem, setNewItem] = useState<NewItemState>({
 
                 <div className="flex gap-4">
                   <button
-                    onClick={() => onSave(localItem)}
+                    onClick={() => {
+                      const parsedPrice = Number(priceInput);
+                      const parsedCost = Number(costInput);
+                      onSave({
+                        ...localItem,
+                        price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
+                        cost: Number.isFinite(parsedCost) ? parsedCost : 0,
+                      });
+                    }}
                     className="flex-1 bg-amber-600 text-white py-3 rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2"
                   >
                     <Save size={20} />
@@ -2636,6 +2690,16 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{language === 'DE' ? 'Aktualisieren' : 'Refresh'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={restoreLegacyMenus}
+            disabled={isLoading || isMutating}
+            className="px-3 py-2 rounded-xl bg-white border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            title={language === 'DE' ? 'Alte MenÃ¼s aus backup.sql wiederherstellen' : 'Restore legacy menus from backup.sql'}
+          >
+            <RefreshCw className={`w-4 h-4 ${isMutating ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{language === 'DE' ? 'Alte MenÃ¼s wiederherstellen' : 'Restore legacy'}</span>
           </button>
           <ViewModeToggle />
           <span className="hidden md:inline text-sm text-gray-600">

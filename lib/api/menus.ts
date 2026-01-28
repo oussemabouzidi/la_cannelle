@@ -86,5 +86,43 @@ export const menusApi = {
     if (response.error) {
       throw new Error(response.error);
     }
+  },
+
+  async restoreDefaultMenus(): Promise<{
+    created: number;
+    updated: number;
+    totalDefaults: number;
+    connectedServices: number;
+    availableProducts: number;
+  }> {
+    const response = await apiClient.post<{
+      created: number;
+      updated: number;
+      totalDefaults: number;
+      connectedServices: number;
+      availableProducts: number;
+    }>(
+      '/menus/restore-defaults',
+      {}
+    );
+    if (response.data) return response.data;
+    throw new Error(response.error || 'Failed to restore default menus');
+  }
+  ,
+
+  async restoreLegacyMenusFromBackup(): Promise<{
+    restoredMenus: number;
+    restoredProducts: number;
+    restoredServices: number;
+    restoredAccessories: number;
+  }> {
+    const response = await apiClient.post<{
+      restoredMenus: number;
+      restoredProducts: number;
+      restoredServices: number;
+      restoredAccessories: number;
+    }>('/menus/restore-legacy', {});
+    if (response.data) return response.data;
+    throw new Error(response.error || 'Failed to restore legacy menus from backup.sql');
   }
 };

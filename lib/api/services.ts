@@ -45,5 +45,11 @@ export const servicesApi = {
   async deleteService(id: number) {
     const response = await apiClient.delete(`/services/${id}`);
     if (response.error) throw new Error(response.error);
+  },
+
+  async restoreDefaultServices(): Promise<{ created: number; totalDefaults: number }> {
+    const response = await apiClient.post<{ created: number; totalDefaults: number }>('/services/restore-defaults', {});
+    if (response.data) return response.data;
+    throw new Error(response.error || 'Failed to restore default services');
   }
 };

@@ -5,7 +5,8 @@ import {
   Menu, X, ChevronRight, Package, Calendar, DollarSign, 
   Users, TrendingUp, Clock, CheckCircle, AlertCircle, XCircle,
   Search, Filter, Eye, Edit, Archive, RefreshCw, Truck,
-  MessageCircle, Phone, Mail, MapPin, User, ShoppingBag, BarChart3, Briefcase
+  MessageCircle, Phone, Mail, MapPin, User, ShoppingBag, BarChart3, Briefcase,
+  AlertTriangle, Info
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,54 @@ import { ordersApi, Order } from '@/lib/api/orders';
 import { useBodyScrollLock } from '../components/useBodyScrollLock';
 import { formatIsoDate, formatIsoDateTime, formatTimeHHmm } from '@/lib/utils/datetime';
 
+// Confirmation Modal Component
+const ConfirmationModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmText, 
+  cancelText,
+  type = 'warning'
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scale-in">
+        <div className={`p-6 ${type === 'warning' ? 'bg-amber-50' : 'bg-blue-50'} rounded-t-xl`}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`p-2 rounded-full ${type === 'warning' ? 'bg-amber-100' : 'bg-blue-100'}`}>
+              <AlertTriangle size={24} className={type === 'warning' ? 'text-amber-600' : 'text-blue-600'} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+          </div>
+          <p className="text-gray-700">{message}</p>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-3">
+              <button
+                onClick={onConfirm}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                {confirmText}
+              </button>
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                {cancelText}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function AdminOrders() {
   const router = useRouter();
@@ -26,7 +75,11 @@ export default function AdminOrders() {
   const [dateFilter, setDateFilter] = useState('all');
   const { language, toggleLanguage } = useTranslation('admin');
 
-  useBodyScrollLock(Boolean(selectedOrder));
+  // State for confirmation modal
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<{id: string, reason: string} | null>(null);
+
+  useBodyScrollLock(Boolean(selectedOrder) || showCancelConfirm);
 
   const copy = {
     EN: {
@@ -99,6 +152,12 @@ export default function AdminOrders() {
         markComplete: 'Mark Complete',
         cancelOrder: 'Cancel Order',
       },
+      confirmation: {
+        cancelTitle: 'Confirm Cancellation',
+        cancelMessage: 'Are you sure you want to cancel this order? A refund will be processed automatically.',
+        confirmCancel: 'Yes, Cancel Order',
+        cancelCancel: 'No, Keep Order',
+      }
     },
     DE: {
       nav: {
@@ -170,6 +229,12 @@ export default function AdminOrders() {
         markComplete: 'Als abgeschlossen markieren',
         cancelOrder: 'Bestellung stornieren',
       },
+      confirmation: {
+        cancelTitle: 'Stornierung bestätigen',
+        cancelMessage: 'Möchten Sie diese Bestellung wirklich stornieren? Eine Rückerstattung wird automatisch verarbeitet.',
+        confirmCancel: 'Ja, Bestellung stornieren',
+        cancelCancel: 'Nein, Bestellung behalten',
+      }
     },
   } as const;
   const t = copy[language] ?? copy.EN;
@@ -177,6 +242,23 @@ export default function AdminOrders() {
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  // Helper function to format price with 2 decimal places
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('de-DE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(price);
+  };
+
+  // Helper function to format order ID for display
+  const formatOrderId = (id: string) => {
+    // If it's a UUID, show first 8 chars and last 4 chars
+    if (id.length > 12) {
+      return `#${id.substring(0, 8)}...${id.substring(id.length - 4)}`;
+    }
+    return `#${id}`;
+  };
 
   const loadOrders = async () => {
     try {
@@ -218,6 +300,15 @@ export default function AdminOrders() {
     loadOrders();
   }, []);
 
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showNotification = (type: 'success' | 'error', message: string, duration = 2500) => {
+    setNotification({ type, message });
+    if (duration > 0) {
+      setTimeout(() => setNotification(null), duration);
+    }
+  };
+
   type LocalOrder = {
     id: string;
     client: string;
@@ -239,8 +330,11 @@ export default function AdminOrders() {
     cancellationReason?: string | null;
   };
 
+  const [cancellationError, setCancellationError] = useState('');
+  const [cancellationReason, setCancellationReason] = useState('');
   const [orders, setOrders] = useState<LocalOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
   const statusOptions = [
     { value: 'pending', label: t.status.pending, color: 'bg-amber-100 text-amber-800' },
     { value: 'confirmed', label: t.status.confirmed, color: 'bg-blue-100 text-blue-800' },
@@ -261,7 +355,6 @@ export default function AdminOrders() {
     { id: 'reports', name: t.nav.reports, icon: BarChart3, path: '/reports' }
   ];
 
-
   // Filter orders based on search and filters
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -281,159 +374,281 @@ export default function AdminOrders() {
         prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
       setSelectedOrder(prev => prev && prev.id === orderId ? { ...prev, status: updated.status.toLowerCase?.() || newStatus } : prev);
+      showNotification('success', 
+        language === 'DE' 
+          ? `Status für Bestellung ${formatOrderId(orderId)} aktualisiert`
+          : `Order ${formatOrderId(orderId)} status updated`,
+        2000
+      );
     } catch (err) {
       console.error('Failed to update status', err);
+      showNotification('error', 
+        language === 'DE' 
+          ? 'Fehler beim Aktualisieren des Status'
+          : 'Failed to update status',
+        3000
+      );
     }
   };
 
-  const cancelOrder = (orderId, reason) => {
-    // In a real app, this would make an API call
-    console.log(`Cancelling order ${orderId} with reason: ${reason}`);
-    // Update local state or refetch data
+  const cancelOrder = async (orderId: string, reason: string) => {
+    try {
+      const updatedOrder = await ordersApi.updateOrderStatus(orderId, 'cancelled', reason);
+      
+      showNotification(
+        'success',
+        language === 'DE'
+          ? `Bestellung ${formatOrderId(orderId)} wurde storniert. Erstattung wird verarbeitet.`
+          : `Order ${formatOrderId(orderId)} has been cancelled. Refund is being processed.`,
+        3000
+      );
+      
+      setOrders(prev =>
+        prev.map(o => (o.id === orderId ? { ...o, status: 'cancelled', cancellationReason: reason } : o))
+      );
+      
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(prev => prev ? { ...prev, status: 'cancelled', cancellationReason: reason } : null);
+      }
+      
+      setShowCancelConfirm(false);
+      setOrderToCancel(null);
+      setCancellationReason('');
+      
+    } catch (error: any) {
+      console.error('Failed to cancel order:', error);
+      showNotification(
+        'error',
+        language === 'DE'
+          ? `Fehler beim Stornieren der Bestellung: ${error.message || 'Unbekannter Fehler'}`
+          : `Failed to cancel order: ${error.message || 'Unknown error'}`,
+        3000
+      );
+    }
   };
 
-  const OrderDetailsModal = ({ order, onClose }) => (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="p-6 border-b border-gray-300 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900 font-elegant">{t.modal.title} - {order.id}</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg text-gray-700">
-              <X size={24} />
-            </button>
-          </div>
-        </div>
+  const handleCancelConfirmation = (orderId: string, reason: string) => {
+    if (!reason.trim()) {
+      setCancellationError(
+        language === 'DE'
+          ? 'Bitte geben Sie einen Stornierungsgrund an.'
+          : 'Please provide a cancellation reason.'
+      );
+      return;
+    }
+    setOrderToCancel({ id: orderId, reason });
+    setShowCancelConfirm(true);
+  };
 
-        <div className="p-6 space-y-6">
-          {/* Client Information */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t.modal.clientInfo}</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <User size={18} className="text-gray-600" />
-                  <div>
-                    <p className="font-medium text-gray-900">{order.client}</p>
-                    <p className="text-sm text-gray-700">{t.modal.clientLabel}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Mail size={18} className="text-gray-600" />
-                  <p className="text-sm text-gray-900">{order.contact}</p>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Phone size={18} className="text-gray-600" />
-                  <p className="text-sm text-gray-900">{order.phone}</p>
+  const OrderDetailsModal = ({ order, onClose }) => {
+    const [localCancellationReason, setLocalCancellationReason] = useState('');
+    const [localCancellationError, setLocalCancellationError] = useState('');
+    
+    const handleCancellationChange = (e) => {
+      const value = e.target.value;
+      setLocalCancellationReason(value);
+      
+      if (value.trim()) {
+        setLocalCancellationError('');
+      }
+    };
+    
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
+        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div className="p-6 border-b border-gray-300 bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 font-elegant mb-1">
+                  {t.modal.title}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-200">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    {formatOrderId(order.id)}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {order.createdAt}
+                  </span>
                 </div>
               </div>
+              <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors">
+                <X size={24} />
+              </button>
             </div>
+          </div>
 
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t.modal.eventDetails}</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="font-medium text-gray-900">{order.eventType}</p>
+          <div className="p-6 space-y-6">
+            {/* Client Information & Event Details Grid */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t.modal.clientInfo}</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <User size={18} className="text-gray-600" />
+                    <div>
+                      <p className="font-medium text-gray-900">{order.client}</p>
+                      <p className="text-sm text-gray-700">{t.modal.clientLabel}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <Mail size={18} className="text-gray-600" />
+                    <p className="text-sm text-gray-900">{order.contact}</p>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <Phone size={18} className="text-gray-600" />
+                    <p className="text-sm text-gray-900">{order.phone}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">{t.modal.eventDetails}</h3>
+                <div className="space-y-3">
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="font-medium text-gray-900">{order.eventType}</p>
                     <p className="text-sm text-gray-700">{t.modal.eventType}</p>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar size={18} className="text-gray-600" />
-                  <div>
-                    <p className="font-medium text-gray-900">{order.eventDate}</p>
-                    <p className="text-sm text-gray-700">{order.eventTime}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <Users size={18} className="text-gray-600" />
-                  <p className="text-gray-900">{order.guests} {t.labels.guests}</p>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                  <MapPin size={18} className="text-gray-600 mt-1" />
-                  <p className="text-sm text-gray-900">{order.location}</p>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <Calendar size={18} className="text-gray-600" />
+                    <div>
+                      <p className="font-medium text-gray-900">{order.eventDate}</p>
+                      <p className="text-sm text-gray-700">{order.eventTime}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <Users size={18} className="text-gray-600" />
+                    <p className="text-gray-900">{order.guests} {t.labels.guests}</p>
+                  </div>
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <MapPin size={18} className="text-gray-600 mt-1" />
+                    <p className="text-sm text-gray-900">{order.location}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Order Items */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.modal.orderItems}</h3>
-            <div className="space-y-3">
-              {order.dishes.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border border-gray-200">
-                  <div>
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-700">{t.modal.quantity}: {item.quantity}</p>
-                  </div>
-                  <p className="font-semibold text-gray-900">€{item.price * item.quantity}</p>
+            {/* Cancellation Reason Display (if order is cancelled) */}
+            {order.status === 'cancelled' && order.cancellationReason && (
+              <div className="border border-red-200 bg-red-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle size={20} className="text-red-600" />
+                  <h4 className="font-semibold text-red-800">
+                    {language === 'DE' ? 'Stornierungsgrund' : 'Cancellation Reason'}
+                  </h4>
                 </div>
-              ))}
-              {order.beverages.map((item, index) => (
-                <div key={index} className="flex justify-between items-center p-3 bg-gray-100 rounded-lg border border-gray-200">
-                  <div>
-                    <p className="font-medium text-gray-900">{item.name}</p>
-                    <p className="text-sm text-gray-700">{t.modal.quantity}: {item.quantity}</p>
-                  </div>
-                  <p className="font-semibold text-gray-900">€{item.price * item.quantity}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between items-center p-4 border-t border-gray-300 mt-4 bg-gray-50 rounded-lg">
-              <p className="text-lg font-bold text-gray-900">{t.modal.total}</p>
-              <p className="text-lg font-bold text-gray-900">€{order.total}</p>
-            </div>
-          </div>
+                <p className="text-red-700 text-sm bg-white p-3 rounded-lg border border-red-100">
+                  {order.cancellationReason}
+                </p>
+              </div>
+            )}
 
-          {/* Special Requests */}
-          {order.specialRequests && (
+            {/* Order Items */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 border-b pb-2">{t.modal.specialRequests}</h3>
-              <p className="text-gray-900 bg-amber-50 p-4 rounded-lg border border-amber-200">{order.specialRequests}</p>
-            </div>
-          )}
-
-          {/* Status Management */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.modal.statusManagement}</h3>
-            <div className="flex flex-wrap gap-2">
-              {statusOptions.map(status => (
-                <button
-                  key={status.value}
-                  onClick={() => updateOrderStatus(order.id, status.value)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors border ${
-                    order.status === status.value 
-                      ? `${status.color} border-gray-300` 
-                      : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  {status.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Cancellation Section */}
-          {order.status !== 'cancelled' && (
-            <div className="border-t border-gray-300 pt-6">
-              <h3 className="text-lg font-semibold text-red-800 mb-4 border-b pb-2">{t.modal.cancelOrder}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.modal.orderItems}</h3>
               <div className="space-y-3">
-                <textarea
-                  placeholder={t.modal.cancelPlaceholder}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 bg-white"
-                  rows={3}
-                />
-                <button
-                  onClick={() => cancelOrder(order.id, 'Client request')}
-                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium border border-red-700"
-                >
-                  {t.modal.cancelAction}
-                </button>
+                {order.dishes.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-700 mt-1">
+                        <span>{t.modal.quantity}: {item.quantity}</span>
+                        <span>€{formatPrice(item.price)}/each</span>
+                      </div>
+                    </div>
+                    <p className="font-semibold text-gray-900 text-lg">€{formatPrice(item.price * item.quantity)}</p>
+                  </div>
+                ))}
+                {order.beverages && order.beverages.map((item, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-700 mt-1">
+                        <span>{t.modal.quantity}: {item.quantity}</span>
+                        <span>€{formatPrice(item.price)}/each</span>
+                      </div>
+                    </div>
+                    <p className="font-semibold text-gray-900 text-lg">€{formatPrice(item.price * item.quantity)}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center p-4 border-t border-gray-300 mt-4 bg-gradient-to-r from-gray-50 to-white rounded-lg">
+                <p className="text-lg font-bold text-gray-900">{t.modal.total}</p>
+                <p className="text-2xl font-bold text-gray-900">€{formatPrice(order.total)}</p>
               </div>
             </div>
-          )}
+
+            {/* Special Requests */}
+            {order.specialRequests && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 border-b pb-2">{t.modal.specialRequests}</h3>
+                <p className="text-gray-900 bg-amber-50 p-4 rounded-lg border border-amber-200">{order.specialRequests}</p>
+              </div>
+            )}
+
+            {/* Status Management */}
+            {order.status !== 'cancelled' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.modal.statusManagement}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {statusOptions.map(status => (
+                    <button
+                      key={status.value}
+                      onClick={() => updateOrderStatus(order.id, status.value)}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors border ${
+                        order.status === status.value 
+                          ? `${status.color} border-gray-300 shadow-sm` 
+                          : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100 hover:border-gray-400'
+                      }`}
+                    >
+                      {status.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cancellation Section (only if not already cancelled) */}
+            {order.status !== 'cancelled' && (
+              <div className="border-t border-gray-300 pt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <AlertTriangle size={20} className="text-red-600" />
+                  <h3 className="text-lg font-semibold text-red-800">{t.modal.cancelOrder}</h3>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <textarea
+                      placeholder={t.modal.cancelPlaceholder}
+                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:border-red-500 text-gray-900 bg-white transition-colors ${
+                        localCancellationError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-red-500 hover:border-gray-400'
+                      }`}
+                      rows={3}
+                      value={localCancellationReason}
+                      onChange={handleCancellationChange}
+                    />
+                    {localCancellationError && (
+                      <p className="mt-1 text-sm text-red-600">{localCancellationError}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleCancelConfirmation(order.id, localCancellationReason)}
+                    disabled={!localCancellationReason.trim()}
+                    className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
+                      !localCancellationReason.trim()
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-md hover:shadow-lg'
+                    }`}
+                  >
+                    {t.modal.cancelAction}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <AdminLayout
@@ -446,144 +661,214 @@ export default function AdminOrders() {
       openMenuLabel={language === 'DE' ? 'Menü öffnen' : 'Open menu'}
       closeMenuLabel={language === 'DE' ? 'Menü schließen' : 'Close menu'}
     >
-          {/* Filters and Search */}
-          <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6 ${
-            isVisible ? 'animate-fade-in-up' : 'opacity-0'
-          }`}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
-                <input
-                  type="text"
-                  placeholder={t.filters.searchPlaceholder}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
-                />
-              </div>
-              
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
-              >
-                <option value="all">{t.filters.allStatus}</option>
-                {statusOptions.map(status => (
-                  <option key={status.value} value={status.value}>{status.label}</option>
-                ))}
-              </select>
-
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
-              >
-                <option value="all">{t.filters.allDates}</option>
-                <option value="today">{t.filters.today}</option>
-                <option value="upcoming">{t.filters.upcoming}</option>
-              </select>
-
-              <button
-                onClick={loadOrders}
-                className="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium flex items-center justify-center gap-2 border border-amber-700"
-              >
-                <RefreshCw size={16} />
-                {isLoading ? t.filters.refreshing : t.filters.refresh}
-              </button>
-            </div>
-          </div>
-
-          {/* Orders List */}
-          <div className={`bg-white rounded-2xl shadow-sm border border-gray-300 ${
-            isVisible ? 'animate-fade-in-up' : 'opacity-0'
-          }`} style={{ animationDelay: '200ms' }}>
-            <div className="p-6 border-b border-gray-300">
-              <h2 className="text-xl font-bold text-gray-900 font-elegant">{t.table.title} ({filteredOrders.length})</h2>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.orderId}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.client}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.event}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.dateTime}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.guests}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.total}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.status}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">{t.table.actions}</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-300">
-                  {filteredOrders.map((order) => {
-                    const statusConfig = statusOptions.find(s => s.value === order.status);
-                    return (
-                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
-                          <div className="text-sm font-medium text-gray-900">{order.id}</div>
-                          <div className="text-sm text-gray-700">{order.createdAt}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
-                          <div className="text-sm font-medium text-gray-900">{order.client}</div>
-                          <div className="text-sm text-gray-700">{order.contact}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
-                          <div className="text-sm text-gray-900">{order.eventType}</div>
-                          <div className="text-sm text-gray-700">{order.menuTier}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
-                          <div className="text-sm text-gray-900">{order.eventDate}</div>
-                          <div className="text-sm text-gray-700">{order.eventTime}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
-                          {order.guests}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
-                          <div className="text-sm font-semibold text-gray-900">€{order.total}</div>
-                          <div className={`text-xs ${
-                            order.payment === 'paid' ? 'text-green-700' : 'text-amber-700'
-                          }`}>
-                            {order.payment === 'paid' ? t.table.paymentPaid : t.table.paymentPending}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap border-r border-gray-300">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusConfig?.color} border-gray-300`}>
-                            {statusConfig?.label}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setSelectedOrder(order)}
-                              className="p-2 text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200"
-                              title={t.labels.viewDetails}
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button
-                              onClick={() => updateOrderStatus(order.id, 'completed')}
-                              className="p-2 text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-200"
-                              title={t.labels.markComplete}
-                            >
-                              <CheckCircle size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredOrders.length === 0 && (
-              <div className="text-center py-12 border-t border-gray-300">
-                <Package size={48} className="mx-auto text-gray-500 mb-4" />
-                <p className="text-gray-700 text-lg">{t.labels.emptyState}</p>
-              </div>
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 animate-slide-in ${
+          notification.type === 'success' ? 'bg-green-100 border-green-400 text-green-800' : 'bg-red-100 border-red-400 text-red-800'
+        } border rounded-xl p-4 shadow-lg max-w-sm`}>
+          <div className="flex items-center gap-3">
+            {notification.type === 'success' ? (
+              <CheckCircle className="text-green-600" size={20} />
+            ) : (
+              <XCircle className="text-red-600" size={20} />
             )}
+            <span className="font-medium">{notification.message}</span>
           </div>
+        </div>
+      )}
+
+      {/* Filters and Search */}
+      <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6 ${
+        isVisible ? 'animate-fade-in-up' : 'opacity-0'
+      }`}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+            <input
+              type="text"
+              placeholder={t.filters.searchPlaceholder}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
+            />
+          </div>
+          
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
+          >
+            <option value="all">{t.filters.allStatus}</option>
+            {statusOptions.map(status => (
+              <option key={status.value} value={status.value}>{status.label}</option>
+            ))}
+          </select>
+
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
+          >
+            <option value="all">{t.filters.allDates}</option>
+            <option value="today">{t.filters.today}</option>
+            <option value="upcoming">{t.filters.upcoming}</option>
+          </select>
+
+          <button
+            onClick={loadOrders}
+            disabled={isLoading}
+            className="px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 transition-all font-medium flex items-center justify-center gap-2 border border-amber-800 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+            {isLoading ? t.filters.refreshing : t.filters.refresh}
+          </button>
+        </div>
+      </div>
+
+      {/* Orders List */}
+      <div className={`bg-white rounded-2xl shadow-sm border border-gray-300 ${
+        isVisible ? 'animate-fade-in-up' : 'opacity-0'
+      }`} style={{ animationDelay: '200ms' }}>
+        <div className="p-6 border-b border-gray-300 bg-gradient-to-r from-gray-50 to-white rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-900 font-elegant">{t.table.title} ({filteredOrders.length})</h2>
+            <div className="text-sm text-gray-600">
+              {language === 'DE' ? 'Letzte Aktualisierung' : 'Last updated'}: {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.orderId}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.client}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.event}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.dateTime}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.guests}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.total}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.status}</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">{t.table.actions}</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-300">
+              {filteredOrders.map((order) => {
+                const statusConfig = statusOptions.find(s => s.value === order.status);
+                return (
+                  <tr key={order.id} className="hover:bg-gray-50 transition-colors group">
+                    <td className="px-6 py-4 border-r border-gray-300">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
+                          <Package size={16} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block">
+                            {formatOrderId(order.id)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">{order.createdAt}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 border-r border-gray-300">
+                      <div className="text-sm font-medium text-gray-900">{order.client}</div>
+                      <div className="text-xs text-gray-700 truncate max-w-[150px]">{order.contact}</div>
+                    </td>
+                    <td className="px-6 py-4 border-r border-gray-300">
+                      <div className="text-sm text-gray-900">{order.eventType}</div>
+                      {order.menuTier && (
+                        <div className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded-full inline-block mt-1 capitalize">
+                          {order.menuTier}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 border-r border-gray-300">
+                      <div className="text-sm text-gray-900 font-medium">{order.eventDate}</div>
+                      <div className="text-sm text-gray-700">{order.eventTime}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
+                      <div className="flex items-center gap-2">
+                        <Users size={14} className="text-gray-500" />
+                        <span className="font-medium">{order.guests}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 border-r border-gray-300">
+                      <div className="text-sm font-semibold text-gray-900">€{formatPrice(order.total)}</div>
+                      <div className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full mt-1 ${
+                        order.payment === 'paid' 
+                          ? 'bg-green-100 text-green-800 border border-green-200' 
+                          : 'bg-amber-100 text-amber-800 border border-amber-200'
+                      }`}>
+                        {order.payment === 'paid' ? (
+                          <>
+                            <CheckCircle size={10} />
+                            {t.table.paymentPaid}
+                          </>
+                        ) : (
+                          <>
+                            <Clock size={10} />
+                            {t.table.paymentPending}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 border-r border-gray-300">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border inline-flex items-center gap-1 ${statusConfig?.color} border-gray-300`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
+                        {statusConfig?.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedOrder(order)}
+                          className="p-2 text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200 hover:border-blue-300 hover:shadow-sm"
+                          title={t.labels.viewDetails}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => updateOrderStatus(order.id, 'completed')}
+                          className="p-2 text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-200 hover:border-green-300 hover:shadow-sm"
+                          title={t.labels.markComplete}
+                        >
+                          <CheckCircle size={16} />
+                        </button>
+                        {order.status !== 'cancelled' && (
+                          <button
+                            onClick={() => handleCancelConfirmation(order.id, '')}
+                            className="p-2 text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300 hover:shadow-sm"
+                            title={t.labels.cancelOrder}
+                          >
+                            <XCircle size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredOrders.length === 0 && (
+          <div className="text-center py-16 border-t border-gray-300">
+            <div className="relative mx-auto w-24 h-24 mb-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full opacity-20"></div>
+              <Package size={64} className="mx-auto text-gray-400 relative z-10" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+              {t.labels.emptyState}
+            </h3>
+            <p className="text-gray-600 max-w-md mx-auto">
+              {language === 'DE' 
+                ? 'Versuchen Sie, Ihre Suchfilter zu ändern oder eine andere Zeitspanne auszuwählen.' 
+                : 'Try changing your search filters or selecting a different time period.'}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Order Details Modal */}
       {selectedOrder && (
@@ -592,6 +877,28 @@ export default function AdminOrders() {
           onClose={() => setSelectedOrder(null)} 
         />
       )}
+
+      {/* Cancellation Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showCancelConfirm}
+        onClose={() => {
+          setShowCancelConfirm(false);
+          setOrderToCancel(null);
+        }}
+        onConfirm={() => {
+          if (orderToCancel) {
+            cancelOrder(orderToCancel.id, orderToCancel.reason);
+          }
+        }}
+        title={t.confirmation.cancelTitle}
+        message={orderToCancel ? 
+          `${t.confirmation.cancelMessage}\n\n${language === 'DE' ? 'Grund' : 'Reason'}: ${orderToCancel.reason}` :
+          t.confirmation.cancelMessage
+        }
+        confirmText={t.confirmation.confirmCancel}
+        cancelText={t.confirmation.cancelCancel}
+        type="warning"
+      />
     </AdminLayout>
   );
 }

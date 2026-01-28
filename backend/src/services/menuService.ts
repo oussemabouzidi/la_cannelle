@@ -3,6 +3,7 @@ import { AppError } from '../middleware/errorHandler';
 import { normalizeImageValue } from '../utils/uploads';
 import { translationService } from './translationService';
 import { translationBackfillService } from './translationBackfillService';
+import { DEFAULT_MENUS } from '../data/defaultMenus';
 
 const isDeeplAutoTranslateOnReadEnabled = () => {
   const raw = process.env.DEEPL_AUTO_TRANSLATE_ON_READ;
@@ -312,5 +313,110 @@ export const menuService = {
     await prisma.menu.delete({
       where: { id }
     });
+  },
+
+  async restoreDefaultMenus() {
+    const services = await prisma.service.findMany({
+      select: { id: true, name: true }
+    });
+    const activeProducts = await prisma.product.findMany({
+      where: { available: true },
+      select: { id: true, category: true, productCategories: true }
+    });
+
+    const normalizeTags = (value: unknown) => {
+      if (!Array.isArray(value)) return [];
+      return value.map((v) => String(v).trim().toLowerCase()).filter(Boolean);
+    };
+
+    const pickServiceIdsForMenu = (serviceName?: string) => {
+      if (serviceName) {
+        const match = services.find((s) => s.name === serviceName);
+        if (match) return [match.id];
+      }
+      return services.map((s) => s.id);
+    };
+
+    const pickProductIdsForMenu = (def: (typeof DEFAULT_MENUS)[number]) => {
+      const productIdSet = new Set<number>();
+
+      for (const p of activeProducts) {
+        const tags = normalizeTags(p.productCategories);
+        const category = String(p.category);
+
+        const matches = (() => {
+          if (def.productFilter.type === 'TAGS_ANY') {
+            return def.productFilter.tags.some((t) => tags.includes(t));
+          }
+          if (def.productFilter.type === 'CATEGORIES_ANY') {
+            return def.productFilter.categories.includes(category as any);
+          }
+          return def.productFilter.tags.some((t) => tags.includes(t)) || def.productFilter.categories.includes(category as any);
+        })();
+
+        if (matches) productIdSet.add(p.id);
+      }
+
+      const productIds = Array.from(productIdSet);
+      return productIds.length ? productIds : activeProducts.map((p) => p.id);
+    };
+
+    let created = 0;
+    let updated = 0;
+
+    for (const def of DEFAULT_MENUS) {
+      const productIds = pickProductIdsForMenu(def);
+      const serviceIds = pickServiceIdsForMenu(def.serviceName);
+
+      const existing = await prisma.menu.findFirst({ where: { name: def.name }, select: { id: true } });
+
+      if (!existing) {
+        await prisma.menu.create({
+          data: {
+            name: def.name,
+            nameDe: null,
+            description: def.description,
+            descriptionDe: null,
+            isActive: def.isActive,
+            price: def.price,
+            image: def.image,
+            minPeople: def.minPeople,
+            steps: def.steps as any
+          }
+        });
+        created += 1;
+      } else {
+        await prisma.menu.update({
+          where: { id: existing.id },
+          data: {
+            description: def.description,
+            isActive: def.isActive,
+            price: def.price,
+            image: def.image,
+            minPeople: def.minPeople,
+            steps: def.steps as any
+          }
+        });
+        updated += 1;
+      }
+
+      const menu = await prisma.menu.findFirst({ where: { name: def.name }, select: { id: true } });
+      if (!menu) continue;
+
+      await prisma.$transaction([
+        prisma.menuProduct.deleteMany({ where: { menuId: menu.id } }),
+        prisma.menuService.deleteMany({ where: { menuId: menu.id } }),
+        productIds.length ? prisma.menuProduct.createMany({ data: productIds.map((productId) => ({ menuId: menu.id, productId })) }) : prisma.menuProduct.deleteMany({ where: { menuId: menu.id } }),
+        serviceIds.length ? prisma.menuService.createMany({ data: serviceIds.map((serviceId) => ({ menuId: menu.id, serviceId })) }) : prisma.menuService.deleteMany({ where: { menuId: menu.id } })
+      ]);
+    }
+
+    return {
+      created,
+      updated,
+      totalDefaults: DEFAULT_MENUS.length,
+      connectedServices: services.length,
+      availableProducts: activeProducts.length
+    };
   }
 };

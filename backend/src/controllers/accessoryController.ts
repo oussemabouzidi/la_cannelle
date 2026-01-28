@@ -33,5 +33,10 @@ export const accessoryController = {
     const { id } = req.params;
     const result = await accessoryService.deleteAccessory(parseInt(id, 10));
     res.json(result);
+  },
+
+  async restoreDefaultAccessories(_req: AuthRequest, res: Response) {
+    const result = await accessoryService.restoreDefaultAccessories();
+    res.json(result);
   }
 };

@@ -470,7 +470,9 @@ export default function OrderPage() {
     guestCount: '',
     location: '',
     selectedMenu: '',
+    selectedFingerfoods: [],
     selectedStarters: [],
+    selectedSoups: [],
     selectedMains: [],
     selectedSides: [],
     selectedDesserts: [],
@@ -737,7 +739,9 @@ export default function OrderPage() {
             setOrderData((prev: any) => ({
               ...prev,
               selectedMenu: '',
+              selectedFingerfoods: [],
               selectedStarters: [],
+              selectedSoups: [],
               selectedMains: [],
               selectedSides: [],
               selectedDesserts: [],
@@ -770,11 +774,24 @@ export default function OrderPage() {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
     if (!guestCount) return;
     setSelectedAccessories((prev) => prev.map((item) => {
-      if (item?.quantityMode === 'FIXED') return item;
-      const targetQuantity = Math.max(1, guestCount || MIN_GUESTS);
+      if (item?.quantityMode === 'FIXED' || item?.quantityMode === 'CLIENT') return item;
+      if (item?.quantityMode !== 'GUEST_COUNT') return item;
+      const targetQuantity = (() => {
+        const base = guestCount > 0 ? guestCount : MIN_GUESTS;
+        const activeMenuId = pendingMenuId
+          ? Number(pendingMenuId)
+          : orderData.selectedMenu
+          ? Number(orderData.selectedMenu)
+          : null;
+        const selectedMenuObj = activeMenuId != null
+          ? menusData.find((m: any) => Number(m.id) === activeMenuId)
+          : null;
+        const menuMinPeople = selectedMenuObj?.minPeople == null ? 0 : Number(selectedMenuObj.minPeople) || 0;
+        return Math.max(MIN_GUESTS, base, menuMinPeople);
+      })();
       return item.quantity === targetQuantity ? item : { ...item, quantity: targetQuantity };
     }));
-  }, [orderData.guestCount]);
+  }, [orderData.guestCount, orderData.selectedMenu, pendingMenuId, menusData]);
   
   // ============================================================================
   // HELPER FUNCTIONS (Inside component, but no hooks)
@@ -803,6 +820,37 @@ export default function OrderPage() {
       chefspecial: 'chefspecial'
     };
     const resolved = aliases[normalized] || normalized;
+
+    // Handle labels like "Fingerfood Basic", "Canape Premium", etc.
+    // (normalizeCategoryValue removes spaces/dashes, so we match by substring.)
+    const substringAliases: Array<[string, string]> = [
+      ['fingerfood', 'fingerfood'],
+      ['canape', 'canape'],
+      ['appetizer', 'appetizer'],
+      ['salad', 'salad'],
+      ['soup', 'soup'],
+      ['pasta', 'pasta'],
+      ['seafood', 'seafood'],
+      ['meat', 'meat'],
+      ['vegetarian', 'vegetarian'],
+      ['vegan', 'vegan'],
+      ['glutenfree', 'glutenfree'],
+      ['dairyfree', 'dairyfree'],
+      ['spicy', 'spicy'],
+      ['signature', 'signature'],
+      ['seasonal', 'seasonal'],
+      ['kidfriendly', 'kidfriendly'],
+      ['chefspecial', 'chefspecial'],
+      ['tapas', 'tapas'],
+      ['bbq', 'bbq'],
+      ['breakfast', 'breakfast'],
+      ['brunch', 'brunch']
+    ];
+
+    for (const [needle, mapped] of substringAliases) {
+      if (resolved.includes(needle)) return mapped;
+    }
+
     return stepCategoryKeys.includes(resolved) ? resolved : '';
   };
   
@@ -870,7 +918,10 @@ export default function OrderPage() {
           label,
           icon: categoryMeta[categoryKey].icon,
           color: categoryMeta[categoryKey].color,
-          included: Number.isFinite(step?.included) ? step.included : 0
+          included: (() => {
+            const parsed = Number(step?.included);
+            return Number.isFinite(parsed) ? parsed : 0;
+          })()
         };
       })
       .filter(Boolean) as Array<{ key: string; categoryKey: string; label: string; icon: any; color: string; included: number }>;
@@ -910,7 +961,9 @@ export default function OrderPage() {
   }, [dynamicMenuSteps]);
   
   const selectionKeyByCategory: Record<string, string> = {
+    fingerfood: 'selectedFingerfoods',
     starter: 'selectedStarters',
+    soup: 'selectedSoups',
     main: 'selectedMains',
     side: 'selectedSides',
     dessert: 'selectedDesserts',
@@ -918,11 +971,23 @@ export default function OrderPage() {
   };
   
   const getAllSelectedItems = () => ([
+    ...orderData.selectedFingerfoods,
     ...orderData.selectedStarters,
+    ...orderData.selectedSoups,
     ...orderData.selectedMains,
     ...orderData.selectedSides,
     ...orderData.selectedDesserts,
     ...orderData.selectedDrinks
+  ]);
+
+  const getAllSelectedItemsFor = (data: any) => ([
+    ...(data?.selectedFingerfoods || []),
+    ...(data?.selectedStarters || []),
+    ...(data?.selectedSoups || []),
+    ...(data?.selectedMains || []),
+    ...(data?.selectedSides || []),
+    ...(data?.selectedDesserts || []),
+    ...(data?.selectedDrinks || [])
   ]);
   
   const matchesStepCategory = (item: any, categoryKey: string) => {
@@ -968,6 +1033,25 @@ export default function OrderPage() {
       }
       return sum + price * quantity;
     }, 0);
+  };
+
+  const getChargeForItemInCategory = (categoryKey: string, item: any) => {
+    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const included = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
+    const items = getItemsForStepCategory(categoryKey);
+    const sorted = [...items].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+    const index = sorted.findIndex((entry) => Number(entry?.id) === Number(item?.id));
+    const isIncluded = included > 0 && index >= 0 && index < included;
+
+    const price = Number(item?.price) || 0;
+    const quantity = Number(item?.quantity) || 0;
+    const chargedQuantity = isIncluded ? Math.max(0, quantity - guestCount) : quantity;
+
+    return {
+      isIncluded,
+      chargedQuantity,
+      chargedTotal: price * chargedQuantity
+    };
   };
   
   const getFoodExtrasSubtotal = () => {
@@ -1119,6 +1203,7 @@ export default function OrderPage() {
   
   const finalizeMenuSelection = (menu: any) => {
     setQuantities({});
+    extraNoticeRef.current = {};
     setPendingMenuId(menu.id);
     setOrderData((prev: any) => {
       const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
@@ -1128,7 +1213,9 @@ export default function OrderPage() {
       return {
         ...prev,
         selectedMenu: Number(menu.id),
+        selectedFingerfoods: [],
         selectedStarters: [],
+        selectedSoups: [],
         selectedMains: [],
         selectedSides: [],
         selectedDesserts: [],
@@ -1279,10 +1366,29 @@ export default function OrderPage() {
       [field]: value
     }));
   };
+
+  const getEffectiveGuestCount = () => {
+    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const base = guestCount > 0 ? guestCount : MIN_GUESTS;
+
+    const activeMenuId = pendingMenuId
+      ? Number(pendingMenuId)
+      : orderData.selectedMenu
+      ? Number(orderData.selectedMenu)
+      : null;
+
+    const selectedMenuObj = activeMenuId != null
+      ? menusData.find((m: any) => Number(m.id) === activeMenuId)
+      : null;
+
+    const menuMinPeople = selectedMenuObj?.minPeople == null ? 0 : Number(selectedMenuObj.minPeople) || 0;
+    return Math.max(MIN_GUESTS, base, menuMinPeople);
+  };
   
   const getMinOrderQuantity = (_product: any) => {
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    return Math.max(1, guestCount || MIN_GUESTS);
+    // In the order flow, the "quantity" for dishes should follow the guest count (and menu minPeople),
+    // not the legacy product minOrderQuantity (often 5).
+    return getEffectiveGuestCount();
   };
   
   const updateQuantity = (category: string, productId: number, quantity: number, minQuantity = 1) => {
@@ -1303,8 +1409,8 @@ export default function OrderPage() {
   
   const getSelectionKey = (categoryKey: string, product?: any) => {
     const normalizedProductCategory = normalizeCategoryValue(product?.category);
-    return selectionKeyByCategory[normalizedProductCategory]
-      || selectionKeyByCategory[categoryKey]
+    return selectionKeyByCategory[categoryKey]
+      || selectionKeyByCategory[normalizedProductCategory]
       || '';
   };
   
@@ -1313,14 +1419,31 @@ export default function OrderPage() {
     const minQuantity = getMinOrderQuantity(product);
     const requestedQuantity = quantities[quantityKey] || 0;
     const quantityInOrder = getProductQuantityInOrder(category, product);
-    const defaultQuantity = quantityInOrder > 0 ? quantityInOrder : minQuantity;
+    const defaultQuantity = quantityInOrder > 0 ? quantityInOrder : getEffectiveGuestCount();
     const quantity = requestedQuantity <= 0 ? defaultQuantity : Math.max(minQuantity, requestedQuantity);
     const productWithQuantity = { ...product, quantity, category };
     
     const categoryKey = getSelectionKey(category, product);
     if (!categoryKey) return;
     const updatedSelection = orderData[categoryKey]?.filter((p: any) => p.id !== product.id) || [];
-    updateOrderData(categoryKey, [...updatedSelection, productWithQuantity]);
+    const nextSelection = [...updatedSelection, productWithQuantity];
+    const nextOrderData = { ...orderData, [categoryKey]: nextSelection };
+
+    const included = Math.max(0, Number(includedByCategory[category]) || 0);
+    if (included > 0) {
+      const nextSelectedCount = getAllSelectedItemsFor(nextOrderData).filter((item) => matchesStepCategory(item, category)).length;
+      const extra = Math.max(0, nextSelectedCount - included);
+      if (extra > 0 && extraNoticeRef.current[category] !== extra) {
+        extraNoticeRef.current[category] = extra;
+        setExtraNoticeData({
+          label: stepLabelByKey[category] || categoryMeta[category]?.label || category,
+          extra
+        });
+        setExtraNoticeOpen(true);
+      }
+    }
+
+    updateOrderData(categoryKey, nextSelection);
     setQuantities(prev => ({ ...prev, [quantityKey]: 0 }));
   };
   
@@ -1348,22 +1471,32 @@ export default function OrderPage() {
     updateOrderData(categoryKey, updatedSelection);
   };
   
-  const toggleAccessory = (accessory: any) => {
-    const getAccessoryTargetQuantity = (value: any) => {
-      const guestCount = parseInt(orderData.guestCount, 10) || 0;
-      const guestTarget = Math.max(1, guestCount || MIN_GUESTS);
-      const quantityMode = value?.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
-      if (quantityMode === 'FIXED') {
-        const fixedQuantity = value?.fixedQuantity == null ? 0 : Number(value.fixedQuantity);
-        const fixedTarget = Math.max(0, Math.trunc(fixedQuantity));
-        return Math.max(1, fixedTarget || 1);
-      }
-      return guestTarget;
-    };
-    const targetQuantity = getAccessoryTargetQuantity(accessory);
-    setSelectedAccessories(prev => {
-      if (prev.some(item => item.id === accessory.id)) {
-        return prev.filter(item => item.id !== accessory.id);
+    const toggleAccessory = (accessory: any) => {
+      const getAccessoryTargetQuantity = (value: any) => {
+        const guestTarget = getEffectiveGuestCount();
+        const quantityMode =
+          value?.quantityMode === 'FIXED'
+            ? 'FIXED'
+            : value?.quantityMode === 'CLIENT'
+            ? 'CLIENT'
+            : 'GUEST_COUNT';
+
+        if (quantityMode === 'FIXED') {
+          const fixedQuantity = value?.fixedQuantity == null ? 0 : Number(value.fixedQuantity);
+          const fixedTarget = Math.max(0, Math.trunc(fixedQuantity));
+          return Math.max(1, fixedTarget || 1);
+        }
+
+        if (quantityMode === 'CLIENT') {
+          return 1;
+        }
+
+        return guestTarget;
+      };
+      const targetQuantity = getAccessoryTargetQuantity(accessory);
+      setSelectedAccessories(prev => {
+        if (prev.some(item => item.id === accessory.id)) {
+          return prev.filter(item => item.id !== accessory.id);
       }
       return [...prev, { ...accessory, quantity: targetQuantity }];
     });
@@ -1371,10 +1504,8 @@ export default function OrderPage() {
   
   const updateAccessoryQuantity = (id: number, quantity: number) => {
     setSelectedAccessories(prev => {
-      const parsedQuantity = Number.isFinite(quantity) ? quantity : 0;
-      if (parsedQuantity <= 0) {
-        return prev.filter(item => item.id !== id);
-      }
+      const parsed = typeof quantity === 'number' ? quantity : Number(quantity);
+      const parsedQuantity = Number.isFinite(parsed) ? Math.max(1, Math.trunc(parsed)) : 1;
       return prev.map(item => item.id === id ? { ...item, quantity: parsedQuantity } : item);
     });
   };
@@ -1573,7 +1704,9 @@ export default function OrderPage() {
         return {
           ...prev,
           selectedMenu: Number(pendingMenuId),
+          selectedFingerfoods: [],
           selectedStarters: [],
+          selectedSoups: [],
           selectedMains: [],
           selectedSides: [],
           selectedDesserts: [],
@@ -1658,7 +1791,9 @@ export default function OrderPage() {
     const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
     
     const foodItems = [
+      ...orderData.selectedFingerfoods,
       ...orderData.selectedStarters,
+      ...orderData.selectedSoups,
       ...orderData.selectedMains,
       ...orderData.selectedSides,
       ...orderData.selectedDesserts,
@@ -2338,7 +2473,7 @@ export default function OrderPage() {
                               <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-600">x{item.quantity}</span>
-                                <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="font-semibold text-gray-900">€{getChargeForItemInCategory(key, item).chargedTotal.toFixed(2)}</span>
                               </div>
                             </div>
                           ))}
@@ -2629,7 +2764,7 @@ export default function OrderPage() {
         details: language === 'DE' ? (a.detailsDe || a.detailsEn) : a.detailsEn,
         price: Number(a.price) || 0,
         unit: (language === 'DE' ? (a.unitDe || a.unitEn) : a.unitEn) || fallbackUnit,
-        quantityMode: a.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT',
+        quantityMode: a.quantityMode === 'FIXED' ? 'FIXED' : a.quantityMode === 'CLIENT' ? 'CLIENT' : 'GUEST_COUNT',
         fixedQuantity: a.fixedQuantity == null ? null : Number(a.fixedQuantity),
         image: a.image || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop'
       };
@@ -2759,7 +2894,7 @@ export default function OrderPage() {
                               <span className="text-gray-800 truncate max-w-[60%]">{item.name}</span>
                               <div className="flex items-center gap-2">
                                 <span className="text-gray-600">x{item.quantity}</span>
-                                <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
+                                <span className="font-semibold text-gray-900">€{getChargeForItemInCategory(key, item).chargedTotal.toFixed(2)}</span>
                               </div>
                             </div>
                           ))}
@@ -2886,15 +3021,26 @@ export default function OrderPage() {
               {realisticAccessories.map((accessory: any) => {
                 const isSelected = selectedAccessories.some((item: any) => item.id === accessory.id);
                 const selectedItem = selectedAccessories.find((item: any) => item.id === accessory.id);
-                const quantityMode = accessory.quantityMode === 'FIXED' ? 'FIXED' : 'GUEST_COUNT';
+                const quantityMode = accessory.quantityMode === 'FIXED'
+                  ? 'FIXED'
+                  : accessory.quantityMode === 'CLIENT'
+                  ? 'CLIENT'
+                  : 'GUEST_COUNT';
                 const baseQuantity = quantityMode === 'FIXED'
                   ? Math.max(1, Math.max(0, Math.trunc(Number(accessory.fixedQuantity) || 0)) || 1)
+                  : quantityMode === 'CLIENT'
+                  ? 1
                   : Math.max(1, guestCount || MIN_GUESTS);
-                const effectiveQuantity = isSelected ? Number(selectedItem?.quantity) || baseQuantity : baseQuantity;
+                const effectiveQuantity = isSelected
+                  ? (Number.isFinite(Number(selectedItem?.quantity)) ? Number(selectedItem?.quantity) : baseQuantity)
+                  : baseQuantity;
                 const displayQuantity = isSelected ? effectiveQuantity : baseQuantity;
                 const quantityLabel = quantityMode === 'FIXED'
                   ? (language === 'DE' ? 'fest' : 'fixed')
+                  : quantityMode === 'CLIENT'
+                  ? (language === 'DE' ? 'vom Kunden' : 'client')
                   : (language === 'DE' ? 'entspricht Gaesten' : 'matches guests');
+                const unitPrice = Number(accessory?.price) || 0;
                 
                 return (
                   <div key={accessory.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow">
@@ -2924,10 +3070,10 @@ export default function OrderPage() {
                               
                               <div className="mt-3">
                                 <div className="text-lg font-bold text-gray-900">
-                                  €{accessory.price.toFixed(2)} {accessory.unit}
+                                  €{unitPrice.toFixed(2)} {accessory.unit}
                                 </div>
                                 <div className="text-xs font-semibold text-amber-700 mt-1">
-                                  {language === 'DE' ? 'Menge' : 'Quantity'}: {displayQuantity} ({quantityLabel}) | {language === 'DE' ? 'Gesamt' : 'Total'}: €{(accessory.price * displayQuantity).toFixed(2)}
+                                  {language === 'DE' ? 'Menge' : 'Quantity'}: {displayQuantity} ({quantityLabel}) | {language === 'DE' ? 'Gesamt' : 'Total'}: €{(unitPrice * displayQuantity).toFixed(2)}
                                 </div>
                               </div>
                             </div>
@@ -2939,6 +3085,34 @@ export default function OrderPage() {
                                   {language === 'DE' ? 'Menge' : 'Qty'}: {effectiveQuantity}
                                 </div>
                               )}
+                              {isSelected && quantityMode === 'CLIENT' ? (
+                                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateAccessoryQuantity(accessory.id, Math.max(1, effectiveQuantity - 1))}
+                                    className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
+                                  >
+                                    <Minus size={18} strokeWidth={2.5} className="text-black" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={String(effectiveQuantity)}
+                                    onChange={(e) => {
+                                      const next = parseInt(e.target.value, 10);
+                                      updateAccessoryQuantity(accessory.id, Number.isFinite(next) ? Math.max(1, next) : 1);
+                                    }}
+                                    className="w-20 text-center py-2 text-base font-bold border-x border-gray-300 bg-white text-gray-900"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => updateAccessoryQuantity(accessory.id, effectiveQuantity + 1)}
+                                    className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
+                                  >
+                                    <Plus size={18} strokeWidth={2.5} className="text-black" />
+                                  </button>
+                                </div>
+                              ) : null}
                               <button
                                 onClick={() => toggleAccessory(accessory)}
                                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
@@ -2963,7 +3137,7 @@ export default function OrderPage() {
                                   </span>
                                 </span>
                                 <span className="text-green-900 font-bold">
-                                  {language === 'DE' ? 'Gesamt' : 'Total'}: €{(selectedItem.price * effectiveQuantity).toFixed(2)}
+                                  {language === 'DE' ? 'Gesamt' : 'Total'}: €{((Number(selectedItem?.price) || 0) * effectiveQuantity).toFixed(2)}
                                 </span>
                               </div>
                             </div>

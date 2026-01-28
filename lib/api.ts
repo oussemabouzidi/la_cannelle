@@ -1,10 +1,15 @@
 // API Configuration and Client
 
 function getDefaultApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.BACKEND_API_URL || 'http://localhost:3001/api';
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:3001/api';
+    }
+    return '/api';
   }
-  return '/api';
+
+  return process.env.BACKEND_API_URL || 'http://localhost:3001/api';
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || getDefaultApiBaseUrl();
@@ -89,6 +94,7 @@ class ApiClient {
         ...options,
         headers,
         credentials: 'include',
+        cache: 'no-store',
       });
 
       const text = await response.text();

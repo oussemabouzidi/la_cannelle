@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { menuService } from '../services/menuService';
+import { legacyBackupRestoreService } from '../services/legacyBackupRestoreService';
 
 export const menuController = {
   async getMenus(req: AuthRequest, res: Response) {
@@ -109,5 +110,15 @@ export const menuController = {
     const { id } = req.params;
     await menuService.deleteMenu(parseInt(id));
     res.status(204).send();
+  },
+
+  async restoreDefaultMenus(_req: AuthRequest, res: Response) {
+    const result = await menuService.restoreDefaultMenus();
+    res.json(result);
+  },
+
+  async restoreLegacyMenusFromBackup(_req: AuthRequest, res: Response) {
+    const result = await legacyBackupRestoreService.restoreLegacyMenusFromBackup();
+    res.json(result);
   }
 };

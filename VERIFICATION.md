@@ -82,6 +82,22 @@ fetch('http://localhost:3001/api/products')
   .then(console.log)
 ```
 
+### Test 4: Product Update Persists (Admin)
+In browser console (on frontend), update a product and then re-fetch it:
+```javascript
+// Pick an existing product id from GET /api/products first.
+const id = 1;
+
+await fetch(`http://localhost:3001/api/products/${id}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ price: 99.99, description: 'Updated from verification test' }),
+}).then(r => r.json()).then(console.log);
+
+await fetch(`http://localhost:3001/api/products/${id}`).then(r => r.json()).then(console.log);
+```
+Expected: the second request returns the updated `price`/`description` (even after a full page refresh), and `menuProducts` is present on product payloads used by the admin UI.
+
 ## 📡 API Endpoints Summary
 
 ### Public Endpoints (No Auth Required)

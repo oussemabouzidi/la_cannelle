@@ -13,6 +13,8 @@ router.get('/:id', asyncHandler(menuController.getMenuById));
 router.use(authenticate);
 router.use(requireAdmin);
 
+router.post('/restore-defaults', asyncHandler(menuController.restoreDefaultMenus));
+router.post('/restore-legacy', asyncHandler(menuController.restoreLegacyMenusFromBackup));
 router.post('/', asyncHandler(menuController.createMenu));
 router.put('/:id', asyncHandler(menuController.updateMenu));
 router.delete('/:id', asyncHandler(menuController.deleteMenu));
