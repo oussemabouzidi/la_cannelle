@@ -38,16 +38,12 @@ enum CustomerTier {
 
 enum ProductCategory {
   STARTER
+  SOUP
   MAIN
+  FINGERFOOD
   DESSERT
   BEVERAGE
   SIDE
-}
-
-enum MenuTier {
-  ESSENTIAL
-  PREMIUM
-  LUXURY
 }
 
 enum ServiceOccasion {
@@ -93,21 +89,17 @@ model User {
 model Product {
   id                Int             @id @default(autoincrement())
   name              String
-  nameDe            String?
   description       String          @db.Text
-  descriptionDe     String?         @db.Text
   category          ProductCategory
+  customCategory    String?
   price             Float
   cost              Float
   available         Boolean         @default(true)
   minOrderQuantity  Int //@default(5)
-  tier              Json?
   ingredients       Json?
   ingredientsDe     Json?
   allergens         Json?
   allergensDe       Json?
-  productCategories Json? // vegetarian, vegan, gluten-free, etc.
-  productCategoriesDe Json?
   image             String?        @db.LongText
   popularity        Int             @default(0)
   createdAt         DateTime        @default(now())
@@ -124,9 +116,7 @@ model Product {
 model Menu {
   id          Int       @id @default(autoincrement())
   name        String
-  nameDe      String?
   description String    @db.Text
-  descriptionDe String? @db.Text
   isActive    Boolean   @default(true)
   startDate   DateTime?
   endDate     DateTime?
@@ -198,7 +188,6 @@ model Order {
   eventTime          String
   guests             Int
   location           String        @db.Text
-  menuTier           MenuTier?
   total              Float
   subtotal           Float
   serviceFee         Float         @default(0)

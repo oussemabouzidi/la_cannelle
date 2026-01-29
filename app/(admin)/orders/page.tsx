@@ -274,7 +274,6 @@ export default function AdminOrders() {
         eventTime: formatTimeHHmm(order.eventTime),
         guests: order.guests,
         location: order.location,
-        menuTier: order.menuTier?.toLowerCase(),
         total: order.total,
         status: order.status.toLowerCase(),
         payment: order.paymentStatus.toLowerCase(),
@@ -319,7 +318,6 @@ export default function AdminOrders() {
     eventTime: string;
     guests: number;
     location: string;
-    menuTier?: string;
     total: number;
     status: string;
     payment: string;
@@ -776,11 +774,6 @@ export default function AdminOrders() {
                     </td>
                     <td className="px-6 py-4 border-r border-gray-300">
                       <div className="text-sm text-gray-900">{order.eventType}</div>
-                      {order.menuTier && (
-                        <div className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded-full inline-block mt-1 capitalize">
-                          {order.menuTier}
-                        </div>
-                      )}
                     </td>
                     <td className="px-6 py-4 border-r border-gray-300">
                       <div className="text-sm text-gray-900 font-medium">{order.eventDate}</div>

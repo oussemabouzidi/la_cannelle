@@ -5,9 +5,7 @@ export interface Menu {
   popularity: any;
   id: number;
   name: string;
-  nameDe?: string | null;
   description: string;
-  descriptionDe?: string | null;
   isActive: boolean;
   startDate?: string;
   endDate?: string;

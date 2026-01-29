@@ -65,31 +65,12 @@ export const reportsService = {
       }))
       .sort((a, b) => b.revenue - a.revenue);
 
-    // Revenue by tier
-    const tierMap = new Map<string, { revenue: number; orders: number }>();
-    orders.forEach(order => {
-      if (order.menuTier) {
-        const existing = tierMap.get(order.menuTier) || { revenue: 0, orders: 0 };
-        tierMap.set(order.menuTier, {
-          revenue: existing.revenue + order.total,
-          orders: existing.orders + 1
-        });
-      }
-    });
-
-    const byTier = Array.from(tierMap.entries())
-      .map(([tier, data]) => ({
-        tier,
-        ...data
-      }));
-
     return {
       totalRevenue,
       averageOrderValue,
       totalOrders,
       dailyRevenue,
       byCategory,
-      byTier
     };
   },
 

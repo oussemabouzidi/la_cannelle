@@ -409,15 +409,13 @@ export default function MenusPage() {
 
   const menuHighlights = useMemo(() => {
     const toHighlightItem = (
-      item: { id: number; name: string; nameDe?: string | null; description?: string; descriptionDe?: string | null; image?: string } | null | undefined
+      item: { id: number; name: string; description?: string; image?: string } | null | undefined
     ): MenuHighlightItem | null => {
       if (!item || item.id == null || !item.name) {
         return null;
       }
-      const name = language === 'DE' ? (item.nameDe || item.name) : item.name;
-      const description = language === 'DE'
-        ? (item.descriptionDe || item.description)
-        : item.description;
+      const name = item.name;
+      const description = item.description;
       return {
         id: item.id,
         name,
@@ -429,10 +427,8 @@ export default function MenusPage() {
     if (menus.length) {
       const productMap = new Map(products.map((product) => [product.id, product]));
       return (menus || []).map((menu) => {
-        const localizedName = language === 'DE' ? (menu.nameDe || menu.name) : menu.name;
-        const localizedDescription = language === 'DE'
-          ? (menu.descriptionDe || menu.description)
-          : menu.description;
+        const localizedName = menu.name;
+        const localizedDescription = menu.description;
         let items: MenuHighlightItem[] = [];
         if (menu.menuProducts && menu.menuProducts.length) {
           items = menu.menuProducts
@@ -493,7 +489,7 @@ export default function MenusPage() {
       const coverImage = items.find((item) => item.image)?.image || '/images/home_image.jpeg';
       const description = items.length
         ? items.slice(0, 3).map((item: any) => (
-          language === 'DE' ? (item.nameDe || item.name) : item.name
+          item.name
         )).join(', ')
         : '';
       return {
@@ -709,9 +705,7 @@ export default function MenusPage() {
 
 
               <h3 className="text-3xl font-bold font-elegant mb-2">
-                {language === 'DE'
-                  ? (selectedMenu?.nameDe || selectedMenu?.name)
-                  : selectedMenu?.name}
+                {selectedMenu?.name}
               </h3>
               {priceLabel && (
                 <p className="text-sm font-semibold text-amber-200">
@@ -721,13 +715,9 @@ export default function MenusPage() {
             </div>
           </div>
           <div className="p-4 sm:p-6">
-            {(language === 'DE'
-              ? (selectedMenu?.descriptionDe || selectedMenu?.description)
-              : selectedMenu?.description) && (
+            {selectedMenu?.description && (
               <p className="text-gray-700 text-sm leading-relaxed mb-6">
-                {language === 'DE'
-                  ? (selectedMenu?.descriptionDe || selectedMenu?.description)
-                  : selectedMenu?.description}
+                {selectedMenu.description}
               </p>
             )}
             <div>

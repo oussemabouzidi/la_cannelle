@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   Menu, X, ChevronRight, Package, Calendar, DollarSign, 
   Users, TrendingUp, Clock, Plus, Edit, Archive, Trash2,
@@ -24,9 +24,7 @@ import { servicesApi, type Service } from '@/lib/api/services';
 type MenuType = {
   id: number;
   name: string;
-  nameDe?: string | null;
   description: string;
-  descriptionDe?: string | null;
   isActive: boolean;
   startDate?: string;
   endDate?: string;
@@ -40,27 +38,22 @@ type MenuType = {
 
 type MenuStep = {
   label: string;
-  labelDe?: string | null;
   included: number;
 };
 
 type MenuItem = {
   id: number;
   name: string;
-  nameDe?: string | null;
   description: string;
-  descriptionDe?: string | null;
   category: string;
+  customCategory?: string | null;
   price: number;
   cost: number;
   available: boolean;
-  tier: string[];
   ingredients: string[];
   ingredientsDe?: string[] | null;
   allergens: string[];
   allergensDe?: string[] | null;
-  productCategories: string[];
-  productCategoriesDe?: string[] | null;
   menus: number[];
   image: string;
   popularity: number;
@@ -100,12 +93,10 @@ export default function AdminMenuManagement() {
   const locale = language === 'DE' ? 'de-DE' : 'en-US';
   const isDE = language === 'DE';
 
-  const getMenuDisplayName = (menu: Pick<MenuType, 'name' | 'nameDe'>) => (isDE ? (menu.nameDe || menu.name) : menu.name);
-  const getMenuDisplayDescription = (menu: Pick<MenuType, 'description' | 'descriptionDe'>) =>
-    isDE ? (menu.descriptionDe || menu.description) : menu.description;
-  const getProductDisplayName = (item: Pick<MenuItem, 'name' | 'nameDe'>) => (isDE ? (item.nameDe || item.name) : item.name);
-  const getProductDisplayDescription = (item: Pick<MenuItem, 'description' | 'descriptionDe'>) =>
-    isDE ? (item.descriptionDe || item.description) : item.description;
+  const getMenuDisplayName = (menu: Pick<MenuType, 'name'>) => menu.name;
+  const getMenuDisplayDescription = (menu: Pick<MenuType, 'description'>) => menu.description;
+  const getProductDisplayName = (item: Pick<MenuItem, 'name'>) => item.name;
+  const getProductDisplayDescription = (item: Pick<MenuItem, 'description'>) => item.description;
   const getServiceDisplayName = (service: Pick<Service, 'name' | 'nameDe'>) =>
     isDE ? (service.nameDe || service.name) : service.name;
   const copy = {
@@ -167,6 +158,7 @@ export default function AdminMenuManagement() {
         description: 'Description',
         descriptionEn: 'Description (EN)',
         descriptionDe: 'Description (DE)',
+        customCategory: 'Custom category',
         sellingPrice: 'Selling Price (€)',
         cost: 'Cost (€)',
         prepTime: 'Prep Time (min)',
@@ -222,7 +214,9 @@ export default function AdminMenuManagement() {
       },
       filters: {
         allCategories: 'All Categories',
+        fingerfoods: 'Fingerfood',
         starters: 'Starters',
+        soups: 'Soups',
         mains: 'Main Courses',
         desserts: 'Desserts',
         drinks: 'Drinks',
@@ -235,7 +229,9 @@ export default function AdminMenuManagement() {
         searchProducts: 'Search products...',
       },
       categories: {
+        fingerfood: 'Fingerfood',
         starter: 'Starter',
+        soup: 'Soup',
         main: 'Main Course',
         dessert: 'Dessert',
         drink: 'Drink',
@@ -321,6 +317,7 @@ export default function AdminMenuManagement() {
         description: 'Beschreibung',
         descriptionEn: 'Beschreibung (EN)',
         descriptionDe: 'Beschreibung (DE)',
+        customCategory: 'Benutzerdefinierte Kategorie',
         sellingPrice: 'Verkaufspreis (€)',
         cost: 'Kosten (€)',
         prepTime: 'Vorbereitungszeit (Min)',
@@ -376,7 +373,9 @@ export default function AdminMenuManagement() {
       },
       filters: {
         allCategories: 'Alle Kategorien',
+        fingerfoods: 'Fingerfood',
         starters: 'Vorspeisen',
+        soups: 'Suppen',
         mains: 'Hauptgerichte',
         desserts: 'Desserts',
         drinks: 'Getränke',
@@ -389,7 +388,9 @@ export default function AdminMenuManagement() {
         searchProducts: 'Produkte suchen...',
       },
       categories: {
+        fingerfood: 'Fingerfood',
         starter: 'Vorspeise',
+        soup: 'Suppe',
         main: 'Hauptgericht',
         dessert: 'Dessert',
         drink: 'Getränk',
@@ -435,7 +436,7 @@ export default function AdminMenuManagement() {
     setIsVisible(true);
   }, []);
 
-  const menuStepCategories = [
+  const baseMenuStepCategories = useMemo(() => ([
     { value: 'starter', label: language === 'DE' ? 'Vorspeise' : 'Starter' },
     { value: 'main', label: language === 'DE' ? 'Hauptgang' : 'Main' },
     { value: 'side', label: language === 'DE' ? 'Beilage' : 'Side' },
@@ -462,7 +463,7 @@ export default function AdminMenuManagement() {
     { value: 'bbq', label: language === 'DE' ? 'BBQ' : 'BBQ' },
     { value: 'breakfast', label: language === 'DE' ? 'Frühstück' : 'Breakfast' },
     { value: 'brunch', label: language === 'DE' ? 'Brunch' : 'Brunch' }
-  ];
+  ]), [language]);
 
   const defaultMenuSteps: MenuStep[] = [
     { label: 'fingerfood', included: 0 },
@@ -475,27 +476,37 @@ export default function AdminMenuManagement() {
 
   const buildDefaultMenuSteps = () => defaultMenuSteps.map(step => ({ ...step }));
 
-  // Product categories
-  const productCategories = [
-    'fingerfood', 'canape', 'appetizer', 'salad', 'soup', 'pasta', 'seafood', 'meat',
-    'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'spicy', 'signature', 'seasonal',
-    'kid-friendly', 'chef-special', 'tapas', 'bbq', 'breakfast', 'brunch'
-  ];
-  const tiers = ['ESSENTIAL', 'PREMIUM', 'LUXURY'];
-
   const [menus, setMenus] = useState<MenuType[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [servicesCatalog, setServicesCatalog] = useState<Service[]>([]);
   const [editingMenu, setEditingMenu] = useState<MenuType | null>(null);
+
+  const menuStepCategories = useMemo(() => {
+    const base = baseMenuStepCategories;
+    const existing = new Set(base.map((c) => String(c.value).trim().toLowerCase()));
+    const custom = new Map<string, string>(); // key -> label
+
+    menuItems.forEach((item) => {
+      const raw = String(item?.customCategory || '').trim();
+      if (!raw) return;
+      const key = raw.toLowerCase();
+      if (existing.has(key)) return;
+      if (!custom.has(key)) custom.set(key, raw);
+    });
+
+    const extra = Array.from(custom.values())
+      .sort((a, b) => a.localeCompare(b, locale))
+      .map((label) => ({ value: label, label }));
+
+    return extra.length ? [...base, ...extra] : base;
+  }, [baseMenuStepCategories, menuItems, locale]);
 
   useBodyScrollLock(Boolean(editingItem || showAddForm || showAddMenuForm || selectedMenuForDetail || editingMenu));
 
   const normalizeMenu = (menu: any): MenuType => ({
     id: menu.id,
     name: menu.name,
-    nameDe: menu.nameDe ?? null,
     description: menu.description || '',
-    descriptionDe: menu.descriptionDe ?? null,
     isActive: !!menu.isActive,
     startDate: menu.startDate || undefined,
     endDate: menu.endDate || undefined,
@@ -511,10 +522,9 @@ export default function AdminMenuManagement() {
     steps: Array.isArray(menu.steps)
       ? menu.steps.map((step: any) => ({
            label: typeof step?.label === 'string' ? step.label : '',
-           labelDe: typeof step?.labelDe === 'string' ? step.labelDe : null,
            included: Number.isFinite(step?.included) ? step.included : 0
-         })).filter((step: MenuStep) => step.label)
-      : []
+          })).filter((step: MenuStep) => step.label)
+       : []
   });
 
   const MenuDetailModal = ({ menu, onClose }: { menu: MenuType; onClose: () => void }) => (
@@ -523,11 +533,9 @@ export default function AdminMenuManagement() {
       onClick={onClose}
     >
       {(() => {
-        const displayName = language === 'DE' ? (menu.nameDe || menu.name) : menu.name;
-        const displayDescription = language === 'DE'
-          ? (menu.descriptionDe || menu.description)
-          : menu.description;
-        const getStepLabel = (step: MenuStep) => (language === 'DE' ? (step.labelDe || step.label) : step.label);
+        const displayName = menu.name;
+        const displayDescription = menu.description;
+        const getStepLabel = (step: MenuStep) => step.label;
 
         return (
       <div
@@ -598,20 +606,16 @@ export default function AdminMenuManagement() {
   const normalizeProduct = (product: any): MenuItem => ({
     id: product.id,
     name: product.name,
-    nameDe: product.nameDe ?? null,
     description: product.description || '',
-    descriptionDe: product.descriptionDe ?? null,
     category: (product.category || '').toLowerCase(),
+    customCategory: typeof product.customCategory === 'string' ? product.customCategory : null,
     price: product.price ?? 0,
     cost: product.cost ?? 0,
     available: !!product.available,
-    tier: Array.isArray(product.tier) ? product.tier : product.tier ? [product.tier] : [],
     ingredients: Array.isArray(product.ingredients) ? product.ingredients : [],
     ingredientsDe: Array.isArray(product.ingredientsDe) ? product.ingredientsDe : null,
     allergens: Array.isArray(product.allergens) ? product.allergens : [],
     allergensDe: Array.isArray(product.allergensDe) ? product.allergensDe : null,
-    productCategories: Array.isArray(product.productCategories) ? product.productCategories : [],
-    productCategoriesDe: Array.isArray(product.productCategoriesDe) ? product.productCategoriesDe : null,
     menus: product.menus
       ? product.menus
       : product.menuProducts
@@ -650,24 +654,6 @@ export default function AdminMenuManagement() {
     }
   };
 
-  const restoreLegacyMenus = async () => {
-    if (isLoading || isMutating) return;
-    await runMutation(language === 'DE' ? 'Stelle alte MenÃ¼s wieder her...' : 'Restoring legacy menus...', async () => {
-      try {
-        const result = await menusApi.restoreLegacyMenusFromBackup();
-        await loadMenusAndProducts();
-        showNotification(
-          'success',
-          (language === 'DE'
-            ? `Alte MenÃ¼s wiederhergestellt. MenÃ¼s: ${result.restoredMenus}, Produkte: ${result.restoredProducts}, Services: ${result.restoredServices}, ZubehÃ¶r: ${result.restoredAccessories}`
-            : `Legacy restored. Menus: ${result.restoredMenus}, Products: ${result.restoredProducts}, Services: ${result.restoredServices}, Accessories: ${result.restoredAccessories}`)
-        );
-      } catch (error: any) {
-        showNotification('error', error?.message || (language === 'DE' ? 'Wiederherstellen fehlgeschlagen.' : 'Restore failed.'));
-      }
-    });
-  };
-
   // Load data from backend
   const loadMenusAndProducts = async () => {
     try {
@@ -697,28 +683,23 @@ export default function AdminMenuManagement() {
   }, []);
 
 const [newItem, setNewItem] = useState<NewItemState>({
-    name: '',
-    nameDe: '',
-    description: '',
-    descriptionDe: '',
-    category: 'starter',
-    price: 0,
-    cost: 0,
-    available: true,
-    tier: [],
-    ingredients: [''],
-    allergens: [],
-    productCategories: [],
-    menus: [],
-    image: ''
+     name: '',
+     description: '',
+     category: 'starter',
+     customCategory: '',
+     price: 0,
+     cost: 0,
+     available: true,
+     ingredients: [''],
+     allergens: [],
+     menus: [],
+     image: ''
   });
 
   // New menu form state
   const [newMenu, setNewMenu] = useState<NewMenuState>({
     name: '',
-    nameDe: '',
     description: '',
-    descriptionDe: '',
     isActive: true,
     startDate: '',
     endDate: '',
@@ -734,7 +715,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const filteredItems = menuItems.filter(item => {
     const query = searchTerm.toLowerCase().trim();
     const matchesSearch = !query
-      || [item.name, item.nameDe || '', item.description, item.descriptionDe || ''].join(' ').toLowerCase().includes(query);
+      || [item.name, item.description, item.customCategory || ''].join(' ').toLowerCase().includes(query);
     const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter;
     const matchesMenu = menuFilter === 'all' || 
                        (menuFilter === 'unassigned' && item.menus.length === 0) ||
@@ -764,14 +745,10 @@ const [newItem, setNewItem] = useState<NewItemState>({
     const base = itemData || newItem;
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
-        const created = await productsApi.createProduct({
-          ...(base as any),
-          nameDe: typeof (base as any).nameDe === 'string' && (base as any).nameDe.trim() ? (base as any).nameDe.trim() : undefined,
-          descriptionDe:
-            typeof (base as any).descriptionDe === 'string' && (base as any).descriptionDe.trim()
-              ? (base as any).descriptionDe.trim()
-              : undefined,
-        } as any);
+        const payload: any = { ...(base as any) };
+        delete payload.ingredientsDe;
+        delete payload.allergensDe;
+        const created = await productsApi.createProduct(payload);
         const normalized = normalizeProduct(created);
         setMenuItems([...menuItems, normalized]);
 
@@ -801,15 +778,13 @@ const [newItem, setNewItem] = useState<NewItemState>({
     if (!oldItem) return;
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
-        const payload = {
+        const payload: any = {
           ...updatedItem,
           menuIds: updatedItem.menus,
-          nameDe: typeof updatedItem.nameDe === 'string' && updatedItem.nameDe.trim() ? updatedItem.nameDe.trim() : undefined,
-          descriptionDe:
-            typeof updatedItem.descriptionDe === 'string' && updatedItem.descriptionDe.trim()
-              ? updatedItem.descriptionDe.trim()
-              : undefined,
         };
+        // Let backend normalize + auto-translate arrays when EN values change.
+        delete payload.ingredientsDe;
+        delete payload.allergensDe;
         const saved = await productsApi.updateProduct(updatedItem.id, payload as any);
         const normalized = normalizeProduct(saved);
 
@@ -846,24 +821,10 @@ const [newItem, setNewItem] = useState<NewItemState>({
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
         const payload: any = { ...(menuData || newMenu) };
-        if (typeof payload.nameDe === 'string') {
-          const trimmed = payload.nameDe.trim();
-          if (!trimmed) delete payload.nameDe;
-          else payload.nameDe = trimmed;
-        }
-        if (typeof payload.descriptionDe === 'string') {
-          const trimmed = payload.descriptionDe.trim();
-          if (!trimmed) delete payload.descriptionDe;
-          else payload.descriptionDe = trimmed;
-        }
         if (Array.isArray(payload.steps)) {
           payload.steps = payload.steps.map((step: any) => {
             const next = { ...step };
-            if (typeof next.labelDe === 'string') {
-              const trimmed = next.labelDe.trim();
-              if (!trimmed) delete next.labelDe;
-              else next.labelDe = trimmed;
-            }
+            delete (next as any).labelDe;
             return next;
           });
         }
@@ -886,24 +847,10 @@ const [newItem, setNewItem] = useState<NewItemState>({
     await runMutation(language === 'DE' ? 'Speichert...' : 'Saving...', async () => {
       try {
         const payload: any = { ...(updatedMenu as any), serviceIds: updatedMenu.services };
-        if (typeof payload.nameDe === 'string') {
-          const trimmed = payload.nameDe.trim();
-          if (!trimmed) delete payload.nameDe;
-          else payload.nameDe = trimmed;
-        }
-        if (typeof payload.descriptionDe === 'string') {
-          const trimmed = payload.descriptionDe.trim();
-          if (!trimmed) delete payload.descriptionDe;
-          else payload.descriptionDe = trimmed;
-        }
         if (Array.isArray(payload.steps)) {
           payload.steps = payload.steps.map((step: any) => {
             const next = { ...step };
-            if (typeof next.labelDe === 'string') {
-              const trimmed = next.labelDe.trim();
-              if (!trimmed) delete next.labelDe;
-              else next.labelDe = trimmed;
-            }
+            delete (next as any).labelDe;
             return next;
           });
         }
@@ -1004,24 +951,6 @@ const [newItem, setNewItem] = useState<NewItemState>({
   };
 
   // Helper functions
-  const toggleTier = (tier: string) => {
-    setNewItem(prev => ({
-      ...prev,
-      tier: prev.tier.includes(tier) 
-        ? prev.tier.filter(t => t !== tier)
-        : [...prev.tier, tier]
-    }));
-  };
-
-  const toggleProductCategory = (category: string) => {
-    setNewItem(prev => ({
-      ...prev,
-      productCategories: prev.productCategories.includes(category)
-        ? prev.productCategories.filter(c => c !== category)
-        : [...prev.productCategories, category]
-    }));
-  };
-
   const toggleMenuAssociation = (menuId: number) => {
     setNewItem(prev => ({
       ...prev,
@@ -1054,17 +983,14 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const resetNewItemForm = () => {
     setNewItem({
       name: '',
-      nameDe: '',
       description: '',
-      descriptionDe: '',
       category: 'starter',
+      customCategory: '',
       price: 0,
       cost: 0,
       available: true,
-      tier: [],
       ingredients: [''],
       allergens: [],
-      productCategories: [],
       menus: [],
       image: ''
     });
@@ -1073,9 +999,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
   const resetNewMenuForm = () => {
     setNewMenu({
       name: '',
-      nameDe: '',
       description: '',
-      descriptionDe: '',
       isActive: true,
       startDate: '',
       endDate: '',
@@ -1134,7 +1058,10 @@ const [newItem, setNewItem] = useState<NewItemState>({
   };
 
   const EditFormModal = ({ item, onSave, onClose }: { item: MenuItem; onSave: (updatedItem: MenuItem) => void; onClose: () => void }) => {
-    const [localItem, setLocalItem] = useState<MenuItem>(item);
+    const [localItem, setLocalItem] = useState<MenuItem>(() => ({
+      ...item,
+      ingredients: item.ingredients.length > 0 ? item.ingredients : ['']
+    }));
     const [localImagePreview, setLocalImagePreview] = useState(item.image);
     const [priceInput, setPriceInput] = useState(() =>
       Number.isFinite(item.price) ? String(item.price) : ''
@@ -1145,6 +1072,14 @@ const [newItem, setNewItem] = useState<NewItemState>({
 
     const handleLocalSave = (updatedItem: MenuItem) => {
       setLocalItem(updatedItem);
+    };
+
+    const updateLocalIngredient = (index: number, value: string) => {
+      setLocalItem((prev) => {
+        const nextIngredients = [...prev.ingredients];
+        nextIngredients[index] = value;
+        return { ...prev, ingredients: nextIngredients };
+      });
     };
 
     const handleImageUploadLocal = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1158,15 +1093,6 @@ const [newItem, setNewItem] = useState<NewItemState>({
         };
         reader.readAsDataURL(file);
       }
-    };
-
-    const toggleLocalProductCategory = (category: string) => {
-      handleLocalSave({
-        ...localItem,
-        productCategories: localItem.productCategories.includes(category)
-          ? localItem.productCategories.filter(c => c !== category)
-          : [...localItem.productCategories, category]
-      });
     };
 
     const toggleLocalMenuAssociation = (menuId: number) => {
@@ -1236,7 +1162,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
               </div>
 
               <div className="md:col-span-3 space-y-6">
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
                     <input
@@ -1248,47 +1174,40 @@ const [newItem, setNewItem] = useState<NewItemState>({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
-                    <input
-                      type="text"
-                      value={localItem.nameDe || ''}
-                      onChange={(e) => handleLocalSave({ ...localItem, nameDe: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder={t.placeholders.dishName}
-                    />
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
                     <select
                       value={localItem.category}
                       onChange={(e) => handleLocalSave({ ...localItem, category: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                     >
+                      <option value="fingerfood">{t.categories.fingerfood}</option>
                       <option value="starter">{t.categories.starter}</option>
+                      <option value="soup">{t.categories.soup}</option>
                       <option value="main">{t.categories.main}</option>
                       <option value="dessert">{t.categories.dessert}</option>
-                      <option value="drink">{t.categories.drink}</option>
+                      <option value="beverage">{t.categories.drink}</option>
                       <option value="side">{t.categories.side}</option>
                   </select>
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.customCategory}</label>
+                  <input
+                    type="text"
+                    value={localItem.customCategory || ''}
+                    onChange={(e) => handleLocalSave({ ...localItem, customCategory: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                    placeholder="e.g., seafood"
+                  />
+                </div>
+
+                <div className="grid gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
                     <textarea
                       value={localItem.description}
                       onChange={(e) => handleLocalSave({ ...localItem, description: e.target.value })}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                      placeholder={t.placeholders.dishDescription}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
-                    <textarea
-                      value={localItem.descriptionDe || ''}
-                      onChange={(e) => handleLocalSave({ ...localItem, descriptionDe: e.target.value })}
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                       placeholder={t.placeholders.dishDescription}
@@ -1345,59 +1264,34 @@ const [newItem, setNewItem] = useState<NewItemState>({
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.productCategories}</label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                      {productCategories.map(category => (
-                        <div key={category} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            id={`category-${category}`}
-                            checked={localItem.productCategories.includes(category)}
-                            onChange={() => toggleLocalProductCategory(category)}
-                            className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                          />
-                          <label 
-                            htmlFor={`category-${category}`}
-                            className="text-sm text-gray-700 capitalize cursor-pointer"
-                          >
-                            {category.replace('-', ' ')}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.includeMenus}</label>
-                    <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                      {menus.map(menu => (
-                        <div key={menu.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            id={`menu-${menu.id}`}
-                            checked={localItem.menus.includes(menu.id)}
-                            onChange={() => toggleLocalMenuAssociation(menu.id)}
-                            className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                          />
-                          <label 
-                            htmlFor={`menu-${menu.id}`}
-                            className="text-sm text-gray-700 cursor-pointer"
-                          >
-                            {getMenuDisplayName(menu)}
-                          </label>
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {menu.isActive ? t.actions.active : t.actions.inactive}
-                          </span>
-                        </div>
-                      ))}
-                      {menus.length === 0 && (
-                        <p className="text-sm text-gray-500 text-center py-2">{t.menu.noMenusYet}</p>
-                      )}
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.includeMenus}</label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                    {menus.map(menu => (
+                      <div key={menu.id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`menu-${menu.id}`}
+                          checked={localItem.menus.includes(menu.id)}
+                          onChange={() => toggleLocalMenuAssociation(menu.id)}
+                          className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                        />
+                        <label 
+                          htmlFor={`menu-${menu.id}`}
+                          className="text-sm text-gray-700 cursor-pointer"
+                        >
+                          {getMenuDisplayName(menu)}
+                        </label>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          menu.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {menu.isActive ? t.actions.active : t.actions.inactive}
+                        </span>
+                      </div>
+                    ))}
+                    {menus.length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-2">{t.menu.noMenusYet}</p>
+                    )}
                   </div>
                 </div>
 
@@ -1418,7 +1312,7 @@ const [newItem, setNewItem] = useState<NewItemState>({
                             <div className="space-y-1 text-sm text-gray-700">
                               {steps.map((step: MenuStep, index: number) => (
                                 <div key={`menu-${menuId}-step-${index}`} className="flex items-center justify-between">
-                                  <span>{isDE ? (step.labelDe || step.label) : step.label}</span>
+                                  <span>{step.label}</span>
                                   <span className="font-semibold text-gray-900">{step.included}</span>
                                 </div>
                               ))}
@@ -1430,6 +1324,44 @@ const [newItem, setNewItem] = useState<NewItemState>({
                       );
                     })}
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.ingredients}</label>
+                  <div className="space-y-3">
+                    {(localItem.ingredients.length > 0 ? localItem.ingredients : ['']).map((ingredient, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          value={ingredient}
+                          onChange={(e) => updateLocalIngredient(index, e.target.value)}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                          placeholder={t.placeholders.ingredients}
+                        />
+                        {localItem.ingredients.length > 1 && (
+                          <button
+                            onClick={() =>
+                              setLocalItem((prev) => ({
+                                ...prev,
+                                ingredients: prev.ingredients.filter((_, i) => i !== index)
+                              }))
+                            }
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title={t.actions.removeIngredientTitle}
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setLocalItem((prev) => ({ ...prev, ingredients: [...prev.ingredients, ''] }))}
+                    className="mt-2 px-4 py-2 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium flex items-center gap-2"
+                  >
+                    <Plus size={16} />
+                    {t.actions.addIngredient}
+                  </button>
                 </div>
 
                 <div className="flex gap-4">
@@ -1542,7 +1474,7 @@ const AddFormModal = () => {
             </div>
 
             <div className="md:col-span-3 space-y-6">
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
                   <input
@@ -1554,47 +1486,40 @@ const AddFormModal = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
-                  <input
-                    type="text"
-                    value={localItem.nameDe || ''}
-                    onChange={(e) => setLocalItem({ ...localItem, nameDe: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.dishName}
-                  />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.category}</label>
                   <select
                     value={localItem.category}
                     onChange={(e) => setLocalItem({ ...localItem, category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
                   >
+                    <option value="fingerfood">{t.categories.fingerfood}</option>
                     <option value="starter">{t.categories.starter}</option>
+                    <option value="soup">{t.categories.soup}</option>
                     <option value="main">{t.categories.main}</option>
                     <option value="dessert">{t.categories.dessert}</option>
-                    <option value="drink">{t.categories.drink}</option>
+                    <option value="beverage">{t.categories.drink}</option>
                     <option value="side">{t.categories.side}</option>
                   </select>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.customCategory}</label>
+                <input
+                  type="text"
+                  value={localItem.customCategory || ''}
+                  onChange={(e) => setLocalItem({ ...localItem, customCategory: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder="e.g., seafood"
+                />
+              </div>
+
+              <div className="grid gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
                   <textarea
                     value={localItem.description}
                     onChange={(e) => setLocalItem({ ...localItem, description: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.dishDescription}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
-                  <textarea
-                    value={localItem.descriptionDe || ''}
-                    onChange={(e) => setLocalItem({ ...localItem, descriptionDe: e.target.value })}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
                     placeholder={t.placeholders.dishDescription}
@@ -1629,33 +1554,7 @@ const AddFormModal = () => {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.productCategories}</label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                    {productCategories.map(category => (
-                      <div key={category} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id={`new-category-${category}`}
-                          checked={localItem.productCategories.includes(category)}
-                          onChange={(e) => {
-                            const updatedCategories = e.target.checked
-                              ? [...localItem.productCategories, category]
-                              : localItem.productCategories.filter(c => c !== category);
-                            setLocalItem({ ...localItem, productCategories: updatedCategories });
-                          }}
-                          className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                        />
-                        <label htmlFor={`new-category-${category}`} className="text-sm text-gray-700 capitalize cursor-pointer">
-                          {category}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
+              <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.assignMenus}</label>
                   <div className="space-y-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
                     {menus.map(menu => (
@@ -1678,33 +1577,6 @@ const AddFormModal = () => {
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">{t.menu.menuTiers}</label>
-                <div className="flex gap-3">
-                  {tiers.map(tier => (
-                    <button
-                      key={tier}
-                      className={`px-4 py-2 rounded-lg font-medium capitalize ${
-                        localItem.tier.includes(tier)
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      onClick={() =>
-                        setLocalItem(prev => ({
-                          ...prev,
-                          tier: prev.tier.includes(tier)
-                            ? prev.tier.filter(t => t !== tier)
-                            : [...prev.tier, tier]
-                        }))
-                      }
-                    >
-                      {tier}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div>
@@ -1807,7 +1679,7 @@ const AddMenuFormModal = () => {
   const addMenuStep = () => {
     setLocalMenuState({
       ...localMenuState,
-      steps: [...(localMenuState.steps || []), { label: '', labelDe: '', included: 0 }]
+      steps: [...(localMenuState.steps || []), { label: '', included: 0 }]
     });
   };
 
@@ -1872,27 +1744,15 @@ const AddMenuFormModal = () => {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
-                  <input
-                    type="text"
-                    value={localMenuState.name}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuName}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
-                  <input
-                    type="text"
-                    value={(localMenuState as any).nameDe || ''}
-                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), nameDe: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuName}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                <input
+                  type="text"
+                  value={localMenuState.name}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.menuName}
+                />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
@@ -1972,27 +1832,15 @@ const AddMenuFormModal = () => {
                 )}
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
-                  <textarea
-                    value={localMenuState.description}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuDescription}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
-                  <textarea
-                    value={(localMenuState as any).descriptionDe || ''}
-                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), descriptionDe: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuDescription}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
+                <textarea
+                  value={localMenuState.description}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.menuDescription}
+                />
               </div>
 
               <div>
@@ -2012,13 +1860,7 @@ const AddMenuFormModal = () => {
                           </option>
                         ))}
                       </select>
-                      <input
-                        type="text"
-                        value={step.labelDe || ''}
-                        onChange={(e) => updateMenuStep(index, { labelDe: e.target.value })}
-                        className="col-span-12 sm:col-span-4 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                        placeholder={isDE ? 'Schrittname (DE)' : 'Step name (DE)'}
-                      />
+
                       <input
                         type="number"
                         value={step.included}
@@ -2121,7 +1963,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
   const addMenuStep = () => {
     setLocalMenuState({
       ...localMenuState,
-      steps: [...(localMenuState.steps || []), { label: '', labelDe: '', included: 0 }]
+      steps: [...(localMenuState.steps || []), { label: '', included: 0 }]
     });
   };
 
@@ -2187,27 +2029,15 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameEn}</label>
-                  <input
-                    type="text"
-                    value={localMenuState.name}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuName}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.nameDe}</label>
-                  <input
-                    type="text"
-                    value={(localMenuState as any).nameDe || ''}
-                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), nameDe: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuName}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.name}</label>
+                <input
+                  type="text"
+                  value={localMenuState.name}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.menuName}
+                />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
@@ -2287,27 +2117,15 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                 )}
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionEn}</label>
-                  <textarea
-                    value={localMenuState.description}
-                    onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuDescription}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.descriptionDe}</label>
-                  <textarea
-                    value={(localMenuState as any).descriptionDe || ''}
-                    onChange={(e) => setLocalMenuState({ ...(localMenuState as any), descriptionDe: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                    placeholder={t.placeholders.menuDescription}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t.menu.description}</label>
+                <textarea
+                  value={localMenuState.description}
+                  onChange={(e) => setLocalMenuState({ ...localMenuState, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
+                  placeholder={t.placeholders.menuDescription}
+                />
               </div>
 
               <div>
@@ -2327,13 +2145,7 @@ const EditMenuFormModal = ({ menu }: { menu: MenuType }) => {
                           </option>
                         ))}
                       </select>
-                      <input
-                        type="text"
-                        value={step.labelDe || ''}
-                        onChange={(e) => updateMenuStep(index, { labelDe: e.target.value })}
-                        className="col-span-12 sm:col-span-4 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder-gray-500"
-                        placeholder={isDE ? 'Schrittname (DE)' : 'Step name (DE)'}
-                      />
+
                       <input
                         type="number"
                         value={step.included}
@@ -2521,24 +2333,6 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
         
         <p className="text-sm text-gray-700 line-clamp-2 mb-4">{getProductDisplayDescription(item)}</p>
 
-        {/* Product Categories */}
-        <div className="mb-3">
-          <div className="flex flex-wrap gap-1">
-            {(isDE && item.productCategoriesDe?.length ? item.productCategoriesDe : item.productCategories)
-              .slice(0, 3)
-              .map((category: string) => (
-              <span key={category} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs capitalize">
-                {category.replace('-', ' ')}
-              </span>
-            ))}
-            {(isDE && item.productCategoriesDe?.length ? item.productCategoriesDe : item.productCategories).length > 3 && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
-                +{(isDE && item.productCategoriesDe?.length ? item.productCategoriesDe : item.productCategories).length - 3}
-              </span>
-            )}
-          </div>
-        </div>
-
         {/* Menu Associations */}
         <div className="mb-3">
           <p className="text-xs text-gray-500 mb-1">{t.menu.includedInMenus}</p>
@@ -2561,24 +2355,6 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 {t.filters.unassigned}
               </span>
             )}
-          </div>
-        </div>
-
-        {/* Menu Tiers */}
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-1">
-            {tiers.map(tier => (
-              <span
-                key={tier}
-                className={`px-2 py-1 rounded text-xs font-medium capitalize ${
-                  item.tier.includes(tier)
-                    ? 'bg-amber-100 text-amber-800'
-                    : 'bg-gray-100 text-gray-500'
-                }`}
-              >
-                {tier}
-              </span>
-            ))}
           </div>
         </div>
 
@@ -2691,16 +2467,6 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{language === 'DE' ? 'Aktualisieren' : 'Refresh'}</span>
           </button>
-          <button
-            type="button"
-            onClick={restoreLegacyMenus}
-            disabled={isLoading || isMutating}
-            className="px-3 py-2 rounded-xl bg-white border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            title={language === 'DE' ? 'Alte MenÃ¼s aus backup.sql wiederherstellen' : 'Restore legacy menus from backup.sql'}
-          >
-            <RefreshCw className={`w-4 h-4 ${isMutating ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{language === 'DE' ? 'Alte MenÃ¼s wiederherstellen' : 'Restore legacy'}</span>
-          </button>
           <ViewModeToggle />
           <span className="hidden md:inline text-sm text-gray-600">
             {t.header.totalProducts}: {menuItems.length} | {t.header.totalMenus}: {menus.length}
@@ -2790,18 +2556,20 @@ const ProductCard = ({ item }: { item: MenuItem }) => (
                 />
               </div>
               
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
-              >
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                >
                 <option value="all">{t.filters.allCategories}</option>
+                <option value="fingerfood">{t.filters.fingerfoods}</option>
                 <option value="starter">{t.filters.starters}</option>
+                <option value="soup">{t.filters.soups}</option>
                 <option value="main">{t.filters.mains}</option>
                 <option value="dessert">{t.filters.desserts}</option>
-                <option value="drink">{t.filters.drinks}</option>
+                <option value="beverage">{t.filters.drinks}</option>
                 <option value="side">{t.filters.sides}</option>
-              </select>
+                </select>
 
               <select
                 value={menuFilter}

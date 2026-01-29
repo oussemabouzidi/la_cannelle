@@ -321,15 +321,13 @@ export default function CateringHomepage() {
 
         id: product.id,
 
-        name: language === 'DE' ? (product.nameDe || product.name) : product.name,
+        name: product.name,
 
         category: product.category,
 
         price: product.price !== undefined ? `${product.price.toFixed(2)} EUR` : undefined,
 
-        description: language === 'DE'
-          ? (product.descriptionDe || product.description)
-          : product.description,
+        description: product.description,
 
         image: product.image,
 
@@ -387,9 +385,9 @@ export default function CateringHomepage() {
 
         id: menu.id,
 
-        name: language === 'DE' ? (menu.nameDe || menu.name) : menu.name,
+        name: menu.name,
 
-        desc: (language === 'DE' ? (menu.descriptionDe || menu.description) : menu.description) || '',
+        desc: menu.description || '',
         price: menu.price !== undefined ? `${menu.price.toFixed(2)} EUR` : undefined,
 
         productIds: menu.products,

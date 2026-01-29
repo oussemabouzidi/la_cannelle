@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import { orderService } from '../services/orderService';
 import { systemService } from '../services/systemService';
 import { AppError } from '../middleware/errorHandler';
+import { captchaService } from '../services/captchaService';
 
 export const orderController = {
   async createOrder(req: AuthRequest, res: Response) {
@@ -15,12 +16,12 @@ export const orderController = {
       eventTime,
       guests,
       location,
-      menuTier,
       specialRequests,
       businessType,
       serviceType,
       serviceId,
       postalCode,
+      captchaToken,
       items,
       subtotal,
       serviceFee,
@@ -49,6 +50,10 @@ export const orderController = {
       return res.status(403).json({ error: 'Selected date is closed for orders' });
     }
 
+    const ipHeader = (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || '') as string;
+    const ip = ipHeader ? String(ipHeader).split(',')[0].trim() : (req.ip ? String(req.ip) : undefined);
+    await captchaService.verify(captchaToken, { ip });
+
     const order = await orderService.createOrder({
       userId: req.user?.id,
       serviceId: serviceId === '' || serviceId === null || serviceId === undefined ? undefined : parseInt(serviceId, 10),
@@ -60,7 +65,6 @@ export const orderController = {
       eventTime: eventTime || 'TBD',
       guests: parseInt(guests) || 1,
       location: location || postalCode || 'Not provided',
-      menuTier,
       specialRequests,
       businessType,
       serviceType,

@@ -3,21 +3,17 @@ import { apiClient } from '../api';
 export interface Product {
   id: number;
   name: string;
-  nameDe?: string | null;
   description: string;
-  descriptionDe?: string | null;
   category: string;
+  customCategory?: string | null;
   price: number;
   cost: number;
   available: boolean;
   minOrderQuantity?: number;
-  tier: string[];
   ingredients: string[];
   ingredientsDe?: string[] | null;
   allergens: string[];
   allergensDe?: string[] | null;
-  productCategories: string[];
-  productCategoriesDe?: string[] | null;
   image?: string;
   popularity: number;
   menus?: number[];
@@ -27,14 +23,12 @@ export const productsApi = {
   async getProducts(filters?: {
     category?: string;
     available?: boolean;
-    tier?: string;
     search?: string;
     menuId?: number;
   }): Promise<Product[]> {
     const params = new URLSearchParams();
     if (filters?.category) params.append('category', filters.category);
     if (filters?.available !== undefined) params.append('available', String(filters.available));
-    if (filters?.tier) params.append('tier', filters.tier);
     if (filters?.search) params.append('search', filters.search);
     if (filters?.menuId) params.append('menuId', String(filters.menuId));
 

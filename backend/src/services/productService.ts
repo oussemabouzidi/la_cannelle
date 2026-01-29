@@ -1,4 +1,4 @@
-import { ProductCategory, MenuTier } from '@prisma/client';
+import { ProductCategory } from '@prisma/client';
 import { prisma } from '../prisma';
 import { AppError } from '../middleware/errorHandler';
 import { normalizeImageValue } from '../utils/uploads';
@@ -21,21 +21,14 @@ const normalizeCategory = (category?: string | ProductCategory): ProductCategory
   return normalized as ProductCategory;
 };
 
-const normalizeTier = (tier?: string[] | MenuTier[]): MenuTier[] | undefined => {
-  if (!tier) return undefined;
-  return tier.map(t => t.toString().toUpperCase() as MenuTier);
-};
-
 const normalizeProductInput = <T extends {
   category?: string | ProductCategory;
-  tier?: string[] | MenuTier[];
   menus?: number[];
   menuIds?: number[];
 }>(data: T) => {
   return {
     ...data,
     ...(data.category && { category: normalizeCategory(data.category) }),
-    ...(data.tier && { tier: normalizeTier(data.tier) }),
     ...(data.menuIds && { menuIds: data.menuIds }),
     ...(data.menus && { menuIds: data.menuIds ?? data.menus })
   };
@@ -48,11 +41,16 @@ const normalizeStringArray = (value: unknown): string[] => {
     .filter((item) => item.length > 0);
 };
 
+const toOptionalString = (value: unknown) => {
+  if (value === null || value === undefined) return undefined;
+  const text = String(value).trim();
+  return text.length ? text : undefined;
+};
+
 export const productService = {
   async getProducts(filters?: {
     category?: ProductCategory;
     available?: boolean;
-    tier?: MenuTier;
     search?: string;
     menuId?: number;
   }) {
@@ -66,16 +64,11 @@ export const productService = {
       where.available = filters.available;
     }
 
-    if (filters?.tier) {
-      where.tier = { has: filters.tier.toString().toUpperCase() as MenuTier };
-    }
-
     if (filters?.search) {
       where.OR = [
         { name: { contains: filters.search } },
-        { nameDe: { contains: filters.search } },
         { description: { contains: filters.search } },
-        { descriptionDe: { contains: filters.search } }
+        { customCategory: { contains: filters.search } }
       ];
     }
 
@@ -125,60 +118,41 @@ export const productService = {
 
   async createProduct(data: {
     name: string;
-    nameDe?: string | null;
     description: string;
-    descriptionDe?: string | null;
     category: ProductCategory;
+    customCategory?: unknown;
     price: number;
     cost: number;
     available?: boolean;
     minOrderQuantity?: number;
-    tier: MenuTier[];
     ingredients: string[];
     ingredientsDe?: unknown;
     allergens: string[];
     allergensDe?: unknown;
-    productCategories: string[];
-    productCategoriesDe?: unknown;
     image?: string;
     menuIds?: number[];
   }) {
     const normalizedData = normalizeProductInput(data);
     const image = await normalizeImageValue(normalizedData.image, { prefix: 'product' });
+    const customCategory = toOptionalString((normalizedData as any).customCategory) ?? null;
 
     const ingredients = normalizeStringArray(normalizedData.ingredients);
     const allergens = normalizeStringArray(normalizedData.allergens);
-    const productCategories = normalizeStringArray(normalizedData.productCategories);
-
-    const providedNameDe = typeof data.nameDe === 'string' ? data.nameDe.trim() : '';
-    const providedDescriptionDe = typeof data.descriptionDe === 'string' ? data.descriptionDe.trim() : '';
 
     const hasIngredientsDe = (data as any).ingredientsDe !== undefined;
     const providedIngredientsDe = hasIngredientsDe ? normalizeStringArray((data as any).ingredientsDe) : null;
     const hasAllergensDe = (data as any).allergensDe !== undefined;
     const providedAllergensDe = hasAllergensDe ? normalizeStringArray((data as any).allergensDe) : null;
-    const hasProductCategoriesDe = (data as any).productCategoriesDe !== undefined;
-    const providedProductCategoriesDe = hasProductCategoriesDe
-      ? normalizeStringArray((data as any).productCategoriesDe)
-      : null;
 
     const translationTargets: Array<
-      | { kind: 'scalar'; key: 'nameDe' | 'descriptionDe'; text: string }
-      | { kind: 'array'; key: 'ingredientsDe' | 'allergensDe' | 'productCategoriesDe'; texts: string[] }
+      { kind: 'array'; key: 'ingredientsDe' | 'allergensDe'; texts: string[] }
     > = [];
 
-    if (!providedNameDe) translationTargets.push({ kind: 'scalar', key: 'nameDe', text: normalizedData.name });
-    if (!providedDescriptionDe) translationTargets.push({ kind: 'scalar', key: 'descriptionDe', text: normalizedData.description });
     if (!hasIngredientsDe) translationTargets.push({ kind: 'array', key: 'ingredientsDe', texts: ingredients });
     if (!hasAllergensDe) translationTargets.push({ kind: 'array', key: 'allergensDe', texts: allergens });
-    if (!hasProductCategoriesDe) translationTargets.push({ kind: 'array', key: 'productCategoriesDe', texts: productCategories });
 
     const texts: string[] = [];
     translationTargets.forEach((target) => {
-      if (target.kind === 'scalar') {
-        texts.push(target.text);
-        return;
-      }
       texts.push(...target.texts);
     });
 
@@ -188,40 +162,28 @@ export const productService = {
     if (translated) {
       let cursor = 0;
       translationTargets.forEach((target) => {
-        if (target.kind === 'scalar') {
-          translatedMap[target.key] = translated[cursor] ?? null;
-          cursor += 1;
-          return;
-        }
         translatedMap[target.key] = translated.slice(cursor, cursor + target.texts.length);
         cursor += target.texts.length;
       });
     }
 
-    const nameDe = providedNameDe ? providedNameDe : (translatedMap.nameDe ?? null);
-    const descriptionDe = providedDescriptionDe ? providedDescriptionDe : (translatedMap.descriptionDe ?? null);
     const translatedIngredients = hasIngredientsDe ? providedIngredientsDe : (translatedMap.ingredientsDe ?? null);
     const translatedAllergens = hasAllergensDe ? providedAllergensDe : (translatedMap.allergensDe ?? null);
-    const translatedProductCategories = hasProductCategoriesDe ? providedProductCategoriesDe : (translatedMap.productCategoriesDe ?? null);
 
     const product = await prisma.product.create({
       data: {
         name: normalizedData.name,
-        nameDe,
         description: normalizedData.description,
-        descriptionDe,
         category: normalizedData.category as ProductCategory,
+        customCategory,
         price: normalizedData.price,
         cost: normalizedData.cost,
         available: normalizedData.available ?? true,
         minOrderQuantity: normalizedData.minOrderQuantity ?? 1,
-        tier: normalizedData.tier as MenuTier[],
         ingredients,
         ingredientsDe: translatedIngredients,
         allergens,
         allergensDe: translatedAllergens,
-        productCategories,
-        productCategoriesDe: translatedProductCategories,
         image,
         menuProducts: normalizedData.menuIds ? {
           create: normalizedData.menuIds.map(menuId => ({ menuId }))
@@ -239,14 +201,13 @@ export const productService = {
     name: string;
     description: string;
     category: ProductCategory;
+    customCategory: unknown;
     price: number;
     cost: number;
     available: boolean;
     minOrderQuantity: number;
-    tier: MenuTier[];
     ingredients: unknown;
     allergens: unknown;
-    productCategories: unknown;
     image: string;
     menuIds: number[];
     menus: number[];
@@ -263,25 +224,23 @@ export const productService = {
     delete updateData.menuProducts;
     delete updateData.orderItems;
     delete updateData.favorites;
+    delete updateData.tier;
+    delete updateData.nameDe;
+    delete updateData.descriptionDe;
+    delete updateData.productCategories;
+    delete updateData.productCategoriesDe;
+
+    if (updateData.customCategory !== undefined) {
+      updateData.customCategory = toOptionalString(updateData.customCategory) ?? null;
+    }
 
     if (updateData.image !== undefined) {
       updateData.image = await normalizeImageValue(updateData.image, { prefix: 'product' });
     }
 
     const translationTargets: Array<
-      | { kind: 'scalar'; key: 'nameDe' | 'descriptionDe'; text: string }
-      | { kind: 'array'; key: 'ingredientsDe' | 'allergensDe' | 'productCategoriesDe'; texts: string[] }
+      { kind: 'array'; key: 'ingredientsDe' | 'allergensDe'; texts: string[] }
     > = [];
-
-    if (updateData.name !== undefined && updateData.nameDe === undefined) {
-      const name = String(updateData.name || '').trim();
-      if (name) translationTargets.push({ kind: 'scalar', key: 'nameDe', text: name });
-    }
-
-    if (updateData.description !== undefined && updateData.descriptionDe === undefined) {
-      const description = String(updateData.description || '').trim();
-      if (description) translationTargets.push({ kind: 'scalar', key: 'descriptionDe', text: description });
-    }
 
     if (updateData.ingredients !== undefined && updateData.ingredientsDe === undefined) {
       const ingredients = normalizeStringArray(updateData.ingredients);
@@ -303,23 +262,9 @@ export const productService = {
       }
     }
 
-    if (updateData.productCategories !== undefined && updateData.productCategoriesDe === undefined) {
-      const productCategories = normalizeStringArray(updateData.productCategories);
-      updateData.productCategories = productCategories;
-      if (productCategories.length === 0) {
-        updateData.productCategoriesDe = [];
-      } else {
-        translationTargets.push({ kind: 'array', key: 'productCategoriesDe', texts: productCategories });
-      }
-    }
-
     if (translationTargets.length > 0) {
       const texts: string[] = [];
       translationTargets.forEach((target) => {
-        if (target.kind === 'scalar') {
-          texts.push(target.text);
-          return;
-        }
         texts.push(...target.texts);
       });
 
@@ -327,11 +272,6 @@ export const productService = {
       if (translated) {
         let cursor = 0;
         translationTargets.forEach((target) => {
-          if (target.kind === 'scalar') {
-            updateData[target.key] = translated[cursor] ?? null;
-            cursor += 1;
-            return;
-          }
           const slice = translated.slice(cursor, cursor + target.texts.length);
           updateData[target.key] = slice;
           cursor += target.texts.length;

@@ -117,8 +117,15 @@ class ApiClient {
 
       return { data };
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Network error';
+      const hintedMessage =
+        typeof window !== 'undefined'
+        && /failed to fetch/i.test(message)
+        && /localhost:3001/i.test(this.baseURL)
+          ? 'Backend unavailable (start the backend on port 3001)'
+          : message;
       return {
-        error: error instanceof Error ? error.message : 'Network error',
+        error: hintedMessage,
       };
     }
   }

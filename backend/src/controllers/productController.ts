@@ -5,12 +5,11 @@ import { AppError } from '../middleware/errorHandler';
 
 export const productController = {
   async getProducts(req: AuthRequest, res: Response) {
-    const { category, available, tier, search, menuId } = req.query;
+    const { category, available, search, menuId } = req.query;
 
     const filters: any = {};
     if (category) filters.category = category;
     if (available !== undefined) filters.available = available === 'true';
-    if (tier) filters.tier = tier;
     if (search) filters.search = search as string;
     if (menuId) filters.menuId = parseInt(menuId as string);
 

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { ordersApi } from '@/lib/api/orders';
 import { menusApi } from '@/lib/api/menus';
 import { productsApi } from '@/lib/api/products';
@@ -103,6 +104,54 @@ const stepCategoryKeys = [
 // ============================================================================
 // EXTRACTED COMPONENTS (Outside OrderPage)
 // ============================================================================
+
+declare global {
+  interface Window {
+    __lacannelleTurnstileSuccess?: (token: string) => void;
+    __lacannelleTurnstileExpired?: () => void;
+    __lacannelleTurnstileError?: () => void;
+  }
+}
+
+const TurnstileWidget = ({
+  siteKey,
+  onToken,
+  onExpire,
+  onError,
+}: {
+  siteKey: string;
+  onToken: (token: string) => void;
+  onExpire: () => void;
+  onError: () => void;
+}) => {
+  useEffect(() => {
+    window.__lacannelleTurnstileSuccess = (token: string) => onToken(token);
+    window.__lacannelleTurnstileExpired = () => onExpire();
+    window.__lacannelleTurnstileError = () => onError();
+
+    return () => {
+      delete window.__lacannelleTurnstileSuccess;
+      delete window.__lacannelleTurnstileExpired;
+      delete window.__lacannelleTurnstileError;
+    };
+  }, [onToken, onExpire, onError]);
+
+  return (
+    <div className="space-y-2">
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="afterInteractive"
+      />
+      <div
+        className="cf-turnstile"
+        data-sitekey={siteKey}
+        data-callback="__lacannelleTurnstileSuccess"
+        data-expired-callback="__lacannelleTurnstileExpired"
+        data-error-callback="__lacannelleTurnstileError"
+      />
+    </div>
+  );
+};
 
 // DatePicker Component
 const DatePicker = ({
@@ -446,6 +495,8 @@ export default function OrderPage() {
   const router = useRouter();
   const { t, language, toggleLanguage, setLanguage: setAppLanguage } = useTranslation('order');
   const commonA11y = commonTranslations[language].accessibility;
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
+  const isCaptchaEnabled = Boolean(turnstileSiteKey);
   
   // ============================================================================
   // STATE HOOKS (All at top level, unconditional)
@@ -509,6 +560,8 @@ export default function OrderPage() {
   const [guestCountError, setGuestCountError] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [bankDetailsOpen, setBankDetailsOpen] = useState(false);
   const [productDetailsOpen, setProductDetailsOpen] = useState(false);
@@ -851,7 +904,7 @@ export default function OrderPage() {
       if (resolved.includes(needle)) return mapped;
     }
 
-    return stepCategoryKeys.includes(resolved) ? resolved : '';
+    return resolved || '';
   };
   
   const closedDateMap = useMemo(() => {
@@ -906,18 +959,19 @@ export default function OrderPage() {
     const mapped = rawSteps
       .map((step: any, index: number) => {
         const categoryKey = normalizeMenuStepKey(step?.label);
-        if (!categoryKey || !categoryMeta[categoryKey]) return null;
+        if (!categoryKey) return null;
         const rawLabel = (step?.label || '').trim();
         const normalizedLabel = normalizeCategoryValue(rawLabel);
-        const label = rawLabel && normalizedLabel === categoryKey
-          ? categoryMeta[categoryKey].label
-          : rawLabel || categoryMeta[categoryKey].label;
+        const meta = (categoryMeta as any)?.[categoryKey];
+        const label = rawLabel && normalizedLabel === categoryKey && meta?.label
+          ? meta.label
+          : (rawLabel || meta?.label || categoryKey);
         return {
           key: `menu-step-${index}`,
           categoryKey,
           label,
-          icon: categoryMeta[categoryKey].icon,
-          color: categoryMeta[categoryKey].color,
+          icon: meta?.icon || Package,
+          color: meta?.color || 'text-gray-600',
           included: (() => {
             const parsed = Number(step?.included);
             return Number.isFinite(parsed) ? parsed : 0;
@@ -992,10 +1046,9 @@ export default function OrderPage() {
   
   const matchesStepCategory = (item: any, categoryKey: string) => {
     const normalizedCategory = normalizeCategoryValue(item.category);
-    const categoryTags = Array.isArray(item.productCategories)
-      ? item.productCategories.map(normalizeCategoryValue)
-      : [];
-    return normalizedCategory === categoryKey || categoryTags.includes(categoryKey);
+    if (normalizedCategory === categoryKey) return true;
+    const normalizedCustom = normalizeCategoryValue(item?.customCategory);
+    return Boolean(normalizedCustom) && normalizedCustom === categoryKey;
   };
   
   const getItemsForStepCategory = (categoryKey: string) => {
@@ -1020,28 +1073,37 @@ export default function OrderPage() {
   const getCategoryExtrasSubtotal = (categoryKey: string) => {
     const items = getItemsForStepCategory(categoryKey);
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    const included = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
-    let remaining = included;
-    const sorted = [...items].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-    return sorted.reduce((sum, item) => {
-      const price = Number(item.price) || 0;
-      const quantity = Number(item.quantity) || 0;
-      if (remaining > 0) {
-        remaining -= 1;
-        const extraPortions = Math.max(0, quantity - guestCount);
-        return sum + price * extraPortions;
-      }
+    const includedCount = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
+
+    // IMPORTANT: Use selection order (stable) for included vs extra items.
+    // First `includedCount` items are included in the base menu price.
+    const includedItems = includedCount > 0 ? items.slice(0, includedCount) : [];
+    const extraItems = includedCount > 0 ? items.slice(includedCount) : items;
+
+    const includedExtras = includedItems.reduce((sum, item) => {
+      const price = Number(item?.price) || 0;
+      const quantity = Number(item?.quantity) || 0;
+      const extraPortions = Math.max(0, quantity - guestCount);
+      return sum + price * extraPortions;
+    }, 0);
+
+    const extras = extraItems.reduce((sum, item) => {
+      const price = Number(item?.price) || 0;
+      const quantity = Number(item?.quantity) || 0;
       return sum + price * quantity;
     }, 0);
+
+    return includedExtras + extras;
   };
 
   const getChargeForItemInCategory = (categoryKey: string, item: any) => {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
-    const included = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
     const items = getItemsForStepCategory(categoryKey);
-    const sorted = [...items].sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-    const index = sorted.findIndex((entry) => Number(entry?.id) === Number(item?.id));
-    const isIncluded = included > 0 && index >= 0 && index < included;
+    const includedCount = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
+
+    // Same rule as getCategoryExtrasSubtotal(): selection order decides which are included.
+    const index = items.findIndex((entry) => Number(entry?.id) === Number(item?.id));
+    const isIncluded = includedCount > 0 && index >= 0 && index < includedCount;
 
     const price = Number(item?.price) || 0;
     const quantity = Number(item?.quantity) || 0;
@@ -1510,6 +1572,60 @@ export default function OrderPage() {
     });
   };
   
+  const getMenuRequiredCountUpToSubStep = (categoryKey: string, subStepIndex: number) => {
+    if (!categoryKey) return 0;
+    if (!Array.isArray(dynamicMenuSteps) || dynamicMenuSteps.length === 0) return 0;
+    const maxIndex = Math.min(dynamicMenuSteps.length - 1, Math.max(0, subStepIndex));
+    let required = 0;
+    for (let i = 0; i <= maxIndex; i += 1) {
+      const step = dynamicMenuSteps[i];
+      const stepCategoryKey = step?.categoryKey || step?.key;
+      if (!stepCategoryKey) continue;
+      if (stepCategoryKey !== categoryKey) continue;
+      required += Math.max(0, Number(step?.included) || 0);
+    }
+    return required;
+  };
+
+  const getFirstInvalidMenuSubStep = (maxSubStepIndex: number) => {
+    if (!Array.isArray(dynamicMenuSteps) || dynamicMenuSteps.length === 0) return null;
+    const maxIndex = Math.min(dynamicMenuSteps.length - 1, Math.max(0, maxSubStepIndex));
+
+    for (let i = 0; i <= maxIndex; i += 1) {
+      const step = dynamicMenuSteps[i];
+      const categoryKey = step?.categoryKey || step?.key;
+      if (!categoryKey) continue;
+
+      const required = getMenuRequiredCountUpToSubStep(categoryKey, i);
+      if (required <= 0) continue;
+
+      const selected = getCategorySelectionCount(categoryKey);
+      if (selected < required) {
+        return { subStep: i, categoryKey, selected, required };
+      }
+    }
+
+    return null;
+  };
+
+  const getMenuStepCompletionErrorMessage = (invalid: { categoryKey: string; selected: number; required: number }) => {
+    const label = stepLabelByKey[invalid.categoryKey] || categoryMeta[invalid.categoryKey]?.label || invalid.categoryKey;
+    const missing = Math.max(0, invalid.required - invalid.selected);
+    return language === 'DE'
+      ? `Bitte wählen Sie noch ${missing} Artikel für "${label}" (${invalid.selected}/${invalid.required}).`
+      : `Please select ${missing} more item(s) for "${label}" (${invalid.selected}/${invalid.required}).`;
+  };
+
+  const validateMenuSubStepsUpTo = (maxSubStepIndex: number) => {
+    const invalid = getFirstInvalidMenuSubStep(maxSubStepIndex);
+    if (!invalid) return true;
+
+    setShowMenuSelection(false);
+    setCurrentMenuSubStep(invalid.subStep);
+    showNotification('error', getMenuStepCompletionErrorMessage(invalid), 3000);
+    return false;
+  };
+
   const getStepValidationError = (step: number) => {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
     const hasValidGuestCount = guestCount >= MIN_GUESTS;
@@ -1544,6 +1660,10 @@ export default function OrderPage() {
       case 'menu':
         if (!orderData.selectedMenu && !pendingMenuId) {
           return language === 'DE' ? 'Bitte ein Menü wählen.' : 'Please select a menu.';
+        }
+        {
+          const invalidMenu = getFirstInvalidMenuSubStep(dynamicMenuSteps.length - 1);
+          if (invalidMenu) return getMenuStepCompletionErrorMessage(invalidMenu);
         }
         return '';
       case 'accessories':
@@ -1588,6 +1708,11 @@ export default function OrderPage() {
             ? 'Bitte AGB und Datenschutz akzeptieren.'
             : 'Please accept the terms and privacy policy.';
         }
+        if (isCaptchaEnabled && !captchaToken) {
+          return language === 'DE'
+            ? 'Bitte Captcha bestätigen.'
+            : 'Please complete the captcha.';
+        }
         return '';
       default:
         return '';
@@ -1606,6 +1731,16 @@ export default function OrderPage() {
             : 'Enter a 5-digit German postal code.'
         );
       }
+    }
+    if (stepKey === 'menu') {
+      const shouldShowMenuSelection = !orderData.selectedMenu && !pendingMenuId;
+      setShowMenuSelection(shouldShowMenuSelection);
+      if (shouldShowMenuSelection) {
+        setCurrentMenuSubStep(0);
+        return;
+      }
+      const invalidSubStep = getFirstInvalidMenuSubStep(dynamicMenuSteps.length - 1);
+      if (invalidSubStep) setCurrentMenuSubStep(invalidSubStep.subStep);
     }
     if (stepKey === 'checkout') {
       const contactEmail = (orderData.contactInfo.email || '').trim();
@@ -1628,6 +1763,15 @@ export default function OrderPage() {
             ? 'Bitte AGB und Datenschutz akzeptieren.'
             : 'Please accept the terms and privacy policy.'
         );
+      }
+      if (isCaptchaEnabled) {
+        setCaptchaError(
+          captchaToken
+            ? ''
+            : (language === 'DE' ? 'Bitte Captcha bestätigen.' : 'Please complete the captcha.')
+        );
+      } else {
+        setCaptchaError('');
       }
     }
   };
@@ -1693,6 +1837,10 @@ export default function OrderPage() {
       showNotification('error', blockedMessage, 3000);
       return;
     }
+
+    if (!validateStepsUpTo(currentStep)) {
+      return;
+    }
     
     if (currentStep === 2 && pendingMenuId) {
       setQuantities({});
@@ -1746,7 +1894,11 @@ export default function OrderPage() {
         : 'The selected date is closed. Please choose another date.', 3000);
       return;
     }
-    
+
+    if (!validateStepsUpTo(stepsConfig.length)) {
+      return;
+    }
+
     const contactEmail = (orderData.contactInfo.email || '').trim();
     const contactPhone = (orderData.contactInfo.phone || '').trim();
     const emailError = validateEmailValue(contactEmail);
@@ -1825,12 +1977,12 @@ export default function OrderPage() {
         eventTime: orderData.eventTime || '',
         guests: guestCount,
         location: orderData.location || orderData.postalCode || '',
-        menuTier: orderData.menuTier,
         specialRequests: mergedRequests,
         businessType: orderData.businessType,
         serviceType: orderData.serviceType,
         serviceId: orderData.serviceId ? Number(orderData.serviceId) : undefined,
         postalCode: orderData.postalCode,
+        captchaToken: isCaptchaEnabled ? captchaToken : undefined,
         items: orderItems,
         subtotal: subtotal,
         serviceFee: flatServiceFee,
@@ -2235,7 +2387,7 @@ export default function OrderPage() {
                   {menu.image ? (
                     <img
                       src={menu.image}
-                      alt={(language === 'DE' ? (menu.nameDe || menu.name) : menu.name) || 'Menu image'}
+                      alt={menu.name || 'Menu image'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -2254,10 +2406,10 @@ export default function OrderPage() {
                   <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
                     <div>
                     <h3 className="text-2xl font-bold text-gray-900">
-                      {language === 'DE' ? (menu.nameDe || menu.name) : menu.name}
+                      {menu.name}
                     </h3>
                     <p className="text-sm text-gray-500 mt-1 max-h-12 overflow-hidden">
-                      {language === 'DE' ? (menu.descriptionDe || menu.description) : menu.description}
+                      {menu.description}
                     </p>
                     </div>
                   <div className="space-y-2 text-sm text-gray-700 flex-1 min-h-0 overflow-y-auto pr-1">
@@ -2347,6 +2499,9 @@ export default function OrderPage() {
       || currentCategory?.charAt(0).toUpperCase() + currentCategory?.slice(1);
     
     const nextSubStep = () => {
+      if (!validateMenuSubStepsUpTo(currentMenuSubStep)) {
+        return;
+      }
       if (currentMenuSubStep < dynamicMenuSteps.length - 1) {
         setCurrentMenuSubStep(currentMenuSubStep + 1);
       } else {
@@ -2421,7 +2576,16 @@ export default function OrderPage() {
                     return (
                       <button
                         key={step.key}
-                        onClick={() => setCurrentMenuSubStep(index)}
+                        onClick={() => {
+                          if (index <= currentMenuSubStep) {
+                            setCurrentMenuSubStep(index);
+                            return;
+                          }
+                          if (!validateMenuSubStepsUpTo(index - 1)) {
+                            return;
+                          }
+                          setCurrentMenuSubStep(index);
+                        }}
                         className={`w-full text-left p-3 rounded-lg transition-colors ${
                           isCurrent
                             ? 'bg-amber-100 border border-amber-300'
@@ -2588,7 +2752,7 @@ export default function OrderPage() {
                         {product.image ? (
                           <img
                             src={product.image}
-                            alt={(language === 'DE' ? (product.nameDe || product.name) : product.name) || 'Product image'}
+                            alt={product.name || 'Product image'}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -2603,7 +2767,7 @@ export default function OrderPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-2">
                               <h3 className="text-xl font-bold text-gray-900">
-                                {language === 'DE' ? (product.nameDe || product.name) : product.name}
+                                {product.name}
                               </h3>
                               {!product.available && (
                                 <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-lg">
@@ -2612,7 +2776,7 @@ export default function OrderPage() {
                               )}
                             </div>
                             <p className="text-gray-600 mb-4">
-                              {language === 'DE' ? (product.descriptionDe || product.description) : product.description}
+                              {product.description}
                             </p>
                             
                             <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -3419,6 +3583,37 @@ export default function OrderPage() {
                         <p className="mt-2 text-sm text-red-600">{termsError}</p>
                       )}
                     </div>
+
+                    {isCaptchaEnabled && (
+                      <div className="pt-6 border-t border-gray-200">
+                        <div className="mb-3">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            {language === 'DE' ? 'Sicherheitsprüfung' : 'Security check'}
+                          </h4>
+                          <p className="text-xs text-gray-600">
+                            {language === 'DE' ? 'Bitte bestätigen Sie, dass Sie kein Bot sind.' : 'Please confirm you are not a bot.'}
+                          </p>
+                        </div>
+                        <TurnstileWidget
+                          siteKey={turnstileSiteKey}
+                          onToken={(token) => {
+                            setCaptchaToken(token);
+                            setCaptchaError('');
+                          }}
+                          onExpire={() => {
+                            setCaptchaToken('');
+                            setCaptchaError(language === 'DE' ? 'Captcha ist abgelaufen. Bitte erneut bestätigen.' : 'Captcha expired. Please complete it again.');
+                          }}
+                          onError={() => {
+                            setCaptchaToken('');
+                            setCaptchaError(language === 'DE' ? 'Captcha konnte nicht geladen werden. Bitte Seite neu laden.' : 'Captcha failed to load. Please reload the page.');
+                          }}
+                        />
+                        {captchaError && (
+                          <p className="mt-2 text-sm text-red-600">{captchaError}</p>
+                        )}
+                      </div>
+                    )}
                     
                     {orderBlocked && (
                       <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -3434,7 +3629,7 @@ export default function OrderPage() {
                         }
                         handleSubmitOrder();
                       }}
-                      disabled={orderBlocked}
+                      disabled={orderBlocked || (isCaptchaEnabled && !captchaToken)}
                       className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <FileInvoice size={20} />
@@ -3786,6 +3981,37 @@ export default function OrderPage() {
                       )}
                     </div>
                     
+                    {isCaptchaEnabled && (
+                      <div className="pt-6 border-t border-gray-200">
+                        <div className="mb-3">
+                          <h4 className="text-sm font-semibold text-gray-900">
+                            {language === 'DE' ? 'Sicherheitsprüfung' : 'Security check'}
+                          </h4>
+                          <p className="text-xs text-gray-600">
+                            {language === 'DE' ? 'Bitte bestätigen Sie, dass Sie kein Bot sind.' : 'Please confirm you are not a bot.'}
+                          </p>
+                        </div>
+                        <TurnstileWidget
+                          siteKey={turnstileSiteKey}
+                          onToken={(token) => {
+                            setCaptchaToken(token);
+                            setCaptchaError('');
+                          }}
+                          onExpire={() => {
+                            setCaptchaToken('');
+                            setCaptchaError(language === 'DE' ? 'Captcha ist abgelaufen. Bitte erneut bestätigen.' : 'Captcha expired. Please complete it again.');
+                          }}
+                          onError={() => {
+                            setCaptchaToken('');
+                            setCaptchaError(language === 'DE' ? 'Captcha konnte nicht geladen werden. Bitte Seite neu laden.' : 'Captcha failed to load. Please reload the page.');
+                          }}
+                        />
+                        {captchaError && (
+                          <p className="mt-2 text-sm text-red-600">{captchaError}</p>
+                        )}
+                      </div>
+                    )}
+                    
                     {orderBlocked && (
                       <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                         {blockedMessage}
@@ -3800,7 +4026,7 @@ export default function OrderPage() {
                         }
                         handleSubmitOrder();
                       }}
-                      disabled={orderBlocked}
+                      disabled={orderBlocked || (isCaptchaEnabled && !captchaToken)}
                       className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Lock size={20} />
@@ -4277,7 +4503,7 @@ export default function OrderPage() {
                 {productDetailsItem.image ? (
                   <img
                     src={productDetailsItem.image}
-                    alt={(language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name) || 'Product image'}
+                    alt={productDetailsItem.name || 'Product image'}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -4289,10 +4515,10 @@ export default function OrderPage() {
               <div className="space-y-3">
                 <div>
                   <h4 className="text-xl font-bold text-gray-900">
-                    {language === 'DE' ? (productDetailsItem.nameDe || productDetailsItem.name) : productDetailsItem.name}
+                    {productDetailsItem.name}
                   </h4>
                   <p className="text-gray-600 mt-2">
-                    {(language === 'DE' ? (productDetailsItem.descriptionDe || productDetailsItem.description) : productDetailsItem.description) || ui.noDescription}
+                    {productDetailsItem.description || ui.noDescription}
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 text-sm">
@@ -4652,7 +4878,16 @@ export default function OrderPage() {
                       <React.Fragment key={step.key}>
                         <button
                           type="button"
-                          onClick={() => setCurrentMenuSubStep(index)}
+                          onClick={() => {
+                            if (index <= currentMenuSubStep) {
+                              setCurrentMenuSubStep(index);
+                              return;
+                            }
+                            if (!validateMenuSubStepsUpTo(index - 1)) {
+                              return;
+                            }
+                            setCurrentMenuSubStep(index);
+                          }}
                           className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                             isCurrent
                               ? 'bg-amber-100 text-amber-800 border border-amber-300'

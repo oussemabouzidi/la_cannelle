@@ -14,7 +14,6 @@ export const orderService = {
     eventTime: string;
     guests: number;
     location: string;
-    menuTier?: string;
     specialRequests?: string;
     businessType?: string;
     serviceType?: string;
@@ -70,7 +69,6 @@ export const orderService = {
         eventTime: data.eventTime,
         guests: data.guests,
         location: data.location,
-        menuTier: data.menuTier as any,
         specialRequests: data.specialRequests,
         businessType: data.businessType,
         serviceType: data.serviceType,

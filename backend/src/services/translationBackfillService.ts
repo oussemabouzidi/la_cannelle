@@ -14,38 +14,11 @@ export const translationBackfillService = {
     id: number;
     name: string;
     description: string;
-    nameDe?: string | null;
-    descriptionDe?: string | null;
     ingredients?: any;
     ingredientsDe?: any;
     allergens?: any;
     allergensDe?: any;
-    productCategories?: any;
-    productCategoriesDe?: any;
   }>) {
-    const missingNames = products.filter(p => !p.nameDe && p.name);
-    const missingDescriptions = products.filter(p => !p.descriptionDe && p.description);
-
-    for (const batch of chunk(missingNames, 25)) {
-      const translated = await translationService.translateTexts(batch.map(p => p.name), { targetLang: 'DE' });
-      if (!translated) return;
-      await Promise.all(batch.map((p, idx) => prisma.product.update({
-        where: { id: p.id },
-        data: { nameDe: translated[idx] ?? null }
-      })));
-      batch.forEach((p, idx) => { (p as any).nameDe = translated[idx] ?? null; });
-    }
-
-    for (const batch of chunk(missingDescriptions, 10)) {
-      const translated = await translationService.translateTexts(batch.map(p => p.description), { targetLang: 'DE' });
-      if (!translated) return;
-      await Promise.all(batch.map((p, idx) => prisma.product.update({
-        where: { id: p.id },
-        data: { descriptionDe: translated[idx] ?? null }
-      })));
-      batch.forEach((p, idx) => { (p as any).descriptionDe = translated[idx] ?? null; });
-    }
-
     const normalizeStringArray = (value: unknown) => {
       if (!Array.isArray(value)) return [];
       return value
@@ -75,18 +48,6 @@ export const translationBackfillService = {
         data: { allergensDe: translated }
       });
       (product as any).allergensDe = translated;
-    }
-
-    const missingProductCategories = products.filter(p => !p.productCategoriesDe && normalizeStringArray((p as any).productCategories).length > 0);
-    for (const product of missingProductCategories) {
-      const categories = normalizeStringArray((product as any).productCategories);
-      const translated = await translationService.translateTexts(categories, { targetLang: 'DE' });
-      if (!translated) return;
-      await prisma.product.update({
-        where: { id: product.id },
-        data: { productCategoriesDe: translated }
-      });
-      (product as any).productCategoriesDe = translated;
     }
   },
 
@@ -144,86 +105,6 @@ export const translationBackfillService = {
         data: { unitDe: translated[idx] ? translated[idx] : null }
       })));
       batch.forEach((a, idx) => { (a as any).unitDe = translated[idx] ? translated[idx] : null; });
-    }
-  },
-
-  async backfillMenusDe(menus: Array<{ id: number; name: string; description: string; nameDe?: string | null; descriptionDe?: string | null }>) {
-    const missingNames = menus.filter(m => !m.nameDe && m.name);
-    const missingDescriptions = menus.filter(m => !m.descriptionDe && m.description);
-
-    for (const batch of chunk(missingNames, 25)) {
-      const translated = await translationService.translateTexts(batch.map(m => m.name), { targetLang: 'DE' });
-      if (!translated) return;
-      await Promise.all(batch.map((m, idx) => prisma.menu.update({
-        where: { id: m.id },
-        data: { nameDe: translated[idx] ?? null }
-      })));
-      batch.forEach((m, idx) => { (m as any).nameDe = translated[idx] ?? null; });
-    }
-
-    for (const batch of chunk(missingDescriptions, 10)) {
-      const translated = await translationService.translateTexts(batch.map(m => m.description), { targetLang: 'DE' });
-      if (!translated) return;
-      await Promise.all(batch.map((m, idx) => prisma.menu.update({
-        where: { id: m.id },
-        data: { descriptionDe: translated[idx] ?? null }
-      })));
-      batch.forEach((m, idx) => { (m as any).descriptionDe = translated[idx] ?? null; });
-    }
-  },
-
-  async backfillMenuStepsDe(menus: Array<{ id: number; steps?: any }>) {
-    const targets: Array<{ menuId: number; stepIndex: number; text: string }> = [];
-
-    menus.forEach((menu) => {
-      const steps = Array.isArray((menu as any).steps) ? (menu as any).steps : null;
-      if (!steps) return;
-
-      steps.forEach((step: any, stepIndex: number) => {
-        const label = typeof step?.label === 'string' ? step.label.trim() : '';
-        if (!label) return;
-        const labelDe = typeof step?.labelDe === 'string' ? step.labelDe.trim() : '';
-        if (labelDe) return;
-        targets.push({ menuId: menu.id, stepIndex, text: label });
-      });
-    });
-
-    for (const batch of chunk(targets, 25)) {
-      const translated = await translationService.translateTexts(batch.map((t) => t.text), { targetLang: 'DE' });
-      if (!translated) return;
-
-      const stepsByMenuId = new Map<number, any[]>();
-
-      const getMenuSteps = (menuId: number) => {
-        const existing = stepsByMenuId.get(menuId);
-        if (existing) return existing;
-        const menu = menus.find((m) => m.id === menuId);
-        const steps = Array.isArray((menu as any)?.steps) ? (menu as any).steps : [];
-        const cloned = steps.map((step: any) => (step && typeof step === 'object' ? { ...step } : step));
-        stepsByMenuId.set(menuId, cloned);
-        return cloned;
-      };
-
-      batch.forEach((target, index) => {
-        const nextSteps = getMenuSteps(target.menuId);
-        const currentStep = nextSteps[target.stepIndex];
-        if (!currentStep || typeof currentStep !== 'object') return;
-        nextSteps[target.stepIndex] = { ...currentStep, labelDe: translated[index] ?? null };
-      });
-
-      await Promise.all(
-        Array.from(stepsByMenuId.entries()).map(([menuId, steps]) =>
-          prisma.menu.update({
-            where: { id: menuId },
-            data: { steps }
-          })
-        )
-      );
-
-      stepsByMenuId.forEach((steps, menuId) => {
-        const menu = menus.find((m) => m.id === menuId);
-        if (menu) (menu as any).steps = steps;
-      });
     }
   },
 

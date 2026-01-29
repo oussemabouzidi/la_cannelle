@@ -7,14 +7,10 @@ export type DefaultMenu = {
   isActive: boolean;
   steps: Array<{ label: string; included: number }>;
   serviceName?: string;
-  productFilter:
-    | { type: 'TAGS_ANY'; tags: string[] }
-    | { type: 'CATEGORIES_ANY'; categories: Array<'STARTER' | 'MAIN' | 'SIDE' | 'DESSERT' | 'BEVERAGE'> }
-    | {
-        type: 'TAGS_ANY_OR_CATEGORIES_ANY';
-        tags: string[];
-        categories: Array<'STARTER' | 'MAIN' | 'SIDE' | 'DESSERT' | 'BEVERAGE'>;
-      };
+  productFilter: {
+    type: 'CATEGORIES_ANY';
+    categories: Array<'STARTER' | 'SOUP' | 'MAIN' | 'FINGERFOOD' | 'SIDE' | 'DESSERT' | 'BEVERAGE'>;
+  };
 };
 
 export const DEFAULT_MENUS: DefaultMenu[] = [
@@ -27,7 +23,7 @@ export const DEFAULT_MENUS: DefaultMenu[] = [
     isActive: true,
     steps: [{ label: 'fingerfood', included: 6 }],
     serviceName: 'Fingerfood Catering',
-    productFilter: { type: 'TAGS_ANY', tags: ['fingerfood', 'canape', 'tapas'] }
+    productFilter: { type: 'CATEGORIES_ANY', categories: ['FINGERFOOD'] }
   },
   {
     name: 'Fingerfood Classic',
@@ -38,7 +34,7 @@ export const DEFAULT_MENUS: DefaultMenu[] = [
     isActive: true,
     steps: [{ label: 'fingerfood', included: 5 }],
     serviceName: 'Fingerfood Catering',
-    productFilter: { type: 'TAGS_ANY', tags: ['fingerfood', 'canape', 'tapas'] }
+    productFilter: { type: 'CATEGORIES_ANY', categories: ['FINGERFOOD'] }
   },
   {
     name: 'Fingerfood Basic',
@@ -49,7 +45,7 @@ export const DEFAULT_MENUS: DefaultMenu[] = [
     isActive: true,
     steps: [{ label: 'fingerfood', included: 4 }],
     serviceName: 'Fingerfood Catering',
-    productFilter: { type: 'TAGS_ANY', tags: ['fingerfood', 'canape', 'tapas'] }
+    productFilter: { type: 'CATEGORIES_ANY', categories: ['FINGERFOOD'] }
   },
   {
     name: 'Büffet Premium',
@@ -67,7 +63,7 @@ export const DEFAULT_MENUS: DefaultMenu[] = [
     serviceName: 'Büffet Catering',
     productFilter: {
       type: 'CATEGORIES_ANY',
-      categories: ['STARTER', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE']
+      categories: ['STARTER', 'SOUP', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE']
     }
   },
   {
@@ -86,7 +82,7 @@ export const DEFAULT_MENUS: DefaultMenu[] = [
     serviceName: 'Büffet Catering',
     productFilter: {
       type: 'CATEGORIES_ANY',
-      categories: ['STARTER', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE']
+      categories: ['STARTER', 'SOUP', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE']
     }
   },
   {
@@ -103,7 +99,7 @@ export const DEFAULT_MENUS: DefaultMenu[] = [
     serviceName: 'Büffet Catering',
     productFilter: {
       type: 'CATEGORIES_ANY',
-      categories: ['STARTER', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE']
+      categories: ['STARTER', 'SOUP', 'MAIN', 'SIDE', 'DESSERT', 'BEVERAGE']
     }
   }
 ];

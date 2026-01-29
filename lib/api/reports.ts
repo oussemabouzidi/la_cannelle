@@ -6,7 +6,6 @@ export type RevenueReport = {
   totalOrders: number;
   dailyRevenue: Array<{ date: string; revenue: number; orders: number }>;
   byCategory: Array<{ category: string; revenue: number; percentage: number }>;
-  byTier: Array<{ tier: string; revenue: number; orders: number }>;
 };
 
 export type PopularItem = {
@@ -66,4 +65,3 @@ export const reportsApi = {
     throw new Error(response.error || 'Failed to get customer analytics');
   }
 };
-

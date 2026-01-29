@@ -25,7 +25,6 @@ type LegacyProductRow = {
   tier: any;
   ingredients: any;
   allergens: any;
-  productCategories: any;
   image: string | null;
   popularity: number;
   createdAt: Date | null;
@@ -184,7 +183,6 @@ export const legacyBackupRestoreService = {
         tier: parseJsonOrNull(row[8]),
         ingredients: parseJsonOrNull(row[10]),
         allergens: parseJsonOrNull(row[11]),
-        productCategories: parseJsonOrNull(row[12]),
         image: row[13] ? String(row[13]) : null,
         popularity: toInt(row[14]) ?? 0,
         createdAt: parseDateOrNull(row[15]),
@@ -300,16 +298,14 @@ export const legacyBackupRestoreService = {
             where: { id: existing.id },
             data: {
               description: legacy.description,
-              descriptionDe: null,
               category: legacy.category as any,
+              customCategory: null,
               price: legacy.price,
               cost: legacy.cost,
               available: legacy.available,
               minOrderQuantity: legacy.minOrderQuantity,
-              tier: legacy.tier ?? undefined,
               ingredients: legacy.ingredients ?? undefined,
               allergens: legacy.allergens ?? undefined,
-              productCategories: legacy.productCategories ?? undefined,
               image: legacy.image,
               popularity: legacy.popularity
             }
@@ -317,18 +313,15 @@ export const legacyBackupRestoreService = {
         : await prisma.product.create({
             data: {
               name: legacy.name,
-              nameDe: null,
               description: legacy.description,
-              descriptionDe: null,
               category: legacy.category as any,
+              customCategory: null,
               price: legacy.price,
               cost: legacy.cost,
               available: legacy.available,
               minOrderQuantity: legacy.minOrderQuantity,
-              tier: legacy.tier ?? undefined,
               ingredients: legacy.ingredients ?? undefined,
               allergens: legacy.allergens ?? undefined,
-              productCategories: legacy.productCategories ?? undefined,
               image: legacy.image,
               popularity: legacy.popularity
             }
@@ -344,7 +337,6 @@ export const legacyBackupRestoreService = {
             where: { id: existing.id },
             data: {
               description: legacy.description,
-              descriptionDe: null,
               isActive: legacy.isActive,
               price: legacy.price,
               image: legacy.image,
@@ -355,9 +347,7 @@ export const legacyBackupRestoreService = {
         : await prisma.menu.create({
             data: {
               name: legacy.name,
-              nameDe: null,
               description: legacy.description,
-              descriptionDe: null,
               isActive: legacy.isActive,
               price: legacy.price,
               image: legacy.image,

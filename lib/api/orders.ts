@@ -17,12 +17,12 @@ export interface CreateOrderData {
   eventTime: string;
   guests: number;
   location: string;
-  menuTier?: string;
   specialRequests?: string;
   businessType?: string;
   serviceType?: string;
   serviceId?: number;
   postalCode?: string;
+  captchaToken?: string;
   items: OrderItem[];
   subtotal: number;
   serviceFee: number;
@@ -41,7 +41,6 @@ export interface Order {
   eventTime: string;
   guests: number;
   location: string;
-  menuTier?: string;
   total: number;
   subtotal: number;
   serviceFee: number;
