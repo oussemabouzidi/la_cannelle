@@ -1051,6 +1051,28 @@ export default function OrderPage() {
     const normalizedCustom = normalizeCategoryValue(item?.customCategory);
     return Boolean(normalizedCustom) && normalizedCustom === categoryKey;
   };
+
+  const toPriceNumber = (value: unknown) => {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : 0;
+    }
+    if (value === null || value === undefined) return 0;
+
+    let text = String(value).trim();
+    if (!text) return 0;
+    text = text.replace(/\s+/g, '');
+
+    // Handle formats like "1.234,56" (DE) or "1234.56" (EN) or "€24,90".
+    if (text.includes(',') && text.includes('.')) {
+      text = text.replace(/\./g, '').replace(',', '.');
+    } else if (text.includes(',') && !text.includes('.')) {
+      text = text.replace(',', '.');
+    }
+
+    text = text.replace(/[^0-9.-]/g, '');
+    const parsed = Number(text);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
   
   const getItemsForStepCategory = (categoryKey: string) => {
     const allItems = getAllSelectedItems();
@@ -1082,14 +1104,14 @@ export default function OrderPage() {
     const extraItems = includedCount > 0 ? items.slice(includedCount) : items;
 
     const includedExtras = includedItems.reduce((sum, item) => {
-      const price = Number(item?.price) || 0;
+      const price = toPriceNumber(item?.price);
       const quantity = Number(item?.quantity) || 0;
       const extraPortions = Math.max(0, quantity - guestCount);
       return sum + price * extraPortions;
     }, 0);
 
     const extras = extraItems.reduce((sum, item) => {
-      const price = Number(item?.price) || 0;
+      const price = toPriceNumber(item?.price);
       const quantity = Number(item?.quantity) || 0;
       return sum + price * quantity;
     }, 0);
@@ -1106,7 +1128,7 @@ export default function OrderPage() {
     const index = items.findIndex((entry) => Number(entry?.id) === Number(item?.id));
     const isIncluded = includedCount > 0 && index >= 0 && index < includedCount;
 
-    const price = Number(item?.price) || 0;
+    const price = toPriceNumber(item?.price);
     const quantity = Number(item?.quantity) || 0;
     const chargedQuantity = isIncluded ? Math.max(0, quantity - guestCount) : quantity;
 
@@ -1140,12 +1162,12 @@ export default function OrderPage() {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
+      return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
     }, 0);
     const selectedMenuObj = menusData.find(
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
     const foodExtrasSubtotal = getFoodExtrasSubtotal();
     const subtotal = menuSubtotal + foodExtrasSubtotal;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
@@ -1956,7 +1978,7 @@ export default function OrderPage() {
     const companyDetails = companyDetailParts.join('\n');
     
     const accessoriesLines = selectedAccessories
-      .map((item: any) => `- ${item.name} x${item.quantity} (€${Number(item.price).toFixed(2)} each)`)
+      .map((item: any) => `- ${item.name} x${item.quantity} (€${toPriceNumber(item.price).toFixed(2)} each)`)
       .join('\n');
     const accessoriesDetails = accessoriesLines ? `Accessories:\n${accessoriesLines}` : '';
     
@@ -1966,13 +1988,13 @@ export default function OrderPage() {
     const guestCount = parseInt(orderData.guestCount) || 0;
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
+      return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
     }, 0);
     
     const selectedMenuObj = menusData.find(
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
     
     const foodItems = [
       ...orderData.selectedFingerfoods,
@@ -1992,7 +2014,7 @@ export default function OrderPage() {
     const orderItems = foodItems.map(item => ({
       productId: item.id,
       quantity: item.quantity,
-      price: item.price,
+      price: toPriceNumber(item.price),
       name: item.name
     }));
     
@@ -2939,13 +2961,13 @@ export default function OrderPage() {
     const guestCount = parseInt(orderData.guestCount) || 0;
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum: number, item: any) => {
-      return sum + (item.price * item.quantity);
+      return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
     }, 0);
     
     const selectedMenuObj = menusData.find(
       (m: any) => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
     
     const foodSubtotal = getFoodExtrasSubtotal();
     const subtotal = menuSubtotal + foodSubtotal;
@@ -2958,7 +2980,7 @@ export default function OrderPage() {
         name: language === 'DE' ? (a.nameDe || a.nameEn) : a.nameEn,
         description: language === 'DE' ? (a.descriptionDe || a.descriptionEn) : a.descriptionEn,
         details: language === 'DE' ? (a.detailsDe || a.detailsEn) : a.detailsEn,
-        price: Number(a.price) || 0,
+        price: toPriceNumber(a.price),
         unit: (language === 'DE' ? (a.unitDe || a.unitEn) : a.unitEn) || fallbackUnit,
         quantityMode: a.quantityMode === 'FIXED' ? 'FIXED' : a.quantityMode === 'CLIENT' ? 'CLIENT' : 'GUEST_COUNT',
         fixedQuantity: a.fixedQuantity == null ? null : Number(a.fixedQuantity),
@@ -3141,7 +3163,7 @@ export default function OrderPage() {
                         <span className="text-gray-800">{item.name}</span>
                         <div className="flex items-center gap-2">
                           <span className="text-gray-600">x{item.quantity}</span>
-                          <span className="font-semibold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-semibold text-gray-900">€{(toPriceNumber(item?.price) * (Number(item?.quantity) || 0)).toFixed(2)}</span>
                         </div>
                       </div>
                     ))}
@@ -3382,13 +3404,13 @@ export default function OrderPage() {
     const guestCount = parseInt(orderData.guestCount) || 0;
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum: number, item: any) => {
-      return sum + (item.price * item.quantity);
+      return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
     }, 0);
     
     const selectedMenuObj = menusData.find(
       (m: any) => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? selectedMenuObj.price * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
     
     const foodSubtotal = getFoodExtrasSubtotal();
     const subtotal = menuSubtotal + foodSubtotal;
