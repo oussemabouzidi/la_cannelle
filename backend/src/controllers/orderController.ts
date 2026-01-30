@@ -146,5 +146,20 @@ export const orderController = {
 
     const order = await orderService.updatePaymentStatus(id, paymentStatus);
     res.json(order);
+  },
+
+  async deleteOrder(req: AuthRequest, res: Response) {
+    const { id } = req.params;
+    if (!id) {
+      throw new AppError('Order id is required', 400);
+    }
+
+    const result = await orderService.deleteOrder(id);
+    res.json(result);
+  },
+
+  async deleteAllOrders(_req: AuthRequest, res: Response) {
+    const result = await orderService.deleteAllOrders();
+    res.json(result);
   }
 };

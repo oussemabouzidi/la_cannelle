@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Menu, X, ChevronRight, Package, Calendar, DollarSign, 
-  Users, TrendingUp, Clock, CheckCircle, AlertCircle, XCircle,
-  Search, Filter, Eye, Edit, Archive, RefreshCw, Truck,
-  MessageCircle, Phone, Mail, MapPin, User, ShoppingBag, BarChart3, Briefcase,
-  AlertTriangle, Info
-} from 'lucide-react';
+   Menu, X, ChevronRight, Package, Calendar, DollarSign, 
+   Users, TrendingUp, Clock, CheckCircle, AlertCircle, XCircle,
+   Search, Filter, Eye, Edit, Archive, RefreshCw, Truck,
+   MessageCircle, Phone, Mail, MapPin, User, ShoppingBag, BarChart3, Briefcase,
+   AlertTriangle, Info, Trash2
+ } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/hooks/useTranslation';
@@ -18,6 +18,22 @@ import { useBodyScrollLock } from '../components/useBodyScrollLock';
 import { formatIsoDate, formatIsoDateTime, formatTimeHHmm } from '@/lib/utils/datetime';
 
 // Confirmation Modal Component
+type ConfirmationModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  reasonValue?: string;
+  onReasonChange?: (value: string) => void;
+  reasonPlaceholder?: string;
+  reasonError?: string;
+  confirmDisabled?: boolean;
+  type?: 'warning' | 'info';
+};
+
 const ConfirmationModal = ({ 
   isOpen, 
   onClose, 
@@ -26,8 +42,13 @@ const ConfirmationModal = ({
   message, 
   confirmText, 
   cancelText,
+  reasonValue,
+  onReasonChange,
+  reasonPlaceholder,
+  reasonError,
+  confirmDisabled = false,
   type = 'warning'
-}) => {
+}: ConfirmationModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -44,10 +65,25 @@ const ConfirmationModal = ({
         </div>
         
         <div className="p-6 space-y-4">
+          {typeof onReasonChange === 'function' && (
+            <div>
+              <textarea
+                value={reasonValue || ''}
+                onChange={(e) => onReasonChange(e.target.value)}
+                placeholder={reasonPlaceholder}
+                rows={3}
+                className={`w-full p-3 border rounded-lg focus:ring-2 focus:border-amber-500 text-gray-900 bg-white transition-colors ${
+                  reasonError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-amber-500 hover:border-gray-400'
+                }`}
+              />
+              {reasonError ? <p className="mt-1 text-sm text-red-600">{reasonError}</p> : null}
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <div className="flex gap-3">
               <button
                 onClick={onConfirm}
+                disabled={Boolean(confirmDisabled) || (typeof onReasonChange === 'function' && !(reasonValue || '').trim())}
                 className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
                 {confirmText}
@@ -77,9 +113,14 @@ export default function AdminOrders() {
 
   // State for confirmation modal
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [orderToCancel, setOrderToCancel] = useState<{id: string, reason: string} | null>(null);
+  const [orderToCancel, setOrderToCancel] = useState<{ id: string; reason?: string | null } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<{ id: string; client?: string } | null>(null);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
+  const [deleteAllConfirmText, setDeleteAllConfirmText] = useState('');
+  const [deleteAllError, setDeleteAllError] = useState('');
 
-  useBodyScrollLock(Boolean(selectedOrder) || showCancelConfirm);
+  useBodyScrollLock(Boolean(selectedOrder) || showCancelConfirm || showDeleteConfirm || showDeleteAllConfirm);
 
   const copy = {
     EN: {
@@ -133,8 +174,11 @@ export default function AdminOrders() {
         total: 'Total',
         specialRequests: 'Special Requests',
         statusManagement: 'Status Management',
+        restoreOrder: 'Restore Order',
+        restoreHint: 'This order is cancelled. Choose a new status to restore it.',
         cancelOrder: 'Cancel Order',
         cancelPlaceholder: 'Reason for cancellation...',
+        cancelNoReasonAction: 'Cancel Without Reason',
         cancelAction: 'Cancel Order & Process Refund',
       },
       status: {
@@ -151,12 +195,21 @@ export default function AdminOrders() {
         viewDetails: 'View Details',
         markComplete: 'Mark Complete',
         cancelOrder: 'Cancel Order',
+        deleteOrder: 'Delete Order',
+        deleteAll: 'Delete All',
       },
       confirmation: {
         cancelTitle: 'Confirm Cancellation',
         cancelMessage: 'Are you sure you want to cancel this order? A refund will be processed automatically.',
         confirmCancel: 'Yes, Cancel Order',
         cancelCancel: 'No, Keep Order',
+        deleteTitle: 'Confirm Deletion',
+        deleteMessage: 'Delete this order permanently? This action cannot be undone.',
+        confirmDelete: 'Yes, Delete',
+        cancelDelete: 'No, Keep',
+        deleteAllTitle: 'Delete All Orders',
+        deleteAllMessage: 'This will permanently delete ALL orders and their items. This action cannot be undone.',
+        deleteAllPlaceholder: 'Type DELETE to confirm',
       }
     },
     DE: {
@@ -210,8 +263,11 @@ export default function AdminOrders() {
         total: 'Gesamt',
         specialRequests: 'Besondere Wünsche',
         statusManagement: 'Statusverwaltung',
+        restoreOrder: 'Bestellung wiederherstellen',
+        restoreHint: 'Diese Bestellung ist storniert. Wählen Sie einen neuen Status, um sie wiederherzustellen.',
         cancelOrder: 'Bestellung stornieren',
         cancelPlaceholder: 'Grund für die Stornierung...',
+        cancelNoReasonAction: 'Ohne Grund stornieren',
         cancelAction: 'Bestellung stornieren und Rückerstattung auslösen',
       },
       status: {
@@ -228,12 +284,21 @@ export default function AdminOrders() {
         viewDetails: 'Details ansehen',
         markComplete: 'Als abgeschlossen markieren',
         cancelOrder: 'Bestellung stornieren',
+        deleteOrder: 'Bestellung löschen',
+        deleteAll: 'Alle löschen',
       },
       confirmation: {
         cancelTitle: 'Stornierung bestätigen',
         cancelMessage: 'Möchten Sie diese Bestellung wirklich stornieren? Eine Rückerstattung wird automatisch verarbeitet.',
         confirmCancel: 'Ja, Bestellung stornieren',
         cancelCancel: 'Nein, Bestellung behalten',
+        deleteTitle: 'Löschung bestätigen',
+        deleteMessage: 'Diese Bestellung endgültig löschen? Dies kann nicht rückgängig gemacht werden.',
+        confirmDelete: 'Ja, löschen',
+        cancelDelete: 'Nein, behalten',
+        deleteAllTitle: 'Alle Bestellungen löschen',
+        deleteAllMessage: 'Dies löscht ALLE Bestellungen und Positionen endgültig. Dies kann nicht rückgängig gemacht werden.',
+        deleteAllPlaceholder: 'Tippen Sie DELETE zur Bestätigung',
       }
     },
   } as const;
@@ -328,8 +393,6 @@ export default function AdminOrders() {
     cancellationReason?: string | null;
   };
 
-  const [cancellationError, setCancellationError] = useState('');
-  const [cancellationReason, setCancellationReason] = useState('');
   const [orders, setOrders] = useState<LocalOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -341,6 +404,7 @@ export default function AdminOrders() {
     { value: 'completed', label: t.status.completed, color: 'bg-green-100 text-green-800' },
     { value: 'cancelled', label: t.status.cancelled, color: 'bg-red-100 text-red-800' }
   ];
+  const statusOptionsForUpdate = statusOptions.filter((s) => s.value !== 'cancelled');
 
   const navigation = [
     { id: 'dashboard', name: t.nav.dashboard, icon: TrendingUp, path: '/dashboard' },
@@ -368,10 +432,23 @@ export default function AdminOrders() {
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       const updated = await ordersApi.updateOrderStatus(orderId, newStatus);
-      setOrders(prev =>
-        prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
+      const shouldClearCancellationReason = newStatus !== 'cancelled';
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId
+            ? { ...o, status: newStatus, ...(shouldClearCancellationReason ? { cancellationReason: null } : {}) }
+            : o
+        )
       );
-      setSelectedOrder(prev => prev && prev.id === orderId ? { ...prev, status: updated.status.toLowerCase?.() || newStatus } : prev);
+      setSelectedOrder((prev) =>
+        prev && prev.id === orderId
+          ? {
+              ...prev,
+              status: updated.status.toLowerCase?.() || newStatus,
+              ...(shouldClearCancellationReason ? { cancellationReason: null } : {})
+            }
+          : prev
+      );
       showNotification('success', 
         language === 'DE' 
           ? `Status für Bestellung ${formatOrderId(orderId)} aktualisiert`
@@ -389,9 +466,9 @@ export default function AdminOrders() {
     }
   };
 
-  const cancelOrder = async (orderId: string, reason: string) => {
+  const cancelOrder = async (orderId: string, reason?: string | null) => {
     try {
-      const updatedOrder = await ordersApi.updateOrderStatus(orderId, 'cancelled', reason);
+      await ordersApi.updateOrderStatus(orderId, 'cancelled', reason || undefined);
       
       showNotification(
         'success',
@@ -402,16 +479,15 @@ export default function AdminOrders() {
       );
       
       setOrders(prev =>
-        prev.map(o => (o.id === orderId ? { ...o, status: 'cancelled', cancellationReason: reason } : o))
+        prev.map(o => (o.id === orderId ? { ...o, status: 'cancelled', cancellationReason: reason || null } : o))
       );
       
       if (selectedOrder && selectedOrder.id === orderId) {
-        setSelectedOrder(prev => prev ? { ...prev, status: 'cancelled', cancellationReason: reason } : null);
+        setSelectedOrder(prev => prev ? { ...prev, status: 'cancelled', cancellationReason: reason || null } : null);
       }
       
       setShowCancelConfirm(false);
       setOrderToCancel(null);
-      setCancellationReason('');
       
     } catch (error: any) {
       console.error('Failed to cancel order:', error);
@@ -425,32 +501,113 @@ export default function AdminOrders() {
     }
   };
 
-  const handleCancelConfirmation = (orderId: string, reason: string) => {
-    if (!reason.trim()) {
-      setCancellationError(
+  const openCancelConfirmation = (orderId: string, reason?: string) => {
+    const trimmed = String(reason || '').trim();
+    setOrderToCancel({ id: orderId, reason: trimmed ? trimmed : null });
+    setShowCancelConfirm(true);
+  };
+
+  const confirmCancelOrder = () => {
+    if (!orderToCancel) return;
+    cancelOrder(orderToCancel.id, orderToCancel.reason ?? null);
+  };
+
+  const openDeleteConfirmation = (order: { id: string; client?: string }) => {
+    setOrderToDelete(order);
+    setShowDeleteConfirm(true);
+  };
+
+  const deleteOrderById = async (orderId: string) => {
+    try {
+      await ordersApi.deleteOrder(orderId);
+
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder(null);
+      }
+
+      showNotification(
+        'success',
         language === 'DE'
-          ? 'Bitte geben Sie einen Stornierungsgrund an.'
-          : 'Please provide a cancellation reason.'
+          ? `Bestellung ${formatOrderId(orderId)} wurde gelöscht.`
+          : `Order ${formatOrderId(orderId)} has been deleted.`,
+        2500
+      );
+    } catch (error: any) {
+      console.error('Failed to delete order:', error);
+      showNotification(
+        'error',
+        language === 'DE'
+          ? `Fehler beim Löschen der Bestellung: ${error.message || 'Unbekannter Fehler'}`
+          : `Failed to delete order: ${error.message || 'Unknown error'}`,
+        3000
+      );
+    } finally {
+      setShowDeleteConfirm(false);
+      setOrderToDelete(null);
+    }
+  };
+
+  const openDeleteAllConfirmation = () => {
+    setShowDeleteAllConfirm(true);
+    setDeleteAllConfirmText('');
+    setDeleteAllError('');
+  };
+
+  const deleteAllOrders = async () => {
+    try {
+      const result = await ordersApi.deleteAllOrders();
+      setOrders([]);
+      setSelectedOrder(null);
+
+      showNotification(
+        'success',
+        language === 'DE'
+          ? `Alle Bestellungen gelöscht. (${result.deletedOrders} Bestellungen, ${result.deletedOrderItems} Positionen)`
+          : `All orders deleted. (${result.deletedOrders} orders, ${result.deletedOrderItems} items)`,
+        3000
+      );
+    } catch (error: any) {
+      console.error('Failed to delete all orders:', error);
+      showNotification(
+        'error',
+        language === 'DE'
+          ? `Fehler beim Löschen aller Bestellungen: ${error.message || 'Unbekannter Fehler'}`
+          : `Failed to delete all orders: ${error.message || 'Unknown error'}`,
+        3000
+      );
+    } finally {
+      setShowDeleteAllConfirm(false);
+      setDeleteAllConfirmText('');
+      setDeleteAllError('');
+    }
+  };
+
+  const confirmDeleteAllOrders = () => {
+    const token = (deleteAllConfirmText || '').trim().toUpperCase();
+    if (token !== 'DELETE') {
+      setDeleteAllError(
+        language === 'DE' ? 'Bitte DELETE zur Bestätigung eingeben.' : 'Please type DELETE to confirm.'
       );
       return;
     }
-    setOrderToCancel({ id: orderId, reason });
-    setShowCancelConfirm(true);
+
+    deleteAllOrders();
   };
 
   const OrderDetailsModal = ({ order, onClose }) => {
     const [localCancellationReason, setLocalCancellationReason] = useState('');
     const [localCancellationError, setLocalCancellationError] = useState('');
-    
+
     const handleCancellationChange = (e) => {
       const value = e.target.value;
       setLocalCancellationReason(value);
-      
+
       if (value.trim()) {
         setLocalCancellationError('');
       }
     };
-    
+
     return (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-4 sm:p-6 overflow-y-auto">
         <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -584,27 +741,30 @@ export default function AdminOrders() {
               </div>
             )}
 
-            {/* Status Management */}
-            {order.status !== 'cancelled' && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.modal.statusManagement}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {statusOptions.map(status => (
-                    <button
-                      key={status.value}
-                      onClick={() => updateOrderStatus(order.id, status.value)}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors border ${
-                        order.status === status.value 
-                          ? `${status.color} border-gray-300 shadow-sm` 
-                          : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100 hover:border-gray-400'
-                      }`}
-                    >
-                      {status.label}
-                    </button>
-                  ))}
-                </div>
+            {/* Status Management / Restore */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
+                {order.status === 'cancelled' ? t.modal.restoreOrder : t.modal.statusManagement}
+              </h3>
+              {order.status === 'cancelled' ? (
+                <p className="text-sm text-gray-700 mb-3">{t.modal.restoreHint}</p>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                {statusOptionsForUpdate.map((status) => (
+                  <button
+                    key={status.value}
+                    onClick={() => updateOrderStatus(order.id, status.value)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors border ${
+                      order.status === status.value
+                        ? `${status.color} border-gray-300 shadow-sm`
+                        : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100 hover:border-gray-400'
+                    }`}
+                  >
+                    {status.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
             {/* Cancellation Section (only if not already cancelled) */}
             {order.status !== 'cancelled' && (
@@ -613,8 +773,20 @@ export default function AdminOrders() {
                   <AlertTriangle size={20} className="text-red-600" />
                   <h3 className="text-lg font-semibold text-red-800">{t.modal.cancelOrder}</h3>
                 </div>
-                <div className="space-y-3">
-                  <div>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => openCancelConfirmation(order.id)}
+                      className="px-4 py-2 rounded-lg font-medium transition-colors border bg-red-100 text-red-800 border-red-200 hover:bg-red-200 hover:border-red-300 shadow-sm"
+                    >
+                      {t.modal.cancelNoReasonAction}
+                    </button>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <p className="text-sm font-medium text-gray-900 mb-2">
+                      {language === 'DE' ? 'Optional: Grund angeben' : 'Optional: Provide a reason'}
+                    </p>
                     <textarea
                       placeholder={t.modal.cancelPlaceholder}
                       className={`w-full p-3 border rounded-lg focus:ring-2 focus:border-red-500 text-gray-900 bg-white transition-colors ${
@@ -627,18 +799,21 @@ export default function AdminOrders() {
                     {localCancellationError && (
                       <p className="mt-1 text-sm text-red-600">{localCancellationError}</p>
                     )}
+                    <button
+                      onClick={() => {
+                        if (!localCancellationReason.trim()) {
+                          setLocalCancellationError(
+                            language === 'DE' ? 'Bitte geben Sie einen Grund ein oder nutzen Sie die obere Schaltfläche.' : 'Enter a reason or use the button above.'
+                          );
+                          return;
+                        }
+                        openCancelConfirmation(order.id, localCancellationReason);
+                      }}
+                      className="mt-3 w-full px-6 py-3 rounded-lg font-medium transition-colors bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-md hover:shadow-lg"
+                    >
+                      {t.modal.cancelAction}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleCancelConfirmation(order.id, localCancellationReason)}
-                    disabled={!localCancellationReason.trim()}
-                    className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
-                      !localCancellationReason.trim()
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 shadow-md hover:shadow-lg'
-                    }`}
-                  >
-                    {t.modal.cancelAction}
-                  </button>
                 </div>
               </div>
             )}
@@ -676,49 +851,64 @@ export default function AdminOrders() {
       )}
 
       {/* Filters and Search */}
-      <div className={`bg-white rounded-2xl p-6 shadow-sm border border-gray-300 mb-6 ${
+      <div className={`mb-6 flex flex-col lg:flex-row gap-4 items-stretch ${
         isVisible ? 'animate-fade-in-up' : 'opacity-0'
       }`}>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
-            <input
-              type="text"
-              placeholder={t.filters.searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
-            />
+        <div className="flex-1 bg-white rounded-2xl p-6 shadow-sm border border-gray-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+              <input
+                type="text"
+                placeholder={t.filters.searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
+              />
+            </div>
+            
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
+            >
+              <option value="all">{t.filters.allStatus}</option>
+              {statusOptions.map(status => (
+                <option key={status.value} value={status.value}>{status.label}</option>
+              ))}
+            </select>
+
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
+            >
+              <option value="all">{t.filters.allDates}</option>
+              <option value="today">{t.filters.today}</option>
+              <option value="upcoming">{t.filters.upcoming}</option>
+            </select>
           </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
-          >
-            <option value="all">{t.filters.allStatus}</option>
-            {statusOptions.map(status => (
-              <option key={status.value} value={status.value}>{status.label}</option>
-            ))}
-          </select>
+        </div>
 
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white hover:border-gray-400 transition-colors"
-          >
-            <option value="all">{t.filters.allDates}</option>
-            <option value="today">{t.filters.today}</option>
-            <option value="upcoming">{t.filters.upcoming}</option>
-          </select>
-
+        <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:w-56 lg:justify-start lg:items-stretch">
           <button
             onClick={loadOrders}
             disabled={isLoading}
-            className="px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 transition-all font-medium flex items-center justify-center gap-2 border border-amber-800 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+            className="px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg hover:from-amber-700 hover:to-amber-800 transition-all font-medium inline-flex items-center justify-center gap-2 border border-amber-800 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             {isLoading ? t.filters.refreshing : t.filters.refresh}
+          </button>
+
+          <button
+            type="button"
+            onClick={openDeleteAllConfirmation}
+            disabled={isLoading || orders.length === 0}
+            className="px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all font-medium inline-flex items-center justify-center gap-2 border border-red-800 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+            title={t.labels.deleteAll}
+          >
+            <Trash2 size={16} />
+            {t.labels.deleteAll}
           </button>
         </div>
       </div>
@@ -740,14 +930,16 @@ export default function AdminOrders() {
           <table className="w-full">
             <thead className="bg-gray-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.orderId}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.client}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.event}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.dateTime}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.guests}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.total}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.status}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">{t.table.actions}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.orderId}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.client}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.event}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.dateTime}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.guests}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.total}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">{t.table.status}</th>
+                <th className="w-40 px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider sticky right-0 bg-gray-100 z-20 border-l border-gray-300 shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.35)]">
+                  {t.table.actions}
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-300">
@@ -755,37 +947,39 @@ export default function AdminOrders() {
                 const statusConfig = statusOptions.find(s => s.value === order.status);
                 return (
                   <tr key={order.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-6 py-4 border-r border-gray-300">
+                    <td className="px-4 py-4 border-r border-gray-300 overflow-hidden">
                       <div className="flex items-center gap-2">
                         <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
                           <Package size={16} className="text-blue-600" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-sm font-semibold text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block">
                             {formatOrderId(order.id)}
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">{order.createdAt}</div>
+                          <div className="text-xs text-gray-500 mt-1 truncate">{order.createdAt}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 border-r border-gray-300">
-                      <div className="text-sm font-medium text-gray-900">{order.client}</div>
-                      <div className="text-xs text-gray-700 truncate max-w-[150px]">{order.contact}</div>
+                    <td className="px-4 py-4 border-r border-gray-300 overflow-hidden">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{order.client}</div>
+                        <div className="text-xs text-gray-700 truncate">{order.contact}</div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 border-r border-gray-300">
-                      <div className="text-sm text-gray-900">{order.eventType}</div>
+                    <td className="px-4 py-4 border-r border-gray-300 overflow-hidden">
+                      <div className="text-sm text-gray-900 truncate">{order.eventType}</div>
                     </td>
-                    <td className="px-6 py-4 border-r border-gray-300">
-                      <div className="text-sm text-gray-900 font-medium">{order.eventDate}</div>
-                      <div className="text-sm text-gray-700">{order.eventTime}</div>
+                    <td className="px-4 py-4 border-r border-gray-300 overflow-hidden">
+                      <div className="text-sm text-gray-900 font-medium truncate">{order.eventDate}</div>
+                      <div className="text-sm text-gray-700 truncate">{order.eventTime}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 border-r border-gray-300">
                       <div className="flex items-center gap-2">
                         <Users size={14} className="text-gray-500" />
                         <span className="font-medium">{order.guests}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 border-r border-gray-300">
+                    <td className="px-4 py-4 border-r border-gray-300 overflow-hidden">
                       <div className="text-sm font-semibold text-gray-900">€{formatPrice(order.total)}</div>
                       <div className={`text-xs inline-flex items-center gap-1 px-2 py-1 rounded-full mt-1 ${
                         order.payment === 'paid' 
@@ -805,13 +999,13 @@ export default function AdminOrders() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 border-r border-gray-300">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border inline-flex items-center gap-1 ${statusConfig?.color} border-gray-300`}>
+                    <td className="px-4 py-4 border-r border-gray-300 overflow-hidden">
+                      <span className={`max-w-full px-3 py-1 rounded-full text-xs font-medium border inline-flex items-center gap-1 ${statusConfig?.color} border-gray-300 overflow-hidden`}>
                         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></span>
-                        {statusConfig?.label}
+                        <span className="min-w-0 truncate">{statusConfig?.label}</span>
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium sticky right-0 bg-white group-hover:bg-gray-50 border-l border-gray-300 shadow-[-8px_0_12px_-12px_rgba(0,0,0,0.35)]">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setSelectedOrder(order)}
@@ -827,15 +1021,13 @@ export default function AdminOrders() {
                         >
                           <CheckCircle size={16} />
                         </button>
-                        {order.status !== 'cancelled' && (
-                          <button
-                            onClick={() => handleCancelConfirmation(order.id, '')}
-                            className="p-2 text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300 hover:shadow-sm"
-                            title={t.labels.cancelOrder}
-                          >
-                            <XCircle size={16} />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => openDeleteConfirmation({ id: order.id, client: order.client })}
+                          className="p-2 text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200 hover:border-red-300 hover:shadow-sm"
+                          title={t.labels.deleteOrder}
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -878,18 +1070,56 @@ export default function AdminOrders() {
           setShowCancelConfirm(false);
           setOrderToCancel(null);
         }}
-        onConfirm={() => {
-          if (orderToCancel) {
-            cancelOrder(orderToCancel.id, orderToCancel.reason);
-          }
-        }}
+        onConfirm={confirmCancelOrder}
         title={t.confirmation.cancelTitle}
-        message={orderToCancel ? 
-          `${t.confirmation.cancelMessage}\n\n${language === 'DE' ? 'Grund' : 'Reason'}: ${orderToCancel.reason}` :
-          t.confirmation.cancelMessage
-        }
+        message={t.confirmation.cancelMessage}
         confirmText={t.confirmation.confirmCancel}
         cancelText={t.confirmation.cancelCancel}
+        type="warning"
+      />
+
+      {/* Delete Order Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setOrderToDelete(null);
+        }}
+        onConfirm={() => {
+          if (orderToDelete) {
+            deleteOrderById(orderToDelete.id);
+          }
+        }}
+        title={t.confirmation.deleteTitle}
+        message={orderToDelete
+          ? `${t.confirmation.deleteMessage}\n\n${t.table.client}: ${orderToDelete.client || '-'}\n${t.table.orderId}: ${formatOrderId(orderToDelete.id)}`
+          : t.confirmation.deleteMessage}
+        confirmText={t.confirmation.confirmDelete}
+        cancelText={t.confirmation.cancelDelete}
+        type="warning"
+      />
+
+      {/* Delete All Orders Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteAllConfirm}
+        onClose={() => {
+          setShowDeleteAllConfirm(false);
+          setDeleteAllConfirmText('');
+          setDeleteAllError('');
+        }}
+        onConfirm={confirmDeleteAllOrders}
+        title={t.confirmation.deleteAllTitle}
+        message={t.confirmation.deleteAllMessage}
+        confirmText={t.confirmation.confirmDelete}
+        cancelText={t.confirmation.cancelDelete}
+        reasonValue={deleteAllConfirmText}
+        onReasonChange={(value) => {
+          setDeleteAllConfirmText(value);
+          setDeleteAllError('');
+        }}
+        reasonPlaceholder={t.confirmation.deleteAllPlaceholder}
+        reasonError={deleteAllError}
+        confirmDisabled={(deleteAllConfirmText || '').trim().toUpperCase() !== 'DELETE'}
         type="warning"
       />
     </AdminLayout>

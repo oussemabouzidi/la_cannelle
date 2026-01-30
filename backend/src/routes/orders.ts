@@ -23,4 +23,8 @@ router.patch('/:id/status', requireAdmin, asyncHandler(orderController.updateOrd
 // Update payment status (admin only)
 router.patch('/:id/payment', requireAdmin, asyncHandler(orderController.updatePaymentStatus));
 
+// Delete order(s) (admin only)
+router.delete('/:id', requireAdmin, asyncHandler(orderController.deleteOrder));
+router.delete('/', requireAdmin, asyncHandler(orderController.deleteAllOrders));
+
 export default router;

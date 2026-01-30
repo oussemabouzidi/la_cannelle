@@ -8,16 +8,13 @@ import { useTranslation } from '@/lib/hooks/useTranslation';
 import { commonTranslations } from '@/lib/translations/common';
 import { contactTranslations } from '@/lib/translations/contact';
 
-// Define InstagramPost interface
-interface InstagramPost {
-  id: string;
-  media_url: string;
-  caption: string;
-  permalink: string;
-  timestamp?: number;
-  media_type?: string;
-  thumbnail_url?: string;
-}
+const INSTAGRAM_PROFILE_URL = 'https://www.instagram.com/lacannellecatering/';
+
+const normalizeInstagramPermalink = (url: string) => {
+  const trimmed = (url || '').trim();
+  if (!trimmed) return '';
+  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+};
 
 export default function ContactPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,11 +28,27 @@ export default function ContactPage() {
   const [isVisible, setIsVisible] = useState(false);
   const pathname = usePathname();
 
-  // Instagram states with proper typing
-  const [instagramPosts, setInstagramPosts] = useState<InstagramPost[]>([]);
-  const [loadingInstagram, setLoadingInstagram] = useState(true);
-  const [instagramError, setInstagramError] = useState(false);
-  const [hasInstagramPosts, setHasInstagramPosts] = useState(false);
+  const instagramPostUrls = (process.env.NEXT_PUBLIC_INSTAGRAM_POST_URLS || '')
+    .split(',')
+    .map((value) => normalizeInstagramPermalink(value))
+    .filter(Boolean);
+
+  const instagramPosts: Array<{
+    id: string;
+    permalink: string;
+    caption?: string;
+    media_url?: string;
+    timestamp?: number;
+  }> = instagramPostUrls.map((permalink, index) => ({
+    id: `ig-${index}`,
+    permalink,
+    caption: '',
+    media_url: '',
+    timestamp: undefined
+  }));
+  const hasInstagramPosts = instagramPosts.length > 0;
+  const loadingInstagram = false;
+  const firstInstagramPost = instagramPosts[0];
 
   const isActiveHref = (href: string) => {
     if (href === '/home') return pathname === '/' || pathname === '/home';
@@ -60,37 +73,7 @@ export default function ContactPage() {
 
   useEffect(() => {
     setIsVisible(true);
-    fetchInstagramData();
   }, []);
-
-  // Instagram data fetching function - SIMPLIFIED
-  const fetchInstagramData = async () => {
-    try {
-      // Try to fetch from your API route
-      const response = await fetch('/api/proxy-instagram');
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.posts && data.posts.length > 0) {
-          setInstagramPosts(data.posts);
-          setHasInstagramPosts(true);
-        } else {
-          setInstagramError(true);
-          setHasInstagramPosts(false);
-        }
-      } else {
-        setInstagramError(true);
-        setHasInstagramPosts(false);
-      }
-    } catch (error) {
-      console.log('Failed to fetch Instagram data:', error);
-      setInstagramError(true);
-      setHasInstagramPosts(false);
-    } finally {
-      setLoadingInstagram(false);
-    }
-  };
 
   const updateFormValue = (name: string, value: string) => {
     setFormData((prev) => ({
@@ -702,57 +685,52 @@ export default function ContactPage() {
                     <>
                       <div>
                         <h4 className="font-semibold text-gray-900 mb-3">Recent Posts</h4>
-                        <div className="grid grid-cols-3 gap-2">
-                          {instagramPosts.slice(0, 6).map((post) => (
-                            <a
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {instagramPosts.slice(0, 2).map((post) => (
+                            <div
                               key={post.id}
-                              href={post.permalink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="aspect-square rounded-lg overflow-hidden instagram-post group"
+                              className="rounded-lg overflow-hidden border border-stone-200 bg-white"
                             >
-                              <img
-                                src={post.media_url}
-                                alt={post.caption || 'Instagram post'}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              <iframe
+                                title={`Instagram post ${post.permalink}`}
+                                src={`${post.permalink}embed`}
+                                className="w-full"
+                                style={{ height: 540 }}
+                                loading="lazy"
+                                allow="encrypted-media; picture-in-picture"
                               />
-                            </a>
+                              <div className="px-4 py-3 border-t border-stone-200 text-sm">
+                                <a
+                                  href={post.permalink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-semibold text-amber-700 hover:text-amber-800 underline underline-offset-4"
+                                >
+                                  View on Instagram -&gt;
+                                </a>
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
 
                       {/* Latest Post Preview */}
-                      {instagramPosts[0] && (
+                      {firstInstagramPost && (
                         <div className="bg-stone-50 rounded-xl p-4 border border-stone-200">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-pink-300 to-amber-400 flex items-center justify-center">
-                              <span className="text-white font-bold text-xs">LC</span>
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">lacannellecatering</p>
-                              <p className="text-xs text-gray-500">
-                                {formatRelativeTime(instagramPosts[0].timestamp)} • Catering Event
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <p className="text-gray-700 text-sm mb-3">
-                            {instagramPosts[0].caption && instagramPosts[0].caption.length > 100 
-                              ? `${instagramPosts[0].caption.substring(0, 100)}...` 
-                              : instagramPosts[0].caption || 'Check out our latest catering creation!'}
-                          </p>
-                          
-                          <div className="aspect-video rounded-lg mb-3 overflow-hidden">
-                            <img
-                              src={instagramPosts[0].media_url}
-                              alt="Latest Instagram post"
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          <div className="rounded-lg overflow-hidden border border-stone-200 bg-white">
+                            <iframe
+                              title={`Instagram post ${firstInstagramPost.permalink}`}
+                              src={`${firstInstagramPost.permalink}embed`}
+                              className="w-full"
+                              style={{ height: 540 }}
+                              loading="lazy"
+                              allow="encrypted-media; picture-in-picture"
                             />
                           </div>
-                          
-                          <div className="text-right">
-                            <a 
-                              href={instagramPosts[0].permalink}
+
+                          <div className="text-right mt-3">
+                            <a
+                              href={firstInstagramPost.permalink}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-amber-700 hover:text-amber-800 font-medium text-sm"
@@ -776,7 +754,7 @@ export default function ContactPage() {
 
                   {/* Follow Button */}
                   <a 
-                    href="https://www.instagram.com/lacannellecatering/" 
+                    href={INSTAGRAM_PROFILE_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full text-white py-3 px-4 rounded-lg font-semibold text-center hover:shadow-lg transition-all duration-300 transform hover:scale-105 inline-flex items-center justify-center gap-2"

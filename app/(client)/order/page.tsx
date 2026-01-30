@@ -506,6 +506,7 @@ export default function OrderPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [quantities, setQuantities] = useState({});
   const [selectedAccessories, setSelectedAccessories] = useState<any[]>([]);
+  const [accessoryDraftQuantities, setAccessoryDraftQuantities] = useState<Record<number, number>>({});
   const [orderSummaryVisible, setOrderSummaryVisible] = useState(true);
   const [menusData, setMenusData] = useState<any[]>([]);
   const [menuItemsData, setMenuItemsData] = useState<any[]>([]);
@@ -1533,7 +1534,14 @@ export default function OrderPage() {
     updateOrderData(categoryKey, updatedSelection);
   };
   
+    const sanitizeAccessoryQuantity = (quantity: any) => {
+      const parsed = typeof quantity === 'number' ? quantity : Number(quantity);
+      const parsedQuantity = Number.isFinite(parsed) ? Math.max(1, Math.trunc(parsed)) : 1;
+      return parsedQuantity;
+    };
+
     const toggleAccessory = (accessory: any) => {
+      const wasSelected = selectedAccessories.some((item) => item.id === accessory.id);
       const getAccessoryTargetQuantity = (value: any) => {
         const guestTarget = getEffectiveGuestCount();
         const quantityMode =
@@ -1562,14 +1570,26 @@ export default function OrderPage() {
       }
       return [...prev, { ...accessory, quantity: targetQuantity }];
     });
+
+      setAccessoryDraftQuantities((prev) => {
+        if (wasSelected) {
+          const { [accessory.id]: _removed, ...rest } = prev;
+          return rest;
+        }
+        return { ...prev, [accessory.id]: sanitizeAccessoryQuantity(targetQuantity) };
+      });
   };
   
   const updateAccessoryQuantity = (id: number, quantity: number) => {
-    setSelectedAccessories(prev => {
-      const parsed = typeof quantity === 'number' ? quantity : Number(quantity);
-      const parsedQuantity = Number.isFinite(parsed) ? Math.max(1, Math.trunc(parsed)) : 1;
-      return prev.map(item => item.id === id ? { ...item, quantity: parsedQuantity } : item);
-    });
+    setAccessoryDraftQuantities((prev) => ({ ...prev, [id]: sanitizeAccessoryQuantity(quantity) }));
+  };
+
+  const confirmAccessoryQuantity = (id: number) => {
+    const draft = accessoryDraftQuantities[id];
+    if (draft == null) return;
+    setSelectedAccessories((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: sanitizeAccessoryQuantity(draft) } : item))
+    );
   };
   
   const getMenuRequiredCountUpToSubStep = (categoryKey: string, subStepIndex: number) => {
@@ -1669,6 +1689,18 @@ export default function OrderPage() {
       case 'accessories':
         if (!hasValidGuestCount) {
           return getGuestCountError();
+        }
+        {
+          const hasPendingAccessoryQuantity = selectedAccessories.some((item: any) => {
+            if (item?.quantityMode !== 'CLIENT') return false;
+            const draft = accessoryDraftQuantities[item.id];
+            return sanitizeAccessoryQuantity(draft ?? item.quantity) !== sanitizeAccessoryQuantity(item.quantity);
+          });
+          if (hasPendingAccessoryQuantity) {
+            return language === 'DE'
+              ? 'Bitte bestätigen Sie die Zubehör-Mengen, bevor Sie fortfahren.'
+              : 'Please confirm the accessory quantities before continuing.';
+          }
         }
         return '';
       case 'checkout':
@@ -3172,6 +3204,7 @@ export default function OrderPage() {
                   type="button"
                   onClick={() => {
                     setSelectedAccessories([]);
+                    setAccessoryDraftQuantities({});
                     nextStep();
                   }}
                   className="px-6 py-3 rounded-lg text-base font-semibold bg-gray-900 text-white hover:bg-black transition-colors"
@@ -3195,10 +3228,14 @@ export default function OrderPage() {
                   : quantityMode === 'CLIENT'
                   ? 1
                   : Math.max(1, guestCount || MIN_GUESTS);
-                const effectiveQuantity = isSelected
-                  ? (Number.isFinite(Number(selectedItem?.quantity)) ? Number(selectedItem?.quantity) : baseQuantity)
+                const confirmedQuantity = isSelected
+                  ? sanitizeAccessoryQuantity(selectedItem?.quantity ?? baseQuantity)
                   : baseQuantity;
-                const displayQuantity = isSelected ? effectiveQuantity : baseQuantity;
+                const draftQuantity = isSelected && quantityMode === 'CLIENT'
+                  ? sanitizeAccessoryQuantity(accessoryDraftQuantities[accessory.id] ?? confirmedQuantity)
+                  : confirmedQuantity;
+                const hasPendingDraft = isSelected && quantityMode === 'CLIENT' && draftQuantity !== confirmedQuantity;
+                const displayQuantity = isSelected ? confirmedQuantity : baseQuantity;
                 const quantityLabel = quantityMode === 'FIXED'
                   ? (language === 'DE' ? 'fest' : 'fixed')
                   : quantityMode === 'CLIENT'
@@ -3243,43 +3280,58 @@ export default function OrderPage() {
                             </div>
                             
                             {/* Selection Controls */}
-                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                            <div className="w-full flex flex-col sm:flex-row sm:flex-wrap sm:justify-end items-stretch sm:items-center gap-2">
                               {isSelected && (
-                                <div className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
-                                  {language === 'DE' ? 'Menge' : 'Qty'}: {effectiveQuantity}
+                                <div className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 self-start sm:self-auto">
+                                  {language === 'DE' ? 'Menge' : 'Qty'}: {confirmedQuantity}
                                 </div>
                               )}
                               {isSelected && quantityMode === 'CLIENT' ? (
-                                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                                <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                  <div className="flex w-full sm:w-auto items-stretch border border-gray-300 rounded-lg overflow-hidden bg-white">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateAccessoryQuantity(accessory.id, Math.max(1, draftQuantity - 1))}
+                                      className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
+                                    >
+                                      <Minus size={18} strokeWidth={2.5} className="text-black" />
+                                    </button>
+                                    <input
+                                      type="number"
+                                      min={1}
+                                      value={String(draftQuantity)}
+                                      onChange={(e) => {
+                                        const next = parseInt(e.target.value, 10);
+                                        updateAccessoryQuantity(accessory.id, Number.isFinite(next) ? Math.max(1, next) : 1);
+                                      }}
+                                      className="w-16 sm:w-20 text-center py-2 text-base font-bold border-x border-gray-300 bg-white text-gray-900"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => updateAccessoryQuantity(accessory.id, draftQuantity + 1)}
+                                      className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
+                                    >
+                                      <Plus size={18} strokeWidth={2.5} className="text-black" />
+                                    </button>
+                                  </div>
                                   <button
                                     type="button"
-                                    onClick={() => updateAccessoryQuantity(accessory.id, Math.max(1, effectiveQuantity - 1))}
-                                    className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
+                                    onClick={() => confirmAccessoryQuantity(accessory.id)}
+                                    disabled={!hasPendingDraft}
+                                    className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap inline-flex items-center justify-center gap-2 ${
+                                      hasPendingDraft
+                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                    }`}
                                   >
-                                    <Minus size={18} strokeWidth={2.5} className="text-black" />
-                                  </button>
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    value={String(effectiveQuantity)}
-                                    onChange={(e) => {
-                                      const next = parseInt(e.target.value, 10);
-                                      updateAccessoryQuantity(accessory.id, Number.isFinite(next) ? Math.max(1, next) : 1);
-                                    }}
-                                    className="w-20 text-center py-2 text-base font-bold border-x border-gray-300 bg-white text-gray-900"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => updateAccessoryQuantity(accessory.id, effectiveQuantity + 1)}
-                                    className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
-                                  >
-                                    <Plus size={18} strokeWidth={2.5} className="text-black" />
+                                    <Check size={16} />
+                                    {language === 'DE' ? 'Bestätigen' : 'Confirm'}
                                   </button>
                                 </div>
                               ) : null}
                               <button
                                 onClick={() => toggleAccessory(accessory)}
-                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+                                className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
                                   isSelected
                                     ? 'bg-red-100 text-red-800 hover:bg-red-200'
                                     : 'bg-gray-900 text-white hover:bg-black'
@@ -3297,13 +3349,20 @@ export default function OrderPage() {
                                 <span className="text-green-800 font-semibold">
                                   {language === 'DE' ? 'Hinzugefuegt' : 'Added'}:{' '}
                                   <span className="text-lg">
-                                    {effectiveQuantity} {language === 'DE' ? 'Stk' : 'pcs'}
+                                    {confirmedQuantity} {language === 'DE' ? 'Stk' : 'pcs'}
                                   </span>
                                 </span>
                                 <span className="text-green-900 font-bold">
-                                  {language === 'DE' ? 'Gesamt' : 'Total'}: €{((Number(selectedItem?.price) || 0) * effectiveQuantity).toFixed(2)}
+                                  {language === 'DE' ? 'Gesamt' : 'Total'}: €{((Number(selectedItem?.price) || 0) * confirmedQuantity).toFixed(2)}
                                 </span>
                               </div>
+                              {hasPendingDraft && (
+                                <div className="mt-2 text-xs text-amber-800 font-medium">
+                                  {language === 'DE'
+                                    ? `Neue Menge (${draftQuantity}) noch nicht bestätigt.`
+                                    : `New quantity (${draftQuantity}) not confirmed yet.`}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

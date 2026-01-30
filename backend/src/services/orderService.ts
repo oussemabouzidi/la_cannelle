@@ -189,12 +189,17 @@ export const orderService = {
 
   async updateOrderStatus(id: string, status: OrderStatus, cancellationReason?: string) {
     const safeStatus = status?.toString().toUpperCase() as OrderStatus;
+    const trimmedReason = String(cancellationReason || '').trim();
     const order = await prisma.order.update({
       where: { id },
       data: {
         status: safeStatus,
-        ...(cancellationReason && { cancellationReason }),
-        ...(safeStatus === 'CANCELLED' && { paymentStatus: 'REFUNDED' as PaymentStatus })
+        ...(safeStatus === 'CANCELLED'
+          ? {
+              cancellationReason: trimmedReason || null,
+              paymentStatus: 'REFUNDED' as PaymentStatus
+            }
+          : { cancellationReason: null })
       },
       include: {
         items: true
@@ -214,5 +219,31 @@ export const orderService = {
     });
 
     return order;
+  },
+
+  async deleteOrder(id: string) {
+    const existing = await prisma.order.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      throw new AppError('Order not found', 404);
+    }
+
+    await prisma.$transaction([
+      prisma.orderItem.deleteMany({ where: { orderId: id } }),
+      prisma.order.delete({ where: { id } })
+    ]);
+
+    return { deletedOrderId: id };
+  },
+
+  async deleteAllOrders() {
+    const [items, orders] = await prisma.$transaction([
+      prisma.orderItem.deleteMany({}),
+      prisma.order.deleteMany({})
+    ]);
+
+    return {
+      deletedOrders: orders.count,
+      deletedOrderItems: items.count
+    };
   }
 };

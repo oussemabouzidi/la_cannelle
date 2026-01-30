@@ -127,9 +127,7 @@ export default function MenuShowcaseHorizontal({
             .map((id) => toHighlightItem(productMap.get(id)))
             .filter(Boolean) as MenuHighlightItem[];
         }
-        const coverImage = menu.image
-          || items.find((item) => item.image)?.image
-          || '/images/home_image.jpeg';
+        const coverImage = menu.image || '/images/home_image.jpeg';
         return {
           ...menu,
           name: localizedName,
@@ -491,9 +489,7 @@ export default function MenuShowcaseHorizontal({
         <div className="relative">
           <div className="flex overflow-x-auto pb-6 space-x-6 scrollbar-hide">
             {menuHighlights.map((menu, index) => {
-              const firstImage = menu.items?.[0]?.image || 
-                                menu.coverImage || 
-                                '/images/home_image.jpeg';
+              const firstImage = menu.coverImage || '/images/home_image.jpeg';
               
               const displayPrice = menu.price 
                 ? `€${menu.price.toFixed(2)}`

@@ -112,4 +112,20 @@ export const ordersApi = {
     }
     throw new Error(response.error || 'Failed to update order status');
   },
+
+  async deleteOrder(id: string): Promise<{ deletedOrderId: string }> {
+    const response = await apiClient.delete<{ deletedOrderId: string }>(`/orders/${id}`);
+    if (response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to delete order');
+  },
+
+  async deleteAllOrders(): Promise<{ deletedOrders: number; deletedOrderItems: number }> {
+    const response = await apiClient.delete<{ deletedOrders: number; deletedOrderItems: number }>('/orders');
+    if (response.data) {
+      return response.data;
+    }
+    throw new Error(response.error || 'Failed to delete orders');
+  },
 };
