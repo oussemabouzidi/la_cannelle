@@ -572,6 +572,7 @@ export default function OrderPage() {
   const [minPeoplePromptOpen, setMinPeoplePromptOpen] = useState(false);
   const [minPeoplePromptMenu, setMinPeoplePromptMenu] = useState<any>(null);
   const [minPeoplePromptGuestCount, setMinPeoplePromptGuestCount] = useState<number>(0);
+  const [ignoreMenuMinPeople, setIgnoreMenuMinPeople] = useState(false);
   const [postalLookupError, setPostalLookupError] = useState('');
   const [postalLookupLoading, setPostalLookupLoading] = useState(false);
   const [cityLookupOptions, setCityLookupOptions] = useState<any[]>([]);
@@ -830,22 +831,10 @@ export default function OrderPage() {
     setSelectedAccessories((prev) => prev.map((item) => {
       if (item?.quantityMode === 'FIXED' || item?.quantityMode === 'CLIENT') return item;
       if (item?.quantityMode !== 'GUEST_COUNT') return item;
-      const targetQuantity = (() => {
-        const base = guestCount > 0 ? guestCount : MIN_GUESTS;
-        const activeMenuId = pendingMenuId
-          ? Number(pendingMenuId)
-          : orderData.selectedMenu
-          ? Number(orderData.selectedMenu)
-          : null;
-        const selectedMenuObj = activeMenuId != null
-          ? menusData.find((m: any) => Number(m.id) === activeMenuId)
-          : null;
-        const menuMinPeople = selectedMenuObj?.minPeople == null ? 0 : Number(selectedMenuObj.minPeople) || 0;
-        return Math.max(MIN_GUESTS, base, menuMinPeople);
-      })();
+      const targetQuantity = getEffectiveGuestCount();
       return item.quantity === targetQuantity ? item : { ...item, quantity: targetQuantity };
     }));
-  }, [orderData.guestCount, orderData.selectedMenu, pendingMenuId, menusData]);
+  }, [orderData.guestCount, orderData.selectedMenu, pendingMenuId, menusData, ignoreMenuMinPeople]);
   
   // ============================================================================
   // HELPER FUNCTIONS (Inside component, but no hooks)
@@ -1095,7 +1084,7 @@ export default function OrderPage() {
   
   const getCategoryExtrasSubtotal = (categoryKey: string) => {
     const items = getItemsForStepCategory(categoryKey);
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const pricingGuestCount = getEffectiveGuestCount();
     const includedCount = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
 
     // IMPORTANT: Use selection order (stable) for included vs extra items.
@@ -1106,7 +1095,7 @@ export default function OrderPage() {
     const includedExtras = includedItems.reduce((sum, item) => {
       const price = toPriceNumber(item?.price);
       const quantity = Number(item?.quantity) || 0;
-      const extraPortions = Math.max(0, quantity - guestCount);
+      const extraPortions = Math.max(0, quantity - pricingGuestCount);
       return sum + price * extraPortions;
     }, 0);
 
@@ -1120,7 +1109,7 @@ export default function OrderPage() {
   };
 
   const getChargeForItemInCategory = (categoryKey: string, item: any) => {
-    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const pricingGuestCount = getEffectiveGuestCount();
     const items = getItemsForStepCategory(categoryKey);
     const includedCount = Math.max(0, Number(includedByCategory[categoryKey]) || 0);
 
@@ -1130,7 +1119,7 @@ export default function OrderPage() {
 
     const price = toPriceNumber(item?.price);
     const quantity = Number(item?.quantity) || 0;
-    const chargedQuantity = isIncluded ? Math.max(0, quantity - guestCount) : quantity;
+    const chargedQuantity = isIncluded ? Math.max(0, quantity - pricingGuestCount) : quantity;
 
     return {
       isIncluded,
@@ -1160,6 +1149,7 @@ export default function OrderPage() {
   
   const getOrderTotals = () => {
     const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const pricingGuestCount = getEffectiveGuestCount();
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
       return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
@@ -1167,12 +1157,13 @@ export default function OrderPage() {
     const selectedMenuObj = menusData.find(
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * pricingGuestCount : 0;
     const foodExtrasSubtotal = getFoodExtrasSubtotal();
     const subtotal = menuSubtotal + foodExtrasSubtotal;
     const total = subtotal + accessoriesSubtotal + flatServiceFee;
     return {
       guestCount,
+      pricingGuestCount,
       subtotal,
       total,
       menuSubtotal,
@@ -1286,9 +1277,12 @@ export default function OrderPage() {
     setMinPeoplePromptOpen(true);
   };
   
-  const finalizeMenuSelection = (menu: any) => {
+  const finalizeMenuSelection = (menu: any, options?: { ignoreMenuMinPeople?: boolean }) => {
     setQuantities({});
     extraNoticeRef.current = {};
+    if (options && options.ignoreMenuMinPeople !== undefined) {
+      setIgnoreMenuMinPeople(Boolean(options.ignoreMenuMinPeople));
+    }
     setPendingMenuId(menu.id);
     setOrderData((prev: any) => {
       const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
@@ -1330,7 +1324,7 @@ export default function OrderPage() {
       return;
     }
 
-    finalizeMenuSelection(menu);
+    finalizeMenuSelection(menu, { ignoreMenuMinPeople: false });
   };
   
   const handlePostalCodeChange = (value: string) => {
@@ -1465,6 +1459,10 @@ export default function OrderPage() {
     const selectedMenuObj = activeMenuId != null
       ? menusData.find((m: any) => Number(m.id) === activeMenuId)
       : null;
+
+    if (ignoreMenuMinPeople) {
+      return Math.max(MIN_GUESTS, base);
+    }
 
     const menuMinPeople = selectedMenuObj?.minPeople == null ? 0 : Number(selectedMenuObj.minPeople) || 0;
     return Math.max(MIN_GUESTS, base, menuMinPeople);
@@ -1982,10 +1980,14 @@ export default function OrderPage() {
       .join('\n');
     const accessoriesDetails = accessoriesLines ? `Accessories:\n${accessoriesLines}` : '';
     
-    const mergedRequests = [companyDetails, accessoriesDetails, baseRequests].filter(Boolean).join('\n\n');
+    const guestCount = parseInt(orderData.guestCount) || 0;
+    const pricingGuestCount = getEffectiveGuestCount();
+    const guestCountNote = guestCount > 0 && pricingGuestCount !== guestCount
+      ? (language === 'DE' ? `Eingegebene Gäste: ${guestCount}` : `Guests entered: ${guestCount}`)
+      : '';
+    const mergedRequests = [companyDetails, accessoriesDetails, guestCountNote, baseRequests].filter(Boolean).join('\n\n');
     
     // Calculate totals
-    const guestCount = parseInt(orderData.guestCount) || 0;
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum, item) => {
       return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
@@ -1994,7 +1996,7 @@ export default function OrderPage() {
     const selectedMenuObj = menusData.find(
       m => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * pricingGuestCount : 0;
     
     const foodItems = [
       ...orderData.selectedFingerfoods,
@@ -2029,7 +2031,7 @@ export default function OrderPage() {
         eventType: orderData.serviceType || orderData.businessType || 'Custom',
         eventDate: orderData.eventDate || new Date().toISOString(),
         eventTime: orderData.eventTime || '',
-        guests: guestCount,
+        guests: pricingGuestCount,
         location: orderData.location || orderData.postalCode || '',
         specialRequests: mergedRequests,
         businessType: orderData.businessType,
@@ -2534,6 +2536,8 @@ export default function OrderPage() {
     const selectedMenu = menusData.find(
       (m: any) => (activeMenuId != null) && Number(m.id) === activeMenuId
     );
+    const guestCount = parseInt(orderData.guestCount, 10) || 0;
+    const pricingGuestCount = getEffectiveGuestCount();
     
     const products = menuItemsData
       .filter((item: any) => matchesStepCategory(item, currentCategory))
@@ -2595,8 +2599,16 @@ export default function OrderPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
+                  <span className="font-semibold text-gray-900">{guestCount}</span>
                 </div>
+                {pricingGuestCount !== guestCount && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-gray-800">
+                      {language === 'DE' ? 'Menü-Portionen (Minimum):' : 'Menu portions (minimum):'}
+                    </span>
+                    <span className="font-semibold text-gray-900">{pricingGuestCount}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
                   <span className="font-semibold text-gray-900">
@@ -2959,6 +2971,7 @@ export default function OrderPage() {
   
   const renderStep3 = () => {
     const guestCount = parseInt(orderData.guestCount) || 0;
+    const pricingGuestCount = getEffectiveGuestCount();
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum: number, item: any) => {
       return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
@@ -2967,7 +2980,7 @@ export default function OrderPage() {
     const selectedMenuObj = menusData.find(
       (m: any) => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * pricingGuestCount : 0;
     
     const foodSubtotal = getFoodExtrasSubtotal();
     const subtotal = menuSubtotal + foodSubtotal;
@@ -3085,8 +3098,16 @@ export default function OrderPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-semibold text-gray-800">{t.eventInfo.guests}:</span>
-                  <span className="font-semibold text-gray-900">{orderData.guestCount || 0}</span>
+                  <span className="font-semibold text-gray-900">{guestCount}</span>
                 </div>
+                {pricingGuestCount !== guestCount && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-gray-800">
+                      {language === 'DE' ? 'Menü-Portionen (Minimum):' : 'Menu portions (minimum):'}
+                    </span>
+                    <span className="font-semibold text-gray-900">{pricingGuestCount}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-semibold text-gray-800">{t.eventInfo.location}:</span>
                   <span className="font-semibold text-gray-900">
@@ -3402,6 +3423,7 @@ export default function OrderPage() {
   
   const renderStep4 = () => {
     const guestCount = parseInt(orderData.guestCount) || 0;
+    const pricingGuestCount = getEffectiveGuestCount();
     const flatServiceFee = 48.90;
     const accessoriesSubtotal = selectedAccessories.reduce((sum: number, item: any) => {
       return sum + (toPriceNumber(item?.price) * (Number(item?.quantity) || 0));
@@ -3410,7 +3432,7 @@ export default function OrderPage() {
     const selectedMenuObj = menusData.find(
       (m: any) => m.id === orderData.selectedMenu || m.id === Number(orderData.selectedMenu)
     );
-    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * guestCount : 0;
+    const menuSubtotal = selectedMenuObj ? toPriceNumber((selectedMenuObj as any).price) * pricingGuestCount : 0;
     
     const foodSubtotal = getFoodExtrasSubtotal();
     const subtotal = menuSubtotal + foodSubtotal;
@@ -3453,9 +3475,17 @@ export default function OrderPage() {
                         <div className="flex items-center gap-2 text-sm text-black">
                           <Users size={16} className="text-gray-500" />
                           <span className="font-medium">
-                            {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
+                            {guestCount} {language === 'DE' ? 'Gäste' : 'guests'}
                           </span>
                         </div>
+                        {pricingGuestCount !== guestCount && (
+                          <div className="flex items-center gap-2 text-sm text-black">
+                            <Users size={16} className="text-gray-500" />
+                            <span className="font-medium">
+                              {pricingGuestCount} {language === 'DE' ? 'Menü-Portionen (Minimum)' : 'menu portions (minimum)'}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-sm text-black">
                           <MapPinIcon size={16} className="text-gray-500" />
                           <span className="font-medium">
@@ -3773,9 +3803,17 @@ export default function OrderPage() {
                         <div className="flex items-center gap-2 text-sm text-black">
                           <Users size={16} className="text-gray-500" />
                           <span className="font-medium">
-                            {orderData.guestCount || 0} {language === 'DE' ? 'Gäste' : 'guests'}
+                            {guestCount} {language === 'DE' ? 'Gäste' : 'guests'}
                           </span>
                         </div>
+                        {pricingGuestCount !== guestCount && (
+                          <div className="flex items-center gap-2 text-sm text-black">
+                            <Users size={16} className="text-gray-500" />
+                            <span className="font-medium">
+                              {pricingGuestCount} {language === 'DE' ? 'Menü-Portionen (Minimum)' : 'menu portions (minimum)'}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-sm text-black">
                           <MapPinIcon size={16} className="text-gray-500" />
                           <span className="font-medium">
@@ -4312,8 +4350,17 @@ export default function OrderPage() {
                 <div className="flex items-center gap-2">
                   <Users size={16} className="text-gray-500" />
                   <span className="font-semibold">{t.eventInfo.guests}:</span>
-                  <span>{orderData.guestCount || 0}</span>
+                  <span>{guestCount}</span>
                 </div>
+                {pricingGuestCount !== guestCount && (
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-gray-500" />
+                    <span className="font-semibold">
+                      {language === 'DE' ? 'Menü-Portionen (Minimum):' : 'Menu portions (minimum):'}
+                    </span>
+                    <span>{pricingGuestCount}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <MapPinIcon size={16} className="text-gray-500" />
                   <span className="font-semibold">{t.eventInfo.location}:</span>
@@ -4397,7 +4444,7 @@ export default function OrderPage() {
                 if (menuMin > 0) {
                   handleGuestCountChange(String(menuMin));
                 }
-                finalizeMenuSelection(minPeoplePromptMenu);
+                finalizeMenuSelection(minPeoplePromptMenu, { ignoreMenuMinPeople: false });
               }}
               className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
             >
@@ -4407,7 +4454,7 @@ export default function OrderPage() {
               type="button"
               onClick={() => {
                 closeMinPeoplePrompt();
-                finalizeMenuSelection(minPeoplePromptMenu);
+                finalizeMenuSelection(minPeoplePromptMenu, { ignoreMenuMinPeople: true });
               }}
               className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50"
             >

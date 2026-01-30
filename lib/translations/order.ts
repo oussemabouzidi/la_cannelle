@@ -131,7 +131,7 @@ const en: OrderTranslations = {
   menuMinPeoplePrompt: {
     title: 'Guest count for this menu',
     description: (menuMinGuests, selectedGuests) =>
-      `This menu has a minimum of ${menuMinGuests} guests. Do you want to continue with ${menuMinGuests} guests or keep your selected ${selectedGuests}?`,
+      `This menu recommends at least ${menuMinGuests} guests. Do you want to update your guest count to ${menuMinGuests} or keep your selected ${selectedGuests}?`,
     useMenuMin: (menuMinGuests) => `Use ${menuMinGuests} guests (menu minimum)`,
     keepSelected: (selectedGuests) => `Keep ${selectedGuests} guests`,
     cancel: 'Cancel',
@@ -263,7 +263,7 @@ const de: OrderTranslations = {
   menuMinPeoplePrompt: {
     title: 'Gästeanzahl für dieses Menü',
     description: (menuMinGuests, selectedGuests) =>
-      `Dieses Menü hat ein Minimum von ${menuMinGuests} Gästen. Möchten Sie mit ${menuMinGuests} Gästen fortfahren oder Ihre Auswahl (${selectedGuests}) behalten?`,
+      `Dieses Menü empfiehlt mindestens ${menuMinGuests} Gäste. Möchten Sie Ihre Gästeanzahl auf ${menuMinGuests} aktualisieren oder bei Ihrer Auswahl (${selectedGuests}) bleiben?`,
     useMenuMin: (menuMinGuests) => `Mit ${menuMinGuests} Gästen fortfahren (Menü-Minimum)`,
     keepSelected: (selectedGuests) => `Bei ${selectedGuests} Gästen bleiben`,
     cancel: 'Abbrechen',
