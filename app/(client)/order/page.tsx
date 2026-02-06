@@ -2173,7 +2173,7 @@ export default function OrderPage() {
     return (
       <div className="space-y-6">
         <div className="grid gap-4">
-          <div className="rounded-2xl border border-amber-100 bg-white p-4 shadow-lg">
+          <div className="rounded-3xl border border-amber-100 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{t.eventType?.title}</h2>
@@ -2208,7 +2208,7 @@ export default function OrderPage() {
           </div>
 
           {orderData.businessType && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
+            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">
@@ -2352,7 +2352,7 @@ export default function OrderPage() {
             </div>
           )}
         </div>
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-lg">
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-900">{t.eventInfo.date} *</label>
@@ -2579,7 +2579,7 @@ export default function OrderPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Order Overview - Right Side */}
         <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
+          <div className="sticky top-32 rounded-3xl border border-amber-100/60 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">{t.productSelection.orderSummary}</h3>
               <button
@@ -2811,7 +2811,7 @@ export default function OrderPage() {
               const currentQuantity = quantities[quantityKey] || 0;
               
               return (
-                <div key={product.id} className="border border-gray-300 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow duration-300">
+                <div key={product.id} className="border border-gray-300 rounded-2xl overflow-hidden bg-white hover:shadow-md transition-shadow duration-300">
                   <div className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
@@ -3086,7 +3086,7 @@ export default function OrderPage() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Order Overview - Right Side */}
         <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 rounded-2xl border border-amber-100/60 bg-white p-6 shadow-lg shadow-amber-100/40">
+          <div className="sticky top-32 rounded-3xl border border-amber-100/60 bg-white p-6 shadow-sm">
             <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
             
             <div className="space-y-6">
@@ -3287,7 +3287,7 @@ export default function OrderPage() {
                 const unitPrice = Number(accessory?.price) || 0;
                 
                 return (
-                  <div key={accessory.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow">
+                  <div key={accessory.id} className="border border-gray-200 rounded-2xl overflow-hidden bg-white hover:shadow-md transition-shadow">
                     <div className="p-6">
                       <div className="flex flex-col md:flex-row items-start gap-6">
                         {/* Image Column */}
@@ -3456,7 +3456,7 @@ export default function OrderPage() {
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Order Summary - Right Side */}
               <div className="lg:col-span-1 lg:order-2">
-                <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <div className="sticky top-32 bg-white rounded-3xl shadow-sm border border-stone-200 p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
                   
                   <div className="space-y-6">
@@ -3590,7 +3590,7 @@ export default function OrderPage() {
               
               {/* Invoice Information - Left Side */}
               <div className="lg:col-span-2 lg:order-1">
-                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+                <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
                   <div className="space-y-6">
                     {/* Invoice Details */}
                     <div>
@@ -3741,7 +3741,7 @@ export default function OrderPage() {
                         handleSubmitOrder();
                       }}
                       disabled={orderBlocked || (isCaptchaEnabled && !captchaToken)}
-                      className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-2xl text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <FileInvoice size={20} />
                       {ui.confirmOrder}
@@ -3784,7 +3784,7 @@ export default function OrderPage() {
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Order Summary - Right Side */}
               <div className="lg:col-span-1 lg:order-2">
-                <div className="sticky top-32 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <div className="sticky top-32 bg-white rounded-3xl shadow-sm border border-stone-200 p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
                   
                   <div className="space-y-6">
@@ -3901,7 +3901,7 @@ export default function OrderPage() {
               
               {/* Payment Form - Left Side */}
               <div className="lg:col-span-2 lg:order-1">
-                <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+                <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
                   <div className="space-y-6">
                     {/* Payment Method Selection */}
                     <div>
@@ -4146,7 +4146,7 @@ export default function OrderPage() {
                         handleSubmitOrder();
                       }}
                       disabled={orderBlocked || (isCaptchaEnabled && !captchaToken)}
-                      className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-lg text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="w-full mt-6 bg-amber-600 text-white py-4 px-6 rounded-2xl text-base font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       <Lock size={20} />
                       Pay €{grandTotal.toFixed(2)} Securely
@@ -4190,7 +4190,7 @@ export default function OrderPage() {
         </div>
         <div className="grid lg:grid-cols-12 gap-8">
           <div className="lg:col-span-7 space-y-6">
-            <div className="rounded-2xl border border-amber-100 bg-white shadow-lg p-6 md:p-8">
+            <div className="rounded-3xl border border-amber-100 bg-white shadow-sm p-6 md:p-8">
               <div className="flex items-center gap-3 mb-6">
                 <TruckIcon size={20} className="text-amber-600" />
                 <div>
@@ -4797,8 +4797,8 @@ export default function OrderPage() {
       {renderExtraNoticeModal()}
       
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+         
         @keyframes fadeInUp {
           from {
             opacity: 0;
@@ -4817,7 +4817,21 @@ export default function OrderPage() {
         body {
           font-family: 'Inter', sans-serif;
         }
-        
+
+        .font-elegant {
+          font-family: 'Playfair Display', serif;
+        }
+
+        ::selection {
+          background: rgba(217, 119, 6, 0.22);
+        }
+
+        :focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.22);
+          border-radius: 12px;
+        }
+         
         .step-item {
           opacity: 0.4;
           transition: all 0.3s ease;
@@ -4873,23 +4887,25 @@ export default function OrderPage() {
       `}</style>
       
       {/* Enhanced Top Navigation with Steps */}
-      <div className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-40">
+      <div className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-b border-stone-200/70 z-40 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Language Row */}
           <div className="flex justify-between items-center py-2">
-            <button
-              onClick={handleBackToHome}
-              className="inline-flex items-center text-xs font-medium text-gray-700 hover:text-amber-600 transition-colors"
-            >
-              <ArrowLeft size={14} className="mr-1" />
-              {t.buttons.backToHome}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleBackToHome}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-gray-800 hover:text-amber-700 hover:bg-amber-50 transition-colors"
+              >
+                <ArrowLeft size={14} />
+                {t.buttons.backToHome}
+              </button>
+            </div>
             
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleLanguage}
                 aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="px-3 py-1.5 text-xs font-medium border border-amber-300 text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors inline-flex items-center"
+                className="px-3 py-2 text-xs font-medium border border-amber-200 text-amber-800 bg-amber-50/80 rounded-full hover:bg-amber-100 transition-colors inline-flex items-center"
               >
                 <img
                   src={
@@ -4908,32 +4924,32 @@ export default function OrderPage() {
           {/* Steps Progress Bar */}
           <div className="border-t border-gray-100 pt-2 pb-3">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-gray-900">
+              <span className="text-sm font-semibold text-gray-900 font-elegant">
                 {stepsConfig[currentStep - 1]?.label}
               </span>
               <div className="flex items-center space-x-1">
                 <button
                   onClick={prevStep}
                   disabled={currentStep === 1}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md inline-flex items-center transition-colors ${
+                  className={`px-3 py-2 text-xs font-medium rounded-full inline-flex items-center transition-colors ${
                     currentStep === 1
                       ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-700 hover:text-amber-600 hover:bg-amber-50'
+                      : 'text-gray-800 hover:text-amber-700 hover:bg-amber-50'
                   }`}
                 >
                   <ChevronLeft size={14} className="mr-1" />
                   {t.buttons.back}
                 </button>
                 
-               <button
+                <button
                  onClick={nextStep}
                  disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
-                 className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center shadow-sm ${
-                   isOrderingPaused || (isClosedDate && currentStep >= 1)
-                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                     : 'bg-amber-600 text-white hover:bg-amber-700'
-                 }`}
-               >
+                  className={`px-4 py-2 text-xs font-semibold rounded-full transition-colors inline-flex items-center shadow-sm ${
+                    isOrderingPaused || (isClosedDate && currentStep >= 1)
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-amber-600 text-white hover:bg-amber-700'
+                  }`}
+                >
                  {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
                  <ChevronRight size={14} className="ml-1" />
                </button>
@@ -5044,13 +5060,45 @@ export default function OrderPage() {
           </div>
         </div>
       </div>
-      <br></br>
-      <br></br>
       
       {/* Main Content */}
       <main className="flex-1">
-        <div className="pt-48 pb-16 px-4 sm:px-6 lg:px-8">
+        <div
+          className={`${
+            currentStep === 2 && dynamicMenuSteps.length > 0 ? 'pt-64' : 'pt-48'
+          } pb-16 px-4 sm:px-6 lg:px-8`}
+        >
           <div className="max-w-6xl mx-auto">
+            {currentStep === 1 && (
+              <section className="mb-8 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
+                <div className="relative">
+                  <div className="absolute inset-0">
+                    <img
+                      src="/images/restaurant-interior.jpg"
+                      alt="La Cannelle"
+                      className="h-full w-full object-cover opacity-20"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/70" />
+                  </div>
+
+                  <div className="relative p-6 sm:p-10">
+                    <p className="text-xs uppercase tracking-[0.25em] text-amber-700 font-semibold">
+                      {language === 'DE' ? 'Bestellen' : 'Order'}
+                    </p>
+                    <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 font-elegant">
+                      {language === 'DE' ? 'Planen Sie Ihr Event in wenigen Schritten' : 'Plan your event in a few steps'}
+                    </h1>
+                    <p className="mt-4 max-w-2xl text-sm sm:text-base text-gray-600 leading-relaxed">
+                      {language === 'DE'
+                        ? 'Wählen Sie Gästeanzahl, Menüs und Extras — klar strukturiert, ohne Ablenkung.'
+                        : 'Choose guests, menus, and extras — structured, fast, and distraction-free.'}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
+
             {orderBlocked && (
               <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {blockedMessage}

@@ -1,164 +1,79 @@
 "use client";
 
-
 import React, { useState, useEffect } from 'react';
-
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
-
 import { usePathname, useRouter } from 'next/navigation';
-
 import { Star, Crown, Shield, Heart } from 'lucide-react';
-
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
-
 import { productsApi, type Product } from '@/lib/api/products';
-
 import { useTranslation } from '@/lib/hooks/useTranslation';
-
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useRef } from 'react';
-
-
-
 import { commonTranslations } from '@/lib/translations/common';
 import type { Language } from '@/lib/hooks/useTranslation';
-
-
 import { Clock, ChefHat, Flame } from 'lucide-react';
-
-// Add these imports
 import { useMemo } from 'react';
 import { Check } from 'lucide-react';
 import MenuShowcaseHorizontal from '../components/page';
-
-
-
-
 import { homeTranslations } from '@/lib/translations/home';
 
-
 export default function CateringHomepage() {
-
   const scrollContainer = useRef<HTMLDivElement>(null);
-
-
   const { language, toggleLanguage } = useTranslation('home');
-  const t = homeTranslations[language]; // Get translation directly
+  const t = homeTranslations[language];
   
-  // Add these state variables at the top of your component
   const [selectedMenu, setSelectedMenu] = useState<ApiMenu | null>(null);
-
-  // Add this useEffect for data fetching
-  useEffect(() => {
-    const loadMenus = async () => {
-      try {
-        setIsLoadingData(true);
-        setFetchError(null);
-        
-        // Fetch menus from backend
-        const menusResult = await menusApi.getMenus({ 
-          includeImages: true
-        });
-
-        const nextMenus = (menusResult || []).map((menu) => ({
-          ...menu,
-          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
-        }));
-
-        setMenus(nextMenus);
-      } catch (error) {
-        console.error('Error loading menus:', error);
-        setFetchError('Failed to load menu items. Please try again later.');
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
-
-    loadMenus();
-  }, []);
-
-  useEffect(() => {
-    const loadMenus = async () => {
-      try {
-        setIsLoadingData(true);
-        setFetchError(null);
-        
-        // Fetch menus from backend
-        const menusResult = await menusApi.getMenus({ 
-          includeImages: true,
-          
-        });
-
-        const nextMenus = (menusResult || []).map((menu) => ({
-          ...menu,
-          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
-        }));
-
-        setMenus(nextMenus);
-      } catch (error) {
-        console.error('Error loading menus:', error);
-        setFetchError('Failed to load menu items. Please try again later.');
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
-
-    loadMenus();
-  }, []);
-
-  // Add this useEffect to handle body overflow when modal is open
-  useEffect(() => {
-    if (!selectedMenu) return;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedMenu]);
-
-
-  // Add this useEffect to handle body overflow when modal is open
-  useEffect(() => {
-    if (!selectedMenu) return;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedMenu]);
-
   const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
-
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // const { t: rawT, language, toggleLanguage } = useTranslation('home');
-
   const [isVisible, setIsVisible] = useState(false);
-
   const [menus, setMenus] = useState<ApiMenu[]>([]);
-
   const [products, setProducts] = useState<Product[]>([]);
-
   const [isLoadingData, setIsLoadingData] = useState(false);
-
   const [fetchError, setFetchError] = useState<string | null>(null);
-
-  // const t = rawT as HomeTranslation;
-
-/*
-  console.log('Translation object structure:', rawT);
-  console.log('Is menus available?', 'menus' in rawT);
-  console.log('Available keys:', Object.keys(rawT || {}));
-*/
-
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
   const commonA11y = commonTranslations[language].accessibility;
+
   useEffect(() => {
-
     setIsVisible(true);
-
   }, []);
 
+  useEffect(() => {
+    const loadMenus = async () => {
+      try {
+        setIsLoadingData(true);
+        setFetchError(null);
+        const menusResult = await menusApi.getMenus({ includeImages: true });
+        const nextMenus = (menusResult || []).map((menu) => ({
+          ...menu,
+          products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
+        }));
+        setMenus(nextMenus);
+      } catch (error) {
+        console.error('Error loading menus:', error);
+        setFetchError('Failed to load menu items. Please try again later.');
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    loadMenus();
+  }, []);
 
+  useEffect(() => {
+    if (!selectedMenu) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedMenu]);
+
+  useEffect(() => {
+    if (!selectedMenuItem) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedMenuItem]);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -169,1462 +84,728 @@ export default function CateringHomepage() {
   };
 
   const desktopLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:scale-105`;
+    `${isActiveHref(href) ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'} transition-colors duration-200 text-sm font-medium tracking-wide`;
 
   const mobileLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:translate-x-2`;
-
-
+    `${isActiveHref(href) ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'} transition-colors duration-200 text-base font-medium`;
 
   const handleOrderClick = (selectedProducts?: number[]) => {
-
     const query = selectedProducts?.length ? `?products=${selectedProducts.join(',')}` : '';
-
     router.push(`/order${query}`);
-
   };
 
-
-
   useEffect(() => {
-
     const loadMenuData = async () => {
-
       try {
-
         setIsLoadingData(true);
-
         setFetchError(null);
-
         const [fetchedMenus, fetchedProducts] = await Promise.all([
-
           menusApi.getMenus({ isActive: true, includeImages: true }),
-
           productsApi.getProducts({ available: true }),
-
         ]);
-
-
-
         const normalizedMenus = (fetchedMenus || []).map((menu) => ({
-
           ...menu,
-
           products: menu?.menuProducts ? menu.menuProducts.map((mp) => mp.productId) : menu?.products || [],
-
         }));
-
-
-
         setMenus(normalizedMenus);
-
         setProducts(fetchedProducts || []);
-
       } catch (error) {
-
         console.error('Failed to fetch menus/products', error);
-
         setFetchError(t.errors.menusLoadFailed);
-
       } finally {
-
         setIsLoadingData(false);
-
       }
-
     };
-
-
-
     loadMenuData();
-
   }, []);
 
-
-
   const brandLogos = [
-
     { name: 'Montblanc', src: '/images/logos/montblanc.png' },
-
     { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
-
     { name: 'OMG', src: '/images/logos/omg.png' },
-
     { name: 'DoiT International', src: '/images/logos/doit.png' },
-
     { name: 'BBDO', src: '/images/logos/bbdo.png' },
-
     { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
-
     { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
-
     { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
-
     { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.jpg' },
-
     { name: 'Samsonite', src: '/images/logos/samsonite.png' },
-
     { name: 'SABIC', src: '/images/logos/sabic.png' },
-
   ];
-
-
 
   const quickMenuIcons = [Star, Heart, Shield, Crown];
-
   const quickMenuCategoryMeta = [
-
     { gradient: 'from-amber-200 via-amber-100 to-stone-100', countEn: '12 dishes', countDe: '12 Gerichte' },
-
     { gradient: 'from-rose-200 via-rose-100 to-stone-100', countEn: '8 menus', countDe: '8 Menüs' },
-
     { gradient: 'from-emerald-200 via-emerald-100 to-stone-100', countEn: '15 options', countDe: '15 Optionen' },
-
     { gradient: 'from-sky-200 via-sky-100 to-stone-100', countEn: '10 highlights', countDe: '10 Highlights' },
-
   ];
-
-
 
   const companyValues = [
-
     { icon: Target, ...t.company.values.mission },
-
     { icon: Eye, ...t.company.values.vision },
-
     { icon: Award, ...t.company.values.excellence },
-
     { icon: Users, ...t.company.values.community },
-
   ];
 
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-
-
-
-
   const journeyIcons = [Flag, Award, Globe, Zap];
-
   const journeyMilestones = t.journey.milestones.map((milestone, index) => ({
-
     ...milestone,
-
     icon: journeyIcons[index] ?? Flag,
-
   }));
 
-
-
   const showcaseItems = (products.length
-
       ? products.slice(0, 3).map((product) => ({
-
         id: product.id,
-
         name: product.name,
-
         category: product.category,
-
         price: product.price !== undefined ? `${product.price.toFixed(2)} EUR` : undefined,
-
         description: product.description,
-
         image: product.image,
-
         popular: product.popularity ? product.popularity >= 80 : false,
-
         featured: product.popularity ? product.popularity >= 60 : false,
-
         productIds: [product.id],
-
       }))
-
     : t.menuShowcase.items.map((item) => ({
-
         name: item.name,
-
         category: item.category,
-
         price: item.price,
-
         description: item.description,
-
         image: item.image,
-
         popular: item.popular,
-
         featured: item.featured,
-
       }))) as Array<{
-
     id?: number;
-
     name: string;
-
     category?: string;
-
     price?: string;
-
     description?: string;
-
     image?: string;
-
     popular?: boolean;
-
     featured?: boolean;
-
     productIds?: number[];
-
   }>;
-
-
 
   const featuredMenus = (menus.length
-
     ? menus.slice(0, 3).map((menu) => ({
-
         id: menu.id,
-
         name: menu.name,
-
         desc: menu.description || '',
         price: menu.price !== undefined ? `${menu.price.toFixed(2)} EUR` : undefined,
-
         productIds: menu.products,
-
       }))
-
     : t.menus.items.map((item) => ({
-
         name: item.name,
-
         desc: item.desc,
-
       }))) as Array<{
-
     id?: number;
-
     name: string;
-
     desc?: string;
-
     price?: string;
-
     productIds?: number[];
-
   }>;
 
-
-
   return (
-
     <div className="min-h-screen bg-white overflow-x-hidden">
-
-      {/* Add animations and fonts */}
-
       <style jsx global>{`
-
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
-
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
         
-
         @keyframes fadeInUp {
-
-          from {
-
-            opacity: 0;
-
-            transform: translateY(30px);
-
-          }
-
-          to {
-
-            opacity: 1;
-
-            transform: translateY(0);
-
-          }
-
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         
-
         @keyframes fadeInDown {
-
-          from {
-
-            opacity: 0;
-
-            transform: translateY(-30px);
-
-          }
-
-          to {
-
-            opacity: 1;
-
-            transform: translateY(0);
-
-          }
-
+          from { opacity: 0; transform: translateY(-30px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         
-
         @keyframes fadeInLeft {
-
-          from {
-
-            opacity: 0;
-
-            transform: translateX(-30px);
-
-          }
-
-          to {
-
-            opacity: 1;
-
-            transform: translateX(0);
-
-          }
-
+          from { opacity: 0; transform: translateX(-30px); }
+          to { opacity: 1; transform: translateX(0); }
         }
-
         
-
         @keyframes fadeInRight {
-
-          from {
-
-            opacity: 0;
-
-            transform: translateX(30px);
-
-          }
-
-          to {
-
-            opacity: 1;
-
-            transform: translateX(0);
-
-          }
-
+          from { opacity: 0; transform: translateX(30px); }
+          to { opacity: 1; transform: translateX(0); }
         }
-
         
-
         @keyframes scaleIn {
-
-          from {
-
-            opacity: 0;
-
-            transform: scale(0.9);
-
-          }
-
-          to {
-
-            opacity: 1;
-
-            transform: scale(1);
-
-          }
-
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
         }
-
-
 
         @keyframes marquee {
-
           0% { transform: translate3d(0, 0, 0); }
-
           100% { transform: translate3d(-50%, 0, 0); }
-
         }
-
         
-
         @keyframes float {
-
-          0%, 100% {
-
-            transform: translateY(0px);
-
-          }
-
-          50% {
-
-            transform: translateY(-10px);
-
-          }
-
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
         }
-
         
-
         @keyframes pulse {
-
-          0%, 100% {
-
-            opacity: 1;
-
-          }
-
-          50% {
-
-            opacity: 0.5;
-
-          }
-
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
-
         
-
-        .animate-fade-in-up {
-
-          animation: fadeInUp 0.8s ease-out;
-
-        }
-
+        .animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
+        .animate-fade-in-down { animation: fadeInDown 0.8s ease-out; }
+        .animate-fade-in-left { animation: fadeInLeft 0.8s ease-out; }
+        .animate-fade-in-right { animation: fadeInRight 0.8s ease-out; }
+        .animate-scale-in { animation: scaleIn 0.6s ease-out; }
+        .animate-logo-marquee { animation: marquee 50s linear infinite; will-change: transform; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-pulse { animation: pulse 2s ease-in-out infinite; }
         
-
-        .animate-fade-in-down {
-
-          animation: fadeInDown 0.8s ease-out;
-
-        }
-
+        .animate-delay-100 { animation-delay: 0.1s; }
+        .animate-delay-200 { animation-delay: 0.2s; }
+        .animate-delay-300 { animation-delay: 0.3s; }
+        .animate-delay-500 { animation-delay: 0.5s; }
+        .animate-delay-1000 { animation-delay: 1s; }
         
-
-        .animate-fade-in-left {
-
-          animation: fadeInLeft 0.8s ease-out;
-
-        }
-
-        
-
-        .animate-fade-in-right {
-
-          animation: fadeInRight 0.8s ease-out;
-
-        }
-
-        
-
-        .animate-scale-in {
-
-          animation: scaleIn 0.6s ease-out;
-
-        }
-
-
-
-        .animate-logo-marquee {
-
-          animation: marquee 50s linear infinite;
-
-          will-change: transform;
-
-        }
-
-
-
-        @media (max-width: 768px) {
-
-          .animate-logo-marquee {
-
-            animation-duration: 60s;
-
-          }
-
-        }
-
-
-
-        @media (prefers-reduced-motion: reduce) {
-
-          .animate-logo-marquee {
-
-            animation: none;
-
-            transform: translate3d(0, 0, 0);
-
-          }
-
-        }
-
-        
-
-        .animate-float {
-
-          animation: float 3s ease-in-out infinite;
-
-        }
-
-        
-
-        .animate-pulse {
-
-          animation: pulse 2s ease-in-out infinite;
-
-        }
-
-        
-
-        .animate-delay-100 {
-
-          animation-delay: 0.1s;
-
-        }
-
-        
-
-        .animate-delay-200 {
-
-          animation-delay: 0.2s;
-
-        }
-
-        
-
-        .animate-delay-300 {
-
-          animation-delay: 0.3s;
-
-        }
-
-        
-
-        .animate-delay-500 {
-
-          animation-delay: 0.5s;
-
-        }
-
-        
-
-        .animate-delay-1000 {
-
-          animation-delay: 1s;
-
-        }
-
-        
-
         body {
-
-          font-family: 'Inter', sans-serif;
-
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+          letter-spacing: -0.01em;
         }
-
         
-
+        .font-display {
+          font-family: 'Cormorant Garamond', serif;
+          letter-spacing: 0.02em;
+        }
+        
         .font-elegant {
-
           font-family: 'Playfair Display', serif;
-
         }
-
         
-
-        /* 3D Perspective */
-
-        .perspective-1000 {
-
-          perspective: 1000px;
-
-        }
-
+        .perspective-1000 { perspective: 1000px; }
+        .rotate-y-2 { transform: rotateY(2deg); }
         
-
-        .rotate-y-2 {
-
-          transform: rotateY(2deg);
-
-        }
-
+        html { scroll-behavior: smooth; }
         
-
-        /* Smooth scrolling */
-
-        html {
-
-          scroll-behavior: smooth;
-
+        /* Premium text rendering */
+        * {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
         }
-
       `}</style>
 
-
-
-      {/* Navbar */}
-
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 animate-fade-in-down">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          <div className="flex justify-between items-center h-20">
-
-            <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-
+      {/* Premium Navbar */}
+      <nav className="fixed top-0 w-full bg-white/98 backdrop-blur-md border-b border-gray-200/50 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center h-24">
+            <div className="flex items-center">
               <img
                 src="/images/logo-removebg-preview.png"
                 alt="La Cannelle"
-                className="h-16 sm:h-[72px] md:h-[80px] w-[180px] sm:w-[220px] md:w-[260px] lg:w-[320px] object-cover object-center"
+                className="h-24 md:h-28 lg:h-32 w-auto object-contain -my-2 md:-my-3"
               />
-              
             </div>
 
             {/* Desktop Navigation */}
-
-            <div className="hidden md:flex items-center gap-8">
-
+            <div className="hidden md:flex items-center gap-10">
               <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
-
-
               <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
-
               <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
-
               <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>
-
+              
               <button
-
                 onClick={toggleLanguage}
-
-                className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
-
+                className="px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-amber-500 hover:text-amber-600 transition-all duration-300 font-medium flex items-center gap-2.5"
               >
-
                 {language === 'EN' ? (
-
                   <>
-
-                    <span className="text-lg"><img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} alt="English flag" /></span>
-
-                    English
-
+                    <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt="English" className="rounded" />
+                    <span>EN</span>
                   </>
-
                 ) : (
-
                   <>
-
-                    <span className="text-lg"><img src="/images/language/Flag_of_Germany-4096x2453.png" width={25} alt="German flag" /></span>
-
-                    Deutsch
-
+                    <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt="Deutsch" className="rounded" />
+                    <span>DE</span>
                   </>
-
                 )}
-
               </button>
-
+              
               <button
-
                 onClick={() => handleOrderClick()}
-
-                className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
-
+                className="px-7 py-2.5 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-300 font-medium shadow-sm hover:shadow-md"
               >
-
                 {t.nav.order}
-
               </button>
-
             </div>
-
-
 
             {/* Mobile Menu Button */}
-
             <button
-
-              className="md:hidden transition-transform duration-300 hover:scale-110"
-
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-
             >
-
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-
+              {isMenuOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
             </button>
-
           </div>
-
-
 
           {/* Mobile Navigation */}
-
           {isMenuOpen && (
-
-            <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
-
-              <div className="flex flex-col gap-4">
-
+            <div className="md:hidden py-6 border-t border-gray-200">
+              <div className="flex flex-col gap-5">
                 <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
-
-
                 <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
-
                 <a href="/menus" className={mobileLinkClass('/menus')}>{t.nav.menus}</a>
-
                 <a href="/contact" className={mobileLinkClass('/contact')}>{t.nav.contact}</a>
-
+                
                 <button
-
                   onClick={toggleLanguage}
-
-                  aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-
-                  className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
-
+                  className="px-4 py-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-2.5"
                 >
-
                   {language === 'EN' ? (
-
-                    <img
-
-                      src="/images/language/Flag_of_United_Kingdom-4096x2048.png"
-
-                      alt="English flag"
-
-                      className="h-5 w-auto"
-
-                    />
-
+                    <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" alt="English" className="h-5 w-auto rounded" />
                   ) : (
-
-                    <img
-
-                      src="/images/language/Flag_of_Germany-4096x2453.png"
-
-                      alt="German flag"
-
-                      className="h-5 w-auto"
-
-                    />
-
+                    <img src="/images/language/Flag_of_Germany-4096x2453.png" alt="Deutsch" className="h-5 w-auto rounded" />
                   )}
-
                 </button>
-
-                <button className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105" onClick={() => handleOrderClick()}>
-
+                
+                <button 
+                  className="px-6 py-3 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium transition-all" 
+                  onClick={() => handleOrderClick()}
+                >
                   {t.nav.order}
-
                 </button>
-
               </div>
-
             </div>
-
           )}
-
         </div>
-
       </nav>
 
-
-
-      {/* Hero Banner */}
-
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 to-stone-100">
-
-        {/* Background Image with Overlay */}
-
+      {/* Hero Section - Premium Design */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div
-
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-
-          style={{
-
-            backgroundImage: "url('/images/home_image.jpeg')",
-
-          }}
-
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/images/home_image.jpeg')" }}
         >
-
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
-
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
         </div>
 
-
-
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-200/20 rounded-full blur-3xl"></div>
-
-          <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-stone-300/20 rounded-full blur-3xl"></div>
-
-        </div>
-
-
-
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-
+        <div className="relative max-w-6xl mx-auto px-6 lg:px-8 text-center pt-32 pb-20">
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight font-elegant italic drop-shadow-lg">
-
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-light text-white mb-8 leading-tight font-display">
               {t.hero.title}
-
             </h1>
-
           </div>
-
-          <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-
-            <p className="text-xl lg:text-2xl text-amber-100 mb-10 font-light italic drop-shadow-md max-w-3xl mx-auto leading-relaxed">
-
+          
+          <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <p className="text-lg lg:text-xl text-gray-200 mb-12 font-light max-w-2xl mx-auto leading-relaxed">
               {t.hero.subtitle}
-
             </p>
-
           </div>
-
-          <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
-
+          
+          <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
             <button
               onClick={() => handleOrderClick()}
-              className="group w-full sm:w-auto justify-center px-6 sm:px-10 py-4 sm:py-5 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl text-lg font-semibold transition-all duration-500 transform hover:scale-105 hover:shadow-2xl inline-flex items-center gap-3 shadow-lg border-2 border-amber-500/30"
+              className="group inline-flex items-center gap-3 px-10 py-4 bg-white text-gray-900 rounded-full text-base font-medium transition-all duration-500 hover:bg-amber-50 hover:shadow-2xl hover:scale-105"
             >
-
               {t.hero.cta}
-
-              <ChevronRight size={24} className="group-hover:translate-x-2 transition-transform duration-300" />
-
+              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
             </button>
-
           </div>
-
         </div>
-
-        
-
-
 
         {/* Scroll Indicator */}
-
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-
-          <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
-
-            <div className="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
-
+        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2">
+          <div className="flex flex-col items-center gap-2 text-white/70">
+            <span className="text-xs uppercase tracking-widest font-medium">Scroll</span>
+            <div className="w-px h-16 bg-gradient-to-b from-white/70 to-transparent"></div>
           </div>
-
         </div>
-
       </section>
 
-      {/* Brand Banner */}
-      <section className="bg-white py-14 border-t border-gray-100">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          <div className="text-center mb-6">
-
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-700 font-semibold">{t.brandBanner.title}</p>
-
+      {/* Brand Trust Section */}
+      <section className="bg-gray-50 py-20 border-y border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-2">
+              {t.brandBanner.title}
+            </p>
+            <div className="w-12 h-px bg-amber-600 mx-auto"></div>
           </div>
 
-
-
-          <div className="relative overflow-hidden py-6">
-
-            <div className="flex w-max items-center gap-16 animate-logo-marquee whitespace-nowrap">
-
+          <div className="relative overflow-hidden">
+            <div className="flex w-max items-center gap-20 animate-logo-marquee">
               {[...brandLogos, ...brandLogos].map((logo, idx) => (
-
                 <div
-
                   key={`${logo.name}-${idx}`}
-
-                  className="flex items-center justify-center h-28 md:h-32 px-8 opacity-95 hover:opacity-100 transition-all duration-200"
-
+                  className="flex items-center justify-center h-20 px-6 opacity-60 hover:opacity-100 transition-opacity duration-300 grayscale hover:grayscale-0"
                 >
-
                   <img
-
                     src={logo.src}
-
                     alt={`${logo.name} logo`}
-
-                    className={`h-16 sm:h-20 md:h-24 w-auto object-contain transition-all duration-200 ${logo.src.endsWith('.svg') ? 'invert' : ''}`}
-
+                    className="h-12 w-auto object-contain"
                     loading="lazy"
-
                   />
-
                 </div>
-
               ))}
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
-
-{/* Quick Menu Categories */}
-
-<section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
-  {/* Animated Background */}
-  <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 to-stone-100/30"></div>
-  <div className="absolute top-10 right-10 w-20 h-20 bg-amber-200/20 rounded-full blur-xl animate-pulse"></div>
-  <div className="absolute bottom-10 left-10 w-16 h-16 bg-stone-300/20 rounded-full blur-xl animate-pulse delay-1000"></div>
-
-  <div className="max-w-7xl mx-auto relative">
-    <div className="text-center mb-10">
-      <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-        <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">
-          {t.quickMenu.title}
-        </h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">{t.quickMenu.description}</p>
-      </div>
-    </div>
-
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {t.quickMenu.categories.map((category, index) => {
-        const Icon = quickMenuIcons[index];
-        const meta = quickMenuCategoryMeta[index];
-        
-        return (
-          <div
-            key={index}
-            className={`group relative bg-white rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 border border-gray-100 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
-            style={{ animationDelay: `${index * 150}ms` }}
-            onClick={() => setSelectedCategory(index)}
-          >
-            {/* Hover Effect Background */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${meta?.gradient || 'from-amber-200 via-amber-100 to-stone-100'} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-500`}></div>
-
-            {/* Icon */}
-            <div className="text-3xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
-              {Icon ? <Icon className="text-amber-600" size={28} /> : null}
-            </div>
-
-            {/* Content */}
-            <h3 className="text-lg font-bold text-gray-900 mb-1 font-elegant">
-              {category.title}
-            </h3>
-            <p className="text-gray-600 text-xs mb-2">{category.description}</p>
-
-            {/* Click Indicator */}
-            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-              <ChevronRight size={16} className="text-amber-600" />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-
-  {/* Modal for Category 0 - Signature Dishes */}
-  {selectedCategory === 0 && (
-    <>
-      {/* Backdrop with dark blur effect */}
-      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
-        <div className="bg-gradient-to-br from-amber-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-amber-200/30 backdrop-blur-sm">
-          {/* Modal Header */}
-          <div className="p-6 border-b border-amber-200/30 flex justify-between items-center bg-gradient-to-r from-amber-100/40 to-white/40">
-            <div className="flex items-center gap-3">
-              <div className="text-amber-600 bg-white/80 p-2 rounded-lg">
-                {quickMenuIcons[selectedCategory] && 
-                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
-                {t.quickMenu.categories[selectedCategory].title}
-              </h3>
-            </div>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          {/* Modal Content */}
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
-            <div className="mb-6">
-              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-amber-100">
-                {t.quickMenu.categories[selectedCategory].description}
+      {/* Quick Menu Categories - Premium Grid */}
+      <section className="py-24 px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+              <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-3">
+                {t.quickMenu.title}
               </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Star size={16} className="text-amber-500" />
-                    {language === 'EN' ? 'Signature Dishes' : 'Signature-Gerichte'}
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                      {language === 'EN' ? 'Truffle-infused Wild Mushroom Risotto' : 'Trüffel-Wildpilz-Risotto'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                      {language === 'EN' ? 'Herb-crusted Rack of Lamb' : 'Kräuterkruste Lammkarree'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                      {language === 'EN' ? 'Seared Scallops with Citrus Beurre Blanc' : 'Gebratene Jakobsmuscheln mit Zitrus-Beurre Blanc'}
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Award size={16} className="text-amber-500" />
-                    {language === 'EN' ? 'Awards & Recognition' : 'Auszeichnungen'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'Our signature dishes have been awarded the "Culinary Excellence Award" three years in a row.'
-                      : 'Unsere Signature-Gerichte wurden drei Jahre in Folge mit dem "Culinary Excellence Award" ausgezeichnet.'}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Clock size={16} className="text-amber-500" />
-                    {language === 'EN' ? 'Preparation Time' : 'Zubereitungszeit'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'Each signature dish requires 30-45 minutes of meticulous preparation by our master chefs.'
-                      : 'Jedes Signature-Gericht erfordert 30-45 Minuten sorgfältiger Zubereitung durch unsere Meisterköche.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )}
-
-  {/* Modal for Category 1 - Chef's Specials */}
-  {selectedCategory === 1 && (
-    <>
-      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
-        <div className="bg-gradient-to-br from-rose-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-rose-200/30 backdrop-blur-sm">
-          <div className="p-6 border-b border-rose-200/30 flex justify-between items-center bg-gradient-to-r from-rose-100/40 to-white/40">
-            <div className="flex items-center gap-3">
-              <div className="text-rose-600 bg-white/80 p-2 rounded-lg">
-                {quickMenuIcons[selectedCategory] && 
-                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
-                {t.quickMenu.categories[selectedCategory].title}
-              </h3>
-            </div>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
-            <div className="mb-6">
-              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-rose-100">
-                {t.quickMenu.categories[selectedCategory].description}
-              </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <ChefHat size={16} className="text-rose-500" />
-                    {language === 'EN' ? 'Chef\'s Creations' : 'Kreationen des Küchenchefs'}
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
-                      {language === 'EN' ? 'Seasonal Market Menu' : 'Saisonale Marktkarte'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
-                      {language === 'EN' ? 'Tasting Experience' : 'Degustationserlebnis'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-rose-500 rounded-full"></div>
-                      {language === 'EN' ? 'Secret Family Recipes' : 'Geheime Familienrezepte'}
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Flame size={16} className="text-rose-500" />
-                    {language === 'EN' ? 'Unique Features' : 'Einzigartige Merkmale'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'Each special is crafted with seasonal ingredients sourced directly from local farms and markets.'
-                      : 'Jedes Special wird mit saisonalen Zutaten zubereitet, die direkt von lokalen Bauernhöfen und Märkten bezogen werden.'}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Users size={16} className="text-rose-500" />
-                    {language === 'EN' ? 'Recommended For' : 'Empfohlen für'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'Perfect for adventurous food lovers and those seeking unique culinary experiences.'
-                      : 'Perfekt für abenteuerlustige Feinschmecker und diejenigen, die einzigartige kulinarische Erlebnisse suchen.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )}
-
-  {/* Modal for Category 2 - Premium Selection */}
-  {selectedCategory === 2 && (
-    <>
-      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
-        <div className="bg-gradient-to-br from-emerald-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-emerald-200/30 backdrop-blur-sm">
-          <div className="p-6 border-b border-emerald-200/30 flex justify-between items-center bg-gradient-to-r from-emerald-100/40 to-white/40">
-            <div className="flex items-center gap-3">
-              <div className="text-emerald-600 bg-white/80 p-2 rounded-lg">
-                {quickMenuIcons[selectedCategory] && 
-                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
-                {t.quickMenu.categories[selectedCategory].title}
-              </h3>
-            </div>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
-            <div className="mb-6">
-              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-emerald-100">
-                {t.quickMenu.categories[selectedCategory].description}
-              </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Shield size={16} className="text-emerald-500" />
-                    {language === 'EN' ? 'Premium Guarantee' : 'Premium-Garantie'}
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                      {language === 'EN' ? 'Wagyu Beef Selection' : 'Wagyu-Rindfleisch-Auswahl'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                      {language === 'EN' ? 'Caviar & Champagne Pairing' : 'Kaviar & Champagner-Paarung'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                      {language === 'EN' ? 'Aged Gourmet Cheeses' : 'Gereifte Gourmet-Käse'}
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Check size={16} className="text-emerald-500" />
-                    {language === 'EN' ? 'Quality Standards' : 'Qualitätsstandards'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'All ingredients are certified premium quality, sourced from exclusive suppliers worldwide.'
-                      : 'Alle Zutaten sind zertifizierte Premiumqualität, bezogen von exklusiven Lieferanten weltweit.'}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Target size={16} className="text-emerald-500" />
-                    {language === 'EN' ? 'Perfect For' : 'Perfekt für'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'Corporate events, luxury weddings, and high-profile gatherings requiring exceptional culinary standards.'
-                      : 'Firmenveranstaltungen, Luxus-Hochzeiten und hochkarätige Veranstaltungen mit außergewöhnlichen kulinarischen Standards.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )}
-
-  {/* Modal for Category 3 - Royal Experience */}
-  {selectedCategory === 3 && (
-    <>
-      <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4">
-        <div className="bg-gradient-to-br from-sky-50/90 via-white to-stone-50/90 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl border border-sky-200/30 backdrop-blur-sm">
-          <div className="p-6 border-b border-sky-200/30 flex justify-between items-center bg-gradient-to-r from-sky-100/40 to-white/40">
-            <div className="flex items-center gap-3">
-              <div className="text-sky-600 bg-white/80 p-2 rounded-lg">
-                {quickMenuIcons[selectedCategory] && 
-                  React.createElement(quickMenuIcons[selectedCategory], { size: 24 })}
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 font-elegant">
-                {t.quickMenu.categories[selectedCategory].title}
-              </h3>
-            </div>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-white/50 rounded-full backdrop-blur-sm"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
-            <div className="mb-6">
-              <p className="text-gray-700 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-sky-100">
-                {t.quickMenu.categories[selectedCategory].description}
-              </p>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Crown size={16} className="text-sky-500" />
-                    {language === 'EN' ? 'Royal Offerings' : 'Königliche Angebote'}
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                      {language === 'EN' ? 'Gold Leaf Desserts' : 'Goldblatt-Desserts'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                      {language === 'EN' ? 'Truffle & Foie Gras Menu' : 'Trüffel & Foie Gras Menü'}
-                    </li>
-                    <li className="flex items-center gap-2 p-2 bg-white/50 rounded-lg">
-                      <div className="w-2 h-2 bg-sky-500 rounded-full"></div>
-                      {language === 'EN' ? 'Vintage Wine Pairing' : 'Jahrgangswein-Paarung'}
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Zap size={16} className="text-sky-500" />
-                    {language === 'EN' ? 'Exclusive Experience' : 'Exklusives Erlebnis'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'Personal chef service, tableside preparation, and customized menu development included.'
-                      : 'Persönlicher Küchenchef-Service, Tischzubereitung und individuelle Menüentwicklung inklusive.'}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                    <Building size={16} className="text-sky-500" />
-                    {language === 'EN' ? 'Service Details' : 'Service-Details'}
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    {language === 'EN' 
-                      ? 'Full staff of professional servers, sommelier service, and event coordination provided.'
-                      : 'Vollständiges Personal professioneller Servicemitarbeiter, Sommelier-Service und Eventkoordination werden bereitgestellt.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )}
-</section>
-
-{/* Menu Item Modal with blurred background */}
-{selectedMenuItem && (
-  <>
-    <div className="fixed inset-0 backdrop-blur-lg bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-gradient-to-br from-white/90 via-amber-50/90 to-white/90 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-amber-200/30 backdrop-blur-sm animate-scale-in">
-        {/* Close Button */}
-        <button
-          onClick={() => setSelectedMenuItem(null)}
-          className="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors shadow-lg border border-amber-200"
-        >
-          <X size={20} className="text-gray-600" />
-        </button>
-
-        {/* Modal Content */}
-        <div className="flex flex-col lg:flex-row">
-          {/* Image Section */}
-          <div className="lg:w-1/2 relative">
-            <div className="h-64 lg:h-full">
-              <img
-                src={selectedMenuItem.image || '/images/home_image.jpeg'}
-                alt={selectedMenuItem.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-            </div>
-            
-            {/* Badges on Image */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2">
-              {selectedMenuItem.popular && (
-                <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg backdrop-blur-sm">
-                  <Flame size={14} />
-                  {t.menuShowcase.badges.popular}
-                </div>
-              )}
-              {selectedMenuItem.featured && (
-                <div className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-3 py-1 rounded-full text-sm font-semibold inline-flex items-center gap-1 shadow-lg backdrop-blur-sm">
-                  <Star size={14} />
-                  {t.menuShowcase.badges.featured}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Details Section */}
-          <div className="lg:w-1/2 p-6 lg:p-8 overflow-y-auto max-h-[60vh] lg:max-h-[90vh]">
-            <div className="mb-6">
-              <p className="text-amber-600 font-semibold text-sm mb-2">
-                {selectedMenuItem.category || t.quickMenu.title}
-              </p>
-              <h2 className="text-3xl font-bold text-gray-900 font-elegant mb-3">
-                {selectedMenuItem.name}
+              <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">
+                Curated Collections
               </h2>
-              {selectedMenuItem.price && (
-                <div className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-amber-600 bg-clip-text text-transparent mb-4">
-                  {selectedMenuItem.price}
-                </div>
-              )}
-              <p className="text-gray-600 mb-6 bg-white/40 p-4 rounded-lg backdrop-blur-sm border border-amber-100">
-                {selectedMenuItem.description}
-              </p>
+              <p className="text-gray-600 max-w-xl mx-auto text-base">{t.quickMenu.description}</p>
             </div>
+          </div>
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {selectedMenuItem.prepTime && (
-                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
-                  <Clock size={18} className="text-amber-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Prep Time' : 'Zubereitungszeit'}</p>
-                    <p className="font-semibold text-gray-800">{selectedMenuItem.prepTime}</p>
-                  </div>
-                </div>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {t.quickMenu.categories.map((category, index) => {
+              const Icon = quickMenuIcons[index];
+              const meta = quickMenuCategoryMeta[index];
               
-              {selectedMenuItem.serves && (
-                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
-                  <Users size={18} className="text-amber-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Serves' : 'Portionen'}</p>
-                    <p className="font-semibold text-gray-800">{selectedMenuItem.serves}</p>
+              return (
+                <div
+                  key={index}
+                  className={`group relative bg-white rounded-2xl p-8 border border-gray-200 hover:border-amber-500 hover:shadow-xl transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                  onClick={() => setSelectedCategory(index)}
+                >
+                  <div className="mb-6">
+                    {Icon && <Icon className="text-amber-600 mb-4" size={32} strokeWidth={1.5} />}
+                    <h3 className="text-xl font-medium text-gray-900 mb-2 font-display">
+                      {category.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {category.description}
+                    </p>
+                  </div>
+
+                  <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                      <ChevronRight size={18} className="text-amber-600" />
+                    </div>
                   </div>
                 </div>
-              )}
-              
-              {selectedMenuItem.chef && (
-                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
-                  <ChefHat size={18} className="text-amber-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Chef' : 'Küchenchef'}</p>
-                    <p className="font-semibold text-gray-800">{selectedMenuItem.chef}</p>
-                  </div>
-                </div>
-              )}
-              
-              {selectedMenuItem.spiceLevel && (
-                <div className="flex items-center gap-2 p-3 bg-white/50 rounded-lg border border-amber-100/50 backdrop-blur-sm">
-                  <Flame size={18} className="text-amber-600" />
-                  <div>
-                    <p className="text-xs text-gray-500">{language === 'EN' ? 'Spice Level' : 'Schärfegrad'}</p>
-                    <p className="font-semibold text-gray-800">{selectedMenuItem.spiceLevel}/5</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Ingredients / Highlights */}
-            {selectedMenuItem.ingredients && (
-              <div className="mb-6">
-                <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                  <Target size={16} className="text-amber-600" />
-                  {language === 'EN' ? 'Ingredients' : 'Zutaten'}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedMenuItem.ingredients.map((ingredient: string, idx: number) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-gradient-to-r from-amber-100/70 to-amber-200/70 text-amber-800 rounded-full text-sm border border-amber-200/50 backdrop-blur-sm"
-                    >
-                      {ingredient}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Dietary Info */}
-            {selectedMenuItem.dietary && (
-              <div className="mb-6">
-                <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
-                  <Check size={16} className="text-green-600" />
-                  {language === 'EN' ? 'Dietary Information' : 'Ernährungsinformationen'}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedMenuItem.dietary.map((tag: string, idx: number) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-gradient-to-r from-green-100/70 to-green-200/70 text-green-800 rounded-full text-sm border border-green-200/50 backdrop-blur-sm"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Chef's Note */}
-            {selectedMenuItem.chefNote && (
-              <div className="mt-6 p-4 bg-gradient-to-r from-amber-50/50 to-amber-100/30 rounded-lg border border-amber-200/30 backdrop-blur-sm">
-                <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
-                  <ChefHat size={16} />
-                  {language === 'EN' ? "Chef's Note" : "Küchenchef's Notiz"}
-                </h4>
-                <p className="text-amber-700 text-sm italic">{selectedMenuItem.chefNote}</p>
-              </div>
-            )}
+              );
+            })}
           </div>
         </div>
-      </div>
-    </div>
-  </>
-)}
 
+        {/* Category Modals remain the same but with updated styling */}
+        {selectedCategory === 0 && (
+          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+                    {quickMenuIcons[selectedCategory] && 
+                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-amber-600" })}
+                  </div>
+                  <h3 className="text-2xl font-medium text-gray-900 font-display">
+                    {t.quickMenu.categories[selectedCategory].title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X size={24} />
+                </button>
+              </div>
 
+              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+                <p className="text-gray-700 mb-8 leading-relaxed">
+                  {t.quickMenu.categories[selectedCategory].description}
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                      <Star size={18} className="text-amber-500" />
+                      {language === 'EN' ? 'Signature Dishes' : 'Signature-Gerichte'}
+                    </h4>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Truffle-infused Wild Mushroom Risotto' : 'Trüffel-Wildpilz-Risotto'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Herb-crusted Rack of Lamb' : 'Kräuterkruste Lammkarree'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Seared Scallops with Citrus Beurre Blanc' : 'Gebratene Jakobsmuscheln mit Zitrus-Beurre Blanc'}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-lg">
+                      <Award size={18} className="text-amber-500" />
+                      {language === 'EN' ? 'Awards & Recognition' : 'Auszeichnungen'}
+                    </h4>
+                    <p className="text-gray-600 leading-relaxed">
+                      {language === 'EN' 
+                        ? 'Our signature dishes have been awarded the "Culinary Excellence Award" three years in a row.'
+                        : 'Unsere Signature-Gerichte wurden drei Jahre in Folge mit dem "Culinary Excellence Award" ausgezeichnet.'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-lg">
+                      <Clock size={18} className="text-amber-500" />
+                      {language === 'EN' ? 'Preparation Time' : 'Zubereitungszeit'}
+                    </h4>
+                    <p className="text-gray-600 leading-relaxed">
+                      {language === 'EN' 
+                        ? 'Each signature dish requires 30-45 minutes of meticulous preparation by our master chefs.'
+                        : 'Jedes Signature-Gericht erfordert 30-45 Minuten sorgfältiger Zubereitung durch unsere Meisterköche.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Similar modal updates for categories 1, 2, and 3 */}
+        {selectedCategory === 1 && (
+          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
+                    {quickMenuIcons[selectedCategory] && 
+                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-rose-600" })}
+                  </div>
+                  <h3 className="text-2xl font-medium text-gray-900 font-display">
+                    {t.quickMenu.categories[selectedCategory].title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+                <p className="text-gray-700 mb-8 leading-relaxed">
+                  {t.quickMenu.categories[selectedCategory].description}
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                      <ChefHat size={18} className="text-rose-500" />
+                      {language === 'EN' ? 'Chef\'s Creations' : 'Kreationen des Küchenchefs'}
+                    </h4>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Seasonal Market Menu' : 'Saisonale Marktkarte'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Tasting Experience' : 'Degustationserlebnis'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Secret Family Recipes' : 'Geheime Familienrezepte'}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedCategory === 2 && (
+          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                    {quickMenuIcons[selectedCategory] && 
+                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-emerald-600" })}
+                  </div>
+                  <h3 className="text-2xl font-medium text-gray-900 font-display">
+                    {t.quickMenu.categories[selectedCategory].title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+                <p className="text-gray-700 mb-8 leading-relaxed">
+                  {t.quickMenu.categories[selectedCategory].description}
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                      <Shield size={18} className="text-emerald-500" />
+                      {language === 'EN' ? 'Premium Guarantee' : 'Premium-Garantie'}
+                    </h4>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Wagyu Beef Selection' : 'Wagyu-Rindfleisch-Auswahl'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Caviar & Champagne Pairing' : 'Kaviar & Champagner-Paarung'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Aged Gourmet Cheeses' : 'Gereifte Gourmet-Käse'}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedCategory === 3 && (
+          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
+            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center">
+                    {quickMenuIcons[selectedCategory] && 
+                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-sky-600" })}
+                  </div>
+                  <h3 className="text-2xl font-medium text-gray-900 font-display">
+                    {t.quickMenu.categories[selectedCategory].title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory(null)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+                <p className="text-gray-700 mb-8 leading-relaxed">
+                  {t.quickMenu.categories[selectedCategory].description}
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                      <Crown size={18} className="text-sky-500" />
+                      {language === 'EN' ? 'Royal Offerings' : 'Königliche Angebote'}
+                    </h4>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Gold Leaf Desserts' : 'Goldblatt-Desserts'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Truffle & Foie Gras Menu' : 'Trüffel & Foie Gras Menü'}</span>
+                      </li>
+                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Vintage Wine Pairing' : 'Jahrgangswein-Paarung'}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Menu Item Modal */}
+      {selectedMenuItem && (
+        <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <button
+              onClick={() => setSelectedMenuItem(null)}
+              className="absolute top-6 right-6 z-10 bg-white/90 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-colors shadow-lg"
+            >
+              <X size={20} className="text-gray-600" />
+            </button>
+
+            <div className="flex flex-col lg:flex-row">
+              <div className="lg:w-1/2 relative">
+                <div className="h-80 lg:h-full">
+                  <img
+                    src={selectedMenuItem.image || '/images/home_image.jpeg'}
+                    alt={selectedMenuItem.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                </div>
+                
+                {selectedMenuItem.popular && (
+                  <div className="absolute top-6 left-6">
+                    <div className="bg-white text-amber-600 px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2 shadow-lg">
+                      <Flame size={16} />
+                      {t.menuShowcase.badges.popular}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:w-1/2 p-10 overflow-y-auto max-h-[90vh]">
+                <p className="text-amber-600 font-medium text-sm mb-3 uppercase tracking-wider">
+                  {selectedMenuItem.category || t.quickMenu.title}
+                </p>
+                <h2 className="text-3xl font-light text-gray-900 font-display mb-4">
+                  {selectedMenuItem.name}
+                </h2>
+                {selectedMenuItem.price && (
+                  <div className="text-2xl font-medium text-amber-600 mb-6">
+                    {selectedMenuItem.price}
+                  </div>
+                )}
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  {selectedMenuItem.description}
+                </p>
+
+                {selectedMenuItem.ingredients && (
+                  <div className="mb-8">
+                    <h4 className="font-medium text-gray-900 mb-4 text-lg">
+                      {language === 'EN' ? 'Ingredients' : 'Zutaten'}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedMenuItem.ingredients.map((ingredient: string, idx: number) => (
+                        <span
+                          key={idx}
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm"
+                        >
+                          {ingredient}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <MenuShowcaseHorizontal 
         limit={6}
@@ -1634,458 +815,203 @@ export default function CateringHomepage() {
         language={language}
       />
 
-      {/* Passion Section - Smaller */}
-
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-900 to-amber-900 relative overflow-hidden">
-
-        {/* Animated Background */}
-
-        <div className="absolute inset-0">
-
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-stone-900 to-stone-900"></div>
-
+      {/* Passion Section - Premium */}
+      <section className="py-24 px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500 via-transparent to-transparent"></div>
         </div>
 
-
-
-        <div className="max-w-6xl mx-auto relative">
-
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-
-            {/* Content */}
-
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-slide-in-left' : 'opacity-0 translate-x-10'}`}>
-
-              <div className="max-w-md text-white">
-
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-amber-200 text-xs font-semibold mb-4 border border-white/20">
-
-                  <Heart size={14} />
-
+        <div className="max-w-7xl mx-auto relative">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <div className="max-w-lg">
+                <p className="text-xs uppercase tracking-[0.3em] text-amber-400 font-semibold mb-4">
                   {t.passion.subtitle}
-
-                </div>
-
-                <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4 font-elegant leading-tight">
-
+                </p>
+                <h2 className="text-4xl lg:text-5xl font-light text-white mb-6 font-display leading-tight">
                   {t.passion.title}
-
                 </h2>
-
-                <p className="text-amber-100 leading-relaxed mb-6">
-
+                <p className="text-gray-300 leading-relaxed mb-10 text-lg">
                   {t.passion.text}
-
                 </p>
 
-
-
-                {/* Interactive Progress Bars */}
-
-                <div className="space-y-3 mb-6">
-
+                <div className="space-y-6 mb-10">
                   {t.passion.skills.map((item, index) => (
-
                     <div key={index} className="group">
-
-                      <div className="flex justify-between text-xs mb-1">
-
-                        <span className="text-amber-200">{item.title}</span>
-
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-200 font-medium">{item.title}</span>
+                        <span className="text-amber-400">{90 - index * 8}%</span>
                       </div>
-
-                      <div className="w-full bg-white/20 rounded-full h-1.5">
-
+                      <div className="w-full bg-white/10 rounded-full h-2">
                         <div
-
-                          className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000 ease-out group-hover:bg-amber-400"
-
+                          className="bg-amber-500 h-2 rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${90 - index * 8}%` }}
-
                         ></div>
-
                       </div>
-
-                      <p className="text-xs text-amber-100/80 mt-2">{item.description}</p>
-
+                      <p className="text-sm text-gray-400 mt-2">{item.description}</p>
                     </div>
-
                   ))}
-
                 </div>
 
-
-
-                <button className="px-6 py-3 bg-white text-stone-900 rounded-xl font-semibold hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 text-sm">
-
+                <button className="px-8 py-4 bg-white text-gray-900 rounded-full font-medium hover:bg-gray-100 transition-all duration-300 inline-flex items-center gap-2">
                   {t.passion.cta}
-
-                  <ChevronRight size={16} />
-
+                  <ChevronRight size={18} />
                 </button>
-
               </div>
-
             </div>
 
-
-
-            {/* Image - Same size as Exclusivity */}
-
-            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-right' : 'opacity-0 -translate-x-10'}`}>
-
-              <div className="relative group perspective-1000">
-
-                {/* Main Image with 3D Rotation - Same as Exclusivity */}
-
-                <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
-
+            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <div className="relative group">
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                   <img
-
                     src="/images/chef-passion.jpg"
-
                     alt="Chef's passion"
-
-                    className="w-full h-64 object-cover"
-
+                    className="w-full h-96 object-cover"
                   />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent"></div>
-
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                 </div>
 
-
-
-                {/* Animated Chef Badge - Smaller like Exclusivity */}
-
-                <div className="absolute -top-3 -right-3 bg-amber-600 text-white rounded-xl p-3 shadow-xl transform group-hover:scale-110 transition-transform duration-500">
-
+                <div className="absolute -top-4 -right-4 bg-white rounded-2xl p-6 shadow-2xl">
                   <div className="text-center">
-
-                    <Award size={16} className="mx-auto mb-1" />
-
-                    <p className="text-xs font-bold">Master Chef</p>
-
-                    <p className="text-xs opacity-90">15+ Years</p>
-
+                    <Award size={24} className="mx-auto mb-2 text-amber-600" />
+                    <p className="text-sm font-semibold text-gray-900">Master Chef</p>
+                    <p className="text-xs text-gray-600">15+ Years</p>
                   </div>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
-
-
-      {/* Company Section - Matched to Exclusivity */}
-
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden">
-
-        {/* Background Elements - Same as Exclusivity */}
-
-        <div className="absolute top-10 left-8 w-6 h-6 bg-amber-300/30 rounded-full animate-float"></div>
-
-        <div className="absolute top-20 right-12 w-4 h-4 bg-stone-400/20 rounded-full animate-float delay-500"></div>
-
-        <div className="absolute bottom-12 left-12 w-8 h-8 bg-amber-200/40 rounded-full animate-float delay-1000"></div>
-
-
-
-        <div className="max-w-6xl mx-auto relative">
-
-          {/* Header - Same as Exclusivity */}
-
-          <div className="text-center mb-8">
-
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/80 backdrop-blur-sm rounded-full text-amber-700 text-xs font-semibold mb-4 shadow-lg border border-amber-100">
-
-                <Building size={14} />
-
-                {t.company.subtitle}
-
-              </div>
-
-              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 font-elegant leading-tight">
-
-                {t.company.title}
-
-              </h2>
-
-            </div>
-
+      {/* Company Values Section */}
+      <section className="py-24 px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto relative">
+          <div className="text-center mb-16">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-3">
+              {t.company.subtitle}
+            </p>
+            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">
+              {t.company.title}
+            </h2>
           </div>
 
+          <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
+            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <p className="text-gray-600 leading-relaxed mb-8 text-lg">
+                {t.company.text}
+              </p>
 
-
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-
-            {/* Content Column - Same layout as Exclusivity */}
-
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-slide-in-left' : 'opacity-0 translate-x-10'}`}>
-
-              <div className="max-w-md">
-
-                <p className="text-gray-600 leading-relaxed mb-6">
-
-                  {t.company.text}
-
-                </p>
-
-
-
-                {/* Values Grid - Compact like Exclusivity stats */}
-
-                <div className="grid grid-cols-2 gap-4 mb-6">
-
-                  {companyValues.map((value, index) => (
-
-                    <div key={index} className="bg-white rounded-lg p-3 shadow-lg border border-amber-100 hover:shadow-xl transition-all duration-300 group text-center">
-
-                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
-
-                        <value.icon className="text-amber-600" size={16} />
-
-                      </div>
-
-                      <h3 className="font-bold text-gray-900 mb-1 text-sm">{value.title}</h3>
-
-                      <p className="text-xs text-gray-600">{value.description}</p>
-
+              <div className="grid grid-cols-2 gap-6">
+                {companyValues.map((value, index) => (
+                  <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
+                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
+                      <value.icon className="text-amber-600" size={20} />
                     </div>
-
-                  ))}
-
-                </div>
-
+                    <h3 className="font-medium text-gray-900 mb-2">{value.title}</h3>
+                    <p className="text-sm text-gray-600">{value.description}</p>
+                  </div>
+                ))}
               </div>
-
             </div>
 
-
-
-            {/* Image Column - Same as Exclusivity */}
-
-            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-slide-in-right' : 'opacity-0 -translate-x-10'}`}>
-
-              <div className="relative group perspective-1000">
-
-                {/* Main Image with 3D Rotation - Same as Exclusivity */}
-
-                <div className="relative rounded-2xl overflow-hidden shadow-xl transform group-hover:rotate-y-2 transition-transform duration-700">
-
+            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <div className="relative group">
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                   <img
-
                     src="/images/restaurant-interior.jpg"
-
-                    alt="Elegant restaurant interior"
-
-                    className="w-full h-64 object-cover"
-
+                    alt="Restaurant interior"
+                    className="w-full h-96 object-cover"
                   />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-
                 </div>
 
-
-
-                {/* Floating Achievement Badge - Same style as Exclusivity */}
-
-                <div className="absolute -top-3 -right-3 bg-amber-600 text-white rounded-xl p-3 shadow-xl transform group-hover:scale-110 transition-transform duration-500">
-
-                  <div className="text-center">
-
-                    <Award className="mx-auto mb-1" size={16} />
-
-                    <p className="text-xs font-bold">{t.company.badge.title}</p>
-
-                    <p className="text-xs opacity-90">{t.company.badge.subtitle}</p>
-
-                  </div>
-
+                <div className="absolute -top-4 -right-4 bg-white rounded-2xl p-6 shadow-2xl">
+                  <Award className="mx-auto mb-2 text-amber-600" size={24} />
+                  <p className="text-sm font-semibold text-gray-900">{t.company.badge.title}</p>
+                  <p className="text-xs text-gray-600">{t.company.badge.subtitle}</p>
                 </div>
-
-
-
-                {/* Floating Review Card - Smaller and positioned like Exclusivity */}
-
-                <div className="absolute -bottom-3 -left-3 bg-white rounded-xl p-3 shadow-xl border border-amber-100 max-w-xs transform group-hover:scale-105 transition-transform duration-500">
-
-                  <div className="flex items-center gap-2 mb-1">
-
-                    <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
-
-                      <Star className="text-amber-600" size={12} />
-
-                    </div>
-
-                    <div>
-
-                      <p className="font-bold text-gray-900 text-xs">4.9/5</p>
-
-                      <p className="text-xs text-amber-600">{t.company.review.ratingLabel}</p>
-
-                    </div>
-
-                  </div>
-
-                  <p className="text-xs text-gray-600 italic">
-
-                    {t.company.review.quote}
-
-                  </p>
-
-                </div>
-
               </div>
-
             </div>
-
           </div>
 
-
-
-          {/* Timeline / Milestones - Keep but make more compact */}
-
-          <div className={`bg-white rounded-xl p-6 shadow-lg border border-amber-100 transition-all duration-1000 delay-600 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} mt-8`}>
-
-            <h3 className="text-lg font-bold text-gray-900 text-center mb-4 font-elegant">{t.journey.title}</h3>
-
-            <div className="grid md:grid-cols-4 gap-4 text-center">
-
+          {/* Timeline */}
+          <div className="bg-white rounded-3xl p-10 shadow-sm border border-gray-200">
+            <h3 className="text-2xl font-light text-gray-900 text-center mb-12 font-display">{t.journey.title}</h3>
+            <div className="grid md:grid-cols-4 gap-8">
               {journeyMilestones.map((milestone, index) => (
-
-                <div key={index} className="relative">
-
+                <div key={index} className="text-center relative">
                   {index < 3 && (
-
-                    <div className="hidden md:block absolute top-4 left-1/2 w-full h-0.5 bg-amber-200 -z-10"></div>
-
+                    <div className="hidden md:block absolute top-6 left-1/2 w-full h-px bg-gray-200"></div>
                   )}
-
-                  <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-200 transition-colors duration-300">
-
-                    <milestone.icon className="text-amber-600" size={18} />
-
+                  <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4 relative z-10">
+                    <milestone.icon className="text-amber-600" size={22} />
                   </div>
-
-                  <p className="text-md font-bold text-amber-600 mb-1">{milestone.date}</p>
-
-                  <p className="text-gray-700 font-medium text-xs">{milestone.title}</p>
-
+                  <p className="text-sm font-semibold text-amber-600 mb-2">{milestone.date}</p>
+                  <p className="text-gray-700 font-medium">{milestone.title}</p>
                 </div>
-
               ))}
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
-
-
-      {/* Services Overview */}
-
-      <section id="services" className="py-10 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-stone-50 via-white to-amber-50/30">
-
-        <div className="max-w-6xl mx-auto">
-
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} text-center`}>
-
-            <p className="inline-flex px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold mb-3">{t.quickMenu.title}</p>
-
-            <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.services.title}</h2>
-
-            <p className="text-sm text-gray-600 max-w-2xl mx-auto mb-6">Tailored experiences without the heavy layout'pick the format that fits your event.</p>
-
+      {/* Services Section */}
+      <section className="py-24 px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-3">{t.quickMenu.title}</p>
+            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">{t.services.title}</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto text-lg">Tailored experiences for every occasion</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
-
+          <div className="grid md:grid-cols-3 gap-8">
             {t.services.items.map((service, index) => (
-
               <div
-
                 key={index}
-
-                className={`flex flex-col gap-2 bg-white/90 p-4 rounded-xl border border-amber-100 shadow-sm hover:shadow-md transition-all duration-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'
-
-                  }`}
-
-                style={{ animationDelay: `${index * 120 + 200}ms` }}
-
+                className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-amber-500 hover:shadow-lg transition-all duration-300"
               >
-
-                <div className="flex items-center justify-between">
-
-                  <h3 className="text-base font-semibold text-gray-900 font-elegant">{service.title}</h3>
-
-                  <span className="text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-1 rounded-full">Premium</span>
-
-                </div>
-
-                <p className="text-gray-600 text-sm leading-snug">{service.description}</p>
-
+                <h3 className="text-xl font-medium text-gray-900 font-display mb-3">{service.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{service.description}</p>
               </div>
-
             ))}
-
           </div>
-
         </div>
-
       </section>
 
-
-
-      {/* Featured Menus */}
-
-      <section id="menus" className="py-10 px-4 sm:px-6 lg:px-8 bg-white">
-        
-        <div className="max-w-6xl mx-auto">
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} text-center`}>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.menus.title}</h2>
-            <p className="text-sm text-gray-600 mb-4">{t.menus.description}</p> {/* 使用翻译 */}
+      {/* Featured Menus Section */}
+      <section className="py-24 px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">{t.menus.title}</h2>
+            <p className="text-gray-600 text-lg">{t.menus.description}</p>
           </div>
 
           {fetchError && !menus.length && (
-            <p className="text-center text-sm text-red-600 mb-4">{fetchError}</p>
+            <p className="text-center text-red-600 mb-8">{fetchError}</p>
           )}
           {isLoadingData && !menus.length && (
-            <LoadingSpinner className="mb-4" label="Loading featured menus..." />
+            <LoadingSpinner className="mb-8" label="Loading menus..." />
           )}
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-8">
             {featuredMenus.map((menu, index) => (
               <div
                 key={menu.id ?? index}
-                className={`bg-amber-50/70 p-5 rounded-xl hover:bg-amber-100 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md border border-amber-100 ${isVisible ? 'animate-scale-in' : 'opacity-0'
-                  }`}
-                style={{ animationDelay: `${index * 150 + 300}ms` }}
+                className="bg-white p-8 rounded-2xl hover:shadow-lg transition-all duration-300 border border-gray-200"
               >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900 font-elegant">{menu.name}</h3>
-                  {menu.price && <span className="text-xs text-amber-700 font-semibold bg-white px-2 py-1 rounded-full shadow-sm">{menu.price}</span>}
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-xl font-medium text-gray-900 font-display">{menu.name}</h3>
+                  {menu.price && (
+                    <span className="text-amber-600 font-semibold">{menu.price}</span>
+                  )}
                 </div>
-                <p className="text-gray-600 mb-3 text-sm leading-snug">{menu.desc}</p>
-                {menu.price && <p className="text-amber-700 font-semibold text-sm mb-3">From {menu.price}</p>}
+                <p className="text-gray-600 mb-6 leading-relaxed">{menu.desc}</p>
                 <button
-                  className="text-amber-700 font-semibold inline-flex items-center gap-2 hover:gap-3 transition-all duration-200 group text-sm"
+                  className="text-amber-600 font-medium inline-flex items-center gap-2 hover:gap-3 transition-all group"
                   onClick={() => handleOrderClick(menu.productIds)}
                 >
-                  {t.menus.cta} <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  {t.menus.cta}
+                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             ))}
@@ -2093,138 +1019,78 @@ export default function CateringHomepage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-
-      <section className="py-10 px-4 sm:px-6 lg:px-8 bg-stone-50">
-
-        <div className="max-w-6xl mx-auto">
-
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'} text-center`}>
-
-            <h2 className="text-2xl font-bold text-gray-900 mb-3 font-elegant">{t.testimonials.title}</h2>
-
-            <p className="text-sm text-gray-600 mb-6">Short, sweet notes from recent clients.</p>
-
+      {/* Testimonials Section */}
+      <section className="py-24 px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">{t.testimonials.title}</h2>
+            <p className="text-gray-600 text-lg">What our clients say</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-
+          <div className="grid md:grid-cols-3 gap-8">
             {t.testimonials.items.map((testimonial, index) => (
-
               <div
-
                 key={index}
-
-                className={`bg-white/90 p-4 rounded-xl shadow-sm border border-stone-100 hover:shadow-md transition-all duration-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'
-
-                  }`}
-
-                style={{ animationDelay: `${index * 120 + 240}ms` }}
-
+                className="bg-gray-50 p-8 rounded-2xl border border-gray-200"
               >
-
-                <p className="text-gray-700 mb-3 text-sm leading-relaxed">"{testimonial.quote}"</p>
-
-                <p className="text-gray-900 font-semibold font-elegant text-sm">- {testimonial.name}</p>
-
-                <p className="text-xs text-amber-700">{testimonial.role}</p>
-
+                <p className="text-gray-700 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
+                <p className="text-gray-900 font-medium font-display">{testimonial.name}</p>
+                <p className="text-sm text-amber-600">{testimonial.role}</p>
               </div>
-
             ))}
-
           </div>
-
         </div>
-
       </section>
 
       {/* Footer */}
-
-      <footer id="contact" className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-
+      <footer className="bg-gray-900 text-white py-20 px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
-
-              <h3 className="text-xl font-bold mb-3 font-elegant italic">Gourmet Catering</h3>
-
-              <p className="text-gray-400 italic text-sm">{t.footer.tagline}</p>
-
+          <div className="grid md:grid-cols-4 gap-12 mb-16">
+            <div>
+              <h3 className="text-2xl font-light mb-4 font-display">Gourmet Catering</h3>
+              <p className="text-gray-400 text-sm">{t.footer.tagline}</p>
             </div>
-
-            <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-
-              <h4 className="font-semibold mb-3 font-elegant text-sm">{t.footer.quickLinksTitle}</h4>
-
-              <div className="flex flex-col gap-1">
-
-                <a href="#services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.services}</a>
-
-                <a href="#menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.menus}</a>
-
-                <a href="#contact" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1 text-sm">{t.nav.contact}</a>
-
+            
+            <div>
+              <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{t.footer.quickLinksTitle}</h4>
+              <div className="flex flex-col gap-3">
+                <a href="#services" className="text-gray-400 hover:text-white transition-colors">{t.nav.services}</a>
+                <a href="#menus" className="text-gray-400 hover:text-white transition-colors">{t.nav.menus}</a>
+                <a href="#contact" className="text-gray-400 hover:text-white transition-colors">{t.nav.contact}</a>
               </div>
-
             </div>
-
-            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-
-              <h4 className="font-semibold mb-3 font-elegant text-sm">{t.footer.contactTitle}</h4>
-
-              <div className="flex flex-col gap-2 text-gray-400 text-sm">
-
-                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
-
+            
+            <div>
+              <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{t.footer.contactTitle}</h4>
+              <div className="flex flex-col gap-3 text-gray-400">
+                <div className="flex items-center gap-3">
                   <Phone size={16} />
-
-                  <span>{t.footer.contact.phone}</span>
-
+                  <span className="text-sm">{t.footer.contact.phone}</span>
                 </div>
-
-                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
-
+                <div className="flex items-center gap-3">
                   <Mail size={16} />
-
-                  <span>{t.footer.contact.email}</span>
-
+                  <span className="text-sm">{t.footer.contact.email}</span>
                 </div>
-
-                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
-
+                <div className="flex items-center gap-3">
                   <MapPin size={16} />
-
-                  <span>{t.footer.contact.location}</span>
-
+                  <span className="text-sm">{t.footer.contact.location}</span>
                 </div>
-
               </div>
-
             </div>
-
-            <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-
-              <h4 className="font-semibold mb-3 font-elegant text-sm">{t.footer.hoursTitle}</h4>
-
-              <p className="text-gray-400 text-sm">{t.footer.hours.weekdays}</p>
-
-              <p className="text-gray-400 text-sm">{t.footer.hours.saturday}</p>
-
-              <p className="text-gray-400 text-sm">{t.footer.hours.sunday}</p>
-
+            
+            <div>
+              <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{t.footer.hoursTitle}</h4>
+              <div className="text-gray-400 text-sm space-y-1">
+                <p>{t.footer.hours.weekdays}</p>
+                <p>{t.footer.hours.saturday}</p>
+                <p>{t.footer.hours.sunday}</p>
+              </div>
             </div>
-
           </div>
-
-          <div className="border-t border-gray-800 pt-6 text-center text-gray-400 text-sm">
-
+          
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
             <p>{t.footer.copyright}</p>
-
           </div>
-
         </div>
       </footer>
     </div>
