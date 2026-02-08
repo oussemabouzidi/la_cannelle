@@ -10,6 +10,7 @@ import { systemApi, type ClosedDate } from '@/lib/api/system';
 import { servicesApi, type Service } from '@/lib/api/services';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { commonTranslations } from '@/lib/translations/common';
+import { ThemeToggle } from '@/components/site/ThemeToggle';
 import { 
   Menu, X, ChevronRight, ChevronLeft, Phone, Mail, MapPin, 
   Clock, Users, Calendar, CreditCard, CheckCircle, 
@@ -107,48 +108,213 @@ const stepCategoryKeys = [
 
 declare global {
   interface Window {
-    __lacannelleTurnstileSuccess?: (token: string) => void;
-    __lacannelleTurnstileExpired?: () => void;
-    __lacannelleTurnstileError?: () => void;
+    turnstile?: any;
   }
 }
+
+type LuxurySelectOption = {
+  value: string;
+  label: string;
+};
+
+const LuxurySelect = ({
+  value,
+  placeholder,
+  options,
+  onChange,
+}: {
+  value: string;
+  placeholder: string;
+  options: LuxurySelectOption[];
+  onChange: (value: string) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const selected = useMemo(
+    () => options.find((option) => option.value === value) || null,
+    [options, value]
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full px-4 py-3 text-left text-sm border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 shadow-sm flex items-center justify-between gap-3 dark:bg-[#2A2A2A]/70 dark:text-[#EDEDED] dark:border-white/10"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className={selected ? 'text-gray-900 dark:text-[#EDEDED]' : 'text-gray-500 dark:text-[#B0B0B0]'}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown
+          size={18}
+          className={`shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-amber-600 dark:text-[#A69256]`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-2 z-50 rounded-xl border border-amber-200/70 bg-white/90 backdrop-blur-md shadow-[0_18px_48px_rgba(0,0,0,0.18)] overflow-hidden dark:bg-[#1C1C1C]/90 dark:border-white/10">
+          <div className="max-h-64 overflow-auto py-1">
+            {options.map((option) => {
+              const isSelected = option.value === value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between gap-3 transition-colors ${
+                    isSelected
+                      ? 'bg-amber-50 text-gray-900 dark:bg-white/10 dark:text-[#EDEDED]'
+                      : 'text-gray-700 hover:bg-amber-50/70 hover:text-gray-900 dark:text-[#EDEDED] dark:hover:bg-white/10'
+                  }`}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span className="truncate">{option.label}</span>
+                  {isSelected && <Check size={16} className="text-amber-600 dark:text-[#A69256]" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const TurnstileWidget = ({
   siteKey,
   onToken,
   onExpire,
   onError,
+  resetKey,
 }: {
   siteKey: string;
   onToken: (token: string) => void;
   onExpire: () => void;
   onError: () => void;
+  resetKey?: number;
 }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const widgetIdRef = useRef<any>(null);
+  const [scriptReady, setScriptReady] = useState(() => typeof window !== 'undefined' && Boolean(window.turnstile));
+  const [turnstileTheme, setTurnstileTheme] = useState<'light' | 'dark'>('light');
+  const onTokenRef = useRef(onToken);
+  const onExpireRef = useRef(onExpire);
+  const onErrorRef = useRef(onError);
+
   useEffect(() => {
-    window.__lacannelleTurnstileSuccess = (token: string) => onToken(token);
-    window.__lacannelleTurnstileExpired = () => onExpire();
-    window.__lacannelleTurnstileError = () => onError();
+    onTokenRef.current = onToken;
+  }, [onToken]);
+
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
+
+  useEffect(() => {
+    const getTheme = () =>
+      document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+
+    setTurnstileTheme(getTheme());
+
+    const observer = new MutationObserver(() => {
+      setTurnstileTheme(getTheme());
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!scriptReady) return;
+    if (!containerRef.current) return;
+    if (!window.turnstile) {
+      onErrorRef.current();
+      return;
+    }
+
+    try {
+      if (widgetIdRef.current) {
+        window.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+    } catch {
+      widgetIdRef.current = null;
+    }
+
+    containerRef.current.innerHTML = '';
+
+    try {
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: siteKey,
+        theme: turnstileTheme,
+        callback: (token: string) => onTokenRef.current(token),
+        'expired-callback': () => onExpireRef.current(),
+        'error-callback': () => onErrorRef.current(),
+      });
+    } catch {
+      onErrorRef.current();
+    }
 
     return () => {
-      delete window.__lacannelleTurnstileSuccess;
-      delete window.__lacannelleTurnstileExpired;
-      delete window.__lacannelleTurnstileError;
+      try {
+        if (widgetIdRef.current && window.turnstile) {
+          window.turnstile.remove(widgetIdRef.current);
+        }
+      } catch {
+        // ignore
+      }
+      widgetIdRef.current = null;
     };
-  }, [onToken, onExpire, onError]);
+  }, [scriptReady, siteKey, turnstileTheme]);
+
+  useEffect(() => {
+    if (!scriptReady) return;
+    if (!widgetIdRef.current) return;
+    if (!window.turnstile) return;
+
+    try {
+      window.turnstile.reset(widgetIdRef.current);
+    } catch {
+      // ignore
+    }
+  }, [resetKey, scriptReady]);
 
   return (
     <div className="space-y-2">
       <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        id="turnstile-script"
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"
+        onLoad={() => setScriptReady(true)}
+        onError={() => {
+          setScriptReady(false);
+          onError();
+        }}
       />
-      <div
-        className="cf-turnstile"
-        data-sitekey={siteKey}
-        data-callback="__lacannelleTurnstileSuccess"
-        data-expired-callback="__lacannelleTurnstileExpired"
-        data-error-callback="__lacannelleTurnstileError"
-      />
+      <div ref={containerRef} />
     </div>
   );
 };
@@ -228,14 +394,16 @@ const DatePicker = ({
       </button>
       <Calendar className="absolute left-4 top-3.5 text-amber-500" size={20} />
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-4 z-20">
+        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-4 z-20 dark:bg-[#1C1C1C]/90 dark:border-white/10">
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
               onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
               disabled={!canGoPrev}
               className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                canGoPrev ? 'hover:bg-amber-50 text-gray-700' : 'text-gray-300 cursor-not-allowed'
+                canGoPrev
+                  ? 'hover:bg-amber-50 hover:text-gray-900 text-gray-700 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]'
+                  : 'text-gray-300 cursor-not-allowed dark:text-white/30'
               }`}
             >
               <ChevronLeft size={16} />
@@ -244,7 +412,7 @@ const DatePicker = ({
             <button
               type="button"
               onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-50 text-gray-700"
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-50 hover:text-gray-900 text-gray-700 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]"
             >
               <ChevronRight size={16} />
             </button>
@@ -279,11 +447,11 @@ const DatePicker = ({
                   className={`h-9 rounded-lg flex items-center justify-center transition-colors ${
                     isPast
                       ? 'text-gray-300 cursor-not-allowed'
-                      : isSelected
+                    : isSelected
                       ? 'bg-amber-600 text-white shadow-md'
-                      : isToday
-                      ? 'border border-amber-400 text-amber-700'
-                      : 'hover:bg-amber-50 text-gray-700'
+                    : isToday
+                      ? 'border border-amber-400 text-amber-700 dark:border-[#A69256]/45 dark:text-[#CDA15B]'
+                      : 'hover:bg-amber-50 hover:text-gray-900 text-gray-700 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]'
                   }`}
                 >
                   {dayNumber}
@@ -334,7 +502,7 @@ const TimePicker = ({
       </button>
       <Clock className="absolute left-4 top-3.5 text-amber-500" size={20} />
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-2 z-20">
+        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-2 z-20 dark:bg-[#1C1C1C]/90 dark:border-white/10">
           <div className="max-h-56 overflow-y-auto">
             {slots.map((slot) => {
               const isSelected = slot === value;
@@ -349,7 +517,7 @@ const TimePicker = ({
                   className={`w-full px-4 py-2 text-left text-sm rounded-lg transition-colors ${
                     isSelected
                       ? 'bg-amber-600 text-white'
-                      : 'text-gray-700 hover:bg-amber-50'
+                      : 'text-gray-700 hover:bg-amber-50 hover:text-gray-900 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]'
                   }`}
                 >
                   {slot}
@@ -386,106 +554,112 @@ const PostalCodeFields = ({
   handlePostalCodeChange,
   lookupPostalCodesByCity,
   lookupPostalCode
-}: any) => (
-  <div className="space-y-4">
-    {label && (
-      <label className="block text-sm font-semibold text-gray-900 mb-2">
-        {label}{required ? ' *' : ''}
-      </label>
-    )}
-    <div className="grid md:grid-cols-3 gap-4">
+}: any) => {
+  const stateOptions: LuxurySelectOption[] = [
+    { value: '', label: postalCopy.statePlaceholder },
+    ...GERMAN_STATES.map((state) => ({
+      value: state.code,
+      label: `${state.code} - ${isDE ? state.nameDe : state.nameEn}`,
+    })),
+  ];
+
+  const postalOptions: LuxurySelectOption[] = [
+    { value: '', label: postalCopy.selectPostal },
+    ...cityLookupOptions.map((option: any) => ({
+      value: option.code,
+      label: `${option.code}${option.city ? ` - ${option.city}` : ''}`,
+    })),
+  ];
+
+  return (
+    <div className="space-y-4">
+      {label && (
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          {label}{required ? ' *' : ''}
+        </label>
+      )}
+      <div className="grid md:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
+            {postalCopy.state}
+          </label>
+          <LuxurySelect
+            value={orderData.state || ''}
+            placeholder={postalCopy.statePlaceholder}
+            options={stateOptions}
+            onChange={(next) => handleStateChange(next)}
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
+            {postalCopy.city}
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={orderData.city}
+              onChange={(e) => handleCityChange(e.target.value)}
+              className="flex-1 px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+              placeholder={postalCopy.cityPlaceholder}
+            />
+            <button
+              type="button"
+              onClick={lookupPostalCodesByCity}
+              disabled={cityLookupLoading}
+              className={`px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
+                cityLookupLoading
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : 'bg-amber-600 text-white hover:bg-amber-700'
+              }`}
+            >
+              {cityLookupLoading ? postalCopy.searching : postalCopy.findPostal}
+            </button>
+          </div>
+          {cityLookupError && (
+            <p className="mt-1 text-sm text-red-600">{cityLookupError}</p>
+          )}
+        </div>
+      </div>
+      {cityLookupOptions.length > 0 && (
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
+            {postalCopy.selectPostal}
+          </label>
+          <LuxurySelect
+            value={orderData.postalCode || ''}
+            placeholder={postalCopy.selectPostal}
+            options={postalOptions}
+            onChange={(next) => handlePostalCodeSelect(next)}
+          />
+        </div>
+      )}
       <div>
         <label className="block text-xs font-semibold text-gray-700 mb-1">
-          {postalCopy.state}
+          {postalCopy.postalCode}
         </label>
-        <select
-          value={orderData.state}
-          onChange={(e) => handleStateChange(e.target.value)}
-          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
-        >
-          <option value="">{postalCopy.statePlaceholder}</option>
-          {GERMAN_STATES.map((state) => (
-            <option key={state.code} value={state.code}>
-              {state.code} - {isDE ? state.nameDe : state.nameEn}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="md:col-span-2">
-        <label className="block text-xs font-semibold text-gray-700 mb-1">
-          {postalCopy.city}
-        </label>
-        <div className="flex gap-2">
+        <div className="relative">
           <input
             type="text"
-            value={orderData.city}
-            onChange={(e) => handleCityChange(e.target.value)}
-            className="flex-1 px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-            placeholder={postalCopy.cityPlaceholder}
+            value={orderData.postalCode}
+            onChange={(e) => handlePostalCodeChange(e.target.value)}
+            onBlur={lookupPostalCode}
+            inputMode="numeric"
+            pattern="[0-9]{5}"
+            maxLength={5}
+            autoComplete="postal-code"
+            required={required}
+            className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+            placeholder={postalCopy.postalPlaceholder}
           />
-          <button
-            type="button"
-            onClick={lookupPostalCodesByCity}
-            disabled={cityLookupLoading}
-            className={`px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
-              cityLookupLoading
-                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                : 'bg-amber-600 text-white hover:bg-amber-700'
-            }`}
-          >
-            {cityLookupLoading ? postalCopy.searching : postalCopy.findPostal}
-          </button>
+          <MapPinIcon className="absolute right-3 top-3.5 text-gray-400" size={20} />
         </div>
-        {cityLookupError && (
-          <p className="mt-1 text-sm text-red-600">{cityLookupError}</p>
-        )}
+        <p className={`mt-1 text-xs ${postalLookupError ? 'text-red-600' : 'text-gray-500'}`}>
+          {postalLookupLoading ? postalCopy.checking : (postalLookupError || postalCopy.germanyOnly)}
+        </p>
       </div>
     </div>
-    {cityLookupOptions.length > 0 && (
-      <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">
-          {postalCopy.selectPostal}
-        </label>
-        <select
-          value={orderData.postalCode}
-          onChange={(e) => handlePostalCodeSelect(e.target.value)}
-          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 bg-white"
-        >
-          <option value="">{postalCopy.selectPostal}</option>
-          {cityLookupOptions.map((option: any) => (
-            <option key={`${option.code}-${option.city}`} value={option.code}>
-              {option.code}{option.city ? ` - ${option.city}` : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-    )}
-    <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-1">
-        {postalCopy.postalCode}
-      </label>
-      <div className="relative">
-        <input
-          type="text"
-          value={orderData.postalCode}
-          onChange={(e) => handlePostalCodeChange(e.target.value)}
-          onBlur={lookupPostalCode}
-          inputMode="numeric"
-          pattern="[0-9]{5}"
-          maxLength={5}
-          autoComplete="postal-code"
-          required={required}
-          className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-          placeholder={postalCopy.postalPlaceholder}
-        />
-        <MapPinIcon className="absolute right-3 top-3.5 text-gray-400" size={20} />
-      </div>
-      <p className={`mt-1 text-xs ${postalLookupError ? 'text-red-600' : 'text-gray-500'}`}>
-        {postalLookupLoading ? postalCopy.checking : (postalLookupError || postalCopy.germanyOnly)}
-      </p>
-    </div>
-  </div>
-);
+  );
+};
 
 // ============================================================================
 // MAIN ORDERPAGE COMPONENT
@@ -563,6 +737,7 @@ export default function OrderPage() {
   const [termsError, setTermsError] = useState('');
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaError, setCaptchaError] = useState('');
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [bankDetailsOpen, setBankDetailsOpen] = useState(false);
   const [productDetailsOpen, setProductDetailsOpen] = useState(false);
@@ -2057,7 +2232,19 @@ export default function OrderPage() {
         window.location.href = '/home';
       }, 2000);
     } catch (error: any) {
-      showNotification('error', 'Failed to place order: ' + (error.message || 'Unknown error'), 3500);
+      const message = (error && typeof error.message === 'string' ? error.message : '') || 'Unknown error';
+
+      if (isCaptchaEnabled && /captcha/i.test(message)) {
+        setCaptchaToken('');
+        setCaptchaResetKey((value) => value + 1);
+        setCaptchaError(
+          language === 'DE'
+            ? 'Captcha-Überprüfung fehlgeschlagen. Bitte erneut bestätigen.'
+            : 'Captcha verification failed. Please complete it again.'
+        );
+      }
+
+      showNotification('error', 'Failed to place order: ' + message, 3500);
     }
   };
   
@@ -2408,12 +2595,12 @@ export default function OrderPage() {
   
   const renderStep2MenuSelection = () => {
     return (
-      <div className="space-y-8">
+        <div className="space-y-8">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-[#404040] mb-4 font-elegant">
             {t.menuSelection.title}
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className="text-[#404040]/70 text-lg">
             {t.menuSelection.subtitle}
           </p>
         </div>
@@ -2426,12 +2613,12 @@ export default function OrderPage() {
               ? menu.menuProducts.length
               : 0;
             const cardClassName =
-              'w-full max-w-[26rem] h-[34rem] rounded-3xl border border-gray-200 overflow-hidden transition-all duration-300 text-left bg-white shadow-sm hover:shadow-xl flex flex-col ' +
+              'group w-full max-w-[26rem] h-[34rem] rounded-3xl border border-white/40 ring-1 ring-black/5 overflow-hidden transition-all duration-300 text-left bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.10)] hover:shadow-[0_30px_90px_rgba(0,0,0,0.14)] hover:-translate-y-0.5 flex flex-col ' +
               ((pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null) === Number(menu.id)
-                ? 'border-amber-500 ring-2 ring-amber-200'
+                ? 'border-[#A69256] ring-2 ring-[#A69256]/25'
                 : menu.isActive
-                ? 'hover:border-amber-300'
-                : 'bg-gray-50 opacity-70 cursor-not-allowed');
+                ? 'hover:border-[#A69256]/50'
+                : 'bg-white/40 opacity-70 cursor-not-allowed');
             return (
                   <button
                     key={menu.id}
@@ -2439,7 +2626,7 @@ export default function OrderPage() {
                     onClick={() => handleMenuCardClick(menu)}
                     className={cardClassName}
                   >
-                <div className="relative h-44 min-h-44 bg-gray-200 flex-none">
+                <div className="relative h-44 min-h-44 bg-black/5 flex-none">
                   {menu.image ? (
                     <img
                       src={menu.image}
@@ -2447,7 +2634,7 @@ export default function OrderPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                    <div className="w-full h-full bg-gradient-to-br from-[#A69256]/10 to-white flex items-center justify-center text-[#404040]/60 text-sm">
                       {ui.noImage}
                     </div>
                   )}
@@ -2461,17 +2648,17 @@ export default function OrderPage() {
                 </div>
                   <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
                     <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-semibold text-[#404040] font-elegant">
                       {menu.name}
                     </h3>
-                    <p className="text-sm text-gray-500 mt-1 max-h-12 overflow-hidden">
+                    <p className="text-sm text-[#404040]/70 mt-1 max-h-12 overflow-hidden">
                       {menu.description}
                     </p>
                     </div>
-                  <div className="space-y-2 text-sm text-gray-700 flex-1 min-h-0 overflow-y-auto pr-1">
+                  <div className="space-y-2 text-sm text-[#404040]/80 flex-1 min-h-0 overflow-y-auto pr-1">
                     {steps.map((step: any, index: number) => (
-                      <div key={`${menu.id}-step-${index}`} className="flex items-center gap-2">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                      <div key={`${menu.id}-step-${index}`} className="flex items-center gap-3 rounded-xl bg-white/60 backdrop-blur-sm border border-black/5 px-3 py-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#A69256]/15 text-[#A69256] border border-[#A69256]/20">
                           <Check size={12} />
                         </span>
                         <span>
@@ -2483,24 +2670,24 @@ export default function OrderPage() {
                         </span>
                       </div>
                     ))}
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 text-green-600">
+                    <div className="flex items-center gap-3 rounded-xl bg-white/60 backdrop-blur-sm border border-black/5 px-3 py-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#A69256]/15 text-[#A69256] border border-[#A69256]/20">
                         <Check size={12} />
                       </span>
                       <span>{dishesAvailable} {ui.dishesAvailable}</span>
                     </div>
                   </div>
-                  <div className="pt-4 border-t border-gray-200 space-y-1 mt-auto">
-                    <div className="text-2xl font-bold text-gray-900">
+                  <div className="pt-4 border-t border-black/10 space-y-1 mt-auto">
+                    <div className="text-2xl font-semibold text-[#404040]">
                       {menu.price ? ui.fromPerGuest(menu.price) : ui.customPricing}
                     </div>
-                    <div className="text-xs text-gray-500">{ui.exclVat}</div>
+                    <div className="text-xs text-[#404040]/60">{ui.exclVat}</div>
                     {menu.minPeople ? (
-                      <div className="text-sm font-semibold text-gray-700">{ui.guestMinimum(menu.minPeople)}</div>
+                      <div className="text-sm font-semibold text-[#404040]/80">{ui.guestMinimum(menu.minPeople)}</div>
                     ) : null}
                   </div>
                   <div className="pt-2">
-                    <div className="w-full rounded-xl bg-amber-400/80 px-4 py-3 text-center text-sm font-semibold text-white">
+                    <div className="w-full rounded-xl bg-[#A69256] px-4 py-3 text-center text-sm font-semibold text-[#F2F2F2] shadow-sm group-hover:bg-[#0D0D0D] group-hover:shadow-md transition-colors">
                       {ui.selectFood}
                     </div>
                   </div>
@@ -2722,17 +2909,17 @@ export default function OrderPage() {
                   </h4>
                   <div className="space-y-3">
                     {getCategorySummaryRows().map((row) => (
-                      <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                      <div key={`summary-${row.key}`} className="rounded-xl border border-[#A6A6A6]/40 bg-white/70 backdrop-blur-sm p-4 shadow-sm dark:border-white/10 dark:bg-white/10">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-sm font-semibold text-[#404040] dark:text-[#D1D1D1]">{row.label}</span>
+                          <span className="text-xs text-[#404040]/70 dark:text-[#B0B0B0]">
                             {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
                           </span>
                         </div>
-                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-[#404040]/80 dark:text-[#B0B0B0]">
                           <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
                           <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
-                          <span className="text-right">
+                          <span className="text-right text-[#404040]/90 dark:text-[#D1D1D1]">
                             {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
                           </span>
                         </div>
@@ -2785,17 +2972,30 @@ export default function OrderPage() {
               </div>
             </div>
             
-            <div className="inline-flex flex-wrap items-center justify-center gap-3 rounded-full border border-amber-100 bg-amber-50/70 px-4 py-2 text-sm text-amber-700">
-              <span className="font-semibold">Included: {stepIncluded}</span>
-              <span className="text-amber-300">|</span>
-              <span className="font-semibold">Selected: {selectedCount}</span>
-              <span className="text-amber-300">|</span>
-              <span className={`font-semibold ${extraCount > 0 ? 'text-amber-900' : ''}`}>
-                Extra: {extraCount}
+            <div className="inline-flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-[#A6A6A6]/50 bg-white/70 backdrop-blur-sm px-4 py-2.5 text-sm text-[#404040] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[#EDEDED]">
+              <span className="text-[#404040]/70 dark:text-[#B0B0B0]">Included</span>
+              <span className="rounded-full bg-[#A69256]/15 px-2 py-0.5 text-xs font-semibold text-[#A69256] border border-[#A69256]/20">
+                {stepIncluded}
+              </span>
+              <span className="text-[#A6A6A6] dark:text-white/20">•</span>
+              <span className="text-[#404040]/70 dark:text-[#B0B0B0]">Selected</span>
+              <span className="rounded-full bg-[#A69256]/15 px-2 py-0.5 text-xs font-semibold text-[#A69256] border border-[#A69256]/20">
+                {selectedCount}
+              </span>
+              <span className="text-[#A6A6A6] dark:text-white/20">•</span>
+              <span className="text-[#404040]/70 dark:text-[#B0B0B0]">Extras</span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold border ${
+                  extraCount > 0
+                    ? 'bg-[#CDA15B]/20 text-[#8E6A3D] border-[#CDA15B]/35 dark:bg-[#CDA15B]/20 dark:text-[#D4A67E] dark:border-[#CDA15B]/35'
+                    : 'bg-black/5 text-[#404040]/70 border-black/10 dark:bg-white/10 dark:text-[#B0B0B0] dark:border-white/10'
+                }`}
+              >
+                {extraCount}
               </span>
             </div>
             {extraCount > 0 && (
-              <p className="mt-2 text-xs text-amber-700">
+              <p className="mt-2 text-xs text-[#404040]/70 dark:text-[#B0B0B0]">
                 {language === 'DE' 
                   ? 'Extras über die enthaltene Menge hinaus werden berechnet.'
                   : 'Extras beyond the included count are charged.'}
@@ -2811,7 +3011,7 @@ export default function OrderPage() {
               const currentQuantity = quantities[quantityKey] || 0;
               
               return (
-                <div key={product.id} className="border border-gray-300 rounded-2xl overflow-hidden bg-white hover:shadow-md transition-shadow duration-300">
+                <div key={product.id} className="rounded-2xl overflow-hidden bg-gradient-to-b from-white/80 via-white/70 to-white/60 supports-[backdrop-filter]:bg-white/60 backdrop-blur-xl border border-white/40 ring-1 ring-black/5 shadow-[0_16px_50px_rgba(0,0,0,0.10)] hover:shadow-[0_24px_80px_rgba(0,0,0,0.14)] transition-all duration-300 hover:-translate-y-0.5">
                   <div className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                       <div className="w-full md:w-48 h-48 relative rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
@@ -2826,6 +3026,7 @@ export default function OrderPage() {
                             {ui.noImage}
                           </div>
                         )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent pointer-events-none" />
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -2852,7 +3053,7 @@ export default function OrderPage() {
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
                                 {(language === 'DE' && Array.isArray(product.allergensDe) && product.allergensDe.length > 0 ? product.allergensDe : product.allergens).map((allergen: string, idx: number) => (
-                                  <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                                  <span key={idx} className="px-2 py-1 bg-white/55 backdrop-blur-sm border border-black/10 text-gray-800 text-xs font-medium rounded">
                                     {allergen}
                                   </span>
                                 ))}
@@ -2865,30 +3066,30 @@ export default function OrderPage() {
                               setProductDetailsItem(product);
                               setProductDetailsOpen(true);
                             }}
-                            className="ml-4 shrink-0 px-4 py-2 text-sm font-semibold rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-50 transition-colors"
+                            className="ml-4 shrink-0 px-4 py-2 text-sm font-semibold rounded-lg border border-amber-200/70 bg-white/40 backdrop-blur-sm text-amber-800 hover:bg-white/60 transition-colors shadow-sm dark:border-[#A69256]/30 dark:bg-white/10 dark:text-[#CDA15B] dark:hover:bg-white/15"
                           >
                             {ui.moreInfo}
                           </button>
                         </div>
                         
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+                          <div className="flex items-center border border-black/10 rounded-lg overflow-hidden bg-white/40 backdrop-blur-sm shadow-sm dark:border-white/10 dark:bg-white/10">
                             <button
                               onClick={() => {
                                 const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
                                 updateQuantity(currentCategory, product.id, base - 1, minQuantity);
                               }}
-                              className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
+                              className="px-4 py-2 hover:bg-white/70 dark:hover:bg-white/10 transition-colors text-[#404040] dark:text-[#EDEDED] disabled:opacity-40 disabled:cursor-not-allowed"
                               disabled={!product.available}
                             >
-                              <Minus size={20} strokeWidth={2.5} className="text-black" />
+                              <Minus size={20} strokeWidth={2.5} className="text-[#404040] dark:text-[#EDEDED]" />
                             </button>
                             <input
                               type="number"
                               min="0"
                               value={currentQuantity}
                               onChange={(e) => updateQuantity(currentCategory, product.id, parseInt(e.target.value, 10) || 0, minQuantity)}
-                              className="w-16 text-center py-2 text-xl font-bold border-x border-gray-300 bg-white text-gray-900"
+                              className="w-16 text-center py-2 text-xl font-bold border-x border-black/10 bg-white/30 text-gray-900 dark:border-white/10 dark:bg-white/5 dark:text-[#EDEDED]"
                               disabled={!product.available}
                             />
                             <button
@@ -2896,10 +3097,10 @@ export default function OrderPage() {
                                 const base = currentQuantity > 0 ? currentQuantity : (quantityInOrder > 0 ? quantityInOrder : 0);
                                 updateQuantity(currentCategory, product.id, base + 1, minQuantity);
                               }}
-                              className="px-4 py-2 hover:bg-gray-100 transition-colors text-black"
+                              className="px-4 py-2 hover:bg-white/70 dark:hover:bg-white/10 transition-colors text-[#404040] dark:text-[#EDEDED] disabled:opacity-40 disabled:cursor-not-allowed"
                               disabled={!product.available}
                             >
-                              <Plus size={20} strokeWidth={2.5} className="text-black" />
+                              <Plus size={20} strokeWidth={2.5} className="text-[#404040] dark:text-[#EDEDED]" />
                             </button>
                           </div>
                           
@@ -2908,8 +3109,8 @@ export default function OrderPage() {
                             disabled={currentQuantity <= 0 || !product.available}
                             className={`px-6 py-3 rounded-lg text-base font-semibold transition-colors ${
                               currentQuantity > 0 && product.available
-                                ? 'bg-gray-900 text-white hover:bg-black'
-                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                ? 'bg-amber-600 text-white hover:bg-amber-700 shadow-sm dark:bg-[#CDA15B] dark:text-[#0D0D0D] dark:hover:bg-[#D4A67E]'
+                                : 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-white/10 dark:text-[#B0B0B0] dark:border dark:border-white/10'
                             }`}
                           >
                             {quantityInOrder > 0 ? ui.updateOrder : ui.addToOrder}
@@ -2917,23 +3118,23 @@ export default function OrderPage() {
                         </div>
                         
                         {quantityInOrder > 0 && (
-                          <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                          <div className="mt-4 p-3 bg-white/60 backdrop-blur-md rounded-lg border border-amber-200/60 shadow-sm dark:bg-white/10 dark:border-[#A69256]/25">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                              <span className="text-amber-800 font-semibold">
+                              <span className="text-amber-800 font-semibold dark:text-[#D1D1D1]">
                                 In order: <span className="text-xl">{quantityInOrder}</span>
                               </span>
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder - 1)}
-                                  className="w-8 h-8 flex items-center justify-center bg-red-100 text-red-800 rounded-full hover:bg-red-200"
+                                  className="w-8 h-8 flex items-center justify-center bg-white/60 backdrop-blur-sm border border-black/10 text-red-800 rounded-full hover:bg-white/80 transition-colors dark:bg-white/10 dark:border-white/10 dark:text-red-300 dark:hover:bg-white/15"
                                 >
-                                  <Minus size={16} strokeWidth={2.5} className="text-black" />
+                                  <Minus size={16} strokeWidth={2.5} className="text-red-800 dark:text-red-300" />
                                 </button>
                                 <button
                                   onClick={() => updateProductQuantityInOrder(currentCategory, product, quantityInOrder + 1)}
-                                  className="w-8 h-8 flex items-center justify-center bg-green-100 text-green-800 rounded-full hover:bg-green-200"
+                                  className="w-8 h-8 flex items-center justify-center bg-white/60 backdrop-blur-sm border border-black/10 text-emerald-800 rounded-full hover:bg-white/80 transition-colors dark:bg-white/10 dark:border-white/10 dark:text-emerald-300 dark:hover:bg-white/15"
                                 >
-                                  <Plus size={16} strokeWidth={2.5} className="text-black" />
+                                  <Plus size={16} strokeWidth={2.5} className="text-emerald-800 dark:text-emerald-300" />
                                 </button>
                               </div>
                             </div>
@@ -3152,17 +3353,17 @@ export default function OrderPage() {
                   </h4>
                   <div className="space-y-3">
                     {getCategorySummaryRows().map((row) => (
-                      <div key={`summary-${row.key}`} className="rounded-lg border border-gray-100 bg-gray-50/70 p-3">
+                      <div key={`summary-${row.key}`} className="rounded-xl border border-[#A6A6A6]/40 bg-white/70 backdrop-blur-sm p-4 shadow-sm dark:border-white/10 dark:bg-white/10">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-gray-800">{row.label}</span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-sm font-semibold text-[#404040] dark:text-[#D1D1D1]">{row.label}</span>
+                          <span className="text-xs text-[#404040]/70 dark:text-[#B0B0B0]">
                             {(language === 'DE' ? 'Inklusive' : 'Included')} {row.included}
                           </span>
                         </div>
-                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-600">
+                        <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-[#404040]/80 dark:text-[#B0B0B0]">
                           <span>{(language === 'DE' ? 'Ausgewählt' : 'Selected')}: {row.selected}</span>
                           <span>{(language === 'DE' ? 'Extras' : 'Extras')}: {row.extra}</span>
-                          <span className="text-right">
+                          <span className="text-right text-[#404040]/90 dark:text-[#D1D1D1]">
                             {(language === 'DE' ? 'Extrakkosten' : 'Extras cost')}: €{row.extraCost.toFixed(2)}
                           </span>
                         </div>
@@ -3707,16 +3908,19 @@ export default function OrderPage() {
                         </div>
                         <TurnstileWidget
                           siteKey={turnstileSiteKey}
+                          resetKey={captchaResetKey}
                           onToken={(token) => {
                             setCaptchaToken(token);
                             setCaptchaError('');
                           }}
                           onExpire={() => {
                             setCaptchaToken('');
+                            setCaptchaResetKey((value) => value + 1);
                             setCaptchaError(language === 'DE' ? 'Captcha ist abgelaufen. Bitte erneut bestätigen.' : 'Captcha expired. Please complete it again.');
                           }}
                           onError={() => {
                             setCaptchaToken('');
+                            setCaptchaResetKey((value) => value + 1);
                             setCaptchaError(language === 'DE' ? 'Captcha konnte nicht geladen werden. Bitte Seite neu laden.' : 'Captcha failed to load. Please reload the page.');
                           }}
                         />
@@ -4112,16 +4316,19 @@ export default function OrderPage() {
                         </div>
                         <TurnstileWidget
                           siteKey={turnstileSiteKey}
+                          resetKey={captchaResetKey}
                           onToken={(token) => {
                             setCaptchaToken(token);
                             setCaptchaError('');
                           }}
                           onExpire={() => {
                             setCaptchaToken('');
+                            setCaptchaResetKey((value) => value + 1);
                             setCaptchaError(language === 'DE' ? 'Captcha ist abgelaufen. Bitte erneut bestätigen.' : 'Captcha expired. Please complete it again.');
                           }}
                           onError={() => {
                             setCaptchaToken('');
+                            setCaptchaResetKey((value) => value + 1);
                             setCaptchaError(language === 'DE' ? 'Captcha konnte nicht geladen werden. Bitte Seite neu laden.' : 'Captcha failed to load. Please reload the page.');
                           }}
                         />
@@ -4413,21 +4620,21 @@ export default function OrderPage() {
     if (!minPeoplePromptOpen || !minPeoplePromptMenu) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-        <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900">{t.menuMinPeoplePrompt.title}</h3>
+      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
+        <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-xl bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.20),0_10px_30px_rgba(166,146,86,0.12)] border border-[#A69256]/25 ring-1 ring-black/5 flex flex-col animate-fade-in-up">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-black/10">
+            <h3 className="text-lg font-semibold text-[#404040] font-elegant tracking-wide">{t.menuMinPeoplePrompt.title}</h3>
             <button
               type="button"
               onClick={closeMinPeoplePrompt}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              className="p-2 rounded-lg text-[#404040]/70 bg-white/60 backdrop-blur-sm border border-black/10 hover:bg-white/80 hover:text-[#404040] hover:border-[#A69256]/25 transition-all duration-200"
               aria-label={ui.close}
             >
               <X size={18} />
             </button>
           </div>
-          <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4">
-            <p className="font-semibold text-gray-900">{minPeoplePromptMenu.name}</p>
+          <div className="px-6 py-5 flex-1 overflow-y-auto text-sm text-[#404040]/80 leading-relaxed space-y-4">
+            <p className="font-semibold text-[#404040]">{minPeoplePromptMenu.name}</p>
             <p>
               {t.menuMinPeoplePrompt.description(
                 Number(minPeoplePromptMenu.minPeople) || 0,
@@ -4435,7 +4642,7 @@ export default function OrderPage() {
               )}
             </p>
           </div>
-          <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-end gap-3">
+          <div className="px-6 py-4 border-t border-black/10 flex flex-col sm:flex-row sm:justify-end gap-3 bg-white/40">
             <button
               type="button"
               onClick={() => {
@@ -4446,7 +4653,7 @@ export default function OrderPage() {
                 }
                 finalizeMenuSelection(minPeoplePromptMenu, { ignoreMenuMinPeople: false });
               }}
-              className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+              className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-[#A69256] text-[#F2F2F2] hover:bg-[#0D0D0D] shadow-[0_10px_20px_rgba(166,146,86,0.18)] hover:shadow-[0_12px_24px_rgba(166,146,86,0.24)] transition-all duration-200 hover:scale-[1.02]"
             >
               {t.menuMinPeoplePrompt.useMenuMin(Number(minPeoplePromptMenu.minPeople) || 0)}
             </button>
@@ -4456,14 +4663,14 @@ export default function OrderPage() {
                 closeMinPeoplePrompt();
                 finalizeMenuSelection(minPeoplePromptMenu, { ignoreMenuMinPeople: true });
               }}
-              className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-800 hover:bg-gray-50"
+              className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-white/60 backdrop-blur-sm border border-black/10 text-[#404040] hover:bg-white/80 hover:border-[#A69256]/25 transition-all duration-200"
             >
               {t.menuMinPeoplePrompt.keepSelected(minPeoplePromptGuestCount)}
             </button>
             <button
               type="button"
               onClick={closeMinPeoplePrompt}
-              className="px-4 py-2 text-sm font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              className="px-5 py-2.5 text-sm font-semibold rounded-lg text-[#404040]/70 bg-transparent hover:bg-white/60 hover:text-[#404040] transition-all duration-200"
             >
               {t.menuMinPeoplePrompt.cancel}
             </button>
@@ -4477,16 +4684,16 @@ export default function OrderPage() {
     if (!termsModalOpen) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-        <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg p-4 sm:p-6 overflow-y-auto">
+        <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-gradient-to-b from-white/80 via-white/70 to-white/60 supports-[backdrop-filter]:bg-white/60 backdrop-blur-2xl shadow-[0_40px_120px_rgba(0,0,0,0.38)] border border-white/35 ring-1 ring-[#A69256]/15 flex flex-col">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-black/5">
             <h3 className="text-lg font-bold text-gray-900">
               {language === 'DE' ? 'AGB & Bedingungen' : 'Terms and Conditions'}
             </h3>
             <button
               type="button"
               onClick={() => setTermsModalOpen(false)}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              className="p-2 rounded-lg text-gray-600 bg-white/40 backdrop-blur-sm ring-1 ring-black/10 hover:bg-white/60 hover:text-gray-800 transition-colors"
             >
               <X size={18} />
             </button>
@@ -4538,7 +4745,7 @@ export default function OrderPage() {
               </p>
             </div>
           </div>
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <div className="px-6 py-4 border-t border-black/5 flex justify-end">
             <button
               type="button"
               onClick={() => setTermsModalOpen(false)}
@@ -4610,24 +4817,24 @@ export default function OrderPage() {
     if (!productDetailsOpen || !productDetailsItem) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
-        <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900">{ui.productDetailsTitle}</h3>
+      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
+        <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.20),0_10px_30px_rgba(166,146,86,0.12)] border border-[#A69256]/25 ring-1 ring-black/5 flex flex-col animate-fade-in-up">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-black/10">
+            <h3 className="text-lg font-semibold text-[#404040] font-elegant tracking-wide">{ui.productDetailsTitle}</h3>
             <button
               type="button"
               onClick={() => {
                 setProductDetailsOpen(false);
                 setProductDetailsItem(null);
               }}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+              className="p-2 rounded-lg text-[#404040]/70 bg-white/60 backdrop-blur-sm border border-black/10 hover:bg-white/80 hover:text-[#404040] hover:border-[#A69256]/25 transition-all duration-200"
             >
               <X size={18} />
             </button>
           </div>
-          <div className="px-5 py-5 flex-1 overflow-y-auto">
+          <div className="px-6 py-6 flex-1 overflow-y-auto">
             <div className="grid gap-5 md:grid-cols-[180px,1fr]">
-              <div className="w-full h-40 rounded-xl bg-gray-100 overflow-hidden">
+              <div className="relative w-full h-44 rounded-xl bg-white/60 backdrop-blur-sm border border-black/10 overflow-hidden shadow-sm">
                 {productDetailsItem.image ? (
                   <img
                     src={productDetailsItem.image}
@@ -4635,32 +4842,33 @@ export default function OrderPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                  <div className="w-full h-full bg-gradient-to-br from-white/70 to-white/30 flex items-center justify-center text-[#404040]/60 text-sm">
                     {ui.noImage}
                   </div>
                 )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent pointer-events-none" />
               </div>
               <div className="space-y-3">
                 <div>
-                  <h4 className="text-xl font-bold text-gray-900">
+                  <h4 className="text-2xl font-semibold text-[#404040] font-elegant">
                     {productDetailsItem.name}
                   </h4>
-                  <p className="text-gray-600 mt-2">
+                  <p className="text-[#404040]/75 mt-2 leading-relaxed">
                     {productDetailsItem.description || ui.noDescription}
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 text-sm">
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <p className="text-gray-500">{ui.price}</p>
-                    <p className="text-base font-semibold text-gray-900">€{productDetailsItem.price}</p>
+                  <div className="rounded-lg bg-white/60 backdrop-blur-sm border border-black/10 p-3">
+                    <p className="text-[#404040]/60">{ui.price}</p>
+                    <p className="text-base font-semibold text-[#A69256]">€{productDetailsItem.price}</p>
                   </div>
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <p className="text-gray-500">{language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'}</p>
-                    <p className="text-base font-semibold text-gray-900">{getMinOrderQuantity(productDetailsItem)}</p>
+                  <div className="rounded-lg bg-white/60 backdrop-blur-sm border border-black/10 p-3">
+                    <p className="text-[#404040]/60">{language === 'DE' ? 'Anzahl der Gaeste' : 'Number of Guests'}</p>
+                    <p className="text-base font-semibold text-[#404040]">{getMinOrderQuantity(productDetailsItem)}</p>
                   </div>
-                  <div className="rounded-lg border border-gray-200 p-3">
-                    <p className="text-gray-500">{ui.availability}</p>
-                    <p className="text-base font-semibold text-gray-900">
+                  <div className="rounded-lg bg-white/60 backdrop-blur-sm border border-black/10 p-3">
+                    <p className="text-[#404040]/60">{ui.availability}</p>
+                    <p className={`text-base font-semibold ${productDetailsItem.available ? 'text-emerald-700' : 'text-red-700'}`}>
                       {productDetailsItem.available ? ui.available : ui.notAvailableShort}
                     </p>
                   </div>
@@ -4672,10 +4880,10 @@ export default function OrderPage() {
                   if (!Array.isArray(ingredients) || ingredients.length === 0) return null;
                   return (
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-2">{ui.ingredients}</p>
+                    <p className="text-sm font-semibold text-[#404040] mb-2 tracking-wide">{ui.ingredients}</p>
                     <div className="flex flex-wrap gap-2">
                       {ingredients.map((ingredient: string, idx: number) => (
-                        <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                        <span key={idx} className="px-2 py-1 bg-white/60 backdrop-blur-sm border border-black/10 text-[#404040]/85 text-xs font-medium rounded">
                           {ingredient}
                         </span>
                       ))}
@@ -4690,10 +4898,10 @@ export default function OrderPage() {
                   if (!Array.isArray(allergens) || allergens.length === 0) return null;
                   return (
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-2">{ui.allergens}</p>
+                    <p className="text-sm font-semibold text-[#404040] mb-2 tracking-wide">{ui.allergens}</p>
                     <div className="flex flex-wrap gap-2">
                       {allergens.map((allergen: string, idx: number) => (
-                        <span key={idx} className="px-2 py-1 bg-red-50 text-red-700 text-xs font-medium rounded">
+                        <span key={idx} className="px-2 py-1 bg-red-50/70 backdrop-blur-sm border border-red-200 text-red-700 text-xs font-medium rounded">
                           {allergen}
                         </span>
                       ))}
@@ -4704,14 +4912,14 @@ export default function OrderPage() {
               </div>
             </div>
           </div>
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <div className="px-6 py-4 border-t border-black/10 flex justify-end bg-white/40">
             <button
               type="button"
               onClick={() => {
                 setProductDetailsOpen(false);
                 setProductDetailsItem(null);
               }}
-              className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+              className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-[#A69256] text-[#F2F2F2] hover:bg-[#0D0D0D] shadow-[0_10px_20px_rgba(166,146,86,0.22)] hover:shadow-[0_12px_24px_rgba(166,146,86,0.28)] transition-all duration-200 hover:scale-[1.02]"
             >
               {ui.close}
             </button>
@@ -4781,7 +4989,7 @@ export default function OrderPage() {
   // ============================================================================
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-[#F2F2F2] flex flex-col overflow-x-hidden">
       {notification && (
         <div className="fixed bottom-6 right-6 z-50">
           <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
@@ -4797,7 +5005,7 @@ export default function OrderPage() {
       {renderExtraNoticeModal()}
       
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
          
         @keyframes fadeInUp {
           from {
@@ -4815,20 +5023,22 @@ export default function OrderPage() {
         }
         
         body {
-          font-family: 'Inter', sans-serif;
+          font-family: 'Open Sans', Lora, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          letter-spacing: 0.01em;
+          line-height: 1.75;
         }
 
         .font-elegant {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Playfair Display', Georgia, serif;
         }
 
         ::selection {
-          background: rgba(217, 119, 6, 0.22);
+          background: rgba(166, 146, 86, 0.25);
         }
 
         :focus-visible {
           outline: none;
-          box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.22);
+          box-shadow: 0 0 0 4px rgba(166, 146, 86, 0.25);
           border-radius: 12px;
         }
          
@@ -4884,17 +5094,69 @@ export default function OrderPage() {
         .text-black {
           color: #000 !important;
         }
+
+        /* Luxury palette overrides for legacy amber utilities */
+        .text-amber-300,
+        .text-amber-400,
+        .text-amber-500,
+        .text-amber-600,
+        .text-amber-700,
+        .text-amber-800,
+        .text-amber-900 {
+          color: #A69256 !important;
+        }
+
+        .bg-amber-600 {
+          background-color: #A69256 !important;
+        }
+
+        .hover\\:bg-amber-700:hover,
+        .hover\\:bg-amber-800:hover {
+          background-color: #0D0D0D !important;
+        }
+
+        .bg-amber-50,
+        [class~="bg-amber-50/60"],
+        [class~="bg-amber-50/70"],
+        [class~="bg-amber-50/80"] {
+          background-color: rgba(166, 146, 86, 0.10) !important;
+        }
+
+        .border-amber-100,
+        .border-amber-200,
+        .border-amber-300,
+        .border-amber-400,
+        .border-amber-500 {
+          border-color: #A6A6A6 !important;
+        }
+
+        .focus\\:border-amber-500:focus,
+        .focus\\:border-amber-600:focus,
+        .focus\\:border-amber-700:focus {
+          border-color: #A69256 !important;
+        }
+
+        .focus\\:ring-amber-500:focus,
+        .focus\\:ring-amber-600:focus,
+        .focus\\:ring-amber-700:focus {
+          --tw-ring-color: rgba(166, 146, 86, 0.45) !important;
+        }
+
+        .focus\\:ring-amber-500\\/30:focus,
+        .focus\\:ring-amber-500\\/40:focus {
+          --tw-ring-color: rgba(166, 146, 86, 0.35) !important;
+        }
       `}</style>
       
       {/* Enhanced Top Navigation with Steps */}
-      <div className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-b border-stone-200/70 z-40 shadow-[0_1px_0_rgba(0,0,0,0.05)]">
+      <div className="group fixed top-0 left-0 right-0 bg-[#404040]/75 supports-[backdrop-filter]:bg-[#404040]/65 backdrop-blur-xl z-40 shadow-[0_10px_30px_rgba(0,0,0,0.12)] overflow-hidden max-h-[52px] hover:max-h-[320px] focus-within:max-h-[320px] transition-[max-height] duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Language Row */}
-          <div className="flex justify-between items-center py-2">
+          <div className="flex justify-between items-center py-1.5">
             <div className="flex items-center gap-3">
               <button
                 onClick={handleBackToHome}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-gray-800 hover:text-amber-700 hover:bg-amber-50 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#F2F2F2] hover:text-[#A69256] hover:bg-white/10 transition-colors"
               >
                 <ArrowLeft size={14} />
                 {t.buttons.backToHome}
@@ -4903,9 +5165,26 @@ export default function OrderPage() {
             
             <div className="flex items-center space-x-2">
               <button
+                onClick={nextStep}
+                disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isOrderingPaused || (isClosedDate && currentStep >= 1)
+                    ? 'bg-white/10 text-[#F2F2F2]/40 cursor-not-allowed'
+                    : 'bg-[#A69256] text-[#F2F2F2] hover:bg-[#0D0D0D]'
+                } group-hover:opacity-0 group-hover:pointer-events-none group-focus-within:opacity-0 group-focus-within:pointer-events-none transition-opacity duration-200`}
+                aria-label={currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
+              >
+                <span className="hidden sm:inline">
+                  {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
+                </span>
+                <ChevronRight size={14} className="sm:ml-0.5" />
+              </button>
+
+              <ThemeToggle className="px-3 py-1.5 text-xs rounded-full border border-white/20 bg-white/10 text-[#F2F2F2] shadow-none hover:bg-white/10 hover:text-[#A69256] hover:border-[#A69256] dark:border-white/20 dark:bg-white/10 dark:text-[#F2F2F2]" />
+              <button
                 onClick={toggleLanguage}
                 aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="px-3 py-2 text-xs font-medium border border-amber-200 text-amber-800 bg-amber-50/80 rounded-full hover:bg-amber-100 transition-colors inline-flex items-center"
+                className="h-8 w-10 text-xs font-medium border border-white/20 text-[#F2F2F2] bg-transparent rounded-full hover:border-[#A69256] hover:text-[#A69256] hover:bg-white/10 transition-colors inline-flex items-center justify-center"
               >
                 <img
                   src={
@@ -4914,27 +5193,27 @@ export default function OrderPage() {
                       : '/images/language/Flag_of_Germany-4096x2453.png'
                   }
                   alt={language === 'EN' ? commonA11y.englishFlagAlt : commonA11y.germanFlagAlt}
-                  className="h-3.5 w-auto mr-1"
+                  className="h-3.5 w-auto"
                 />
-                {language === 'EN' ? 'EN' : 'DE'}
               </button>
             </div>
           </div>
           
-          {/* Steps Progress Bar */}
-          <div className="border-t border-gray-100 pt-2 pb-3">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-gray-900 font-elegant">
+          <div className="pointer-events-none opacity-0 max-h-0 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:max-h-[320px] group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-focus-within:max-h-[320px] transition-[max-height,opacity] duration-300">
+            {/* Steps Progress Bar */}
+            <div className="border-t border-white/10 pt-1.5 pb-2.5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-[#F2F2F2] font-elegant">
                 {stepsConfig[currentStep - 1]?.label}
               </span>
               <div className="flex items-center space-x-1">
                 <button
                   onClick={prevStep}
                   disabled={currentStep === 1}
-                  className={`px-3 py-2 text-xs font-medium rounded-full inline-flex items-center transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full inline-flex items-center transition-colors ${
                     currentStep === 1
-                      ? 'text-gray-400 cursor-not-allowed'
-                      : 'text-gray-800 hover:text-amber-700 hover:bg-amber-50'
+                      ? 'text-[#F2F2F2]/40 cursor-not-allowed'
+                      : 'text-[#F2F2F2] hover:text-[#A69256] hover:bg-white/10'
                   }`}
                 >
                   <ChevronLeft size={14} className="mr-1" />
@@ -4944,10 +5223,10 @@ export default function OrderPage() {
                 <button
                  onClick={nextStep}
                  disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
-                  className={`px-4 py-2 text-xs font-semibold rounded-full transition-colors inline-flex items-center shadow-sm ${
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors inline-flex items-center shadow-sm ${
                     isOrderingPaused || (isClosedDate && currentStep >= 1)
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-amber-600 text-white hover:bg-amber-700'
+                      ? 'bg-white/10 text-[#F2F2F2]/40 cursor-not-allowed'
+                      : 'bg-[#A69256] text-[#F2F2F2] hover:bg-[#0D0D0D]'
                   }`}
                 >
                  {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
@@ -4975,12 +5254,12 @@ export default function OrderPage() {
                       }`}
                     >
                       <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mb-1 transition-colors ${
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mb-1 transition-colors ${
                           isCompleted
-                            ? 'border-amber-500 bg-amber-500'
-                            : isCurrent
-                            ? 'border-amber-500 bg-white'
-                            : 'border-gray-300 bg-white'
+                             ? 'border-amber-500 bg-amber-500'
+                           : isCurrent
+                            ? 'border-amber-500 bg-[#F2F2F2]'
+                            : 'border-white/20 bg-[#F2F2F2]'
                         }`}
                       >
                         {isCompleted ? (
@@ -4990,8 +5269,8 @@ export default function OrderPage() {
                         )}
                       </div>
                       <span
-                        className={`hidden sm:block text-[11px] font-semibold text-center whitespace-nowrap ${
-                          isCurrent ? 'text-amber-600' : isCompleted ? 'text-amber-600' : 'text-gray-500'
+                        className={`hidden sm:block text-[10px] font-semibold text-center whitespace-nowrap ${
+                          isCurrent ? 'text-amber-600' : isCompleted ? 'text-amber-600' : 'text-[#F2F2F2]/60'
                         }`}
                       >
                         {step.label}
@@ -5000,7 +5279,7 @@ export default function OrderPage() {
                     {index < stepsConfig.length - 1 && (
                       <div
                         className={`h-0.5 flex-1 min-w-[50px] max-w-[130px] rounded-full transition-colors duration-300 ${
-                          stepNumber < currentStep ? 'bg-amber-500' : 'bg-gray-200'
+                          stepNumber < currentStep ? 'bg-amber-500' : 'bg-white/15'
                         }`}
                       />
                     )}
@@ -5011,7 +5290,7 @@ export default function OrderPage() {
             
             {/* Menu Sub-steps Indicator (only shown when in menu step) */}
             {currentStep === 2 && dynamicMenuSteps.length > 0 && (
-              <div className="mt-4 pt-3 border-t border-gray-100">
+              <div className="mt-2 pt-2 border-t border-white/10">
                 <div className="flex items-center justify-center gap-1 flex-wrap">
                   {dynamicMenuSteps.map((step, index) => {
                     const isCurrent = index === currentMenuSubStep;
@@ -5032,10 +5311,10 @@ export default function OrderPage() {
                             }
                             setCurrentMenuSubStep(index);
                           }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                             isCurrent
                               ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                              : isCompleted
+                            : isCompleted
                               ? 'bg-green-100 text-green-800 border border-green-200'
                               : 'bg-gray-100 text-gray-600 border border-gray-200'
                           }`}
@@ -5047,8 +5326,8 @@ export default function OrderPage() {
                           )}
                         </button>
                         {index < dynamicMenuSteps.length - 1 && (
-                          <div className={`h-0.5 w-4 rounded-full ${
-                            index < currentMenuSubStep ? 'bg-green-500' : 'bg-gray-200'
+                          <div className={`h-0.5 w-3 rounded-full ${
+                            index < currentMenuSubStep ? 'bg-green-500' : 'bg-white/15'
                           }`} />
                         )}
                       </React.Fragment>
@@ -5058,6 +5337,7 @@ export default function OrderPage() {
               </div>
             )}
           </div>
+          </div>
         </div>
       </div>
       
@@ -5065,7 +5345,7 @@ export default function OrderPage() {
       <main className="flex-1">
         <div
           className={`${
-            currentStep === 2 && dynamicMenuSteps.length > 0 ? 'pt-64' : 'pt-48'
+            currentStep === 2 && dynamicMenuSteps.length > 0 ? 'pt-28' : 'pt-24'
           } pb-16 px-4 sm:px-6 lg:px-8`}
         >
           <div className="max-w-6xl mx-auto">
@@ -5082,19 +5362,7 @@ export default function OrderPage() {
                     <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/70" />
                   </div>
 
-                  <div className="relative p-6 sm:p-10">
-                    <p className="text-xs uppercase tracking-[0.25em] text-amber-700 font-semibold">
-                      {language === 'DE' ? 'Bestellen' : 'Order'}
-                    </p>
-                    <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 font-elegant">
-                      {language === 'DE' ? 'Planen Sie Ihr Event in wenigen Schritten' : 'Plan your event in a few steps'}
-                    </h1>
-                    <p className="mt-4 max-w-2xl text-sm sm:text-base text-gray-600 leading-relaxed">
-                      {language === 'DE'
-                        ? 'Wählen Sie Gästeanzahl, Menüs und Extras — klar strukturiert, ohne Ablenkung.'
-                        : 'Choose guests, menus, and extras — structured, fast, and distraction-free.'}
-                    </p>
-                  </div>
+
                 </div>
               </section>
             )}
@@ -5112,9 +5380,9 @@ export default function OrderPage() {
       </main>
       
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-6 lg:px-8">
+      <footer className="bg-[#404040] text-[#F2F2F2] py-12 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="text-gray-400 text-lg">&copy; 2025 La Cannelle Catering. All rights reserved.</p>
+          <p className="text-[#F2F2F2]/70 text-lg">&copy; 2025 La Cannelle Catering. All rights reserved.</p>
         </div>
       </footer>
     </div>

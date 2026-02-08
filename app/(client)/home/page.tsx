@@ -16,6 +16,7 @@ import { useMemo } from 'react';
 import { Check } from 'lucide-react';
 import MenuShowcaseHorizontal from '../components/page';
 import { homeTranslations } from '@/lib/translations/home';
+import { ThemeToggle } from '@/components/site/ThemeToggle';
 
 export default function CateringHomepage() {
   const scrollContainer = useRef<HTMLDivElement>(null);
@@ -26,6 +27,7 @@ export default function CateringHomepage() {
   const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const [menus, setMenus] = useState<ApiMenu[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -36,6 +38,28 @@ export default function CateringHomepage() {
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!window.matchMedia?.('(hover: hover)').matches) return;
+
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        setIsNavCollapsed(window.scrollY > 32);
+      });
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
@@ -84,10 +108,16 @@ export default function CateringHomepage() {
   };
 
   const desktopLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'} transition-colors duration-200 text-sm font-medium tracking-wide`;
+    `${isActiveHref(href)
+      ? 'text-[#A69256] border-[#A69256]'
+      : 'text-[#404040] dark:text-[#F2F2F2] border-transparent hover:text-[#A69256] hover:border-[#A69256]'
+    } transition-colors duration-200 text-sm font-medium tracking-wide border-b-2 pb-1 px-1`;
 
   const mobileLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'} transition-colors duration-200 text-base font-medium`;
+    `${isActiveHref(href)
+      ? 'text-[#A69256] underline decoration-[#A69256] underline-offset-8'
+      : 'text-[#404040] dark:text-[#F2F2F2] hover:text-[#A69256]'
+    } transition-colors duration-200 text-base font-medium py-2`;
 
   const handleOrderClick = (selectedProducts?: number[]) => {
     const query = selectedProducts?.length ? `?products=${selectedProducts.join(',')}` : '';
@@ -135,10 +165,10 @@ export default function CateringHomepage() {
 
   const quickMenuIcons = [Star, Heart, Shield, Crown];
   const quickMenuCategoryMeta = [
-    { gradient: 'from-amber-200 via-amber-100 to-stone-100', countEn: '12 dishes', countDe: '12 Gerichte' },
-    { gradient: 'from-rose-200 via-rose-100 to-stone-100', countEn: '8 menus', countDe: '8 Menüs' },
-    { gradient: 'from-emerald-200 via-emerald-100 to-stone-100', countEn: '15 options', countDe: '15 Optionen' },
-    { gradient: 'from-sky-200 via-sky-100 to-stone-100', countEn: '10 highlights', countDe: '10 Highlights' },
+    { gradient: 'from-[#A69256]/25 via-white to-[#F2F2F2]', countEn: '12 dishes', countDe: '12 Gerichte' },
+    { gradient: 'from-[#404040]/15 via-white to-[#F2F2F2]', countEn: '8 menus', countDe: '8 MenÃƒÂ¼s' },
+    { gradient: 'from-[#A6A6A6]/18 via-white to-[#F2F2F2]', countEn: '15 options', countDe: '15 Optionen' },
+    { gradient: 'from-[#A69256]/15 via-white to-[#F2F2F2]', countEn: '10 highlights', countDe: '10 Highlights' },
   ];
 
   const companyValues = [
@@ -206,9 +236,9 @@ export default function CateringHomepage() {
   }>;
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#F2F2F2] overflow-x-hidden">
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:wght@300;400;500;600;700&display=swap');
         
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(30px); }
@@ -266,17 +296,18 @@ export default function CateringHomepage() {
         .animate-delay-1000 { animation-delay: 1s; }
         
         body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          letter-spacing: -0.01em;
+          font-family: 'Open Sans', Lora, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          letter-spacing: 0.01em;
+          line-height: 1.75;
         }
         
         .font-display {
-          font-family: 'Cormorant Garamond', serif;
-          letter-spacing: 0.02em;
+          font-family: 'Playfair Display', Georgia, serif;
+          letter-spacing: 0.03em;
         }
         
         .font-elegant {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Playfair Display', Georgia, serif;
         }
         
         .perspective-1000 { perspective: 1000px; }
@@ -293,19 +324,35 @@ export default function CateringHomepage() {
       `}</style>
 
       {/* Premium Navbar */}
-      <nav className="fixed top-0 w-full bg-white/98 backdrop-blur-md border-b border-gray-200/50 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-24">
-            <div className="flex items-center">
+      <nav
+        className={`group fixed top-0 w-full bg-white/80 supports-[backdrop-filter]:bg-white/65 backdrop-blur-lg border-b border-black/10 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.08)] md:overflow-hidden md:transition-[max-height] md:duration-300 md:ease-out dark:bg-[#2C2C2C]/80 dark:supports-[backdrop-filter]:bg-[#2C2C2C]/65 dark:border-white/10 dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${
+          isNavCollapsed
+            ? 'md:max-h-[14px] md:hover:max-h-[112px] md:focus-within:max-h-[112px]'
+            : 'md:max-h-[112px]'
+        }`}
+      >
+        <div
+          className={`max-w-7xl mx-auto px-6 lg:px-8 md:transition-opacity md:duration-200 ${
+            isNavCollapsed
+              ? 'md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:group-focus-within:opacity-100 md:group-focus-within:pointer-events-auto'
+              : ''
+          }`}
+        >
+          <div className="flex justify-between items-center h-16 md:h-20">
+            <a
+              href="/home"
+              aria-label="Go to Home"
+              className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A69256]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#2C2C2C]"
+            >
               <img
                 src="/images/logo-removebg-preview.png"
                 alt="La Cannelle"
-                className="h-24 md:h-28 lg:h-32 w-auto object-contain -my-2 md:-my-3"
+                className="h-12 md:h-16 lg:h-[76px] xl:h-[84px] w-auto max-w-[240px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[480px] xl:max-w-[560px] object-contain dark:invert dark:brightness-200 dark:contrast-125"
               />
-            </div>
+            </a>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-10">
+            <div className="hidden md:flex items-center gap-10 lg:gap-12">
               <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
               <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
               <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
@@ -313,24 +360,21 @@ export default function CateringHomepage() {
               
               <button
                 onClick={toggleLanguage}
-                className="px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-amber-500 hover:text-amber-600 transition-all duration-300 font-medium flex items-center gap-2.5"
+                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
+                className="h-10 w-12 rounded-lg border border-[#404040]/25 bg-transparent text-[#404040] hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-all duration-300 font-medium inline-flex items-center justify-center dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10 shrink-0"
               >
                 {language === 'EN' ? (
-                  <>
-                    <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt="English" className="rounded" />
-                    <span>EN</span>
-                  </>
+                  <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt={commonA11y.englishFlagAlt} className="rounded" />
                 ) : (
-                  <>
-                    <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt="Deutsch" className="rounded" />
-                    <span>DE</span>
-                  </>
+                  <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt={commonA11y.germanFlagAlt} className="rounded" />
                 )}
               </button>
+
+              <ThemeToggle />
               
               <button
                 onClick={() => handleOrderClick()}
-                className="px-7 py-2.5 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-300 font-medium shadow-sm hover:shadow-md"
+                className="px-7 py-2.5 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] transition-all duration-300 font-medium shadow-sm hover:shadow-md"
               >
                 {t.nav.order}
               </button>
@@ -338,16 +382,16 @@ export default function CateringHomepage() {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-black/5 rounded-lg transition-colors dark:hover:bg-white/10"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
+              {isMenuOpen ? <X size={24} className="text-[#404040] dark:text-[#F2F2F2]" /> : <Menu size={24} className="text-[#404040] dark:text-[#F2F2F2]" />}
             </button>
           </div>
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden py-6 border-t border-gray-200">
+            <div className="md:hidden py-6 border-t border-black/10 dark:border-white/10">
               <div className="flex flex-col gap-5">
                 <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
                 <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
@@ -356,7 +400,7 @@ export default function CateringHomepage() {
                 
                 <button
                   onClick={toggleLanguage}
-                  className="px-4 py-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-2.5"
+                  className="px-4 py-3 text-sm border border-[#404040]/25 rounded-lg bg-transparent text-[#404040] font-medium flex items-center justify-center gap-2.5 hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-colors dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10"
                 >
                   {language === 'EN' ? (
                     <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" alt="English" className="h-5 w-auto rounded" />
@@ -364,9 +408,11 @@ export default function CateringHomepage() {
                     <img src="/images/language/Flag_of_Germany-4096x2453.png" alt="Deutsch" className="h-5 w-auto rounded" />
                   )}
                 </button>
+
+                <ThemeToggle className="w-full justify-center" />
                 
                 <button 
-                  className="px-6 py-3 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium transition-all" 
+                  className="px-6 py-3 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] font-medium transition-all" 
                   onClick={() => handleOrderClick()}
                 >
                   {t.nav.order}
@@ -380,7 +426,7 @@ export default function CateringHomepage() {
       {/* Hero Section - Premium Design */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center lux-hero-image"
           style={{ backgroundImage: "url('/images/home_image.jpeg')" }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
@@ -402,7 +448,7 @@ export default function CateringHomepage() {
           <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
             <button
               onClick={() => handleOrderClick()}
-              className="group inline-flex items-center gap-3 px-10 py-4 bg-white text-gray-900 rounded-full text-base font-medium transition-all duration-500 hover:bg-amber-50 hover:shadow-2xl hover:scale-105"
+              className="group inline-flex items-center gap-3 px-10 py-4 bg-[#A69256] text-[#F2F2F2] rounded-full text-base font-semibold transition-all duration-500 hover:bg-[#0D0D0D] hover:shadow-2xl hover:scale-105"
             >
               {t.hero.cta}
               <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
@@ -420,13 +466,13 @@ export default function CateringHomepage() {
       </section>
 
       {/* Brand Trust Section */}
-      <section className="bg-gray-50 py-20 border-y border-gray-200">
+      <section className="bg-[#F2F2F2] py-20 border-y border-[#A6A6A6]/40 lux-reveal" data-lux-delay="60">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-2">
               {t.brandBanner.title}
             </p>
-            <div className="w-12 h-px bg-amber-600 mx-auto"></div>
+            <div className="w-12 h-px bg-[#A69256] mx-auto"></div>
           </div>
 
           <div className="relative overflow-hidden">
@@ -450,11 +496,11 @@ export default function CateringHomepage() {
       </section>
 
       {/* Quick Menu Categories - Premium Grid */}
-      <section className="py-24 px-6 lg:px-8 bg-white">
+      <section className="py-24 px-6 lg:px-8 bg-white lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-3">
+              <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-3">
                 {t.quickMenu.title}
               </p>
               <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">
@@ -472,12 +518,12 @@ export default function CateringHomepage() {
               return (
                 <div
                   key={index}
-                  className={`group relative bg-white rounded-2xl p-8 border border-gray-200 hover:border-amber-500 hover:shadow-xl transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
+                  className={`lux-card group relative bg-white rounded-2xl p-8 border border-gray-200 hover:border-[#A69256] hover:shadow-xl transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
                   style={{ animationDelay: `${index * 100}ms` }}
                   onClick={() => setSelectedCategory(index)}
                 >
                   <div className="mb-6">
-                    {Icon && <Icon className="text-amber-600 mb-4" size={32} strokeWidth={1.5} />}
+                    {Icon && <Icon className="text-[#A69256] mb-4" size={32} strokeWidth={1.5} />}
                     <h3 className="text-xl font-medium text-gray-900 mb-2 font-display">
                       {category.title}
                     </h3>
@@ -487,8 +533,8 @@ export default function CateringHomepage() {
                   </div>
 
                   <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                      <ChevronRight size={18} className="text-amber-600" />
+                    <div className="w-10 h-10 rounded-full bg-[#A69256]/15 flex items-center justify-center">
+                      <ChevronRight size={18} className="text-[#A69256]" />
                     </div>
                   </div>
                 </div>
@@ -499,13 +545,13 @@ export default function CateringHomepage() {
 
         {/* Category Modals remain the same but with updated styling */}
         {selectedCategory === 0 && (
-          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
-            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
+            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-[#A69256]/15 rounded-2xl flex items-center justify-center">
                     {quickMenuIcons[selectedCategory] && 
-                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-amber-600" })}
+                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-[#A69256]" })}
                   </div>
                   <h3 className="text-2xl font-medium text-gray-900 font-display">
                     {t.quickMenu.categories[selectedCategory].title}
@@ -527,20 +573,20 @@ export default function CateringHomepage() {
                 <div className="space-y-6">
                   <div>
                     <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                      <Star size={18} className="text-amber-500" />
+                      <Star size={18} className="text-[#A69256]" />
                       {language === 'EN' ? 'Signature Dishes' : 'Signature-Gerichte'}
                     </h4>
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Truffle-infused Wild Mushroom Risotto' : 'Trüffel-Wildpilz-Risotto'}</span>
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-[#A69256] rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Truffle-infused Wild Mushroom Risotto' : 'TrÃƒÂ¼ffel-Wildpilz-Risotto'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Herb-crusted Rack of Lamb' : 'Kräuterkruste Lammkarree'}</span>
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-[#A69256] rounded-full mt-2"></div>
+                        <span className="text-gray-700">{language === 'EN' ? 'Herb-crusted Rack of Lamb' : 'KrÃƒÂ¤uterkruste Lammkarree'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-2"></div>
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-[#A69256] rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Seared Scallops with Citrus Beurre Blanc' : 'Gebratene Jakobsmuscheln mit Zitrus-Beurre Blanc'}</span>
                       </li>
                     </ul>
@@ -548,7 +594,7 @@ export default function CateringHomepage() {
 
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-lg">
-                      <Award size={18} className="text-amber-500" />
+                      <Award size={18} className="text-[#A69256]" />
                       {language === 'EN' ? 'Awards & Recognition' : 'Auszeichnungen'}
                     </h4>
                     <p className="text-gray-600 leading-relaxed">
@@ -560,13 +606,13 @@ export default function CateringHomepage() {
 
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-lg">
-                      <Clock size={18} className="text-amber-500" />
+                      <Clock size={18} className="text-[#A69256]" />
                       {language === 'EN' ? 'Preparation Time' : 'Zubereitungszeit'}
                     </h4>
                     <p className="text-gray-600 leading-relaxed">
                       {language === 'EN' 
                         ? 'Each signature dish requires 30-45 minutes of meticulous preparation by our master chefs.'
-                        : 'Jedes Signature-Gericht erfordert 30-45 Minuten sorgfältiger Zubereitung durch unsere Meisterköche.'}
+                        : 'Jedes Signature-Gericht erfordert 30-45 Minuten sorgfÃƒÂ¤ltiger Zubereitung durch unsere MeisterkÃƒÂ¶che.'}
                     </p>
                   </div>
                 </div>
@@ -577,8 +623,8 @@ export default function CateringHomepage() {
 
         {/* Similar modal updates for categories 1, 2, and 3 */}
         {selectedCategory === 1 && (
-          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
-            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
+            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
@@ -606,18 +652,18 @@ export default function CateringHomepage() {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
                       <ChefHat size={18} className="text-rose-500" />
-                      {language === 'EN' ? 'Chef\'s Creations' : 'Kreationen des Küchenchefs'}
+                      {language === 'EN' ? 'Chef\'s Creations' : 'Kreationen des KÃƒÂ¼chenchefs'}
                     </h4>
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Seasonal Market Menu' : 'Saisonale Marktkarte'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Tasting Experience' : 'Degustationserlebnis'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Secret Family Recipes' : 'Geheime Familienrezepte'}</span>
                       </li>
@@ -630,8 +676,8 @@ export default function CateringHomepage() {
         )}
 
         {selectedCategory === 2 && (
-          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
-            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
+            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
@@ -662,17 +708,17 @@ export default function CateringHomepage() {
                       {language === 'EN' ? 'Premium Guarantee' : 'Premium-Garantie'}
                     </h4>
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Wagyu Beef Selection' : 'Wagyu-Rindfleisch-Auswahl'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Caviar & Champagne Pairing' : 'Kaviar & Champagner-Paarung'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Aged Gourmet Cheeses' : 'Gereifte Gourmet-Käse'}</span>
+                        <span className="text-gray-700">{language === 'EN' ? 'Aged Gourmet Cheeses' : 'Gereifte Gourmet-KÃƒÂ¤se'}</span>
                       </li>
                     </ul>
                   </div>
@@ -683,8 +729,8 @@ export default function CateringHomepage() {
         )}
 
         {selectedCategory === 3 && (
-          <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
-            <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-2xl">
+          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
+            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center">
@@ -712,18 +758,18 @@ export default function CateringHomepage() {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
                       <Crown size={18} className="text-sky-500" />
-                      {language === 'EN' ? 'Royal Offerings' : 'Königliche Angebote'}
+                      {language === 'EN' ? 'Royal Offerings' : 'KÃƒÂ¶nigliche Angebote'}
                     </h4>
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Gold Leaf Desserts' : 'Goldblatt-Desserts'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Truffle & Foie Gras Menu' : 'Trüffel & Foie Gras Menü'}</span>
+                        <span className="text-gray-700">{language === 'EN' ? 'Truffle & Foie Gras Menu' : 'TrÃƒÂ¼ffel & Foie Gras MenÃƒÂ¼'}</span>
                       </li>
-                      <li className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
                         <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
                         <span className="text-gray-700">{language === 'EN' ? 'Vintage Wine Pairing' : 'Jahrgangswein-Paarung'}</span>
                       </li>
@@ -738,11 +784,11 @@ export default function CateringHomepage() {
 
       {/* Menu Item Modal */}
       {selectedMenuItem && (
-        <div className="fixed inset-0 backdrop-blur-md bg-black/60 z-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
+          <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
             <button
               onClick={() => setSelectedMenuItem(null)}
-              className="absolute top-6 right-6 z-10 bg-white/90 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-colors shadow-lg"
+              className="absolute top-6 right-6 z-10 bg-white/75 backdrop-blur-md rounded-full p-3 hover:bg-white/90 transition-colors shadow-lg ring-1 ring-black/10 hover:ring-[#A69256]/20"
             >
               <X size={20} className="text-gray-600" />
             </button>
@@ -760,7 +806,7 @@ export default function CateringHomepage() {
                 
                 {selectedMenuItem.popular && (
                   <div className="absolute top-6 left-6">
-                    <div className="bg-white text-amber-600 px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2 shadow-lg">
+                    <div className="bg-white text-[#A69256] px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2 shadow-lg">
                       <Flame size={16} />
                       {t.menuShowcase.badges.popular}
                     </div>
@@ -768,15 +814,15 @@ export default function CateringHomepage() {
                 )}
               </div>
 
-              <div className="lg:w-1/2 p-10 overflow-y-auto max-h-[90vh]">
-                <p className="text-amber-600 font-medium text-sm mb-3 uppercase tracking-wider">
+              <div className="lg:w-1/2 p-10 overflow-y-auto max-h-[90vh] bg-white/35 backdrop-blur-sm lg:border-l border-black/5">
+                <p className="text-[#A69256] font-medium text-sm mb-3 uppercase tracking-wider">
                   {selectedMenuItem.category || t.quickMenu.title}
                 </p>
                 <h2 className="text-3xl font-light text-gray-900 font-display mb-4">
                   {selectedMenuItem.name}
                 </h2>
                 {selectedMenuItem.price && (
-                  <div className="text-2xl font-medium text-amber-600 mb-6">
+                  <div className="text-2xl font-medium text-[#A69256] mb-6">
                     {selectedMenuItem.price}
                   </div>
                 )}
@@ -793,7 +839,7 @@ export default function CateringHomepage() {
                       {selectedMenuItem.ingredients.map((ingredient: string, idx: number) => (
                         <span
                           key={idx}
-                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm"
+                          className="px-4 py-2 bg-white/55 backdrop-blur-sm border border-black/10 text-gray-800 rounded-full text-sm"
                         >
                           {ingredient}
                         </span>
@@ -818,14 +864,14 @@ export default function CateringHomepage() {
       {/* Passion Section - Premium */}
       <section className="py-24 px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#A69256] via-transparent to-transparent"></div>
         </div>
 
         <div className="max-w-7xl mx-auto relative">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
               <div className="max-w-lg">
-                <p className="text-xs uppercase tracking-[0.3em] text-amber-400 font-semibold mb-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-4">
                   {t.passion.subtitle}
                 </p>
                 <h2 className="text-4xl lg:text-5xl font-light text-white mb-6 font-display leading-tight">
@@ -840,11 +886,11 @@ export default function CateringHomepage() {
                     <div key={index} className="group">
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-gray-200 font-medium">{item.title}</span>
-                        <span className="text-amber-400">{90 - index * 8}%</span>
+                        <span className="text-[#A69256]">{90 - index * 8}%</span>
                       </div>
                       <div className="w-full bg-white/10 rounded-full h-2">
                         <div
-                          className="bg-amber-500 h-2 rounded-full transition-all duration-1000 ease-out"
+                          className="bg-[#A69256] h-2 rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${90 - index * 8}%` }}
                         ></div>
                       </div>
@@ -852,11 +898,6 @@ export default function CateringHomepage() {
                     </div>
                   ))}
                 </div>
-
-                <button className="px-8 py-4 bg-white text-gray-900 rounded-full font-medium hover:bg-gray-100 transition-all duration-300 inline-flex items-center gap-2">
-                  {t.passion.cta}
-                  <ChevronRight size={18} />
-                </button>
               </div>
             </div>
 
@@ -873,7 +914,7 @@ export default function CateringHomepage() {
 
                 <div className="absolute -top-4 -right-4 bg-white rounded-2xl p-6 shadow-2xl">
                   <div className="text-center">
-                    <Award size={24} className="mx-auto mb-2 text-amber-600" />
+                    <Award size={24} className="mx-auto mb-2 text-[#A69256]" />
                     <p className="text-sm font-semibold text-gray-900">Master Chef</p>
                     <p className="text-xs text-gray-600">15+ Years</p>
                   </div>
@@ -885,10 +926,10 @@ export default function CateringHomepage() {
       </section>
 
       {/* Company Values Section */}
-      <section className="py-24 px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden">
+      <section className="py-24 px-6 lg:px-8 bg-gradient-to-br from-[#F2F2F2] to-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative">
           <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-3">
+            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-3">
               {t.company.subtitle}
             </p>
             <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">
@@ -905,8 +946,8 @@ export default function CateringHomepage() {
               <div className="grid grid-cols-2 gap-6">
                 {companyValues.map((value, index) => (
                   <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
-                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
-                      <value.icon className="text-amber-600" size={20} />
+                    <div className="w-12 h-12 bg-[#A69256]/15 rounded-xl flex items-center justify-center mb-4">
+                      <value.icon className="text-[#A69256]" size={20} />
                     </div>
                     <h3 className="font-medium text-gray-900 mb-2">{value.title}</h3>
                     <p className="text-sm text-gray-600">{value.description}</p>
@@ -926,7 +967,7 @@ export default function CateringHomepage() {
                 </div>
 
                 <div className="absolute -top-4 -right-4 bg-white rounded-2xl p-6 shadow-2xl">
-                  <Award className="mx-auto mb-2 text-amber-600" size={24} />
+                  <Award className="mx-auto mb-2 text-[#A69256]" size={24} />
                   <p className="text-sm font-semibold text-gray-900">{t.company.badge.title}</p>
                   <p className="text-xs text-gray-600">{t.company.badge.subtitle}</p>
                 </div>
@@ -943,10 +984,10 @@ export default function CateringHomepage() {
                   {index < 3 && (
                     <div className="hidden md:block absolute top-6 left-1/2 w-full h-px bg-gray-200"></div>
                   )}
-                  <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4 relative z-10">
-                    <milestone.icon className="text-amber-600" size={22} />
+                  <div className="w-14 h-14 bg-[#A69256]/15 rounded-2xl flex items-center justify-center mx-auto mb-4 relative z-10">
+                    <milestone.icon className="text-[#A69256]" size={22} />
                   </div>
-                  <p className="text-sm font-semibold text-amber-600 mb-2">{milestone.date}</p>
+                  <p className="text-sm font-semibold text-[#A69256] mb-2">{milestone.date}</p>
                   <p className="text-gray-700 font-medium">{milestone.title}</p>
                 </div>
               ))}
@@ -959,7 +1000,7 @@ export default function CateringHomepage() {
       <section className="py-24 px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-3">{t.quickMenu.title}</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-3">{t.quickMenu.title}</p>
             <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">{t.services.title}</h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">Tailored experiences for every occasion</p>
           </div>
@@ -968,7 +1009,7 @@ export default function CateringHomepage() {
             {t.services.items.map((service, index) => (
               <div
                 key={index}
-                className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-amber-500 hover:shadow-lg transition-all duration-300"
+                className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#A69256] hover:shadow-lg transition-all duration-300"
               >
                 <h3 className="text-xl font-medium text-gray-900 font-display mb-3">{service.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{service.description}</p>
@@ -1002,12 +1043,12 @@ export default function CateringHomepage() {
                 <div className="flex items-start justify-between mb-4">
                   <h3 className="text-xl font-medium text-gray-900 font-display">{menu.name}</h3>
                   {menu.price && (
-                    <span className="text-amber-600 font-semibold">{menu.price}</span>
+                    <span className="text-[#A69256] font-semibold">{menu.price}</span>
                   )}
                 </div>
                 <p className="text-gray-600 mb-6 leading-relaxed">{menu.desc}</p>
                 <button
-                  className="text-amber-600 font-medium inline-flex items-center gap-2 hover:gap-3 transition-all group"
+                  className="text-[#A69256] font-medium inline-flex items-center gap-2 hover:gap-3 transition-all group"
                   onClick={() => handleOrderClick(menu.productIds)}
                 >
                   {t.menus.cta}
@@ -1035,7 +1076,7 @@ export default function CateringHomepage() {
               >
                 <p className="text-gray-700 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
                 <p className="text-gray-900 font-medium font-display">{testimonial.name}</p>
-                <p className="text-sm text-amber-600">{testimonial.role}</p>
+                <p className="text-sm text-[#A69256]">{testimonial.role}</p>
               </div>
             ))}
           </div>
@@ -1043,26 +1084,26 @@ export default function CateringHomepage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-20 px-6 lg:px-8">
+      <footer className="bg-[#404040] text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div>
               <h3 className="text-2xl font-light mb-4 font-display">Gourmet Catering</h3>
-              <p className="text-gray-400 text-sm">{t.footer.tagline}</p>
+              <p className="text-[#F2F2F2]/70 text-sm">{t.footer.tagline}</p>
             </div>
             
             <div>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{t.footer.quickLinksTitle}</h4>
               <div className="flex flex-col gap-3">
-                <a href="#services" className="text-gray-400 hover:text-white transition-colors">{t.nav.services}</a>
-                <a href="#menus" className="text-gray-400 hover:text-white transition-colors">{t.nav.menus}</a>
-                <a href="#contact" className="text-gray-400 hover:text-white transition-colors">{t.nav.contact}</a>
+                <a href="#services" className="text-[#F2F2F2] hover:text-[#A69256] transition-colors">{t.nav.services}</a>
+                <a href="#menus" className="text-[#F2F2F2] hover:text-[#A69256] transition-colors">{t.nav.menus}</a>
+                <a href="#contact" className="text-[#F2F2F2] hover:text-[#A69256] transition-colors">{t.nav.contact}</a>
               </div>
             </div>
             
             <div>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{t.footer.contactTitle}</h4>
-              <div className="flex flex-col gap-3 text-gray-400">
+              <div className="flex flex-col gap-3 text-[#F2F2F2]/70">
                 <div className="flex items-center gap-3">
                   <Phone size={16} />
                   <span className="text-sm">{t.footer.contact.phone}</span>
@@ -1080,7 +1121,7 @@ export default function CateringHomepage() {
             
             <div>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{t.footer.hoursTitle}</h4>
-              <div className="text-gray-400 text-sm space-y-1">
+              <div className="text-[#F2F2F2]/70 text-sm space-y-1">
                 <p>{t.footer.hours.weekdays}</p>
                 <p>{t.footer.hours.saturday}</p>
                 <p>{t.footer.hours.sunday}</p>
@@ -1088,7 +1129,7 @@ export default function CateringHomepage() {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+          <div className="border-t border-white/10 pt-8 text-center text-[#F2F2F2]/60 text-sm">
             <p>{t.footer.copyright}</p>
           </div>
         </div>

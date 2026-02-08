@@ -390,11 +390,11 @@ export default function MenuShowcaseHorizontal({
     return (
       <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ?'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div
-          className={`absolute inset-0 bg-black transition-opacity duration-300 ${isOpen && !isMenuModalClosing ?'opacity-60' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md transition-opacity duration-300 ${isOpen && !isMenuModalClosing ?'opacity-100' : 'opacity-0'}`}
           onClick={closeMenuDetails}
         />
         <div
-          className={`relative bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-y-auto transition-all duration-300 transform ${isOpen && !isMenuModalClosing ?'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
+          className={`relative bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl border border-[#A69256]/25 ring-1 ring-black/5 rounded-xl w-full max-w-4xl max-h-[85vh] overflow-y-auto shadow-[0_30px_90px_rgba(0,0,0,0.20),0_10px_30px_rgba(166,146,86,0.12)] transition-all duration-300 transform ${isOpen && !isMenuModalClosing ?'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`}
         >
           <div
             className="relative h-56 md:h-72 bg-cover bg-center"
@@ -407,7 +407,7 @@ export default function MenuShowcaseHorizontal({
                 event.stopPropagation();
                 closeMenuDetails();
               }}
-              className="absolute top-4 right-4 z-10 bg-white/90 text-gray-700 hover:text-gray-900 rounded-full p-2 shadow-md transition-colors pointer-events-auto"
+              className="absolute top-4 right-4 z-10 bg-white/60 backdrop-blur-sm text-[#404040]/70 border border-black/10 hover:bg-white/80 hover:text-[#404040] hover:border-[#A69256]/25 rounded-full p-2 shadow-md transition-all duration-200 pointer-events-auto"
               aria-label={language === 'DE' ? 'Menüdetails schließen' : 'Close menu details'}
             >
               <X size={18} />
@@ -417,7 +417,7 @@ export default function MenuShowcaseHorizontal({
                 {selectedMenu?.name}
               </h3>
               {priceLabel && (
-                <p className="text-sm font-semibold text-amber-200">
+                <p className="text-sm font-semibold text-[#A69256]">
                   {menuT.menuHighlights?.priceLabel || homeT.menus?.priceLabel || (language === 'DE' ? 'Ab' : 'Starting at')} €{priceLabel}
                 </p>
               )}
@@ -425,34 +425,34 @@ export default function MenuShowcaseHorizontal({
           </div>
           <div className="p-4 sm:p-6">
             {selectedMenu?.description && (
-              <p className="text-gray-700 text-sm leading-relaxed mb-6">
+              <p className="text-[#404040]/80 text-sm leading-relaxed mb-6">
                 {selectedMenu.description}
               </p>
             )}
             <div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-3">
+              <h4 className="text-lg font-semibold text-[#404040] mb-3">
                 {menuT.menuHighlights?.includes || homeT.menus?.includes || (language === 'DE' ? 'Enthält' : 'Includes')}
               </h4>
               {items.length > 0 ?(
                 <div className="grid sm:grid-cols-2 gap-4">
                   {items.map((item) => (
-                    <div key={item.id} className="flex gap-3 bg-stone-50 border border-stone-100 rounded-xl p-3">
+                    <div key={item.id} className="flex gap-3 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl p-3 hover:border-[#A69256]/25 transition-colors">
                       <img
                         src={item.image || '/images/home_image.jpeg'}
                         alt={item.name}
                         className="w-12 h-12 rounded-lg object-cover"
                       />
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+                        <p className="text-sm font-semibold text-[#404040]">{item.name}</p>
                         {item.description && (
-                          <p className="text-xs text-gray-600">{item.description}</p>
+                          <p className="text-xs text-[#404040]/70">{item.description}</p>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#404040]/70">
                   {menuT.menuHighlights?.noItems || homeT.menus?.noItems || (language === 'DE' ? 'Menüdetails auf Anfrage erhältlich.' : 'Menu details available upon request.')}
                 </p>
               )}
@@ -464,13 +464,13 @@ export default function MenuShowcaseHorizontal({
   };
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden">
+    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#F2F2F2] relative overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-10">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 font-elegant">
+          <h2 className="text-3xl lg:text-4xl font-bold text-[#A69256] mb-3 font-elegant">
             {title || menuT.menuHighlights?.title || homeT.menus?.title || (language === 'DE' ? 'Unsere Menüs' : 'Our Menus')}
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-[#404040]/80 max-w-2xl mx-auto">
             {description || menuT.menuHighlights?.subtitle || homeT.menus?.description || (language === 'DE' ? 'Entdecken Sie unsere ausgewählten Menüs und sehen Sie die Details' : 'Explore our signature menus and view the details')}
           </p>
         </div>
@@ -500,7 +500,7 @@ export default function MenuShowcaseHorizontal({
               return (
                 <div
                   key={menu.id}
-                  className="flex-shrink-0 w-72 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group"
+                  className="flex-shrink-0 w-72 bg-[#F9F9F9] rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group ring-1 ring-[#A6A6A6]/30"
                   style={{ animationDelay: `${index * 200}ms` }}
                 >
                   <div className="relative h-40 overflow-hidden">
@@ -512,38 +512,38 @@ export default function MenuShowcaseHorizontal({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
 
                     {menu.isPopular && (
-                      <div className="absolute top-3 left-3 bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      <div className="absolute top-3 left-3 bg-[#A69256] text-[#F2F2F2] px-2 py-1 rounded-full text-xs font-semibold">
                         {menuT.menuShowcase?.badges?.popular || homeT.menuShowcase?.badges?.popular || (language === 'DE' ? 'Beliebt' : 'Popular')}
                       </div>
                     )}
                     {menu.isFeatured && (
-                      <div className="absolute top-3 left-3 bg-rose-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      <div className="absolute top-3 left-3 bg-[#404040] text-[#F2F2F2] px-2 py-1 rounded-full text-xs font-semibold">
                         {menuT.menuShowcase?.badges?.featured || homeT.menuShowcase?.badges?.featured || (language === 'DE' ? 'Empfohlen' : 'Featured')}
                       </div>
                     )}
 
                     {displayPrice && (
-                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
-                        <span className="font-bold text-gray-900 text-sm">{displayPrice}</span>
+                      <div className="absolute top-3 right-3 bg-[#F9F9F9]/90 backdrop-blur-sm px-2 py-1 rounded-full ring-1 ring-black/5">
+                        <span className="font-bold text-[#A69256] text-sm">{displayPrice}</span>
                       </div>
                     )}
                   </div>
 
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-bold text-gray-900 font-elegant line-clamp-1">
+                      <h3 className="text-lg font-bold text-[#404040] font-elegant line-clamp-1">
                         {menu.name}
                       </h3>
                     </div>
-                    <p className="text-amber-600 text-xs font-semibold mb-2">
+                    <p className="text-[#A69256] text-xs font-semibold mb-2">
                       {menu.category || menu.type || menuT.categories?.all || homeT.menus?.categoryAll || (language === 'DE' ? 'Menü' : 'Menu')}
                     </p>
-                    <p className="text-gray-600 text-xs mb-3 line-clamp-2">
+                    <p className="text-[#404040]/75 text-xs mb-3 line-clamp-2">
                       {menu.description}
                     </p>
 
                     <button
-                      className="w-full bg-amber-50 text-amber-700 py-2 rounded-lg font-semibold hover:bg-amber-100 transition-all duration-300 transform group-hover:scale-105 flex items-center justify-center gap-2 text-sm"
+                      className="w-full bg-[#A69256] text-[#F2F2F2] py-2 rounded-lg font-semibold hover:bg-[#0D0D0D] transition-all duration-300 transform group-hover:scale-105 flex items-center justify-center gap-2 text-sm"
                       onClick={() => openMenuDetails(menu)}
                     >
                       {menuT.menuShowcase?.viewDetails || homeT.menus?.viewDetails || (language === 'DE' ? 'Details anzeigen' : 'View Details')}
@@ -559,7 +559,7 @@ export default function MenuShowcaseHorizontal({
             {menuHighlights.map((_, index) => (
               <div
                 key={index}
-                className="w-2 h-2 rounded-full bg-gray-300"
+                className="w-2 h-2 rounded-full bg-[#A6A6A6]"
               />
             ))}
           </div>
@@ -568,7 +568,7 @@ export default function MenuShowcaseHorizontal({
         {showViewAll && menuHighlights.length > 0 && (
           <div className="text-center mt-8">
             <button 
-              className="px-6 py-3 bg-amber-600 text-white rounded-xl font-semibold hover:bg-amber-700 transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm"
+              className="px-6 py-3 bg-[#A69256] text-[#F2F2F2] rounded-xl font-semibold hover:bg-[#0D0D0D] transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm"
               onClick={() => window.location.href = '/menus'}
             >
               {menuT.menuShowcase?.exploreFull || homeT.menus?.exploreFull || (language === 'DE' ? 'Vollständige Menüsammlung erkunden' : 'Explore Full Menu Collection')}

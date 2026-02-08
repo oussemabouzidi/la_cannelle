@@ -68,7 +68,9 @@ export const captchaService = {
 
       const data = (await response.json().catch(() => null)) as any;
       if (!response.ok || !data || data.success !== true) {
-        throw new AppError('Captcha validation failed', 400);
+        const errorCodes = Array.isArray(data?.['error-codes']) ? data['error-codes'] : [];
+        const suffix = errorCodes.length ? `: ${errorCodes.join(', ')}` : '';
+        throw new AppError(`Captcha validation failed${suffix}`, 400);
       }
 
       return;

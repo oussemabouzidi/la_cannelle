@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronRight, Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, X, ChevronRight, Phone, Mail, MapPin, Clock, Send, MessageCircle, Calendar } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { commonTranslations } from '@/lib/translations/common';
 import { contactTranslations } from '@/lib/translations/contact';
+import { ThemeToggle } from '@/components/site/ThemeToggle';
+import { LuxurySelect } from '@/components/site/LuxurySelect';
 
 const INSTAGRAM_PROFILE_URL = 'https://www.instagram.com/lacannellecatering/';
 
@@ -18,6 +20,7 @@ const normalizeInstagramPermalink = (url: string) => {
 
 export default function ContactPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const { t: rawT, language, toggleLanguage } = useTranslation('contact');
 
   const t = rawT as typeof contactTranslations.EN;
@@ -55,11 +58,23 @@ export default function ContactPage() {
   };
 
   const desktopLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'} transition-colors duration-200 text-sm font-medium tracking-wide`;
+    `${isActiveHref(href)
+      ? 'text-[#A69256] border-[#A69256]'
+      : 'text-[#404040] dark:text-[#F2F2F2] border-transparent hover:text-[#A69256] hover:border-[#A69256]'
+    } transition-colors duration-200 text-sm font-medium tracking-wide border-b-2 pb-1 px-1`;
 
   const mobileLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'} transition-colors duration-200 text-base font-medium`;
+    `${isActiveHref(href)
+      ? 'text-[#A69256] underline decoration-[#A69256] underline-offset-8'
+      : 'text-[#404040] dark:text-[#F2F2F2] hover:text-[#A69256]'
+    } transition-colors duration-200 text-base font-medium py-2`;
   
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const datePickerContainerRef = useRef<HTMLDivElement>(null);
+  const eventDateInputRef = useRef<HTMLInputElement>(null);
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
+  const [calendarMonthIndex, setCalendarMonthIndex] = useState(() => new Date().getMonth());
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -74,6 +89,28 @@ export default function ContactPage() {
     setIsVisible(true);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!window.matchMedia?.('(hover: hover)').matches) return;
+
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        setIsNavCollapsed(window.scrollY > 32);
+      });
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const updateFormValue = (name: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -84,6 +121,40 @@ export default function ContactPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     updateFormValue(e.target.name, e.target.value);
   };
+
+  useEffect(() => {
+    if (!isDatePickerOpen) return;
+
+    const nextDate = parseDateInputValue(formData.eventDate) || new Date();
+    setCalendarYear(nextDate.getFullYear());
+    setCalendarMonthIndex(nextDate.getMonth());
+  }, [isDatePickerOpen, formData.eventDate]);
+
+  useEffect(() => {
+    if (!isDatePickerOpen) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const container = datePickerContainerRef.current;
+      if (!container) return;
+      if (!container.contains(event.target as Node)) {
+        setIsDatePickerOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsDatePickerOpen(false);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown, { passive: true });
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isDatePickerOpen]);
 
   const toDateInputValue = (date: Date) => {
     const year = date.getFullYear();
@@ -117,6 +188,10 @@ export default function ContactPage() {
       alert(t.alerts.invalidEmail);
       return;
     }
+    if (!formData.eventType.trim()) {
+      alert(language === 'DE' ? 'Bitte Veranstaltungstyp wählen.' : 'Please select an event type.');
+      return;
+    }
     const phoneValue = formData.phone.trim();
     if (phoneValue && !/^\+?[0-9\s-]{7,15}$/.test(phoneValue)) {
       alert(t.alerts.invalidPhone);
@@ -148,6 +223,58 @@ export default function ContactPage() {
   };
 
   const todayDateValue = toDateInputValue(new Date());
+  const minSelectableDateValue = todayDateValue;
+
+  const getDaysInMonth = (year: number, monthIndex: number) =>
+    new Date(year, monthIndex + 1, 0).getDate();
+
+  const getMondayStartOffset = (year: number, monthIndex: number) => {
+    const dayOfWeek = new Date(year, monthIndex, 1).getDay(); // 0 = Sun
+    return (dayOfWeek + 6) % 7; // 0 = Mon
+  };
+
+  const getMonthLabel = (year: number, monthIndex: number) => {
+    const locale = language === 'DE' ? 'de-DE' : 'en-US';
+    return new Date(year, monthIndex, 1).toLocaleString(locale, { month: 'long', year: 'numeric' });
+  };
+
+  const isBeforeMinDate = (value: string) => value < minSelectableDateValue;
+
+  const applyEventDateValue = (nextValue: string) => {
+    if (nextValue && isBeforeMinDate(nextValue)) return;
+    updateFormValue('eventDate', nextValue);
+  };
+
+  const goToPrevMonth = () => {
+    setCalendarMonthIndex((prev) => {
+      if (prev === 0) {
+        setCalendarYear((y) => y - 1);
+        return 11;
+      }
+      return prev - 1;
+    });
+  };
+
+  const goToNextMonth = () => {
+    setCalendarMonthIndex((prev) => {
+      if (prev === 11) {
+        setCalendarYear((y) => y + 1);
+        return 0;
+      }
+      return prev + 1;
+    });
+  };
+
+  const monthLabel = getMonthLabel(calendarYear, calendarMonthIndex);
+  const datePickerUi = {
+    prevMonth: language === 'DE' ? 'Vorheriger Monat' : 'Previous month',
+    nextMonth: language === 'DE' ? 'Naechster Monat' : 'Next month',
+    clear: language === 'DE' ? 'Loeschen' : 'Clear',
+    today: language === 'DE' ? 'Heute' : 'Today',
+    weekdayLabels: language === 'DE'
+      ? ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+      : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  };
   const eventDateError = formData.eventDate && isDateInPast(formData.eventDate)
     ? t.contactForm.invalidEventDate
     : '';
@@ -159,9 +286,9 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#F2F2F2] overflow-x-hidden">
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:wght@300;400;500;600;700&display=swap');
         
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(30px); }
@@ -199,17 +326,18 @@ export default function ContactPage() {
         .animate-delay-300 { animation-delay: 0.3s; }
         
         body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          letter-spacing: -0.01em;
+          font-family: 'Open Sans', Lora, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          letter-spacing: 0.01em;
+          line-height: 1.75;
         }
         
         .font-display {
-          font-family: 'Cormorant Garamond', serif;
-          letter-spacing: 0.02em;
+          font-family: 'Playfair Display', Georgia, serif;
+          letter-spacing: 0.03em;
         }
         
         .font-elegant {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Playfair Display', Georgia, serif;
         }
 
         * {
@@ -220,10 +348,17 @@ export default function ContactPage() {
 
         .contact-date-input {
           color-scheme: light;
+          accent-color: #A69256;
+          appearance: none;
         }
 
         .contact-date-input::-webkit-calendar-picker-indicator {
-          filter: brightness(0) saturate(100%) invert(50%) sepia(40%) saturate(500%) hue-rotate(2deg);
+          opacity: 0;
+          cursor: pointer;
+        }
+
+        .contact-date-input::-webkit-datetime-edit {
+          color: #404040;
         }
         
         html {
@@ -232,19 +367,35 @@ export default function ContactPage() {
       `}</style>
 
       {/* Premium Navbar */}
-      <nav className="fixed top-0 w-full bg-white/98 backdrop-blur-md border-b border-gray-200/50 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-24">
-            <div className="flex items-center">
+      <nav
+        className={`group fixed top-0 w-full bg-white/80 supports-[backdrop-filter]:bg-white/65 backdrop-blur-lg border-b border-black/10 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.08)] md:overflow-hidden md:transition-[max-height] md:duration-300 md:ease-out dark:bg-[#2C2C2C]/80 dark:supports-[backdrop-filter]:bg-[#2C2C2C]/65 dark:border-white/10 dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${
+          isNavCollapsed
+            ? 'md:max-h-[14px] md:hover:max-h-[112px] md:focus-within:max-h-[112px]'
+            : 'md:max-h-[112px]'
+        }`}
+      >
+        <div
+          className={`max-w-7xl mx-auto px-6 lg:px-8 md:transition-opacity md:duration-200 ${
+            isNavCollapsed
+              ? 'md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:group-focus-within:opacity-100 md:group-focus-within:pointer-events-auto'
+              : ''
+          }`}
+        >
+          <div className="flex justify-between items-center h-16 md:h-20">
+            <a
+              href="/home"
+              aria-label="Go to Home"
+              className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A69256]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#2C2C2C]"
+            >
               <img
                 src="/images/logo-removebg-preview.png"
                 alt="La Cannelle"
-                className="h-24 md:h-28 lg:h-32 w-auto object-contain -my-2 md:-my-3"
+                className="h-12 md:h-16 lg:h-[76px] xl:h-[84px] w-auto max-w-[240px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[480px] xl:max-w-[560px] object-contain dark:invert dark:brightness-200 dark:contrast-125"
               />
-            </div>
+            </a>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-10">
+            <div className="hidden md:flex items-center gap-10 lg:gap-12">
               <a href="/home" className={desktopLinkClass('/home')}>{commonNav.home}</a>
               <a href="/services" className={desktopLinkClass('/services')}>{commonNav.services}</a>
               <a href="/menus" className={desktopLinkClass('/menus')}>{commonNav.menus}</a>
@@ -252,24 +403,21 @@ export default function ContactPage() {
               
               <button 
                 onClick={toggleLanguage}
-                className="px-4 py-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-amber-500 hover:text-amber-600 transition-all duration-300 font-medium flex items-center gap-2.5"
+                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
+                className="h-10 w-12 rounded-lg border border-[#404040]/25 bg-transparent text-[#404040] hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-all duration-300 font-medium inline-flex items-center justify-center dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10 shrink-0"
               >
                 {language === 'EN' ? (
-                  <>
-                    <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt="English" className="rounded" />
-                    <span>EN</span>
-                  </>
+                  <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt={commonA11y.englishFlagAlt} className="rounded" />
                 ) : (
-                  <>
-                    <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt="Deutsch" className="rounded" />
-                    <span>DE</span>
-                  </>
+                  <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt={commonA11y.germanFlagAlt} className="rounded" />
                 )}
               </button>
+
+              <ThemeToggle />
  
               <button 
                 onClick={handleOrderClick}
-                className="px-7 py-2.5 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-all duration-300 font-medium shadow-sm hover:shadow-md"
+                className="px-7 py-2.5 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] transition-all duration-300 font-medium shadow-sm hover:shadow-md"
               >
                 {t.nav.order}
               </button>
@@ -277,16 +425,16 @@ export default function ContactPage() {
 
             {/* Mobile Menu Button */}
             <button 
-              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-black/5 rounded-lg transition-colors dark:hover:bg-white/10"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? <X size={24} className="text-gray-700" /> : <Menu size={24} className="text-gray-700" />}
+              {isMenuOpen ? <X size={24} className="text-[#404040] dark:text-[#F2F2F2]" /> : <Menu size={24} className="text-[#404040] dark:text-[#F2F2F2]" />}
             </button>
           </div>
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden py-6 border-t border-gray-200">
+            <div className="md:hidden py-6 border-t border-black/10 dark:border-white/10">
               <div className="flex flex-col gap-5">
                 <a href="/home" className={mobileLinkClass('/home')}>{commonNav.home}</a>
                 <a href="/services" className={mobileLinkClass('/services')}>{commonNav.services}</a>
@@ -296,7 +444,7 @@ export default function ContactPage() {
                 <button 
                   onClick={toggleLanguage}
                   aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                  className="px-4 py-3 text-sm border border-gray-300 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-2.5"
+                  className="px-4 py-3 text-sm border border-[#404040]/25 rounded-lg bg-transparent text-[#404040] font-medium flex items-center justify-center gap-2.5 hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-colors dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10"
                 >
                   {language === 'EN' ? (
                     <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" alt="English flag" className="h-5 w-auto rounded" />
@@ -304,10 +452,12 @@ export default function ContactPage() {
                     <img src="/images/language/Flag_of_Germany-4096x2453.png" alt="German flag" className="h-5 w-auto rounded" />
                   )}
                 </button>
+
+                <ThemeToggle className="w-full justify-center" />
                 
                 <button 
                   onClick={handleOrderClick}
-                  className="px-6 py-3 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium transition-all"
+                  className="px-6 py-3 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] font-medium transition-all"
                 >
                   {t.nav.order}
                 </button>
@@ -318,14 +468,14 @@ export default function ContactPage() {
       </nav>
 
       {/* Hero Section - Premium */}
-      <section className="pt-40 pb-24 px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
+      <section className="pt-40 pb-24 px-6 lg:px-8 bg-[#F2F2F2] relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-100/20 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#A69256]/12 via-transparent to-transparent"></div>
         </div>
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-600 font-semibold mb-4">Get In Touch</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-4">Get In Touch</p>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light text-gray-900 mb-6 font-display leading-tight">
               {t.hero.title}
             </h1>
@@ -339,7 +489,7 @@ export default function ContactPage() {
       </section>
 
       {/* Main Content - Premium Layout */}
-      <section className="py-24 px-6 lg:px-8 bg-white">
+      <section className="py-24 px-6 lg:px-8 bg-white lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-3 gap-12">
             {/* Contact Form - Premium Design */}
@@ -348,10 +498,10 @@ export default function ContactPage() {
                 isVisible ? 'animate-fade-in-left' : 'opacity-0'
               }`}>
                 <div className="flex items-center gap-4 mb-10">
-                  <div className="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center">
-                    <MessageCircle className="text-amber-600" size={24} strokeWidth={1.5} />
+                  <div className="w-14 h-14 bg-[#A69256]/15 rounded-2xl flex items-center justify-center">
+                    <MessageCircle className="text-[#A69256]" size={24} strokeWidth={1.5} />
                   </div>
-                  <h2 className="text-3xl font-light text-gray-900 font-display">
+                  <h2 className="text-3xl font-light text-[#404040] font-display">
                     {t.contactForm.title}
                   </h2>
                 </div>
@@ -359,7 +509,7 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
+                      <label className="block text-sm font-medium text-[#404040] mb-2">
                         {t.contactForm.name} *
                       </label>
                       <input
@@ -368,12 +518,12 @@ export default function ContactPage() {
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-400"
+                        className="w-full px-4 py-3 border border-[#A6A6A6] rounded-xl focus:ring-2 focus:ring-[color:#A69256] focus:border-[color:#A69256] transition-all duration-300 text-[#404040] bg-[#F9F9F9] placeholder:text-[#A6A6A6]"
                         placeholder={t.placeholders.name}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
+                      <label className="block text-sm font-medium text-[#404040] mb-2">
                         {t.contactForm.email} *
                       </label>
                       <input
@@ -382,7 +532,7 @@ export default function ContactPage() {
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-400"
+                        className="w-full px-4 py-3 border border-[#A6A6A6] rounded-xl focus:ring-2 focus:ring-[color:#A69256] focus:border-[color:#A69256] transition-all duration-300 text-[#404040] bg-[#F9F9F9] placeholder:text-[#A6A6A6]"
                         placeholder={t.placeholders.email}
                       />
                     </div>
@@ -390,7 +540,7 @@ export default function ContactPage() {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
+                      <label className="block text-sm font-medium text-[#404040] mb-2">
                         {t.contactForm.phone}
                       </label>
                       <input
@@ -403,48 +553,151 @@ export default function ContactPage() {
                         }}
                         inputMode="tel"
                         pattern="^\\+?[0-9\\s-]{7,15}$"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-400"
+                        className="w-full px-4 py-3 border border-[#A6A6A6] rounded-xl focus:ring-2 focus:ring-[color:#A69256] focus:border-[color:#A69256] transition-all duration-300 text-[#404040] bg-[#F9F9F9] placeholder:text-[#A6A6A6]"
                         placeholder={t.placeholders.phone}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
+                      <label className="block text-sm font-medium text-[#404040] mb-2">
                         {t.contactForm.eventType} *
                       </label>
-                      <select
-                        name="eventType"
+                      <LuxurySelect
                         value={formData.eventType}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white"
-                      >
-                        <option value="" className="text-gray-400">{t.contactForm.eventTypePlaceholder}</option>
-                        {t.contactForm.eventTypes.map((type, index) => (
-                          <option key={index} value={type} className="text-gray-900">{type}</option>
-                        ))}
-                      </select>
+                        placeholder={t.contactForm.eventTypePlaceholder}
+                        options={t.contactForm.eventTypes.map((type) => ({ value: type, label: type }))}
+                        onChange={(value) => updateFormValue('eventType', value)}
+                      />
                     </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
+                      <label className="block text-sm font-medium text-[#404040] mb-2">
                         {t.contactForm.eventDate}
                       </label>
-                      <input
-                        type="date"
-                        name="eventDate"
-                        value={formData.eventDate}
-                        onChange={handleInputChange}
-                        min={todayDateValue}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white contact-date-input"
-                      />
+                      <div className="relative" ref={datePickerContainerRef}>
+                        <input
+                          ref={eventDateInputRef}
+                          type="text"
+                          readOnly
+                          name="eventDate"
+                          value={formData.eventDate}
+                          onClick={() => setIsDatePickerOpen(true)}
+                          onFocus={() => setIsDatePickerOpen(true)}
+                          className="w-full cursor-pointer px-4 pr-14 py-3 border border-[#A6A6A6] rounded-xl focus:ring-2 focus:ring-[color:#A69256] focus:border-[color:#A69256] transition-all duration-300 text-[#404040] bg-[#F9F9F9] contact-date-input placeholder:text-[#A6A6A6]"
+                          placeholder="YYYY-MM-DD"
+                          aria-haspopup="dialog"
+                          aria-expanded={isDatePickerOpen}
+                        />
+                        <button
+                          type="button"
+                          aria-label={t.contactForm.eventDate}
+                          onClick={() => {
+                            setIsDatePickerOpen((prev) => !prev);
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[#A6A6A6] bg-white/70 text-[#A69256] shadow-sm hover:bg-white hover:border-[#A69256] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A69256]/40"
+                        >
+                          <Calendar size={18} />
+                        </button>
+
+                        {isDatePickerOpen && (
+                          <div className="absolute left-0 top-full z-50 mt-2 w-full max-w-[360px] overflow-hidden rounded-2xl border border-[#A6A6A6]/70 bg-white/80 supports-[backdrop-filter]:bg-white/65 backdrop-blur-xl shadow-[0_18px_45px_rgba(0,0,0,0.14)]">
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-black/10">
+                              <button
+                                type="button"
+                                onClick={goToPrevMonth}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#A6A6A6]/70 bg-white/70 text-[#404040] hover:border-[#A69256] hover:text-[#A69256] transition-colors"
+                                aria-label={datePickerUi.prevMonth}
+                              >
+                                <ChevronRight size={16} className="rotate-180" />
+                              </button>
+                              <div className="text-sm font-semibold tracking-wide text-[#404040] font-display">
+                                {monthLabel}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={goToNextMonth}
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#A6A6A6]/70 bg-white/70 text-[#404040] hover:border-[#A69256] hover:text-[#A69256] transition-colors"
+                                aria-label={datePickerUi.nextMonth}
+                              >
+                                <ChevronRight size={16} />
+                              </button>
+                            </div>
+
+                            <div className="px-4 py-3">
+                              <div className="grid grid-cols-7 gap-1 text-[11px] uppercase tracking-[0.22em] text-[#404040]/70 mb-2">
+                                {datePickerUi.weekdayLabels.map((label) => (
+                                  <div key={label} className="text-center">{label}</div>
+                                ))}
+                              </div>
+
+                              <div className="grid grid-cols-7 gap-1">
+                                {Array.from({ length: getMondayStartOffset(calendarYear, calendarMonthIndex) }).map((_, index) => (
+                                  <div key={`blank-${index}`} className="h-10" />
+                                ))}
+
+                                {Array.from({ length: getDaysInMonth(calendarYear, calendarMonthIndex) }).map((_, index) => {
+                                  const day = index + 1;
+                                  const value = toDateInputValue(new Date(calendarYear, calendarMonthIndex, day));
+                                  const disabled = isBeforeMinDate(value);
+                                  const selected = formData.eventDate === value;
+
+                                  return (
+                                    <button
+                                      key={value}
+                                      type="button"
+                                      disabled={disabled}
+                                      onClick={() => {
+                                        applyEventDateValue(value);
+                                        setIsDatePickerOpen(false);
+                                      }}
+                                      className={`h-10 rounded-xl text-sm font-medium transition-all ${
+                                        disabled
+                                          ? 'text-[#A6A6A6] cursor-not-allowed'
+                                          : selected
+                                            ? 'bg-[#A69256] text-white shadow-sm'
+                                            : 'text-[#404040] hover:bg-[#A69256]/12 hover:text-[#A69256]'
+                                      }`}
+                                      aria-label={value}
+                                    >
+                                      {day}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/10 pt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    applyEventDateValue('');
+                                    setIsDatePickerOpen(false);
+                                  }}
+                                  className="px-3 py-2 text-xs font-semibold text-[#404040] rounded-lg hover:bg-black/5 transition-colors"
+                                >
+                                  {datePickerUi.clear}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    applyEventDateValue(minSelectableDateValue);
+                                    setIsDatePickerOpen(false);
+                                  }}
+                                  className="px-3 py-2 text-xs font-semibold rounded-lg bg-[#A69256] text-white hover:bg-[#0D0D0D] transition-colors"
+                                >
+                                  {datePickerUi.today}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                       {eventDateError && (
                         <p className="mt-2 text-sm text-red-600">{eventDateError}</p>
                       )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
+                      <label className="block text-sm font-medium text-[#404040] mb-2">
                         {t.contactForm.guests}
                       </label>
                       <input
@@ -457,14 +710,14 @@ export default function ContactPage() {
                         }}
                         inputMode="numeric"
                         pattern="[0-9]*"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 text-gray-900 bg-white placeholder-gray-400"
+                        className="w-full px-4 py-3 border border-[#A6A6A6] rounded-xl focus:ring-2 focus:ring-[color:#A69256] focus:border-[color:#A69256] transition-all duration-300 text-[#404040] bg-[#F9F9F9] placeholder:text-[#A6A6A6]"
                         placeholder={t.placeholders.guests}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                    <label className="block text-sm font-medium text-[#404040] mb-2">
                       {t.contactForm.message} *
                     </label>
                     <textarea
@@ -473,14 +726,14 @@ export default function ContactPage() {
                       onChange={handleInputChange}
                       required
                       rows={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-300 resize-none text-gray-900 bg-white placeholder-gray-400"
+                      className="w-full px-4 py-3 border border-[#A6A6A6] rounded-xl focus:ring-2 focus:ring-[color:#A69256] focus:border-[color:#A69256] transition-all duration-300 resize-none text-[#404040] bg-[#F9F9F9] placeholder:text-[#A6A6A6]"
                       placeholder={t.placeholders.message}
                     ></textarea>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-amber-600 text-white py-4 px-8 rounded-xl font-medium hover:bg-amber-700 transition-all duration-300 hover:shadow-lg inline-flex items-center justify-center gap-2 group"
+                    className="w-full bg-[#A69256] text-[#F2F2F2] py-4 px-8 rounded-xl font-semibold hover:bg-[#0D0D0D] transition-all duration-300 hover:shadow-lg inline-flex items-center justify-center gap-2 group"
                   >
                     <Send size={20} className="group-hover:translate-x-1 transition-transform" strokeWidth={1.5} />
                     {t.contactForm.button}
@@ -501,8 +754,8 @@ export default function ContactPage() {
                 
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 p-4 bg-white rounded-2xl hover:shadow-sm transition-all group">
-                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Phone className="text-amber-600" size={18} strokeWidth={1.5} />
+                    <div className="w-10 h-10 bg-[#A69256]/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Phone className="text-[#A69256]" size={18} strokeWidth={1.5} />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{t.contactInfo.phone}</p>
@@ -511,8 +764,8 @@ export default function ContactPage() {
                   </div>
                   
                   <div className="flex items-center gap-4 p-4 bg-white rounded-2xl hover:shadow-sm transition-all group">
-                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Mail className="text-amber-600" size={18} strokeWidth={1.5} />
+                    <div className="w-10 h-10 bg-[#A69256]/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Mail className="text-[#A69256]" size={18} strokeWidth={1.5} />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 text-sm">{t.contactInfo.email}</p>
@@ -520,8 +773,8 @@ export default function ContactPage() {
                   </div>
                   
                   <div className="flex items-start gap-4 p-4 bg-white rounded-2xl hover:shadow-sm transition-all group">
-                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <MapPin className="text-amber-600" size={18} strokeWidth={1.5} />
+                    <div className="w-10 h-10 bg-[#A69256]/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <MapPin className="text-[#A69256]" size={18} strokeWidth={1.5} />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{t.contactInfo.address}</p>
@@ -529,8 +782,8 @@ export default function ContactPage() {
                   </div>
                   
                   <div className="flex items-start gap-4 p-4 bg-white rounded-2xl hover:shadow-sm transition-all group">
-                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Clock className="text-amber-600" size={18} strokeWidth={1.5} />
+                    <div className="w-10 h-10 bg-[#A69256]/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Clock className="text-[#A69256]" size={18} strokeWidth={1.5} />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 mb-1">{t.contactInfo.hours.title}</p>
@@ -547,7 +800,7 @@ export default function ContactPage() {
                 isVisible ? 'animate-scale-in' : 'opacity-0'
               }`} style={{ animationDelay: '200ms' }}>
                 <div className="absolute inset-0 opacity-10">
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#A69256] via-transparent to-transparent"></div>
                 </div>
                 
                 <div className="relative z-10">
@@ -560,7 +813,7 @@ export default function ContactPage() {
                   <button
                     type="button"
                     onClick={() => router.push('/order')}
-                    className="w-full bg-white text-gray-900 py-3 px-6 rounded-xl font-medium hover:bg-gray-100 transition-all duration-300 hover:shadow-lg inline-flex items-center justify-center gap-2 group"
+                    className="w-full bg-[#A69256] text-[#F2F2F2] py-3 px-6 rounded-xl font-semibold hover:bg-[#0D0D0D] transition-all duration-300 hover:shadow-lg inline-flex items-center justify-center gap-2 group"
                   >
                     {t.quickOrder.button}
                     <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" strokeWidth={1.5} />
@@ -587,9 +840,9 @@ export default function ContactPage() {
                 
                 <div className="space-y-6">
                   {/* Instagram Profile Preview */}
-                  <div className="p-5 bg-gradient-to-br from-pink-50 to-amber-50 rounded-2xl border border-pink-100">
+                  <div className="p-5 bg-gradient-to-br from-[#F2F2F2] to-[#A69256]/10 rounded-2xl border border-[#A6A6A6]/40">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-400 to-amber-500 flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-2xl bg-[#A69256] flex items-center justify-center">
                         <span className="text-white font-semibold text-base">LC</span>
                       </div>
                       <div>
@@ -648,22 +901,22 @@ export default function ContactPage() {
       </section>
 
       {/* Google Map Section - Premium */}
-      <section className="py-24 px-6 lg:px-8 bg-gray-50">
+      <section className="py-24 px-6 lg:px-8 bg-gray-50 lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className={`bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-200 ${
             isVisible ? 'animate-fade-in-up' : 'opacity-0'
           }`} style={{ animationDelay: '600ms' }}>
             <div className="p-8 border-b border-gray-200">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center">
-                  <MapPin className="text-amber-600" size={20} strokeWidth={1.5} />
+                <div className="w-12 h-12 bg-[#A69256]/15 rounded-2xl flex items-center justify-center">
+                  <MapPin className="text-[#A69256]" size={20} strokeWidth={1.5} />
                 </div>
                 <h3 className="text-2xl font-light text-gray-900 font-display">
                   {t.location.title}
                 </h3>
               </div>
             </div>
-            <div className="h-96 bg-gradient-to-br from-amber-100 to-gray-200 relative">
+            <div className="h-96 bg-gradient-to-br from-[#F2F2F2] to-[#A6A6A6]/25 relative">
               <iframe 
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2498.8334217314505!2d6.776975276284795!3d51.22214423150265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47b8cb10fedecbc9%3A0xa3a5e988315ddb33!2sLa%20Cannelle!5e0!3m2!1sfr!2stn!4v1763137870611!5m2!1sfr!2stn" 
                 width="100%" 
@@ -681,27 +934,27 @@ export default function ContactPage() {
       </section>
 
       {/* Premium Footer */}
-      <footer className="bg-gray-900 text-white py-20 px-6 lg:px-8">
+      <footer className="bg-[#404040] text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
               <h3 className="text-2xl font-light mb-4 font-display">La Cannelle</h3>
-              <p className="text-gray-400 text-sm">{commonFooter.brandTagline}</p>
+              <p className="text-[#F2F2F2]/70 text-sm">{commonFooter.brandTagline}</p>
             </div>
             
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{commonFooter.quickLinks}</h4>
               <div className="flex flex-col gap-3">
-                <a href="/home" className="text-gray-400 hover:text-white transition-colors">{commonNav.home}</a>
-                <a href="/services" className="text-gray-400 hover:text-white transition-colors">{commonNav.services}</a>
-                <a href="/menus" className="text-gray-400 hover:text-white transition-colors">{commonNav.menus}</a>
-                <a href="/contact" className="text-amber-400 font-semibold">{commonNav.contact}</a>
+                <a href="/home" className="text-white hover:text-[#A69256] transition-colors">{commonNav.home}</a>
+                <a href="/services" className="text-white hover:text-[#A69256] transition-colors">{commonNav.services}</a>
+                <a href="/menus" className="text-white hover:text-[#A69256] transition-colors">{commonNav.menus}</a>
+                <a href="/contact" className="text-white font-semibold">{commonNav.contact}</a>
               </div>
             </div>
             
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{commonFooter.contact}</h4>
-              <div className="flex flex-col gap-3 text-gray-400">
+              <div className="flex flex-col gap-3 text-[#F2F2F2]/70">
                 <div className="flex items-center gap-3">
                   <Phone size={16} />
                   <span className="text-sm">{t.contactInfo.phone}</span>
@@ -719,8 +972,8 @@ export default function ContactPage() {
             
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{commonFooter.followUs}</h4>
-              <div className="flex flex-col gap-2 text-gray-400">
-                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors inline-flex items-center gap-2 text-sm">
+              <div className="flex flex-col gap-2 text-[#F2F2F2]/70">
+                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-[#A69256] transition-colors inline-flex items-center gap-2 text-sm">
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
                     <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zM17.75 6a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.75 6z" />
                   </svg>
@@ -730,7 +983,7 @@ export default function ContactPage() {
             </div>
           </div>
           
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+          <div className="border-t border-white/10 pt-8 text-center text-[#F2F2F2]/60 text-sm">
             <p>{commonFooter.copyright}</p>
           </div>
         </div>

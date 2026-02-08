@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ChevronRight, Phone, Mail, MapPin, Star, Users, Heart, Target, Award, Clock } from 'lucide-react';
@@ -7,9 +7,11 @@ import { Crown, Building } from 'lucide-react';
 import { commonTranslations } from '@/lib/translations/common';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { aboutTranslations } from '@/lib/translations/about';
+import { ThemeToggle } from '@/components/site/ThemeToggle';
 
 export default function AboutPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const { t: rawT, language, toggleLanguage } = useTranslation('about');
   const [isVisible, setIsVisible] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -34,10 +36,16 @@ export default function AboutPage() {
   };
 
   const desktopLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:scale-105`;
+    `${isActiveHref(href)
+      ? 'text-[#A69256] border-[#A69256]'
+      : 'text-[#404040] dark:text-[#F2F2F2] border-transparent hover:text-[#A69256] hover:border-[#A69256]'
+    } transition-colors duration-300 text-sm font-medium tracking-wide border-b-2 pb-1 px-1`;
 
   const mobileLinkClass = (href: string) =>
-    `${isActiveHref(href) ? 'text-amber-700 font-semibold' : 'text-gray-900 hover:text-amber-700 font-medium'} transition-all duration-300 transform hover:translate-x-2`;
+    `${isActiveHref(href)
+      ? 'text-[#A69256] underline decoration-[#A69256] underline-offset-8'
+      : 'text-[#404040] dark:text-[#F2F2F2] hover:text-[#A69256]'
+    } transition-colors duration-300 text-base font-medium py-2`;
 
   // Handle click outside modal to close
   useEffect(() => {
@@ -105,6 +113,28 @@ export default function AboutPage() {
 
   useEffect(() => {
     setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!window.matchMedia?.('(hover: hover)').matches) return;
+
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        setIsNavCollapsed(window.scrollY > 32);
+      });
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
     type AboutContent = {
@@ -300,10 +330,10 @@ export default function AboutPage() {
   const commonA11y = commonTranslations[language].accessibility;
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#F2F2F2] overflow-x-hidden">
       {/* Add animations and fonts */}
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:wght@300;400;500;600;700&display=swap');
         
         @keyframes fadeInUp {
           from {
@@ -393,11 +423,13 @@ export default function AboutPage() {
         }
         
         body {
-          font-family: 'Inter', sans-serif;
+          font-family: 'Open Sans', Lora, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          letter-spacing: 0.01em;
+          line-height: 1.75;
         }
         
         .font-elegant {
-          font-family: 'Playfair Display', serif;
+          font-family: 'Playfair Display', Georgia, serif;
         }
         
         html {
@@ -410,27 +442,27 @@ export default function AboutPage() {
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start sm:items-center justify-center z-[100] p-4 sm:p-6 overflow-y-auto animate-scale-in">
           <div 
             ref={modalRef}
-            className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto"
+            className="bg-[#F9F9F9] rounded-2xl max-w-md w-full max-h-[80vh] overflow-y-auto ring-1 ring-black/5"
           >
             <div className="p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold text-gray-900 font-elegant">
+                <h3 className="text-2xl font-bold text-[#404040] font-elegant">
                   {t.quoteModal.title}
                 </h3>
                 <button
                   onClick={() => setShowQuoteModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                  className="text-[#A6A6A6] hover:text-[#A69256] transition-colors p-1 rounded-full hover:bg-[#A69256]/10"
                 >
                   <X size={20} />
                 </button>
               </div>
-              <p className="text-gray-600 mb-6">
+              <p className="text-[#404040]/75 mb-6">
                 {t.quoteModal.subtitle}
               </p>
               
               <form onSubmit={handleQuoteSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#404040] mb-1">
                     {t.quoteModal.name}
                   </label>
                   <input
@@ -439,12 +471,12 @@ export default function AboutPage() {
                     value={quoteForm.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
+                    className="w-full px-3 py-2 border border-[#A6A6A6] rounded-lg bg-[#F9F9F9] focus:outline-none focus:ring-2 focus:ring-[color:#A69256] focus:border-transparent text-[#404040]"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#404040] mb-1">
                     {t.quoteModal.email}
                   </label>
                   <input
@@ -453,12 +485,12 @@ export default function AboutPage() {
                     value={quoteForm.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
+                    className="w-full px-3 py-2 border border-[#A6A6A6] rounded-lg bg-[#F9F9F9] focus:outline-none focus:ring-2 focus:ring-[color:#A69256] focus:border-transparent text-[#404040]"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#404040] mb-1">
                     {t.quoteModal.phone}
                   </label>
                   <input
@@ -466,12 +498,12 @@ export default function AboutPage() {
                     name="phone"
                     value={quoteForm.phone}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
+                    className="w-full px-3 py-2 border border-[#A6A6A6] rounded-lg bg-[#F9F9F9] focus:outline-none focus:ring-2 focus:ring-[color:#A69256] focus:border-transparent text-[#404040]"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#404040] mb-1">
                     {t.quoteModal.eventType}
                   </label>
                   <select
@@ -479,7 +511,7 @@ export default function AboutPage() {
                     value={quoteForm.eventType}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
+                    className="w-full px-3 py-2 border border-[#A6A6A6] rounded-lg bg-[#F9F9F9] focus:outline-none focus:ring-2 focus:ring-[color:#A69256] focus:border-transparent text-[#404040]"
                   >
                     <option value="">{t.quoteModal.eventTypePlaceholder}</option>
                     {t.quoteModal.eventTypes.map((type, index) => (
@@ -489,7 +521,7 @@ export default function AboutPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#404040] mb-1">
                     {t.quoteModal.eventDate}
                   </label>
                   <input
@@ -497,12 +529,12 @@ export default function AboutPage() {
                     name="eventDate"
                     value={quoteForm.eventDate}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
+                    className="w-full px-3 py-2 border border-[#A6A6A6] rounded-lg bg-[#F9F9F9] focus:outline-none focus:ring-2 focus:ring-[color:#A69256] focus:border-transparent text-[#404040]"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#404040] mb-1">
                     {t.quoteModal.guests}
                   </label>
                   <input
@@ -511,12 +543,12 @@ export default function AboutPage() {
                     value={quoteForm.guests}
                     onChange={handleInputChange}
                     min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
+                    className="w-full px-3 py-2 border border-[#A6A6A6] rounded-lg bg-[#F9F9F9] focus:outline-none focus:ring-2 focus:ring-[color:#A69256] focus:border-transparent text-[#404040]"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-[#404040] mb-1">
                     {t.quoteModal.message}
                   </label>
                   <textarea
@@ -524,7 +556,7 @@ export default function AboutPage() {
                     value={quoteForm.message}
                     onChange={handleInputChange}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-black"
+                    className="w-full px-3 py-2 border border-[#A6A6A6] rounded-lg bg-[#F9F9F9] focus:outline-none focus:ring-2 focus:ring-[color:#A69256] focus:border-transparent text-[#404040]"
                   ></textarea>
                 </div>
                 
@@ -532,13 +564,13 @@ export default function AboutPage() {
                   <button
                     type="button"
                     onClick={() => setShowQuoteModal(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex-1 px-4 py-2 border border-[#A6A6A6] text-[#404040] rounded-lg hover:bg-[#404040] hover:text-[#F2F2F2] transition-colors"
                   >
                     {t.quoteModal.cancel}
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors"
+                    className="flex-1 px-4 py-2 bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] transition-colors"
                   >
                     {t.quoteModal.submit}
                   </button>
@@ -550,19 +582,35 @@ export default function AboutPage() {
       )}
 
       {/* Navbar */}
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50 animate-fade-in-down">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="text-2xl font-bold text-gray-900 font-elegant italic">
+      <nav
+        className={`group fixed top-0 w-full bg-white/80 supports-[backdrop-filter]:bg-white/65 backdrop-blur-lg border-b border-black/10 z-50 animate-fade-in-down shadow-[0_10px_30px_rgba(0,0,0,0.08)] md:overflow-hidden md:transition-[max-height] md:duration-300 md:ease-out dark:bg-[#2C2C2C]/80 dark:supports-[backdrop-filter]:bg-[#2C2C2C]/65 dark:border-white/10 dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${
+          isNavCollapsed
+            ? 'md:max-h-[14px] md:hover:max-h-[112px] md:focus-within:max-h-[112px]'
+            : 'md:max-h-[112px]'
+        }`}
+      >
+        <div
+          className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 md:transition-opacity md:duration-200 ${
+            isNavCollapsed
+              ? 'md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:group-focus-within:opacity-100 md:group-focus-within:pointer-events-auto'
+              : ''
+          }`}
+        >
+          <div className="flex justify-between items-center h-16 md:h-20">
+            <a
+              href="/home"
+              aria-label="Go to Home"
+              className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A69256]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#2C2C2C]"
+            >
               <img
                 src="/images/logo-removebg-preview.png"
                 alt="La Cannelle"
-                className="h-16 sm:h-[72px] md:h-[80px] w-[180px] sm:w-[220px] md:w-[260px] lg:w-[320px] object-cover object-center"
+                className="h-12 sm:h-14 md:h-16 lg:h-[76px] xl:h-[84px] w-auto max-w-[240px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-[520px] xl:max-w-[600px] object-contain dark:invert dark:brightness-200 dark:contrast-125"
               />
-            </div>
+            </a>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-10">
               <a href="/home" className={desktopLinkClass('/home')}>{commonNav.home}</a>
               <a href="/about" className={desktopLinkClass('/about')}>{commonNav.about}</a>
               <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
@@ -571,23 +619,19 @@ export default function AboutPage() {
               <button 
                 onClick={toggleLanguage}
                 aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition-all duration-300 transform hover:scale-105 font-medium flex items-center gap-2"
+                className="h-10 w-12 rounded-lg border border-[#404040]/25 bg-transparent text-[#404040] hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-all duration-300 transform hover:scale-105 font-medium inline-flex items-center justify-center dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10 shrink-0"
               >
                 {language === 'EN' ? (
-                  <>
-                    <span className="text-lg"><img src="images/language/Flag_of_United_Kingdom-4096x2048.png" width={27} alt={commonA11y.englishFlagAlt} /></span>
-                    English
-                  </>
+                  <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt={commonA11y.englishFlagAlt} className="rounded" />
                 ) : (
-                  <>
-                    <span className="text-lg"><img src="images/language/Flag_of_Germany-4096x2453.png" width={25} alt={commonA11y.germanFlagAlt} /></span>
-                    Deutsch
-                  </>
+                  <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt={commonA11y.germanFlagAlt} className="rounded" />
                 )}
               </button>
+
+              <ThemeToggle />
               <button 
                 onClick={handleOrderClick}
-                className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all duration-300 transform hover:scale-105 font-medium"
+                className="px-6 py-2 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] transition-all duration-300 transform hover:scale-105 font-medium"
               >
                 {t.nav.order}
               </button>
@@ -595,7 +639,7 @@ export default function AboutPage() {
 
             {/* Mobile Menu Button */}
             <button 
-              className="md:hidden transition-transform duration-300 hover:scale-110"
+              className="md:hidden transition-transform duration-300 hover:scale-110 text-[#404040] dark:text-[#F2F2F2]"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -604,7 +648,7 @@ export default function AboutPage() {
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in-down">
+            <div className="md:hidden py-4 border-t border-black/10 animate-fade-in-down dark:border-white/10">
               <div className="flex flex-col gap-4">
                 <a href="/home" className={mobileLinkClass('/home')}>{commonNav.home}</a>
                 <a href="/about" className={mobileLinkClass('/about')}>{commonNav.about}</a>
@@ -614,7 +658,7 @@ export default function AboutPage() {
                 <button 
                   onClick={toggleLanguage}
                   aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                  className="px-4 py-2 text-sm border border-amber-300 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 w-full font-medium transition-all duration-300 flex items-center justify-center"
+                  className="px-4 py-2 text-sm border border-[#404040]/25 rounded-lg bg-transparent text-[#404040] hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 w-full font-medium transition-all duration-300 flex items-center justify-center dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10"
                 >
                   {language === 'EN' ? (
                     <img
@@ -630,7 +674,9 @@ export default function AboutPage() {
                     />
                   )}
                 </button>
-                <button onClick={handleOrderClick} className="px-6 py-2 text-sm bg-amber-700 text-white rounded-lg hover:bg-amber-800 font-medium transition-all duration-300 transform hover:scale-105">
+
+                <ThemeToggle className="w-full justify-center" />
+                <button onClick={handleOrderClick} className="px-6 py-2 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] font-medium transition-all duration-300 transform hover:scale-105">
                   {t.nav.order}
                 </button>
               </div>
@@ -640,7 +686,7 @@ export default function AboutPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-stone-100 relative overflow-hidden">
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-[#F2F2F2] relative overflow-hidden">
         <div className="absolute inset-0 bg-black/5"></div>
         <div className="max-w-7xl mx-auto text-center relative z-10">
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
@@ -657,7 +703,7 @@ export default function AboutPage() {
       </section>
 
       {/* Our Story Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
@@ -673,9 +719,9 @@ export default function AboutPage() {
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <div className="bg-gradient-to-br from-amber-100 to-stone-200 rounded-2xl p-8 h-96 flex items-center justify-center">
+              <div className="bg-white/70 rounded-2xl p-8 h-96 flex items-center justify-center border border-[#A6A6A6]/40">
                 <div className="text-center">
-                  <div className="text-6xl font-bold text-amber-700 mb-4 font-elegant">14+</div>
+                  <div className="text-6xl font-bold text-[#A69256] mb-4 font-elegant">14+</div>
                   <div className="text-xl text-gray-700 font-semibold">Years of Excellence</div>
                   <div className="text-gray-600 mt-2">Serving B2B & Private Clients</div>
                 </div>
@@ -686,9 +732,9 @@ export default function AboutPage() {
       </section>
 
       {/* Our Values Section - Redesigned */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-white relative overflow-hidden">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#F2F2F2] relative overflow-hidden lux-reveal" data-lux-delay="40">
         {/* Background Elements */}
-        <div className="absolute top-10 right-10 w-20 h-20 bg-amber-200/20 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-10 right-10 w-20 h-20 bg-[#A69256]/15 rounded-full blur-xl animate-pulse"></div>
         <div className="absolute bottom-10 left-10 w-16 h-16 bg-stone-300/20 rounded-full blur-xl animate-pulse delay-1000"></div>
 
         <div className="max-w-6xl mx-auto relative">
@@ -714,7 +760,7 @@ export default function AboutPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                 
                 {/* Badge */}
-                <div className="absolute top-4 left-4 bg-amber-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                <div className="absolute top-4 left-4 bg-[#A69256] text-[#F2F2F2] px-3 py-1 rounded-full text-sm font-semibold">
                   Premium
                 </div>
               </div>
@@ -722,13 +768,13 @@ export default function AboutPage() {
               {/* Content */}
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition-colors duration-300">
-                    <Crown className="text-amber-600" size={20} />
+                  <div className="w-10 h-10 bg-[#A69256]/15 rounded-xl flex items-center justify-center group-hover:bg-[#A69256]/25 transition-colors duration-300">
+                    <Crown className="text-[#A69256]" size={20} />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 font-elegant">{t.values.exclusivity.title}</h3>
                 </div>
                 
-                <p className="text-sm text-amber-700 font-semibold mb-3 tracking-wider italic">
+                <p className="text-sm text-[#A69256] font-semibold mb-3 tracking-wider italic">
                   {t.values.exclusivity.subtitle}
                 </p>
                 
@@ -740,7 +786,7 @@ export default function AboutPage() {
                 <div className="mt-4 space-y-2">
                   {['Personalized Service', 'Custom Menus', 'Private Consultations'].map((feature, index) => (
                     <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                      <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="w-1.5 h-1.5 bg-[#A69256] rounded-full"></div>
                       {feature}
                     </div>
                   ))}
@@ -846,7 +892,7 @@ export default function AboutPage() {
           </div>
 
           {/* Stats Section */}
-          <div className={`mt-16 bg-white rounded-2xl shadow-lg border border-amber-100 p-8 transition-all duration-1000 delay-600 ${
+          <div className={`mt-16 bg-white rounded-2xl shadow-lg border border-[#A6A6A6]/40 p-8 transition-all duration-1000 delay-600 ${
             isVisible ? 'animate-fade-in-up' : 'opacity-0'
           }`}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -857,7 +903,7 @@ export default function AboutPage() {
                 { number: '50+', label: 'Awards Won' }
               ].map((stat, index) => (
                 <div key={index} className="group">
-                  <p className="text-3xl font-bold text-amber-600 mb-2 group-hover:scale-110 transition-transform duration-300">
+                  <p className="text-3xl font-bold text-[#A69256] mb-2 group-hover:scale-110 transition-transform duration-300">
                     {stat.number}
                   </p>
                   <p className="text-sm text-gray-600 font-semibold">{stat.label}</p>
@@ -869,7 +915,7 @@ export default function AboutPage() {
       </section>
 
       {/* Why Choose Us Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center font-elegant">
@@ -881,13 +927,13 @@ export default function AboutPage() {
             {t.team.items.map((item, index) => (
               <div
                 key={index}
-                className={`bg-stone-50 rounded-2xl p-6 text-center hover:bg-amber-50 transition-all duration-500 transform hover:-translate-y-2 group ${
+                className={`bg-stone-50 rounded-2xl p-6 text-center hover:bg-[#A69256]/10 transition-all duration-500 transform hover:-translate-y-2 group ${
                   isVisible ? 'animate-scale-in' : 'opacity-0'
                 }`}
                 style={{ animationDelay: `${index * 150 + 300}ms` }}
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full mb-4 group-hover:bg-amber-200 transition-colors">
-                  <Star className="text-amber-700" size={32} />
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-[#A69256]/15 rounded-full mb-4 group-hover:bg-[#A69256]/25 transition-colors">
+                  <Star className="text-[#A69256]" size={32} />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3 font-elegant">
                   {item.name}
@@ -902,7 +948,7 @@ export default function AboutPage() {
       </section>
 
       {/* Services Overview */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-stone-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-stone-50 lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center font-elegant">
@@ -920,7 +966,7 @@ export default function AboutPage() {
                 style={{ animationDelay: `${index * 100 + 400}ms` }}
               >
                 <div className="flex items-center gap-3">
-                  <Star size={20} className="text-amber-500 flex-shrink-0" />
+                  <Star size={20} className="text-[#A69256] flex-shrink-0" />
                   <span className="text-gray-800 font-medium">
                     {typeof service === 'string' ? service : service.title}
                   </span>
@@ -935,7 +981,7 @@ export default function AboutPage() {
       </section>
 
       {/* Contact Information */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
@@ -943,23 +989,23 @@ export default function AboutPage() {
                 {t.contact.title}
               </h2>
               <div className="space-y-6">
-                <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-amber-50 transition-colors">
-                  <MapPin className="text-amber-700" size={24} />
+                <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-[#A69256]/10 transition-colors">
+                  <MapPin className="text-[#A69256]" size={24} />
                   <div>
                     <p className="font-semibold text-gray-900">{t.contactLabels.address}</p>
                     <p className="text-gray-600">{t.contact.address}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-amber-50 transition-colors">
-                  <Phone className="text-amber-700" size={24} />
+                <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-[#A69256]/10 transition-colors">
+                  <Phone className="text-[#A69256]" size={24} />
                   <div>
                     <p className="font-semibold text-gray-900">{t.contactLabels.phone}</p>
                     <p className="text-gray-600">{t.contact.phone}</p>
                     <p className="text-gray-600 text-sm">{t.contact.mobile}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-amber-50 transition-colors">
-                  <Mail className="text-amber-700" size={24} />
+                <div className="flex items-center gap-4 p-4 bg-stone-50 rounded-lg hover:bg-[#A69256]/10 transition-colors">
+                  <Mail className="text-[#A69256]" size={24} />
                   <div>
                     <p className="font-semibold text-gray-900">{t.contactLabels.email}</p>
                     <p className="text-gray-600">{t.contact.email}</p>
@@ -995,7 +1041,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-700 to-amber-800 relative overflow-hidden">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#404040] to-[#0D0D0D] relative overflow-hidden lux-reveal" data-lux-delay="40">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
@@ -1004,14 +1050,14 @@ export default function AboutPage() {
             </h2>
           </div>
           <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <p className="text-xl text-amber-100 mb-8 font-light italic">
+            <p className="text-xl text-[#A6A6A6] mb-8 font-light italic">
               {t.cta.subtitle}
             </p>
           </div>
           <div className={`transition-all duration-1000 delay-500 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
             <button 
               onClick={handleGetQuoteClick}
-              className="group w-full sm:w-auto justify-center px-6 sm:px-12 py-4 bg-white text-amber-700 rounded-lg text-lg font-semibold hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl inline-flex items-center gap-3"
+              className="group w-full sm:w-auto justify-center px-6 sm:px-12 py-4 bg-[#A69256] text-[#F2F2F2] rounded-lg text-lg font-semibold hover:bg-[#0D0D0D] transition-all duration-300 transform hover:scale-105 hover:shadow-2xl inline-flex items-center gap-3"
             >
               {t.cta.button}
               <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -1021,34 +1067,34 @@ export default function AboutPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-[#404040] text-[#F2F2F2] py-16 px-4 sm:px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
               <h3 className="text-2xl font-bold mb-4 font-elegant italic">La Cannelle</h3>
-              <p className="text-gray-400 italic">Crafting unforgettable culinary experiences since 2010</p>
+              <p className="text-[#F2F2F2]/70 italic">Crafting unforgettable culinary experiences since 2010</p>
             </div>
             <div className={`transition-all duration-1000 delay-100 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{t.footer.quickLinks}</h4>
               <div className="flex flex-col gap-2">
-                <a href="/" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.home}</a>
-                <a href="/about" className="text-amber-400 font-semibold transition-all duration-300 transform hover:translate-x-1">{commonNav.about}</a>
-                <a href="/services" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.services}</a>
-                <a href="/menus" className="text-gray-400 hover:text-white transition-all duration-300 transform hover:translate-x-1">{commonNav.menus}</a>
+                <a href="/home" className="text-white hover:text-[#A69256] transition-all duration-300 transform hover:translate-x-1">{commonNav.home}</a>
+                <a href="/about" className="text-white font-semibold transition-all duration-300 transform hover:translate-x-1">{commonNav.about}</a>
+                <a href="/services" className="text-white hover:text-[#A69256] transition-all duration-300 transform hover:translate-x-1">{commonNav.services}</a>
+                <a href="/menus" className="text-white hover:text-[#A69256] transition-all duration-300 transform hover:translate-x-1">{commonNav.menus}</a>
               </div>
             </div>
             <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{t.footer.contact}</h4>
-              <div className="flex flex-col gap-3 text-gray-400">
-                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
+              <div className="flex flex-col gap-3 text-[#F2F2F2]/70">
+                <div className="flex items-center gap-2 hover:text-[#A69256] transition-colors duration-300">
                   <Phone size={18} />
                   <span>{t.contact.phone}</span>
                 </div>
-                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
+                <div className="flex items-center gap-2 hover:text-[#A69256] transition-colors duration-300">
                   <Mail size={18} />
                   <span>{t.contact.email}</span>
                 </div>
-                <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
+                <div className="flex items-center gap-2 hover:text-[#A69256] transition-colors duration-300">
                   <MapPin size={18} />
                   <span>{t.contact.address}</span>
                 </div>
@@ -1056,13 +1102,13 @@ export default function AboutPage() {
             </div>
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
               <h4 className="font-semibold mb-4 font-elegant">{t.footer.followUs}</h4>
-              <div className="flex flex-col gap-2 text-gray-400">
-                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-white transition-colors duration-300">Instagram</a>
-                <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-white transition-colors duration-300">TikTok</a>
+              <div className="flex flex-col gap-2 text-[#F2F2F2]/70">
+                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-[#A69256] transition-colors duration-300">Instagram</a>
+                <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-[#A69256] transition-colors duration-300">TikTok</a>
               </div>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
+          <div className="border-t border-white/10 pt-8 text-center text-[#F2F2F2]/60">
             <p>&copy; 2025 La Cannelle Catering. All rights reserved.</p>
           </div>
         </div>
