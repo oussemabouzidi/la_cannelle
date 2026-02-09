@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap } from 'lucide-react';
+import { ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap, X, ArrowUpRight, PlayCircle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Star, Crown, Shield, Heart } from 'lucide-react';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
@@ -16,7 +16,19 @@ import { useMemo } from 'react';
 import { Check } from 'lucide-react';
 import MenuShowcaseHorizontal from '../components/page';
 import { homeTranslations } from '@/lib/translations/home';
-import { ThemeToggle } from '@/components/site/ThemeToggle';
+import SiteHeader from '@/components/site/SiteHeader';
+import { createPortal } from 'react-dom';
+
+function BodyPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  return createPortal(children, document.body);
+}
 
 export default function CateringHomepage() {
   const scrollContainer = useRef<HTMLDivElement>(null);
@@ -25,41 +37,18 @@ export default function CateringHomepage() {
   
   const [selectedMenu, setSelectedMenu] = useState<ApiMenu | null>(null);
   const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const [menus, setMenus] = useState<ApiMenu[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
+  const commonNav = commonTranslations[language].nav;
   const commonA11y = commonTranslations[language].accessibility;
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!window.matchMedia?.('(hover: hover)').matches) return;
-
-    let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = 0;
-        setIsNavCollapsed(window.scrollY > 32);
-      });
-    };
-
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
   }, []);
 
   useEffect(() => {
@@ -99,29 +88,25 @@ export default function CateringHomepage() {
     };
   }, [selectedMenuItem]);
 
+  useEffect(() => {
+    if (selectedCategory == null) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [selectedCategory]);
+
   const router = useRouter();
   const pathname = usePathname();
-
-  const isActiveHref = (href: string) => {
-    if (href === '/home') return pathname === '/' || pathname === '/home';
-    return pathname === href;
-  };
-
-  const desktopLinkClass = (href: string) =>
-    `${isActiveHref(href)
-      ? 'text-[#A69256] border-[#A69256]'
-      : 'text-[#404040] dark:text-[#F2F2F2] border-transparent hover:text-[#A69256] hover:border-[#A69256]'
-    } transition-colors duration-200 text-sm font-medium tracking-wide border-b-2 pb-1 px-1`;
-
-  const mobileLinkClass = (href: string) =>
-    `${isActiveHref(href)
-      ? 'text-[#A69256] underline decoration-[#A69256] underline-offset-8'
-      : 'text-[#404040] dark:text-[#F2F2F2] hover:text-[#A69256]'
-    } transition-colors duration-200 text-base font-medium py-2`;
 
   const handleOrderClick = (selectedProducts?: number[]) => {
     const query = selectedProducts?.length ? `?products=${selectedProducts.join(',')}` : '';
     router.push(`/order${query}`);
+  };
+  
+  const handlePlanClick = () => {
+    router.push('/contact');
   };
 
   useEffect(() => {
@@ -265,11 +250,6 @@ export default function CateringHomepage() {
           to { opacity: 1; transform: scale(1); }
         }
 
-        @keyframes marquee {
-          0% { transform: translate3d(0, 0, 0); }
-          100% { transform: translate3d(-50%, 0, 0); }
-        }
-        
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-10px); }
@@ -285,7 +265,6 @@ export default function CateringHomepage() {
         .animate-fade-in-left { animation: fadeInLeft 0.8s ease-out; }
         .animate-fade-in-right { animation: fadeInRight 0.8s ease-out; }
         .animate-scale-in { animation: scaleIn 0.6s ease-out; }
-        .animate-logo-marquee { animation: marquee 50s linear infinite; will-change: transform; }
         .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-pulse { animation: pulse 2s ease-in-out infinite; }
         
@@ -323,105 +302,20 @@ export default function CateringHomepage() {
         }
       `}</style>
 
-      {/* Premium Navbar */}
-      <nav
-        className={`group fixed top-0 w-full bg-white/80 supports-[backdrop-filter]:bg-white/65 backdrop-blur-lg border-b border-black/10 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.08)] md:overflow-hidden md:transition-[max-height] md:duration-300 md:ease-out dark:bg-[#2C2C2C]/80 dark:supports-[backdrop-filter]:bg-[#2C2C2C]/65 dark:border-white/10 dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${
-          isNavCollapsed
-            ? 'md:max-h-[14px] md:hover:max-h-[112px] md:focus-within:max-h-[112px]'
-            : 'md:max-h-[112px]'
-        }`}
-      >
-        <div
-          className={`max-w-7xl mx-auto px-6 lg:px-8 md:transition-opacity md:duration-200 ${
-            isNavCollapsed
-              ? 'md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:group-focus-within:opacity-100 md:group-focus-within:pointer-events-auto'
-              : ''
-          }`}
-        >
-          <div className="flex justify-between items-center h-16 md:h-20">
-            <a
-              href="/home"
-              aria-label="Go to Home"
-              className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A69256]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#2C2C2C]"
-            >
-              <img
-                src="/images/logo-removebg-preview.png"
-                alt="La Cannelle"
-                className="h-12 md:h-16 lg:h-[76px] xl:h-[84px] w-auto max-w-[240px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[480px] xl:max-w-[560px] object-contain dark:invert dark:brightness-200 dark:contrast-125"
-              />
-            </a>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-10 lg:gap-12">
-              <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
-              <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
-              <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
-              <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>
-              
-              <button
-                onClick={toggleLanguage}
-                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="h-10 w-12 rounded-lg border border-[#404040]/25 bg-transparent text-[#404040] hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-all duration-300 font-medium inline-flex items-center justify-center dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10 shrink-0"
-              >
-                {language === 'EN' ? (
-                  <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt={commonA11y.englishFlagAlt} className="rounded" />
-                ) : (
-                  <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt={commonA11y.germanFlagAlt} className="rounded" />
-                )}
-              </button>
-
-              <ThemeToggle />
-              
-              <button
-                onClick={() => handleOrderClick()}
-                className="px-7 py-2.5 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] transition-all duration-300 font-medium shadow-sm hover:shadow-md"
-              >
-                {t.nav.order}
-              </button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 hover:bg-black/5 rounded-lg transition-colors dark:hover:bg-white/10"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X size={24} className="text-[#404040] dark:text-[#F2F2F2]" /> : <Menu size={24} className="text-[#404040] dark:text-[#F2F2F2]" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <div className="md:hidden py-6 border-t border-black/10 dark:border-white/10">
-              <div className="flex flex-col gap-5">
-                <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
-                <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
-                <a href="/menus" className={mobileLinkClass('/menus')}>{t.nav.menus}</a>
-                <a href="/contact" className={mobileLinkClass('/contact')}>{t.nav.contact}</a>
-                
-                <button
-                  onClick={toggleLanguage}
-                  className="px-4 py-3 text-sm border border-[#404040]/25 rounded-lg bg-transparent text-[#404040] font-medium flex items-center justify-center gap-2.5 hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-colors dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10"
-                >
-                  {language === 'EN' ? (
-                    <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" alt="English" className="h-5 w-auto rounded" />
-                  ) : (
-                    <img src="/images/language/Flag_of_Germany-4096x2453.png" alt="Deutsch" className="h-5 w-auto rounded" />
-                  )}
-                </button>
-
-                <ThemeToggle className="w-full justify-center" />
-                
-                <button 
-                  className="px-6 py-3 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] font-medium transition-all" 
-                  onClick={() => handleOrderClick()}
-                >
-                  {t.nav.order}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
+      <SiteHeader
+        language={language}
+        toggleLanguage={toggleLanguage}
+        pathname={pathname}
+        nav={{
+          home: t.nav.home || commonNav.home,
+          services: t.nav.services || commonNav.services,
+          menus: t.nav.menus || commonNav.menus,
+          contact: t.nav.contact || commonNav.contact,
+          order: t.nav.order || commonNav.order,
+        }}
+        a11y={commonA11y}
+        onOrderClick={handleOrderClick}
+      />
 
       {/* Hero Section - Premium Design */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -432,62 +326,91 @@ export default function CateringHomepage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-6 lg:px-8 text-center pt-32 pb-20">
-          <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-light text-white mb-8 leading-tight font-display">
-              {t.hero.title}
-            </h1>
-          </div>
-          
-          <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <p className="text-lg lg:text-xl text-gray-200 mb-12 font-light max-w-2xl mx-auto leading-relaxed">
-              {t.hero.subtitle}
-            </p>
-          </div>
-          
-          <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
-            <button
-              onClick={() => handleOrderClick()}
-              className="group inline-flex items-center gap-3 px-10 py-4 bg-[#A69256] text-[#F2F2F2] rounded-full text-base font-semibold transition-all duration-500 hover:bg-[#0D0D0D] hover:shadow-2xl hover:scale-105"
-            >
-              {t.hero.cta}
-              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-            </button>
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-36 sm:pt-40 pb-28 sm:pb-24 w-full">
+          <div className="grid lg:grid-cols-12 items-center gap-12">
+            <div className="lg:col-span-7 text-center lg:text-left">
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.32em] text-white/75 mb-5 ${isVisible ? 'animate-fade-in-down lux-type lux-type-run lux-type-caret' : 'opacity-0'}`}>
+                Beyond taste
+              </p>
+
+              <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-light text-white mb-7 leading-tight font-display">
+                  {t.hero.title}
+                </h1>
+              </div>
+
+              <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+                <p className="text-lg lg:text-xl text-gray-200 mb-10 font-light max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                  {t.hero.subtitle}
+                </p>
+              </div>
+
+              <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
+                  <button
+                    onClick={handlePlanClick}
+                    className="group inline-flex items-center justify-center gap-3 px-9 py-4 bg-[#A69256] text-[#0D0D0D] rounded-full text-sm font-semibold uppercase tracking-[0.18em] transition-all duration-500 hover:brightness-95 hover:shadow-2xl hover:scale-[1.02]"
+                  >
+                    {t.hero.cta}
+                    <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform duration-300" />
+                  </button>
+
+                  <button
+                    onClick={() => handleOrderClick()}
+                    className="inline-flex items-center justify-center px-9 py-4 rounded-full text-sm font-semibold uppercase tracking-[0.18em] text-white border border-white/20 bg-white/5 hover:bg-white/10 hover:border-white/30 transition-colors"
+                  >
+                    {commonNav.order}
+                  </button>
+                </div>
+              </div>
+
+              <ul className="mt-10 flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-3 text-xs font-medium uppercase tracking-[0.22em] text-white/75">
+                <li className="inline-flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]"></span>
+                  Crafted menus
+                </li>
+                <li className="inline-flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]"></span>
+                  Seamless delivery
+                </li>
+                <li className="inline-flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]"></span>
+                  Premium service
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2">
+        <div className="hidden md:block absolute bottom-10 left-1/2 transform -translate-x-1/2 pointer-events-none select-none">
           <div className="flex flex-col items-center gap-2 text-white/70">
             <span className="text-xs uppercase tracking-widest font-medium">Scroll</span>
-            <div className="w-px h-16 bg-gradient-to-b from-white/70 to-transparent"></div>
+            <div className="w-px h-14 bg-gradient-to-b from-white/70 to-transparent"></div>
           </div>
         </div>
       </section>
 
-      {/* Brand Trust Section */}
-      <section className="bg-[#F2F2F2] py-20 border-y border-[#A6A6A6]/40 lux-reveal" data-lux-delay="60">
+      {/* Brand Banner (FoodExplorer-inspired marquee) */}
+      <section className="bg-black py-14 border-y border-white/10 lux-reveal" data-lux-delay="60">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-2">
+          <div className="text-center mb-10">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3 lux-reveal lux-type" data-lux-delay="40">
               {t.brandBanner.title}
             </p>
-            <div className="w-12 h-px bg-[#A69256] mx-auto"></div>
+            <div className="w-12 h-px bg-white/20 mx-auto"></div>
           </div>
 
-          <div className="relative overflow-hidden">
-            <div className="flex w-max items-center gap-20 animate-logo-marquee">
-              {[...brandLogos, ...brandLogos].map((logo, idx) => (
-                <div
-                  key={`${logo.name}-${idx}`}
-                  className="flex items-center justify-center h-20 px-6 opacity-60 hover:opacity-100 transition-opacity duration-300 grayscale hover:grayscale-0"
-                >
-                  <img
-                    src={logo.src}
-                    alt={`${logo.name} logo`}
-                    className="h-12 w-auto object-contain"
-                    loading="lazy"
-                  />
+          <div className="lux-marquee" style={{ ['--lux-marquee-duration' as any]: '30s' }} aria-label={t.brandBanner.title}>
+            <div className="lux-marquee-track">
+              {brandLogos.map((logo) => (
+                <div key={logo.name} className="lux-marquee-item">
+                  <img src={logo.src} alt={`${logo.name} logo`} loading="lazy" decoding="async" />
+                </div>
+              ))}
+              {brandLogos.map((logo) => (
+                <div key={`${logo.name}-dup`} className="lux-marquee-item" aria-hidden="true">
+                  <img src={logo.src} alt="" loading="lazy" decoding="async" />
                 </div>
               ))}
             </div>
@@ -496,48 +419,48 @@ export default function CateringHomepage() {
       </section>
 
       {/* Quick Menu Categories - Premium Grid */}
-      <section className="py-24 px-6 lg:px-8 bg-white lux-reveal" data-lux-delay="40">
+      <section id="collections" className="py-24 px-6 lg:px-8 bg-white border-t border-black/10 lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
                 {t.quickMenu.title}
               </p>
-              <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">
+              <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display">
                 Curated Collections
               </h2>
-              <p className="text-gray-600 max-w-xl mx-auto text-base">{t.quickMenu.description}</p>
+              <p className="text-black/70 max-w-xl mx-auto text-base">{t.quickMenu.description}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {t.quickMenu.categories.map((category, index) => {
               const Icon = quickMenuIcons[index];
-              const meta = quickMenuCategoryMeta[index];
               
               return (
-                <div
+                <button
                   key={index}
-                  className={`lux-card group relative bg-white rounded-2xl p-8 border border-gray-200 hover:border-[#A69256] hover:shadow-xl transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
+                  type="button"
+                  className={`group relative bg-white rounded-2xl p-8 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)] transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'} hover:bg-black`}
                   style={{ animationDelay: `${index * 100}ms` }}
                   onClick={() => setSelectedCategory(index)}
                 >
                   <div className="mb-6">
-                    {Icon && <Icon className="text-[#A69256] mb-4" size={32} strokeWidth={1.5} />}
-                    <h3 className="text-xl font-medium text-gray-900 mb-2 font-display">
+                    {Icon && <Icon className="text-black/70 mb-4 group-hover:text-white/85 transition-colors" size={32} strokeWidth={1.5} />}
+                    <h3 className="text-xl font-semibold text-black mb-2 font-display group-hover:text-white transition-colors">
                       {category.title}
                     </h3>
-                    <p className="text-gray-600 text-sm leading-relaxed">
+                    <p className="text-black/70 text-sm leading-relaxed group-hover:text-white/70 transition-colors">
                       {category.description}
                     </p>
                   </div>
 
                   <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                    <div className="w-10 h-10 rounded-full bg-[#A69256]/15 flex items-center justify-center">
-                      <ChevronRight size={18} className="text-[#A69256]" />
+                    <div className="w-10 h-10 rounded-full border border-white/15 bg-white/5 flex items-center justify-center">
+                      <ChevronRight size={18} className="text-white/85" />
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -545,8 +468,9 @@ export default function CateringHomepage() {
 
         {/* Category Modals remain the same but with updated styling */}
         {selectedCategory === 0 && (
-          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
-            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+          <BodyPortal>
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-[#A69256]/15 rounded-2xl flex items-center justify-center">
@@ -619,12 +543,14 @@ export default function CateringHomepage() {
               </div>
             </div>
           </div>
+          </BodyPortal>
         )}
 
         {/* Similar modal updates for categories 1, 2, and 3 */}
         {selectedCategory === 1 && (
-          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
-            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+          <BodyPortal>
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
@@ -673,11 +599,13 @@ export default function CateringHomepage() {
               </div>
             </div>
           </div>
+          </BodyPortal>
         )}
 
         {selectedCategory === 2 && (
-          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
-            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+          <BodyPortal>
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
@@ -726,11 +654,13 @@ export default function CateringHomepage() {
               </div>
             </div>
           </div>
+          </BodyPortal>
         )}
 
         {selectedCategory === 3 && (
-          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
-            <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+          <BodyPortal>
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
               <div className="p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center">
@@ -779,13 +709,15 @@ export default function CateringHomepage() {
               </div>
             </div>
           </div>
+          </BodyPortal>
         )}
       </section>
 
       {/* Menu Item Modal */}
       {selectedMenuItem && (
-        <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg z-50 flex items-center justify-center p-6">
-          <div className="bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+        <BodyPortal>
+          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
             <button
               onClick={() => setSelectedMenuItem(null)}
               className="absolute top-6 right-6 z-10 bg-white/75 backdrop-blur-md rounded-full p-3 hover:bg-white/90 transition-colors shadow-lg ring-1 ring-black/10 hover:ring-[#A69256]/20"
@@ -849,8 +781,9 @@ export default function CateringHomepage() {
                 )}
               </div>
             </div>
+            </div>
           </div>
-        </div>
+        </BodyPortal>
       )}
 
       <MenuShowcaseHorizontal 
@@ -861,96 +794,85 @@ export default function CateringHomepage() {
         language={language}
       />
 
-      {/* Passion Section - Premium */}
-      <section className="py-24 px-6 lg:px-8 bg-gradient-to-br from-gray-900 to-gray-800 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#A69256] via-transparent to-transparent"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto relative">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
-              <div className="max-w-lg">
-                <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-4">
-                  {t.passion.subtitle}
-                </p>
-                <h2 className="text-4xl lg:text-5xl font-light text-white mb-6 font-display leading-tight">
-                  {t.passion.title}
-                </h2>
-                <p className="text-gray-300 leading-relaxed mb-10 text-lg">
-                  {t.passion.text}
-                </p>
-
-                <div className="space-y-6 mb-10">
-                  {t.passion.skills.map((item, index) => (
-                    <div key={index} className="group">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-200 font-medium">{item.title}</span>
-                        <span className="text-[#A69256]">{90 - index * 8}%</span>
-                      </div>
-                      <div className="w-full bg-white/10 rounded-full h-2">
-                        <div
-                          className="bg-[#A69256] h-2 rounded-full transition-all duration-1000 ease-out"
-                          style={{ width: `${90 - index * 8}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-sm text-gray-400 mt-2">{item.description}</p>
-                    </div>
-                  ))}
+      {/* Passion Section (FoodExplorer-inspired: black/white, airy, minimal) */}
+      <section className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-12 gap-14 items-center">
+            <div className={`lg:col-span-5 transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
+              <div className="rounded-2xl overflow-hidden ring-1 ring-black/10 shadow-[0_24px_70px_rgba(0,0,0,0.14)]">
+                <div className="relative aspect-[3/4]">
+                  <img
+                    src="/images/chef-passion.jpg"
+                    alt="Chef's passion"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
+                  <div className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/45 backdrop-blur-sm px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
+                    <Award size={16} className="text-white/80" />
+                    {language === 'DE' ? 'CHEF-LED' : 'CHEF-LED'}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <div className="relative group">
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                  <img
-                    src="/images/chef-passion.jpg"
-                    alt="Chef's passion"
-                    className="w-full h-96 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                </div>
+            <div className={`lg:col-span-7 transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-5">
+                {t.passion.subtitle}
+              </p>
+              <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-6 font-display leading-tight lux-reveal lux-type" data-lux-delay="80">
+                {t.passion.title}
+              </h2>
+              <p className="text-black/70 leading-relaxed mb-10 text-lg">
+                {t.passion.text}
+              </p>
 
-                <div className="absolute -top-4 -right-4 bg-white rounded-2xl p-6 shadow-2xl">
-                  <div className="text-center">
-                    <Award size={24} className="mx-auto mb-2 text-[#A69256]" />
-                    <p className="text-sm font-semibold text-gray-900">Master Chef</p>
-                    <p className="text-xs text-gray-600">15+ Years</p>
+              <div className="grid sm:grid-cols-2 gap-6">
+                {t.passion.skills.map((item, index) => (
+                  <div key={index} className="rounded-2xl border border-black/10 p-6 hover:border-black/20 transition-colors">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/60">
+                      {language === 'DE' ? 'DETAIL' : 'DETAIL'}
+                    </p>
+                    <p className="mt-3 text-base font-semibold text-black">{item.title}</p>
+                    <p className="mt-2 text-sm text-black/70 leading-relaxed">{item.description}</p>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Company Values Section */}
-      <section className="py-24 px-6 lg:px-8 bg-gradient-to-br from-[#F2F2F2] to-white relative overflow-hidden">
+      {/* Company Values Section (black/white) */}
+      <section className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
         <div className="max-w-7xl mx-auto relative">
           <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
               {t.company.subtitle}
             </p>
-            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">
+            <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display lux-reveal lux-type" data-lux-delay="60">
               {t.company.title}
             </h2>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
-              <p className="text-gray-600 leading-relaxed mb-8 text-lg">
+              <p className="text-black/70 leading-relaxed mb-10 text-lg">
                 {t.company.text}
               </p>
 
               <div className="grid grid-cols-2 gap-6">
                 {companyValues.map((value, index) => (
-                  <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300">
-                    <div className="w-12 h-12 bg-[#A69256]/15 rounded-xl flex items-center justify-center mb-4">
-                      <value.icon className="text-[#A69256]" size={20} />
+                  <div
+                    key={index}
+                    className="group rounded-2xl p-6 border border-black/10 bg-white transition-colors duration-300 hover:bg-black hover:border-black"
+                  >
+                    <div className="w-12 h-12 bg-black/5 rounded-xl flex items-center justify-center mb-4 transition-colors group-hover:bg-white/10">
+                      <value.icon className="text-black/70 group-hover:text-white/85" size={20} />
                     </div>
-                    <h3 className="font-medium text-gray-900 mb-2">{value.title}</h3>
-                    <p className="text-sm text-gray-600">{value.description}</p>
+                    <h3 className="font-semibold text-black group-hover:text-white mb-2">{value.title}</h3>
+                    <p className="text-sm text-black/70 group-hover:text-white/70">{value.description}</p>
                   </div>
                 ))}
               </div>
@@ -958,37 +880,39 @@ export default function CateringHomepage() {
 
             <div className={`relative transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
               <div className="relative group">
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+                <div className="relative rounded-2xl overflow-hidden ring-1 ring-black/10 shadow-[0_24px_70px_rgba(0,0,0,0.14)]">
                   <img
                     src="/images/restaurant-interior.jpg"
                     alt="Restaurant interior"
                     className="w-full h-96 object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
 
-                <div className="absolute -top-4 -right-4 bg-white rounded-2xl p-6 shadow-2xl">
-                  <Award className="mx-auto mb-2 text-[#A69256]" size={24} />
-                  <p className="text-sm font-semibold text-gray-900">{t.company.badge.title}</p>
-                  <p className="text-xs text-gray-600">{t.company.badge.subtitle}</p>
+                <div className="absolute -top-4 -right-4 bg-black text-white rounded-2xl p-6 shadow-2xl border border-white/10">
+                  <Award className="mx-auto mb-2 text-white/80" size={24} />
+                  <p className="text-sm font-semibold">{t.company.badge.title}</p>
+                  <p className="text-xs text-white/70">{t.company.badge.subtitle}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Timeline */}
-          <div className="bg-white rounded-3xl p-10 shadow-sm border border-gray-200">
-            <h3 className="text-2xl font-light text-gray-900 text-center mb-12 font-display">{t.journey.title}</h3>
+          <div className="bg-white rounded-2xl p-10 border border-black/10">
+            <h3 className="text-2xl font-semibold text-black text-center mb-12 font-display lux-reveal lux-type" data-lux-delay="40">{t.journey.title}</h3>
             <div className="grid md:grid-cols-4 gap-8">
               {journeyMilestones.map((milestone, index) => (
                 <div key={index} className="text-center relative">
                   {index < 3 && (
-                    <div className="hidden md:block absolute top-6 left-1/2 w-full h-px bg-gray-200"></div>
+                    <div className="hidden md:block absolute top-6 left-1/2 w-full h-px bg-black/10"></div>
                   )}
-                  <div className="w-14 h-14 bg-[#A69256]/15 rounded-2xl flex items-center justify-center mx-auto mb-4 relative z-10">
-                    <milestone.icon className="text-[#A69256]" size={22} />
+                  <div className="w-14 h-14 bg-black/5 rounded-2xl flex items-center justify-center mx-auto mb-4 relative z-10 ring-1 ring-black/10">
+                    <milestone.icon className="text-black/70" size={22} />
                   </div>
-                  <p className="text-sm font-semibold text-[#A69256] mb-2">{milestone.date}</p>
-                  <p className="text-gray-700 font-medium">{milestone.title}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-black/60 mb-2">{milestone.date}</p>
+                  <p className="text-black font-semibold">{milestone.title}</p>
                 </div>
               ))}
             </div>
@@ -997,22 +921,22 @@ export default function CateringHomepage() {
       </section>
 
       {/* Services Section */}
-      <section className="py-24 px-6 lg:px-8 bg-white">
+      <section id="service-formats" className="py-24 px-6 lg:px-8 bg-black text-white border-t border-white/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-3">{t.quickMenu.title}</p>
-            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">{t.services.title}</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg">Tailored experiences for every occasion</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3">{t.quickMenu.title}</p>
+            <h2 className="text-4xl lg:text-5xl font-semibold text-white mb-4 font-display">{t.services.title}</h2>
+            <p className="text-white/70 max-w-2xl mx-auto text-lg">Tailored experiences for every occasion</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {t.services.items.map((service, index) => (
               <div
                 key={index}
-                className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#A69256] hover:shadow-lg transition-all duration-300"
+                className="group bg-white/5 p-8 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
               >
-                <h3 className="text-xl font-medium text-gray-900 font-display mb-3">{service.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{service.description}</p>
+                <h3 className="text-xl font-semibold text-white font-display mb-3">{service.title}</h3>
+                <p className="text-white/70 leading-relaxed">{service.description}</p>
               </div>
             ))}
           </div>
@@ -1020,11 +944,14 @@ export default function CateringHomepage() {
       </section>
 
       {/* Featured Menus Section */}
-      <section className="py-24 px-6 lg:px-8 bg-gray-50">
+      <section className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">{t.menus.title}</h2>
-            <p className="text-gray-600 text-lg">{t.menus.description}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
+              {language === 'DE' ? 'MENÜS' : 'MENUS'}
+            </p>
+            <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display">{t.menus.title}</h2>
+            <p className="text-black/70 text-lg">{t.menus.description}</p>
           </div>
 
           {fetchError && !menus.length && (
@@ -1038,17 +965,17 @@ export default function CateringHomepage() {
             {featuredMenus.map((menu, index) => (
               <div
                 key={menu.id ?? index}
-                className="bg-white p-8 rounded-2xl hover:shadow-lg transition-all duration-300 border border-gray-200"
+                className="group bg-white p-8 rounded-2xl transition-all duration-300 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)]"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-medium text-gray-900 font-display">{menu.name}</h3>
+                  <h3 className="text-xl font-semibold text-black font-display">{menu.name}</h3>
                   {menu.price && (
-                    <span className="text-[#A69256] font-semibold">{menu.price}</span>
+                    <span className="text-black/70 font-semibold">{menu.price}</span>
                   )}
                 </div>
-                <p className="text-gray-600 mb-6 leading-relaxed">{menu.desc}</p>
+                <p className="text-black/70 mb-6 leading-relaxed">{menu.desc}</p>
                 <button
-                  className="text-[#A69256] font-medium inline-flex items-center gap-2 hover:gap-3 transition-all group"
+                  className="text-black font-semibold inline-flex items-center gap-2 transition-all group-hover:gap-3"
                   onClick={() => handleOrderClick(menu.productIds)}
                 >
                   {t.menus.cta}
@@ -1061,30 +988,206 @@ export default function CateringHomepage() {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-24 px-6 lg:px-8 bg-white">
+      <section id="testimonials" className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-4 font-display">{t.testimonials.title}</h2>
-            <p className="text-gray-600 text-lg">What our clients say</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
+              {language === 'DE' ? 'FEEDBACK' : 'FEEDBACK'}
+            </p>
+            <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display lux-reveal lux-type" data-lux-delay="60">{t.testimonials.title}</h2>
+            <p className="text-black/70 text-lg lux-reveal lux-type" data-lux-delay="120">What our clients say</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {t.testimonials.items.map((testimonial, index) => (
               <div
                 key={index}
-                className="bg-gray-50 p-8 rounded-2xl border border-gray-200"
+                className="bg-white p-8 rounded-2xl border border-black/10 hover:border-black/20 transition-colors"
               >
-                <p className="text-gray-700 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
-                <p className="text-gray-900 font-medium font-display">{testimonial.name}</p>
-                <p className="text-sm text-[#A69256]">{testimonial.role}</p>
+                <p className="text-black/80 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
+                <p className="text-black font-semibold font-display">{testimonial.name}</p>
+                <p className="text-sm text-black/60">{testimonial.role}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Lookbook + Reels */}
+      <section id="lookbook" className="py-24 px-6 lg:px-8 bg-[#F2F2F2] border-t border-black/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between mb-12">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
+                {language === 'DE' ? 'LOOKBOOK' : 'LOOKBOOK'}
+              </p>
+              <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display lux-reveal lux-type" data-lux-delay="60">
+                {language === 'DE' ? 'Signature Moments' : 'Signature moments'}
+              </h2>
+              <p className="text-black/70 text-lg lux-reveal lux-type" data-lux-delay="120">
+                {language === 'DE'
+                  ? 'Ein Einblick in Private Dining, Brand Launches und unvergessliche Feiern.'
+                  : 'A glimpse into private dining, brand launches, and unforgettable celebrations.'}
+              </p>
+            </div>
+
+            <a
+              href="https://www.instagram.com/lacannellecatering/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white hover:bg-black/90 transition-colors"
+            >
+              {language === 'DE' ? 'Reels ansehen' : 'Watch reels'}
+              <ArrowUpRight size={16} />
+            </a>
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-6">
+            <a
+              href="https://www.instagram.com/lacannellecatering/"
+              target="_blank"
+              rel="noreferrer"
+              className="group relative lg:col-span-7 overflow-hidden rounded-3xl border border-black/10 bg-black aspect-[16/10] shadow-[0_24px_70px_rgba(0,0,0,0.12)]"
+            >
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 will-change-transform group-hover:scale-[1.04]"
+                style={{ backgroundImage: "url('/images/exclusive-dining.jpg')" }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+              <div className="absolute left-6 bottom-6 right-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
+                  {language === 'DE' ? 'Private Dining' : 'Private dining'}
+                </p>
+                <h3 className="mt-2 text-2xl font-semibold text-white font-display">
+                  {language === 'DE' ? 'Cinematic service, bis ins Detail.' : 'Cinematic service, down to the detail.'}
+                </h3>
+              </div>
+              <div className="absolute top-6 right-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white">
+                <PlayCircle size={16} />
+                {language === 'DE' ? 'Ansehen' : 'View'}
+              </div>
+            </a>
+
+            <div className="lg:col-span-5 grid sm:grid-cols-2 lg:grid-cols-1 gap-6">
+              {[
+                {
+                  image: '/images/restaurant-interior.jpg',
+                  label: language === 'DE' ? 'Brand Events' : 'Brand events',
+                  title: language === 'DE' ? 'Premium Settings. Klare Ästhetik.' : 'Premium settings. Clean aesthetic.',
+                },
+                {
+                  image: '/images/community-feast.jpg',
+                  label: language === 'DE' ? 'Celebrations' : 'Celebrations',
+                  title: language === 'DE' ? 'Warm, großzügig, unvergesslich.' : 'Warm, generous, unforgettable.',
+                },
+              ].map((card) => (
+                <a
+                  key={card.image}
+                  href="https://www.instagram.com/lacannellecatering/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group relative overflow-hidden rounded-3xl border border-black/10 bg-black aspect-[16/12] shadow-[0_18px_55px_rgba(0,0,0,0.10)]"
+                >
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 will-change-transform group-hover:scale-[1.04]"
+                    style={{ backgroundImage: `url('${card.image}')` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
+                  <div className="absolute left-6 bottom-6 right-6">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">{card.label}</p>
+                    <h3 className="mt-2 text-xl font-semibold text-white font-display">{card.title}</h3>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Concierge CTA */}
+      <section className="py-24 px-6 lg:px-8 bg-black text-white border-t border-white/10">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
+          <div className="lg:col-span-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3">
+              {language === 'DE' ? 'CONCIERGE' : 'CONCIERGE'}
+            </p>
+            <h2 className="text-4xl lg:text-5xl font-semibold text-white mb-5 font-display lux-reveal lux-type" data-lux-delay="60">
+              {language === 'DE' ? 'Planung, perfekt umgesetzt.' : 'Planning, perfected.'}
+            </h2>
+            <p className="text-white/75 text-lg leading-relaxed lux-reveal lux-type" data-lux-delay="120">
+              {language === 'DE'
+                ? 'Von der Menükuration bis zum Service vor Ort: Wir führen Ihr Event mit ruhiger Präzision — elegant, zuverlässig, diskret.'
+                : 'From menu curation to on-site service, we guide your event with calm precision — elegant, reliable, discreet.'}
+            </p>
+
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => router.push('/order')}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-black hover:brightness-95 transition-all"
+              >
+                {language === 'DE' ? 'Jetzt bestellen' : 'Order now'}
+                <ChevronRight size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/contact')}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-white hover:bg-white/10 transition-colors"
+              >
+                {language === 'DE' ? 'Angebot anfragen' : 'Request a quote'}
+                <ArrowUpRight size={18} className="text-white/80" />
+              </button>
+            </div>
+
+            <div className="mt-10 grid sm:grid-cols-2 gap-4">
+              {[
+                {
+                  title: language === 'DE' ? 'Antwort in 48h' : '48h response',
+                  desc: language === 'DE' ? 'Schnell, verbindlich, persönlich.' : 'Fast, reliable, personal.',
+                },
+                {
+                  title: language === 'DE' ? 'White-glove Service' : 'White-glove service',
+                  desc: language === 'DE' ? 'Team, Setup, Ablauf — aus einer Hand.' : 'Team, setup, flow — end to end.',
+                },
+                {
+                  title: language === 'DE' ? 'Saisonale Menüs' : 'Seasonal menus',
+                  desc: language === 'DE' ? 'Modern, fein, mit Handschrift.' : 'Modern, refined, signature-led.',
+                },
+                {
+                  title: language === 'DE' ? 'Transparente Angebote' : 'Clear proposals',
+                  desc: language === 'DE' ? 'Details, Kosten, Timing — sauber erklärt.' : 'Details, cost, timing — explained.',
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <p className="text-sm font-semibold text-white">{item.title}</p>
+                  <p className="mt-1 text-sm text-white/70">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="lg:col-span-6">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div
+                className="aspect-[4/5] bg-cover bg-center"
+                style={{ backgroundImage: "url('/images/restaurant-hero.jpg')" }}
+              />
+              <div className="absolute left-8 bottom-8 right-8">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
+                  {language === 'DE' ? 'Haute Catering' : 'Haute catering'}
+                </p>
+                <p className="mt-2 text-2xl font-semibold text-white font-display">
+                  {language === 'DE' ? 'Modern technique, generous hospitality.' : 'Modern technique, generous hospitality.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="bg-[#404040] text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
+      <footer className="bg-black text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div>

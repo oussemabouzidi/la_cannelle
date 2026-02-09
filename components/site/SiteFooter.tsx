@@ -20,7 +20,6 @@ type FooterLabels = {
 
 type NavLabels = {
   home: string;
-  about: string;
   services: string;
   menus: string;
   contact: string;
@@ -52,9 +51,6 @@ export default function SiteFooter({ footer, nav }: SiteFooterProps) {
               </Link>
               <Link href="/menus" className="text-white/70 hover:text-white transition-colors">
                 {nav.menus}
-              </Link>
-              <Link href="/about" className="text-white/70 hover:text-white transition-colors">
-                {nav.about}
               </Link>
               <Link href="/contact" className="text-white/70 hover:text-white transition-colors">
                 {nav.contact}

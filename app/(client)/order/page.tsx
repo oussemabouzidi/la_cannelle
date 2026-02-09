@@ -10,7 +10,6 @@ import { systemApi, type ClosedDate } from '@/lib/api/system';
 import { servicesApi, type Service } from '@/lib/api/services';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { commonTranslations } from '@/lib/translations/common';
-import { ThemeToggle } from '@/components/site/ThemeToggle';
 import { 
   Menu, X, ChevronRight, ChevronLeft, Phone, Mail, MapPin, 
   Clock, Users, Calendar, CreditCard, CheckCircle, 
@@ -151,21 +150,21 @@ const LuxurySelect = ({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-4 py-3 text-left text-sm border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 shadow-sm flex items-center justify-between gap-3 dark:bg-[#2A2A2A]/70 dark:text-[#EDEDED] dark:border-white/10"
+        className="w-full px-4 py-3 text-left text-sm border border-black/10 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 shadow-sm flex items-center justify-between gap-3 hover:border-black/20"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className={selected ? 'text-gray-900 dark:text-[#EDEDED]' : 'text-gray-500 dark:text-[#B0B0B0]'}>
+        <span className={selected ? 'text-gray-900' : 'text-gray-500'}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown
           size={18}
-          className={`shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-amber-600 dark:text-[#A69256]`}
+          className={`shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} text-black/50`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-2 z-50 rounded-xl border border-amber-200/70 bg-white/90 backdrop-blur-md shadow-[0_18px_48px_rgba(0,0,0,0.18)] overflow-hidden dark:bg-[#1C1C1C]/90 dark:border-white/10">
+        <div className="absolute left-0 right-0 mt-2 z-50 rounded-xl border border-black/10 bg-white shadow-[0_18px_48px_rgba(0,0,0,0.14)] overflow-hidden">
           <div className="max-h-64 overflow-auto py-1">
             {options.map((option) => {
               const isSelected = option.value === value;
@@ -179,14 +178,14 @@ const LuxurySelect = ({
                   }}
                   className={`w-full px-4 py-2.5 text-left text-sm flex items-center justify-between gap-3 transition-colors ${
                     isSelected
-                      ? 'bg-amber-50 text-gray-900 dark:bg-white/10 dark:text-[#EDEDED]'
-                      : 'text-gray-700 hover:bg-amber-50/70 hover:text-gray-900 dark:text-[#EDEDED] dark:hover:bg-white/10'
+                      ? 'bg-black/5 text-gray-900'
+                      : 'text-gray-700 hover:bg-black/5 hover:text-gray-900'
                   }`}
                   role="option"
                   aria-selected={isSelected}
                 >
                   <span className="truncate">{option.label}</span>
-                  {isSelected && <Check size={16} className="text-amber-600 dark:text-[#A69256]" />}
+                  {isSelected && <Check size={16} className="text-amber-600" />}
                 </button>
               );
             })}
@@ -388,13 +387,13 @@ const DatePicker = ({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full pl-12 pr-4 py-3 text-left text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
+        className="w-full pl-12 pr-4 py-3 text-left text-base border border-black/10 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500 shadow-sm hover:border-black/20"
       >
         {displayValue || placeholder}
       </button>
       <Calendar className="absolute left-4 top-3.5 text-amber-500" size={20} />
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-4 z-20 dark:bg-[#1C1C1C]/90 dark:border-white/10">
+        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-black/10 bg-white shadow-xl p-4 z-20">
           <div className="flex items-center justify-between mb-4">
             <button
               type="button"
@@ -402,8 +401,8 @@ const DatePicker = ({
               disabled={!canGoPrev}
               className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 canGoPrev
-                  ? 'hover:bg-amber-50 hover:text-gray-900 text-gray-700 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]'
-                  : 'text-gray-300 cursor-not-allowed dark:text-white/30'
+                  ? 'hover:bg-black/5 hover:text-gray-900 text-gray-700'
+                  : 'text-gray-300 cursor-not-allowed'
               }`}
             >
               <ChevronLeft size={16} />
@@ -412,7 +411,7 @@ const DatePicker = ({
             <button
               type="button"
               onClick={() => setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-50 hover:text-gray-900 text-gray-700 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]"
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/5 hover:text-gray-900 text-gray-700"
             >
               <ChevronRight size={16} />
             </button>
@@ -448,10 +447,10 @@ const DatePicker = ({
                     isPast
                       ? 'text-gray-300 cursor-not-allowed'
                     : isSelected
-                      ? 'bg-amber-600 text-white shadow-md'
+                      ? 'bg-amber-600 text-black shadow-md'
                     : isToday
-                      ? 'border border-amber-400 text-amber-700 dark:border-[#A69256]/45 dark:text-[#CDA15B]'
-                      : 'hover:bg-amber-50 hover:text-gray-900 text-gray-700 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]'
+                      ? 'border border-amber-400 text-amber-700'
+                      : 'hover:bg-black/5 hover:text-gray-900 text-gray-700'
                   }`}
                 >
                   {dayNumber}
@@ -496,13 +495,13 @@ const TimePicker = ({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full pl-12 pr-4 py-3 text-left text-base border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-amber-50/60 text-gray-900 placeholder:text-gray-500 shadow-sm"
+        className="w-full pl-12 pr-4 py-3 text-left text-base border border-black/10 rounded-xl focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all duration-300 bg-white text-gray-900 placeholder:text-gray-500 shadow-sm hover:border-black/20"
       >
         {value || placeholder}
       </button>
       <Clock className="absolute left-4 top-3.5 text-amber-500" size={20} />
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-amber-200 bg-white shadow-xl p-2 z-20 dark:bg-[#1C1C1C]/90 dark:border-white/10">
+        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-black/10 bg-white shadow-xl p-2 z-20">
           <div className="max-h-56 overflow-y-auto">
             {slots.map((slot) => {
               const isSelected = slot === value;
@@ -516,8 +515,8 @@ const TimePicker = ({
                   }}
                   className={`w-full px-4 py-2 text-left text-sm rounded-lg transition-colors ${
                     isSelected
-                      ? 'bg-amber-600 text-white'
-                      : 'text-gray-700 hover:bg-amber-50 hover:text-gray-900 dark:text-[#EDEDED] dark:hover:bg-white/10 dark:hover:text-[#EDEDED]'
+                      ? 'bg-amber-600 text-black'
+                      : 'text-gray-700 hover:bg-black/5 hover:text-gray-900'
                   }`}
                 >
                   {slot}
@@ -677,6 +676,8 @@ export default function OrderPage() {
   // ============================================================================
   const [currentStep, setCurrentStep] = useState(1);
   const [currentMenuSubStep, setCurrentMenuSubStep] = useState(0);
+  const stepsBarRef = useRef<HTMLDivElement | null>(null);
+  const [stepsBarHeight, setStepsBarHeight] = useState(140);
   const [isVisible, setIsVisible] = useState(false);
   const [quantities, setQuantities] = useState({});
   const [selectedAccessories, setSelectedAccessories] = useState<any[]>([]);
@@ -2065,6 +2066,49 @@ export default function OrderPage() {
       return;
     }
 
+    // Step 2 has sub-steps (menu categories). Advance within the menu step first.
+    if (currentStep === 2) {
+      // If user is still on the menu selection grid, "Next" should enter dish selection.
+      if (showMenuSelection) {
+        const err = getStepValidationError(2);
+        if (err) {
+          showNotification('error', err, 3000);
+          return;
+        }
+        if (pendingMenuId) {
+          setQuantities({});
+          setOrderData((prev: any) => {
+            const previousSelected = prev.selectedMenu ? Number(prev.selectedMenu) : null;
+            if (previousSelected === Number(pendingMenuId)) {
+              return { ...prev, selectedMenu: Number(pendingMenuId) };
+            }
+            return {
+              ...prev,
+              selectedMenu: Number(pendingMenuId),
+              selectedFingerfoods: [],
+              selectedStarters: [],
+              selectedSoups: [],
+              selectedMains: [],
+              selectedSides: [],
+              selectedDesserts: [],
+              selectedDrinks: []
+            };
+          });
+        }
+        setCurrentMenuSubStep(0);
+        setShowMenuSelection(false);
+        return;
+      }
+
+      if (dynamicMenuSteps.length > 0 && currentMenuSubStep < dynamicMenuSteps.length - 1) {
+        if (!validateMenuSubStepsUpTo(currentMenuSubStep)) {
+          return;
+        }
+        setCurrentMenuSubStep((prev) => Math.min(prev + 1, dynamicMenuSteps.length - 1));
+        return;
+      }
+    }
+
     if (!validateStepsUpTo(currentStep)) {
       return;
     }
@@ -2104,6 +2148,20 @@ export default function OrderPage() {
     } else {
       setCurrentStep(prev => Math.max(prev - 1, 1));
     }
+  };
+
+  const prevStepFloating = () => {
+    if (currentStep === 2) {
+      if (!showMenuSelection) {
+        if (currentMenuSubStep > 0) {
+          setCurrentMenuSubStep((prev) => Math.max(0, prev - 1));
+          return;
+        }
+        setShowMenuSelection(true);
+        return;
+      }
+    }
+    prevStep();
   };
   
   const handleSubmitOrder = async () => {
@@ -2597,10 +2655,10 @@ export default function OrderPage() {
     return (
         <div className="space-y-8">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-[#404040] mb-4 font-elegant">
+          <h2 className="text-3xl font-bold text-black mb-4 font-elegant">
             {t.menuSelection.title}
           </h2>
-          <p className="text-[#404040]/70 text-lg">
+          <p className="text-black/70 text-lg">
             {t.menuSelection.subtitle}
           </p>
         </div>
@@ -2613,7 +2671,7 @@ export default function OrderPage() {
               ? menu.menuProducts.length
               : 0;
             const cardClassName =
-              'group w-full max-w-[26rem] h-[34rem] rounded-3xl border border-white/40 ring-1 ring-black/5 overflow-hidden transition-all duration-300 text-left bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.10)] hover:shadow-[0_30px_90px_rgba(0,0,0,0.14)] hover:-translate-y-0.5 flex flex-col ' +
+              'group w-full max-w-[26rem] min-h-[34rem] rounded-3xl border border-white/40 ring-1 ring-black/5 overflow-hidden transition-all duration-300 text-left bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.10)] hover:shadow-[0_30px_90px_rgba(0,0,0,0.14)] hover:-translate-y-0.5 flex flex-col ' +
               ((pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null) === Number(menu.id)
                 ? 'border-[#A69256] ring-2 ring-[#A69256]/25'
                 : menu.isActive
@@ -2646,7 +2704,7 @@ export default function OrderPage() {
                     </div>
                   )}
                 </div>
-                  <div className="p-6 flex flex-col gap-4 flex-1 min-h-0">
+                  <div className="p-6 flex flex-col gap-4">
                     <div>
                     <h3 className="text-2xl font-semibold text-[#404040] font-elegant">
                       {menu.name}
@@ -2655,7 +2713,7 @@ export default function OrderPage() {
                       {menu.description}
                     </p>
                     </div>
-                  <div className="space-y-2 text-sm text-[#404040]/80 flex-1 min-h-0 overflow-y-auto pr-1">
+                  <div className="space-y-2 text-sm text-[#404040]/80">
                     {steps.map((step: any, index: number) => (
                       <div key={`${menu.id}-step-${index}`} className="flex items-center gap-3 rounded-xl bg-white/60 backdrop-blur-sm border border-black/5 px-3 py-2">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#A69256]/15 text-[#A69256] border border-[#A69256]/20">
@@ -2762,11 +2820,14 @@ export default function OrderPage() {
       }
     };
     
-    return (
+        return (
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Order Overview - Right Side */}
-        <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 rounded-3xl border border-amber-100/60 bg-white p-6 shadow-sm">
+        <div className="hidden lg:block lg:col-span-1 lg:order-2">
+          <div
+            className="lg:sticky rounded-3xl border border-amber-100/60 bg-white p-6 shadow-sm"
+            style={{ top: stepsBarHeight + 16 }}
+          >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-900">{t.productSelection.orderSummary}</h3>
               <button
@@ -2876,7 +2937,7 @@ export default function OrderPage() {
               {/* Items Summary */}
               <div className="pt-4 border-t border-gray-200">
                 <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <div className="space-y-3 pr-2">
                   {activeCategoryKeys.map((key) => {
                     const items = getItemsForStepCategory(key);
                     const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
@@ -2953,7 +3014,7 @@ export default function OrderPage() {
         </div>
         
         {/* Product Selection - Left Side */}
-        <div className="lg:col-span-2 lg:order-1">
+        <div className="lg:col-span-2 lg:order-1 lg:max-h-[calc(100dvh-var(--order-top)-2.5rem)] lg:overflow-y-auto lg:pr-3 lg:pb-24">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -3022,7 +3083,7 @@ export default function OrderPage() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-amber-50 to-stone-100 flex items-center justify-center text-gray-500 text-sm">
+                          <div className="w-full h-full bg-gradient-to-br from-black/5 to-white flex items-center justify-center text-gray-500 text-sm">
                             {ui.noImage}
                           </div>
                         )}
@@ -3286,8 +3347,11 @@ export default function OrderPage() {
     return (
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Order Overview - Right Side */}
-        <div className="lg:col-span-1 lg:order-2">
-          <div className="sticky top-32 rounded-3xl border border-amber-100/60 bg-white p-6 shadow-sm">
+        <div className="hidden lg:block lg:col-span-1 lg:order-2">
+          <div
+            className="lg:sticky rounded-3xl border border-amber-100/60 bg-white p-6 shadow-sm"
+            style={{ top: stepsBarHeight + 16 }}
+          >
             <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
             
             <div className="space-y-6">
@@ -3320,7 +3384,7 @@ export default function OrderPage() {
               {/* Items Summary */}
               <div className="pt-4 border-t border-gray-200">
                 <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">Selected Items</h4>
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <div className="space-y-3 pr-2">
                   {activeCategoryKeys.map((key) => {
                     const items = getItemsForStepCategory(key);
                     const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
@@ -3430,7 +3494,7 @@ export default function OrderPage() {
         </div>
         
         {/* Accessories Selection - Left Side */}
-        <div className="lg:col-span-2 lg:order-1">
+        <div className="lg:col-span-2 lg:order-1 lg:max-h-[calc(100dvh-var(--order-top)-2.5rem)] lg:overflow-y-auto lg:pr-3 lg:pb-24">
           <div className="space-y-8">
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold text-gray-900 mb-3">
@@ -3656,8 +3720,11 @@ export default function OrderPage() {
             </div>
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Order Summary - Right Side */}
-              <div className="lg:col-span-1 lg:order-2">
-                <div className="sticky top-32 bg-white rounded-3xl shadow-sm border border-stone-200 p-6">
+              <div className="hidden lg:block lg:col-span-1 lg:order-2">
+                <div
+                  className="lg:sticky bg-white rounded-3xl shadow-sm border border-black/10 p-6"
+                  style={{ top: stepsBarHeight + 16 }}
+                >
                   <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
                   
                   <div className="space-y-6">
@@ -3790,8 +3857,8 @@ export default function OrderPage() {
               </div>
               
               {/* Invoice Information - Left Side */}
-              <div className="lg:col-span-2 lg:order-1">
-                <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
+              <div className="lg:col-span-2 lg:order-1 lg:max-h-[calc(100dvh-var(--order-top)-2.5rem)] lg:overflow-y-auto lg:pr-3 lg:pb-24">
+                <div className="bg-white rounded-3xl shadow-sm border border-black/10 p-8">
                   <div className="space-y-6">
                     {/* Invoice Details */}
                     <div>
@@ -3987,8 +4054,11 @@ export default function OrderPage() {
             </div>
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Order Summary - Right Side */}
-              <div className="lg:col-span-1 lg:order-2">
-                <div className="sticky top-32 bg-white rounded-3xl shadow-sm border border-stone-200 p-6">
+              <div className="hidden lg:block lg:col-span-1 lg:order-2">
+                <div
+                  className="lg:sticky bg-white rounded-3xl shadow-sm border border-black/10 p-6"
+                  style={{ top: stepsBarHeight + 16 }}
+                >
                   <h3 className="text-xl font-bold text-gray-900 mb-6">{t.productSelection.orderSummary}</h3>
                   
                   <div className="space-y-6">
@@ -4104,8 +4174,8 @@ export default function OrderPage() {
               </div>
               
               {/* Payment Form - Left Side */}
-              <div className="lg:col-span-2 lg:order-1">
-                <div className="bg-white rounded-3xl shadow-sm border border-stone-200 p-8">
+              <div className="lg:col-span-2 lg:order-1 lg:max-h-[calc(100dvh-var(--order-top)-2.5rem)] lg:overflow-y-auto lg:pr-3 lg:pb-24">
+                <div className="bg-white rounded-3xl shadow-sm border border-black/10 p-8">
                   <div className="space-y-6">
                     {/* Payment Method Selection */}
                     <div>
@@ -4987,11 +5057,36 @@ export default function OrderPage() {
   // ============================================================================
   // MAIN RENDER
   // ============================================================================
+
+  useEffect(() => {
+    const el = stepsBarRef.current;
+    if (!el) return;
+    const update = () => {
+      const next = Math.ceil(el.getBoundingClientRect().height);
+      if (next > 0) setStepsBarHeight(next);
+    };
+    update();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => update());
+      ro.observe(el);
+    }
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      ro?.disconnect();
+    };
+  }, [currentStep, dynamicMenuSteps.length]);
+
+  const dockGuestCount = parseInt(orderData.guestCount) || 0;
+  const dockPricingGuestCount = getEffectiveGuestCount();
+  const dockLocation = `${orderData.postalCode || ui.notSpecified}${orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}`;
   
   return (
-    <div className="min-h-screen bg-[#F2F2F2] flex flex-col overflow-x-hidden">
+    <div className="order-theme min-h-screen bg-[#F2F2F2] flex flex-col overflow-x-hidden">
       {notification && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed right-6 z-[70]" style={{ top: stepsBarHeight + 16 }}>
           <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
             {notification.message}
           </div>
@@ -5065,16 +5160,47 @@ export default function OrderPage() {
         }
         
         ::-webkit-scrollbar-track {
-          background: #f1f1f1;
+          background: rgba(13, 13, 13, 0.06);
         }
         
         ::-webkit-scrollbar-thumb {
-          background: #d97706;
+          background: #A69256;
           border-radius: 3px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-          background: #b45309;
+          background: #0D0D0D;
+        }
+
+        /* Align legacy grays with the client theme (black/white/gold) */
+        .order-theme [class~="text-gray-900"] { color: #0D0D0D !important; }
+        .order-theme [class~="text-gray-800"] { color: rgba(13, 13, 13, 0.88) !important; }
+        .order-theme [class~="text-gray-700"] { color: rgba(13, 13, 13, 0.78) !important; }
+        .order-theme [class~="text-gray-600"] { color: rgba(13, 13, 13, 0.66) !important; }
+        .order-theme [class~="text-gray-500"] { color: rgba(13, 13, 13, 0.55) !important; }
+        .order-theme [class~="text-gray-400"] { color: rgba(13, 13, 13, 0.44) !important; }
+
+        /* Unify hardcoded legacy hex utilities (keep black/white crisp) */
+        .order-theme [class*="text-[#404040]"] { color: #0D0D0D !important; }
+        .order-theme [class*="text-[#404040]/"] { color: rgba(13, 13, 13, 0.72) !important; }
+        .order-theme [class*="text-[#A6A6A6]"] { color: rgba(13, 13, 13, 0.44) !important; }
+        .order-theme [class*="text-[#A6A6A6]/"] { color: rgba(13, 13, 13, 0.44) !important; }
+        .order-theme [class*="border-[#A6A6A6]"] { border-color: rgba(13, 13, 13, 0.10) !important; }
+        .order-theme [class*="border-[#A69256]"] { border-color: rgba(166, 146, 86, 0.35) !important; }
+
+        .order-theme [class~="border-gray-100"],
+        .order-theme [class~="border-gray-200"],
+        .order-theme [class~="border-gray-300"] {
+          border-color: rgba(13, 13, 13, 0.10) !important;
+        }
+
+        .order-theme [class~="bg-gray-50"],
+        .order-theme [class~="bg-gray-50/70"],
+        .order-theme [class~="bg-gray-50/60"],
+        .order-theme [class~="bg-gray-100"],
+        .order-theme [class~="bg-gray-100/70"],
+        .order-theme [class~="bg-gray-100/60"] {
+          background-color: rgba(13, 13, 13, 0.03) !important;
         }
         
         /* Ensure input text is visible */
@@ -5108,6 +5234,7 @@ export default function OrderPage() {
 
         .bg-amber-600 {
           background-color: #A69256 !important;
+          color: #0D0D0D !important;
         }
 
         .hover\\:bg-amber-700:hover,
@@ -5119,15 +5246,24 @@ export default function OrderPage() {
         [class~="bg-amber-50/60"],
         [class~="bg-amber-50/70"],
         [class~="bg-amber-50/80"] {
-          background-color: rgba(166, 146, 86, 0.10) !important;
+          background-color: rgba(13, 13, 13, 0.02) !important;
+        }
+
+        .hover\\:bg-amber-50:hover,
+        .hover\\:bg-amber-50\\/70:hover,
+        .hover\\:bg-amber-50\\/80:hover {
+          background-color: rgba(13, 13, 13, 0.03) !important;
         }
 
         .border-amber-100,
         .border-amber-200,
-        .border-amber-300,
+        .border-amber-300 {
+          border-color: rgba(13, 13, 13, 0.12) !important;
+        }
+
         .border-amber-400,
         .border-amber-500 {
-          border-color: #A6A6A6 !important;
+          border-color: rgba(166, 146, 86, 0.70) !important;
         }
 
         .focus\\:border-amber-500:focus,
@@ -5149,64 +5285,18 @@ export default function OrderPage() {
       `}</style>
       
       {/* Enhanced Top Navigation with Steps */}
-      <div className="group fixed top-0 left-0 right-0 bg-[#404040]/75 supports-[backdrop-filter]:bg-[#404040]/65 backdrop-blur-xl z-40 shadow-[0_10px_30px_rgba(0,0,0,0.12)] overflow-hidden max-h-[52px] hover:max-h-[320px] focus-within:max-h-[320px] transition-[max-height] duration-300">
+      <div
+        ref={stepsBarRef}
+        className="fixed top-0 left-0 right-0 bg-black/85 supports-[backdrop-filter]:bg-black/70 backdrop-blur-xl z-40 border-b border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Language Row */}
-          <div className="flex justify-between items-center py-1.5">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleBackToHome}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#F2F2F2] hover:text-[#A69256] hover:bg-white/10 transition-colors"
-              >
-                <ArrowLeft size={14} />
-                {t.buttons.backToHome}
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={nextStep}
-                disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  isOrderingPaused || (isClosedDate && currentStep >= 1)
-                    ? 'bg-white/10 text-[#F2F2F2]/40 cursor-not-allowed'
-                    : 'bg-[#A69256] text-[#F2F2F2] hover:bg-[#0D0D0D]'
-                } group-hover:opacity-0 group-hover:pointer-events-none group-focus-within:opacity-0 group-focus-within:pointer-events-none transition-opacity duration-200`}
-                aria-label={currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
-              >
-                <span className="hidden sm:inline">
-                  {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
-                </span>
-                <ChevronRight size={14} className="sm:ml-0.5" />
-              </button>
-
-              <ThemeToggle className="px-3 py-1.5 text-xs rounded-full border border-white/20 bg-white/10 text-[#F2F2F2] shadow-none hover:bg-white/10 hover:text-[#A69256] hover:border-[#A69256] dark:border-white/20 dark:bg-white/10 dark:text-[#F2F2F2]" />
-              <button
-                onClick={toggleLanguage}
-                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="h-8 w-10 text-xs font-medium border border-white/20 text-[#F2F2F2] bg-transparent rounded-full hover:border-[#A69256] hover:text-[#A69256] hover:bg-white/10 transition-colors inline-flex items-center justify-center"
-              >
-                <img
-                  src={
-                    language === 'EN'
-                      ? '/images/language/Flag_of_United_Kingdom-4096x2048.png'
-                      : '/images/language/Flag_of_Germany-4096x2453.png'
-                  }
-                  alt={language === 'EN' ? commonA11y.englishFlagAlt : commonA11y.germanFlagAlt}
-                  className="h-3.5 w-auto"
-                />
-              </button>
-            </div>
-          </div>
-          
-          <div className="pointer-events-none opacity-0 max-h-0 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:max-h-[320px] group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-focus-within:max-h-[320px] transition-[max-height,opacity] duration-300">
-            {/* Steps Progress Bar */}
-            <div className="border-t border-white/10 pt-1.5 pb-2.5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-[#F2F2F2] font-elegant">
+          {/* Steps Progress Bar */}
+          <div className="pt-2 pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="min-w-0 text-xs sm:text-sm font-semibold text-[#F2F2F2] font-elegant truncate">
                 {stepsConfig[currentStep - 1]?.label}
               </span>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={prevStep}
                   disabled={currentStep === 1}
@@ -5219,73 +5309,102 @@ export default function OrderPage() {
                   <ChevronLeft size={14} className="mr-1" />
                   {t.buttons.back}
                 </button>
-                
+
                 <button
-                 onClick={nextStep}
-                 disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
+                  onClick={nextStep}
+                  disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
                   className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors inline-flex items-center shadow-sm ${
                     isOrderingPaused || (isClosedDate && currentStep >= 1)
                       ? 'bg-white/10 text-[#F2F2F2]/40 cursor-not-allowed'
                       : 'bg-[#A69256] text-[#F2F2F2] hover:bg-[#0D0D0D]'
                   }`}
+                  aria-label={currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
                 >
-                 {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
-                 <ChevronRight size={14} className="ml-1" />
-               </button>
+                  {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
+                  <ChevronRight size={14} className="ml-1" />
+                </button>
               </div>
             </div>
-            
-            {/* Steps Navigation - Only 4 main steps now */}
-            <div className="flex items-center justify-start sm:justify-center gap-2 px-2 flex-nowrap overflow-x-auto overscroll-x-contain">
-              {stepsConfig.map((step, index) => {
-                const stepNumber = index + 1;
-                const isCurrent = stepNumber === currentStep;
-                const isCompleted = stepNumber < currentStep;
-                const canNavigate = canNavigateToStep(stepNumber);
-                
-                return (
-                  <React.Fragment key={step.key}>
-                    <button
-                      type="button"
-                      onClick={() => handleStepChange(stepNumber)}
-                      disabled={!canNavigate}
-                      className={`flex flex-col items-center min-w-0 px-1 transition-all duration-300 ${
-                        !canNavigate ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mb-1 transition-colors ${
-                          isCompleted
-                             ? 'border-amber-500 bg-amber-500'
-                           : isCurrent
-                            ? 'border-amber-500 bg-[#F2F2F2]'
-                            : 'border-white/20 bg-[#F2F2F2]'
-                        }`}
-                      >
-                        {isCompleted ? (
-                          <Check size={12} className="text-white" />
-                        ) : (
-                          <span className="w-2 h-2 rounded-full bg-amber-500" />
+
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={handleBackToHome}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#F2F2F2] hover:text-[#A69256] hover:bg-white/10 transition-colors"
+              >
+                <ArrowLeft size={14} />
+                <span className="hidden sm:inline">{t.buttons.backToHome}</span>
+              </button>
+
+              {/* Steps Navigation - Only 4 main steps now */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-start sm:justify-center gap-2 px-2 flex-nowrap overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {stepsConfig.map((step, index) => {
+                    const stepNumber = index + 1;
+                    const isCurrent = stepNumber === currentStep;
+                    const isCompleted = stepNumber < currentStep;
+                    const canNavigate = canNavigateToStep(stepNumber);
+
+                    return (
+                      <React.Fragment key={step.key}>
+                        <button
+                          type="button"
+                          onClick={() => handleStepChange(stepNumber)}
+                          disabled={!canNavigate}
+                          className={`flex flex-col items-center min-w-0 px-1 transition-all duration-300 ${
+                            !canNavigate ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mb-1 transition-colors ${
+                              isCompleted
+                                ? 'border-[#A69256] bg-[#A69256]'
+                                : isCurrent
+                                  ? 'border-[#A69256] bg-white/10'
+                                  : 'border-white/25 bg-white/10'
+                            }`}
+                          >
+                            {isCompleted ? (
+                              <Check size={12} className="text-white" />
+                            ) : (
+                              <span className="w-2 h-2 rounded-full bg-[#A69256]" />
+                            )}
+                          </div>
+                          <span
+                            className={`hidden sm:block text-[10px] font-semibold text-center whitespace-nowrap ${
+                              isCurrent ? 'text-[#A69256]' : isCompleted ? 'text-[#A69256]' : 'text-[#F2F2F2]/60'
+                            }`}
+                          >
+                            {step.label}
+                          </span>
+                        </button>
+                        {index < stepsConfig.length - 1 && (
+                          <div
+                            className={`h-0.5 flex-1 min-w-[50px] max-w-[130px] rounded-full transition-colors duration-300 ${
+                              stepNumber < currentStep ? 'bg-[#A69256]' : 'bg-white/15'
+                            }`}
+                          />
                         )}
-                      </div>
-                      <span
-                        className={`hidden sm:block text-[10px] font-semibold text-center whitespace-nowrap ${
-                          isCurrent ? 'text-amber-600' : isCompleted ? 'text-amber-600' : 'text-[#F2F2F2]/60'
-                        }`}
-                      >
-                        {step.label}
-                      </span>
-                    </button>
-                    {index < stepsConfig.length - 1 && (
-                      <div
-                        className={`h-0.5 flex-1 min-w-[50px] max-w-[130px] rounded-full transition-colors duration-300 ${
-                          stepNumber < currentStep ? 'bg-amber-500' : 'bg-white/15'
-                        }`}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-              })}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                onClick={toggleLanguage}
+                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
+                className="shrink-0 h-8 w-10 text-xs font-medium border border-white/20 text-[#F2F2F2] bg-transparent rounded-full hover:border-[#A69256] hover:text-[#A69256] hover:bg-white/10 transition-colors inline-flex items-center justify-center"
+              >
+                <img
+                  src={
+                    language === 'EN'
+                      ? '/images/language/Flag_of_United_Kingdom-4096x2048.png'
+                      : '/images/language/Flag_of_Germany-4096x2453.png'
+                  }
+                  alt={language === 'EN' ? commonA11y.englishFlagAlt : commonA11y.germanFlagAlt}
+                  className="h-3.5 w-auto"
+                />
+              </button>
             </div>
             
             {/* Menu Sub-steps Indicator (only shown when in menu step) */}
@@ -5313,21 +5432,21 @@ export default function OrderPage() {
                           }}
                           className={`flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
                             isCurrent
-                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              ? 'bg-white/10 text-white border border-white/15'
                             : isCompleted
-                              ? 'bg-green-100 text-green-800 border border-green-200'
-                              : 'bg-gray-100 text-gray-600 border border-gray-200'
+                              ? 'bg-[#A69256]/20 text-[#F2F2F2] border border-[#A69256]/35'
+                              : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
                           }`}
                         >
-                          <Icon size={12} className={isCurrent ? 'text-amber-600' : isCompleted ? 'text-green-600' : 'text-gray-500'} />
+                          <Icon size={12} className={isCurrent ? 'text-white' : isCompleted ? 'text-[#A69256]' : 'text-white/60'} />
                           <span>{step.label}</span>
                           {isCompleted && (
-                            <Check size={10} className="text-green-600 ml-1" />
+                            <Check size={10} className="text-[#A69256] ml-1" />
                           )}
                         </button>
                         {index < dynamicMenuSteps.length - 1 && (
                           <div className={`h-0.5 w-3 rounded-full ${
-                            index < currentMenuSubStep ? 'bg-green-500' : 'bg-white/15'
+                            index < currentMenuSubStep ? 'bg-[#A69256]' : 'bg-white/15'
                           }`} />
                         )}
                       </React.Fragment>
@@ -5337,20 +5456,21 @@ export default function OrderPage() {
               </div>
             )}
           </div>
-          </div>
         </div>
       </div>
+
+      {/* Spacer so fixed steps bar never covers content */}
+      <div aria-hidden style={{ height: stepsBarHeight }} />
       
       {/* Main Content */}
       <main className="flex-1">
         <div
-          className={`${
-            currentStep === 2 && dynamicMenuSteps.length > 0 ? 'pt-28' : 'pt-24'
-          } pb-16 px-4 sm:px-6 lg:px-8`}
+          className={`pt-6 ${currentStep === 1 ? 'pb-28' : 'pb-32 lg:pb-16'} px-4 sm:px-6 lg:px-8`}
+          style={{ ['--order-top' as any]: `${stepsBarHeight}px` }}
         >
           <div className="max-w-6xl mx-auto">
             {currentStep === 1 && (
-              <section className="mb-8 overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
+              <section className="mb-8 overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
                 <div className="relative">
                   <div className="absolute inset-0">
                     <img
@@ -5378,9 +5498,86 @@ export default function OrderPage() {
           </div>
         </div>
       </main>
+
+      {/* Floating Next CTA */}
+      {currentStep < stepsConfig.length && (
+        <div
+          data-order-next-fab
+          className={`fixed right-6 z-[60] ${
+            currentStep === 1 ? 'bottom-6' : 'bottom-24 lg:bottom-6'
+          }`}
+        >
+          <button
+            onClick={nextStep}
+            disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition-all ${
+              isOrderingPaused || (isClosedDate && currentStep >= 1)
+                ? 'bg-black/10 text-black/30 cursor-not-allowed shadow-none'
+                : 'bg-[#A69256] text-white hover:bg-black hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:scale-[0.98]'
+            }`}
+            aria-label={currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
+          >
+            {currentStep === stepsConfig.length ? ui.confirmOrder : t.buttons.next}
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* Floating Back CTA */}
+      {currentStep > 1 && (
+        <div
+          data-order-back-fab
+          className="fixed left-6 bottom-24 lg:bottom-6 z-[60]"
+        >
+          <button
+            type="button"
+            onClick={prevStepFloating}
+            className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition-all bg-white/90 supports-[backdrop-filter]:bg-white/75 backdrop-blur-xl text-[#0D0D0D] border border-black/10 hover:border-[#A69256]/50 hover:text-black hover:shadow-[0_16px_34px_rgba(0,0,0,0.18)] active:scale-[0.98]"
+            aria-label={t.buttons.back}
+          >
+            <ChevronLeft size={18} />
+            {t.buttons.back}
+          </button>
+        </div>
+      )}
+
+      {/* Floating Order Summary (mobile/tablet) */}
+      {currentStep !== 1 && (
+        <div
+          data-order-summary-dock
+          className="fixed left-4 right-4 bottom-6 z-[55] lg:hidden"
+        >
+          <div className="rounded-2xl border border-black/10 bg-white/90 supports-[backdrop-filter]:bg-white/75 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.14)] px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/50">
+                  {t.productSelection.orderSummary}
+                </div>
+                <div className="mt-2 space-y-1 text-xs text-black/70">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate">{t.eventInfo.date}:</span>
+                    <span className="font-semibold text-black">{orderData.eventDate || ui.notSpecified}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate">{t.eventInfo.guests}:</span>
+                    <span className="font-semibold text-black">
+                      {dockGuestCount}
+                      {dockPricingGuestCount !== dockGuestCount ? ` (${dockPricingGuestCount} min)` : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate">{t.eventInfo.location}:</span>
+                    <span className="font-semibold text-black truncate max-w-[55%] text-right">{dockLocation}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Footer */}
-      <footer className="bg-[#404040] text-[#F2F2F2] py-12 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
+      <footer className="bg-black text-[#F2F2F2] py-12 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-[#F2F2F2]/70 text-lg">&copy; 2025 La Cannelle Catering. All rights reserved.</p>
         </div>

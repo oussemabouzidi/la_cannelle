@@ -4,19 +4,20 @@
 
 :root {
   /* Luxury palette */
-  --background: #f2f2f2;
-  --foreground: #404040;
-  --lux-bg: #f2f2f2;
-  --lux-dark: #404040;
+  --background: #ffffff;
+  --foreground: #0d0d0d;
+  --accent: #a69256;
+  --lux-bg: #ffffff;
+  --lux-dark: #0d0d0d;
   --lux-muted: #a6a6a6;
   --lux-gold: #a69256;
   --lux-black: #0d0d0d;
   --lux-divider: #a6a6a6;
   --lux-surface: #ffffff;
   --lux-surface-2: #f9f9f9;
-  --lux-text-primary: #404040;
+  --lux-text-primary: #0d0d0d;
   --lux-text-secondary: #6b7280;
-  --lux-text-heading: #111827;
+  --lux-text-heading: #0d0d0d;
   --lux-border: rgba(166, 166, 166, 0.6);
   --lux-divider-dark: rgba(0, 0, 0, 0.08);
   --lux-gold-cta: #a69256;
@@ -292,11 +293,133 @@ html[data-theme="dark"] .bg-black\/60 {
   to { transform: scale(1.06); }
 }
 
+@keyframes modalEnter {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.985); filter: blur(2px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes softBounce {
+  0% { transform: translate3d(0, -2px, 0); }
+  35% { transform: translate3d(0, -6px, 0); }
+  70% { transform: translate3d(0, -3px, 0); }
+  100% { transform: translate3d(0, -4px, 0); }
+}
+
+@keyframes typeReveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes caretBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
 .animate-fade-in-up { animation: fadeInUp var(--lux-slow) var(--lux-ease) both; animation-delay: var(--lux-delay, 0ms); }
 .animate-fade-in-down { animation: fadeInDown var(--lux-slow) var(--lux-ease) both; animation-delay: var(--lux-delay, 0ms); }
 .animate-fade-in-left { animation: fadeInLeft var(--lux-slow) var(--lux-ease) both; animation-delay: var(--lux-delay, 0ms); }
 .animate-fade-in-right { animation: fadeInRight var(--lux-slow) var(--lux-ease) both; animation-delay: var(--lux-delay, 0ms); }
 .animate-scale-in { animation: scaleIn 520ms var(--lux-ease) both; animation-delay: var(--lux-delay, 0ms); }
+
+.lux-type {
+  position: relative;
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lux-modal {
+    animation: modalEnter 520ms var(--lux-ease) both;
+  }
+  .lux-type {
+    clip-path: inset(0 100% 0 0);
+  }
+  .lux-reveal.lux-in.lux-type {
+    animation: typeReveal 1.05s var(--lux-ease) both;
+    animation-delay: var(--lux-delay, 0ms);
+  }
+  .lux-type-run {
+    animation: typeReveal 1.05s var(--lux-ease) both;
+    animation-delay: var(--lux-delay, 0ms);
+  }
+  .lux-type-caret::after {
+    content: "";
+    position: absolute;
+    right: -0.22em;
+    top: 0.12em;
+    height: 1em;
+    width: 1px;
+    background: currentColor;
+    opacity: 0.7;
+    animation: caretBlink 900ms step-end infinite;
+  }
+}
+
+@keyframes marqueeLtr {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+.lux-marquee {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.lux-marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  gap: 3rem;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lux-marquee-track {
+    animation: marqueeLtr var(--lux-marquee-duration, 28s) linear infinite;
+  }
+}
+
+.lux-marquee:hover .lux-marquee-track {
+  animation-play-state: paused;
+}
+
+.lux-marquee-item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(166, 146, 86, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  opacity: 0.92;
+  transition: opacity var(--lux-med) var(--lux-ease), background-color var(--lux-med) var(--lux-ease), border-color var(--lux-med) var(--lux-ease), box-shadow var(--lux-med) var(--lux-ease);
+}
+
+.lux-marquee-item:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(166, 146, 86, 0.28);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22), 0 0 18px rgba(166, 146, 86, 0.16);
+}
+
+.lux-marquee-item img {
+  height: 34px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+  filter: none !important;
+  -webkit-filter: none !important;
+  opacity: 0.95;
+  transition: filter var(--lux-med) var(--lux-ease), opacity var(--lux-med) var(--lux-ease), transform var(--lux-med) var(--lux-ease);
+}
+
+.lux-marquee-item:hover img {
+  filter: none !important;
+  -webkit-filter: none !important;
+  opacity: 1;
+  transform: translate3d(0, -1px, 0);
+}
 
 .lux-reveal {
   opacity: 0;
@@ -343,6 +466,24 @@ html[data-theme="dark"] .bg-black\/60 {
   }
 }
 
+/* Premium hover for black buttons */
+@media (prefers-reduced-motion: no-preference) {
+  button[class~="bg-black"],
+  a[class~="bg-black"] {
+    transition: transform var(--lux-med) var(--lux-ease), box-shadow var(--lux-med) var(--lux-ease), background-color var(--lux-med) var(--lux-ease);
+    will-change: transform, box-shadow;
+  }
+  button[class~="bg-black"]:hover,
+  a[class~="bg-black"]:hover {
+    transform: translate3d(0, -1px, 0) scale(1.01);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22), 0 0 16px rgba(166, 146, 86, 0.14);
+  }
+  button[class~="bg-black"]:active,
+  a[class~="bg-black"]:active {
+    transform: translate3d(0, 0, 0) scale(0.995);
+  }
+}
+
 .lux-card {
   transition: transform var(--lux-med) var(--lux-ease), box-shadow var(--lux-med) var(--lux-ease);
   will-change: transform, box-shadow;
@@ -363,7 +504,8 @@ html[data-theme="dark"] .bg-black\/60 {
 
 @media (prefers-reduced-motion: no-preference) {
   .lux-scrolltop:hover {
-    transform: translate3d(0, -2px, 0);
+    transform: translate3d(0, -4px, 0);
+    animation: softBounce 780ms var(--lux-ease) both;
     box-shadow: 0 14px 40px rgba(0, 0, 0, 0.16), 0 0 18px rgba(166, 146, 86, 0.28);
   }
 }

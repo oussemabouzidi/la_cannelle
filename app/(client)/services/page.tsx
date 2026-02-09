@@ -1,41 +1,23 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronRight, Phone, Mail, MapPin, Briefcase, Users, Heart, Building2 } from 'lucide-react';
+import { ChevronRight, Phone, Mail, MapPin, Briefcase, Users, Heart, Building2 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { servicesTranslations } from '@/lib/translations/services';
 import { commonTranslations } from '@/lib/translations/common';
-import { ThemeToggle } from '@/components/site/ThemeToggle';
+import SiteHeader from '@/components/site/SiteHeader';
 
 export default function ServicesPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const translation = useTranslation('services');
   const t = translation.t as typeof servicesTranslations.EN;
   const { language, toggleLanguage } = translation;
+  const commonNav = commonTranslations[language].nav;
   const commonA11y = commonTranslations[language].accessibility;
   const [isVisible, setIsVisible] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
-
-  const isActiveHref = (href: string) => {
-    if (href === '/home') return pathname === '/' || pathname === '/home';
-    return pathname === href;
-  };
-
-  const desktopLinkClass = (href: string) =>
-    `${isActiveHref(href)
-      ? 'text-[#A69256] border-[#A69256]'
-      : 'text-[#404040] dark:text-[#F2F2F2] border-transparent hover:text-[#A69256] hover:border-[#A69256]'
-    } transition-colors duration-200 text-sm font-medium tracking-wide border-b-2 pb-1 px-1`;
-
-  const mobileLinkClass = (href: string) =>
-    `${isActiveHref(href)
-      ? 'text-[#A69256] underline decoration-[#A69256] underline-offset-8'
-      : 'text-[#404040] dark:text-[#F2F2F2] hover:text-[#A69256]'
-    } transition-colors duration-200 text-base font-medium py-2`;
 
   const handleOrderClick = () => {
     router.push('/order');
@@ -43,28 +25,6 @@ export default function ServicesPage() {
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!window.matchMedia?.('(hover: hover)').matches) return;
-
-    let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = 0;
-        setIsNavCollapsed(window.scrollY > 32);
-      });
-    };
-
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
   }, []);
 
   return (
@@ -123,105 +83,20 @@ export default function ServicesPage() {
         }
       `}</style>
 
-      {/* Premium Navbar */}
-      <nav
-        className={`group fixed top-0 w-full bg-white/80 supports-[backdrop-filter]:bg-white/65 backdrop-blur-lg border-b border-black/10 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.08)] md:overflow-hidden md:transition-[max-height] md:duration-300 md:ease-out dark:bg-[#2C2C2C]/80 dark:supports-[backdrop-filter]:bg-[#2C2C2C]/65 dark:border-white/10 dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${
-          isNavCollapsed
-            ? 'md:max-h-[14px] md:hover:max-h-[112px] md:focus-within:max-h-[112px]'
-            : 'md:max-h-[112px]'
-        }`}
-      >
-        <div
-          className={`max-w-7xl mx-auto px-6 lg:px-8 md:transition-opacity md:duration-200 ${
-            isNavCollapsed
-              ? 'md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:group-focus-within:opacity-100 md:group-focus-within:pointer-events-auto'
-              : ''
-          }`}
-        >
-          <div className="flex justify-between items-center h-16 md:h-20">
-            <a
-              href="/home"
-              aria-label="Go to Home"
-              className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A69256]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#2C2C2C]"
-            >
-              <img
-                src="/images/logo-removebg-preview.png"
-                alt="La Cannelle"
-                className="h-12 md:h-16 lg:h-[76px] xl:h-[84px] w-auto max-w-[240px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[480px] xl:max-w-[560px] object-contain dark:invert dark:brightness-200 dark:contrast-125"
-              />
-            </a>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-10 lg:gap-12">
-              <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
-              <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
-              <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
-              <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>
-              
-              <button 
-                onClick={toggleLanguage}
-                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="h-10 w-12 rounded-lg border border-[#404040]/25 bg-transparent text-[#404040] hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-all duration-300 font-medium inline-flex items-center justify-center dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10 shrink-0"
-              >
-                {language === 'EN' ? (
-                  <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt={commonA11y.englishFlagAlt} className="rounded" />
-                ) : (
-                  <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt={commonA11y.germanFlagAlt} className="rounded" />
-                )}
-              </button>
-
-              <ThemeToggle />
-              
-              <button 
-                onClick={handleOrderClick}
-                className="px-7 py-2.5 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] transition-all duration-300 font-medium shadow-sm hover:shadow-md"
-              >
-                {t.nav.order}
-              </button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden p-2 hover:bg-black/5 rounded-lg transition-colors dark:hover:bg-white/10"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X size={24} className="text-[#404040] dark:text-[#F2F2F2]" /> : <Menu size={24} className="text-[#404040] dark:text-[#F2F2F2]" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <div className="md:hidden py-6 border-t border-black/10 dark:border-white/10">
-              <div className="flex flex-col gap-5">
-                <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
-                <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
-                <a href="/menus" className={mobileLinkClass('/menus')}>{t.nav.menus}</a>
-                <a href="/contact" className={mobileLinkClass('/contact')}>{t.nav.contact}</a>
-                
-                <button
-                  onClick={toggleLanguage}
-                  className="px-4 py-3 text-sm border border-[#404040]/25 rounded-lg bg-transparent text-[#404040] font-medium flex items-center justify-center gap-2.5 hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-colors dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10"
-                >
-                  {language === 'EN' ? (
-                    <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" alt="English" className="h-5 w-auto rounded" />
-                  ) : (
-                    <img src="/images/language/Flag_of_Germany-4096x2453.png" alt="Deutsch" className="h-5 w-auto rounded" />
-                  )}
-                </button>
-
-                <ThemeToggle className="w-full justify-center" />
-                
-                <button 
-                  onClick={handleOrderClick} 
-                  className="px-6 py-3 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] font-medium transition-all"
-                >
-                  {t.nav.order}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
+      <SiteHeader
+        language={language}
+        toggleLanguage={toggleLanguage}
+        pathname={pathname}
+        nav={{
+          home: t.nav.home || commonNav.home,
+          services: t.nav.services || commonNav.services,
+          menus: t.nav.menus || commonNav.menus,
+          contact: t.nav.contact || commonNav.contact,
+          order: t.nav.order || commonNav.order,
+        }}
+        a11y={commonA11y}
+        onOrderClick={handleOrderClick}
+      />
 
       {/* Hero Section - Premium */}
       <section className="pt-40 pb-24 px-6 lg:px-8 bg-[#F2F2F2] relative overflow-hidden">
@@ -434,7 +309,7 @@ export default function ServicesPage() {
       </section>
 
       {/* Premium Footer */}
-      <footer className="bg-[#404040] text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
+      <footer className="bg-black text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>

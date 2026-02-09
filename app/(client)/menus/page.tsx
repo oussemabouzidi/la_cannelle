@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Menu, X, Phone, Mail, MapPin, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Phone, Mail, MapPin, Check, ChevronRight } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
 import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
@@ -9,7 +10,18 @@ import { commonTranslations } from '@/lib/translations/common';
 import { menusTranslations } from '@/lib/translations/menus';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { ThemeToggle } from '@/components/site/ThemeToggle';
+import SiteHeader from '@/components/site/SiteHeader';
+
+function BodyPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  return createPortal(children, document.body);
+}
 
 type MenuHighlightItem = {
   id: number;
@@ -24,8 +36,6 @@ type MenuHighlight = ApiMenu & {
 };
 
 export default function MenusPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const { language, toggleLanguage } = useTranslation('menus');
   const [isVisible, setIsVisible] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState<MenuHighlight | null>(null);
@@ -34,6 +44,7 @@ export default function MenusPage() {
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const commonNav = commonTranslations[language].nav;
   const commonFooter = commonTranslations[language].footer;
   const commonA11y = commonTranslations[language].accessibility;
   const t = menusTranslations[language];
@@ -42,47 +53,8 @@ export default function MenusPage() {
     setIsVisible(true);
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!window.matchMedia?.('(hover: hover)').matches) return;
-
-    let raf = 0;
-    const onScroll = () => {
-      if (raf) return;
-      raf = window.requestAnimationFrame(() => {
-        raf = 0;
-        setIsNavCollapsed(window.scrollY > 32);
-      });
-    };
-
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
-  }, []);
-
   const router = useRouter();
   const pathname = usePathname();
-
-  const isActiveHref = (href: string) => {
-    if (href === '/home') return pathname === '/' || pathname === '/home';
-    return pathname === href;
-  };
-
-  const desktopLinkClass = (href: string) =>
-    `${isActiveHref(href)
-      ? 'text-[#A69256] border-[#A69256]'
-      : 'text-[#404040] dark:text-[#F2F2F2] border-transparent hover:text-[#A69256] hover:border-[#A69256]'
-    } transition-colors duration-200 text-sm font-medium tracking-wide border-b-2 pb-1 px-1`;
-
-  const mobileLinkClass = (href: string) =>
-    `${isActiveHref(href)
-      ? 'text-[#A69256] underline decoration-[#A69256] underline-offset-8'
-      : 'text-[#404040] dark:text-[#F2F2F2] hover:text-[#A69256]'
-    } transition-colors duration-200 text-base font-medium py-2`;
 
   const handleOrderClick = () => {
     router.push('/order');
@@ -441,18 +413,59 @@ export default function MenusPage() {
           }
         }}
         aria-label={`${t.menuHighlights.viewDetails}: ${menu.name}`}
-        className="group flex h-full min-h-[480px] flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:border-[#A6A6A6] text-left focus:outline-none focus:ring-2 focus:ring-[color:#A69256] cursor-pointer"
+        className="group relative h-full min-h-[420px] overflow-hidden rounded-2xl bg-black text-left shadow-[0_20px_60px_rgba(0,0,0,0.22)] ring-1 ring-black/10 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_30px_90px_rgba(0,0,0,0.32)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] cursor-pointer"
       >
-        <div className="relative h-56 shrink-0 bg-gray-100 overflow-hidden">
+        <div className="relative h-[420px] bg-black overflow-hidden">
           <img 
             src={menu.coverImage} 
             alt={menu.name} 
-            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10"></div>
+          <div className="absolute inset-x-0 bottom-0 p-7">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
+              {language === 'DE' ? 'MENÜ' : 'MENU'}
+            </p>
+            <h3 className="mt-2 text-3xl font-semibold text-white font-display leading-tight">
+              {menu.name}
+            </h3>
+
+            <div className="mt-4 max-h-0 overflow-hidden opacity-0 transition-all duration-500 group-hover:opacity-100 group-hover:max-h-72">
+              <p className="text-sm leading-relaxed text-white/80 line-clamp-3">{menu.description || ''}</p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {steps.slice(0, 2).map((step: any, index: number) => (
+                  <span
+                    key={`${menu.id}-step-chip-${index}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85"
+                  >
+                    <Check size={14} className="text-white/70" />
+                    {step.included} {stepLabelFor(step.label)}
+                  </span>
+                ))}
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/85">
+                  <Check size={14} className="text-white/70" />
+                  {dishesAvailable} {t.labels.dishesAvailable}
+                </span>
+              </div>
+
+              <div className="mt-6 flex items-end justify-between gap-4">
+                <div>
+                  {priceLabel && <div className="text-2xl font-semibold text-white">€{priceLabel}</div>}
+                  {priceLabel && <div className="mt-1 text-xs uppercase tracking-[0.18em] text-white/60">{t.labels.exclVat}</div>}
+                  {menu.minPeople && <div className="mt-2 text-xs uppercase tracking-[0.18em] text-white/70">{t.labels.minPeople(menu.minPeople)}</div>}
+                </div>
+
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white hover:bg-white/10 transition-colors">
+                  {t.labels.selectFood}
+                  <ChevronRight size={18} className="transition-transform group-hover:translate-x-1" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
-        <div className="flex flex-1 flex-col p-8">
+        <div className="hidden flex-1 flex-col p-8">
           <div className="space-y-4 mb-6">
             <div>
               <h3 className="text-2xl font-medium font-display text-gray-900 mb-2">{menu.name}</h3>
@@ -511,7 +524,7 @@ export default function MenusPage() {
       : '';
 
     return (
-      <div className={`fixed inset-0 z-[100] flex items-center justify-center p-6 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div
           className={`absolute inset-0 bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md transition-opacity duration-300 ${isOpen && !isMenuModalClosing ? 'opacity-100' : 'opacity-0'}`}
           onClick={closeMenuDetails}
@@ -641,107 +654,24 @@ export default function MenusPage() {
         }
       `}</style>
 
-      <MenuDetailsModal />
+      <BodyPortal>
+        <MenuDetailsModal />
+      </BodyPortal>
 
-      {/* Premium Navbar */}
-      <nav
-        className={`group fixed top-0 w-full bg-white/80 supports-[backdrop-filter]:bg-white/65 backdrop-blur-lg border-b border-black/10 z-50 shadow-[0_10px_30px_rgba(0,0,0,0.08)] md:overflow-hidden md:transition-[max-height] md:duration-300 md:ease-out dark:bg-[#2C2C2C]/80 dark:supports-[backdrop-filter]:bg-[#2C2C2C]/65 dark:border-white/10 dark:shadow-[0_10px_30px_rgba(0,0,0,0.35)] ${
-          isNavCollapsed
-            ? 'md:max-h-[14px] md:hover:max-h-[112px] md:focus-within:max-h-[112px]'
-            : 'md:max-h-[112px]'
-        }`}
-      >
-        <div
-          className={`max-w-7xl mx-auto px-6 lg:px-8 md:transition-opacity md:duration-200 ${
-            isNavCollapsed
-              ? 'md:opacity-0 md:pointer-events-none md:group-hover:opacity-100 md:group-hover:pointer-events-auto md:group-focus-within:opacity-100 md:group-focus-within:pointer-events-auto'
-              : ''
-          }`}
-        >
-          <div className="flex justify-between items-center h-16 md:h-20">
-            <a
-              href="/home"
-              aria-label="Go to Home"
-              className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A69256]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#2C2C2C]"
-            >
-              <img
-                src="/images/logo-removebg-preview.png"
-                alt="La Cannelle"
-                className="h-12 md:h-16 lg:h-[76px] xl:h-[84px] w-auto max-w-[240px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[480px] xl:max-w-[560px] object-contain dark:invert dark:brightness-200 dark:contrast-125"
-              />
-            </a>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-10 lg:gap-12">
-              <a href="/home" className={desktopLinkClass('/home')}>{t.nav.home}</a>
-              <a href="/services" className={desktopLinkClass('/services')}>{t.nav.services}</a>
-              <a href="/menus" className={desktopLinkClass('/menus')}>{t.nav.menus}</a>
-              <a href="/contact" className={desktopLinkClass('/contact')}>{t.nav.contact}</a>
-              
-              <button 
-                onClick={toggleLanguage}
-                aria-label={language === 'EN' ? commonA11y.switchToGerman : commonA11y.switchToEnglish}
-                className="h-10 w-12 rounded-lg border border-[#404040]/25 bg-transparent text-[#404040] hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-all duration-300 font-medium inline-flex items-center justify-center dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10 shrink-0"
-              >
-                {language === 'EN' ? (
-                  <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" width={24} alt={commonA11y.englishFlagAlt} className="rounded" />
-                ) : (
-                  <img src="/images/language/Flag_of_Germany-4096x2453.png" width={24} alt={commonA11y.germanFlagAlt} className="rounded" />
-                )}
-              </button>
-
-              <ThemeToggle />
-              
-              <button 
-                onClick={handleOrderClick}
-                className="px-7 py-2.5 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] transition-all duration-300 font-medium shadow-sm hover:shadow-md"
-              >
-                {t.nav.order}
-              </button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden p-2 hover:bg-black/5 rounded-lg transition-colors dark:hover:bg-white/10"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X size={24} className="text-[#404040] dark:text-[#F2F2F2]" /> : <Menu size={24} className="text-[#404040] dark:text-[#F2F2F2]" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <div className="md:hidden py-6 border-t border-black/10 dark:border-white/10">
-              <div className="flex flex-col gap-5">
-                <a href="/home" className={mobileLinkClass('/home')}>{t.nav.home}</a>
-                <a href="/services" className={mobileLinkClass('/services')}>{t.nav.services}</a>
-                <a href="/menus" className={mobileLinkClass('/menus')}>{t.nav.menus}</a>
-                <a href="/contact" className={mobileLinkClass('/contact')}>{t.nav.contact}</a>
-                
-                <button 
-                  onClick={toggleLanguage}
-                  className="px-4 py-3 text-sm border border-[#404040]/25 rounded-lg bg-transparent text-[#404040] font-medium flex items-center justify-center gap-2.5 hover:border-[#A69256] hover:text-[#A69256] hover:bg-[#A69256]/10 transition-colors dark:border-white/15 dark:text-[#F2F2F2] dark:hover:bg-white/10"
-                >
-                  {language === 'EN' ? (
-                    <img src="/images/language/Flag_of_United_Kingdom-4096x2048.png" alt="English" className="h-5 w-auto rounded" />
-                  ) : (
-                    <img src="/images/language/Flag_of_Germany-4096x2453.png" alt="Deutsch" className="h-5 w-auto rounded" />
-                  )}
-                </button>
-
-                <ThemeToggle className="w-full justify-center" />
-                
-                <button
-                  onClick={handleOrderClick}
-                  className="px-6 py-3 text-sm bg-[#A69256] text-[#F2F2F2] rounded-lg hover:bg-[#0D0D0D] font-medium transition-all"
-                >
-                  {t.nav.order}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
+      <SiteHeader
+        language={language}
+        toggleLanguage={toggleLanguage}
+        pathname={pathname}
+        nav={{
+          home: t.nav.home || commonNav.home,
+          services: t.nav.services || commonNav.services,
+          menus: t.nav.menus || commonNav.menus,
+          contact: t.nav.contact || commonNav.contact,
+          order: t.nav.order || commonNav.order,
+        }}
+        a11y={commonA11y}
+        onOrderClick={handleOrderClick}
+      />
 
       {/* Hero Section - Premium */}
       <section className="pt-40 pb-24 px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
@@ -776,7 +706,7 @@ export default function MenusPage() {
           
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
             <div className="text-center mb-16">
-              <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
                 {t.menuHighlights.title}
               </p>
               <h2 className="text-4xl lg:text-5xl font-light text-gray-900 font-display mb-4">
@@ -800,7 +730,7 @@ export default function MenusPage() {
       </section>
 
       {/* Premium Footer */}
-      <footer className="bg-[#404040] text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
+      <footer className="bg-black text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>

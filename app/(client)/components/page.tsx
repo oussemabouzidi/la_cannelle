@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronRight, X } from 'lucide-react';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
 import { productsApi, type Product as ApiProduct } from '@/lib/api/products';
@@ -8,6 +9,17 @@ import { useTranslation } from '@/lib/hooks/useTranslation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { menusTranslations } from '@/lib/translations/menus';
 import { homeTranslations } from '@/lib/translations/home';
+
+function BodyPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  return createPortal(children, document.body);
+}
 
 type MenuHighlightItem = {
   id: number;
@@ -388,7 +400,7 @@ export default function MenuShowcaseHorizontal({
       : '';
 
     return (
-      <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300 ${isOpen ?'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto transition-all duration-300 ${isOpen ?'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div
           className={`absolute inset-0 bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md transition-opacity duration-300 ${isOpen && !isMenuModalClosing ?'opacity-100' : 'opacity-0'}`}
           onClick={closeMenuDetails}
@@ -464,13 +476,16 @@ export default function MenuShowcaseHorizontal({
   };
 
   return (
-    <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#F2F2F2] relative overflow-hidden">
+    <section id="menu-snapshots" className="py-16 px-4 sm:px-6 lg:px-8 bg-white relative overflow-hidden lux-reveal" data-lux-delay="40">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl lg:text-4xl font-bold text-[#A69256] mb-3 font-elegant">
+        <div className="text-center mb-12">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-4">
+            {language === 'DE' ? 'AUSWAHL' : 'CURATED'}
+          </p>
+          <h2 className="text-3xl lg:text-4xl font-semibold text-black mb-4 font-elegant lux-reveal lux-type" data-lux-delay="60">
             {title || menuT.menuHighlights?.title || homeT.menus?.title || (language === 'DE' ? 'Unsere Menüs' : 'Our Menus')}
           </h2>
-          <p className="text-[#404040]/80 max-w-2xl mx-auto">
+          <p className="text-black/70 max-w-2xl mx-auto">
             {description || menuT.menuHighlights?.subtitle || homeT.menus?.description || (language === 'DE' ? 'Entdecken Sie unsere ausgewählten Menüs und sehen Sie die Details' : 'Explore our signature menus and view the details')}
           </p>
         </div>
@@ -487,9 +502,11 @@ export default function MenuShowcaseHorizontal({
         )}
 
         <div className="relative">
-          <div className="flex overflow-x-auto pb-6 space-x-6 scrollbar-hide">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {menuHighlights.map((menu, index) => {
               const firstImage = menu.coverImage || '/images/home_image.jpeg';
+              const viewDetailsLabel =
+                menuT.menuShowcase?.viewDetails || homeT.menus?.viewDetails || (language === 'DE' ? 'Details ansehen' : 'View details');
               
               const displayPrice = menu.price 
                 ? `€${menu.price.toFixed(2)}`
@@ -500,36 +517,67 @@ export default function MenuShowcaseHorizontal({
               return (
                 <div
                   key={menu.id}
-                  className="flex-shrink-0 w-72 bg-[#F9F9F9] rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden group ring-1 ring-[#A6A6A6]/30"
-                  style={{ animationDelay: `${index * 200}ms` }}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openMenuDetails(menu)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openMenuDetails(menu);
+                    }
+                  }}
+                  aria-label={`${viewDetailsLabel}: ${menu.name}`}
+                  className="w-full bg-black rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] hover:shadow-[0_30px_90px_rgba(0,0,0,0.28)] transition-all duration-500 transform hover:-translate-y-1 overflow-hidden group ring-1 ring-black/10"
+                  style={{ animationDelay: `${index * 120}ms` }}
                 >
-                  <div className="relative h-40 overflow-hidden">
+                  <div className="relative h-72 lg:h-80 overflow-hidden">
                     <img
                       src={firstImage}
                       alt={menu.name}
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10"></div>
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute inset-0 bg-black/35"></div>
+                    </div>
 
                     {menu.isPopular && (
-                      <div className="absolute top-3 left-3 bg-[#A69256] text-[#F2F2F2] px-2 py-1 rounded-full text-xs font-semibold">
+                      <div className="absolute top-4 left-4 bg-white text-black px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.18em]">
                         {menuT.menuShowcase?.badges?.popular || homeT.menuShowcase?.badges?.popular || (language === 'DE' ? 'Beliebt' : 'Popular')}
                       </div>
                     )}
                     {menu.isFeatured && (
-                      <div className="absolute top-3 left-3 bg-[#404040] text-[#F2F2F2] px-2 py-1 rounded-full text-xs font-semibold">
+                      <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm border border-white/15 text-white px-3 py-1.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.18em]">
                         {menuT.menuShowcase?.badges?.featured || homeT.menuShowcase?.badges?.featured || (language === 'DE' ? 'Empfohlen' : 'Featured')}
                       </div>
                     )}
 
                     {displayPrice && (
-                      <div className="absolute top-3 right-3 bg-[#F9F9F9]/90 backdrop-blur-sm px-2 py-1 rounded-full ring-1 ring-black/5">
-                        <span className="font-bold text-[#A69256] text-sm">{displayPrice}</span>
+                      <div className="absolute top-4 right-4 bg-black/55 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/15">
+                        <span className="font-semibold text-white text-[11px] uppercase tracking-[0.18em]">{displayPrice}</span>
                       </div>
                     )}
+                    
+                    <div className="absolute inset-x-0 bottom-0 p-6">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
+                        {menu.category || menu.type || menuT.categories?.all || homeT.menus?.categoryAll || (language === 'DE' ? 'MenÃ¼' : 'Menu')}
+                      </p>
+                      <h3 className="mt-2 text-2xl font-semibold text-white font-elegant leading-tight">
+                        {menu.name}
+                      </h3>
+                      <div className="mt-3 max-h-0 overflow-hidden opacity-0 transition-all duration-500 group-hover:opacity-100 group-hover:max-h-40">
+                        <p className="text-sm text-white/80 line-clamp-3">
+                          {menu.description}
+                        </p>
+                        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white">
+                          {viewDetailsLabel}
+                          <ChevronRight size={16} className="transition-transform group-hover:translate-x-1" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="p-4">
+                  <div className="hidden p-4">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-lg font-bold text-[#404040] font-elegant line-clamp-1">
                         {menu.name}
@@ -555,20 +603,12 @@ export default function MenuShowcaseHorizontal({
             })}
           </div>
 
-          <div className="flex justify-center mt-4 space-x-2">
-            {menuHighlights.map((_, index) => (
-              <div
-                key={index}
-                className="w-2 h-2 rounded-full bg-[#A6A6A6]"
-              />
-            ))}
-          </div>
         </div>
 
         {showViewAll && menuHighlights.length > 0 && (
           <div className="text-center mt-8">
             <button 
-              className="px-6 py-3 bg-[#A69256] text-[#F2F2F2] rounded-xl font-semibold hover:bg-[#0D0D0D] transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-2 shadow-lg text-sm"
+              className="px-7 py-3 bg-black text-white rounded-full font-semibold hover:bg-black/90 transition-all duration-300 inline-flex items-center gap-2 shadow-lg text-xs uppercase tracking-[0.18em]"
               onClick={() => window.location.href = '/menus'}
             >
               {menuT.menuShowcase?.exploreFull || homeT.menus?.exploreFull || (language === 'DE' ? 'Vollständige Menüsammlung erkunden' : 'Explore Full Menu Collection')}
@@ -578,7 +618,11 @@ export default function MenuShowcaseHorizontal({
         )}
       </div>
 
-      {selectedMenu && <MenuDetailsModal />}
+      {selectedMenu && (
+        <BodyPortal>
+          <MenuDetailsModal />
+        </BodyPortal>
+      )}
     </section>
   );
 }
