@@ -524,7 +524,7 @@ export default function MenusPage() {
       : '';
 
     return (
-      <div className={`fixed inset-0 z-[100] flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div
           className={`absolute inset-0 bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md transition-opacity duration-300 ${isOpen && !isMenuModalClosing ? 'opacity-100' : 'opacity-0'}`}
           onClick={closeMenuDetails}

@@ -363,6 +363,7 @@ html[data-theme="dark"] .bg-black\/60 {
   position: relative;
   overflow: hidden;
   mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 
 .lux-marquee-track {
@@ -379,8 +380,10 @@ html[data-theme="dark"] .bg-black\/60 {
   }
 }
 
-.lux-marquee:hover .lux-marquee-track {
-  animation-play-state: paused;
+@media (hover: hover) and (pointer: fine) {
+  .lux-marquee:hover .lux-marquee-track {
+    animation-play-state: paused;
+  }
 }
 
 .lux-marquee-item {
@@ -396,11 +399,13 @@ html[data-theme="dark"] .bg-black\/60 {
   transition: opacity var(--lux-med) var(--lux-ease), background-color var(--lux-med) var(--lux-ease), border-color var(--lux-med) var(--lux-ease), box-shadow var(--lux-med) var(--lux-ease);
 }
 
-.lux-marquee-item:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(166, 146, 86, 0.28);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22), 0 0 18px rgba(166, 146, 86, 0.16);
+@media (hover: hover) and (pointer: fine) {
+  .lux-marquee-item:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(166, 146, 86, 0.28);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22), 0 0 18px rgba(166, 146, 86, 0.16);
+  }
 }
 
 .lux-marquee-item img {
@@ -414,11 +419,28 @@ html[data-theme="dark"] .bg-black\/60 {
   transition: filter var(--lux-med) var(--lux-ease), opacity var(--lux-med) var(--lux-ease), transform var(--lux-med) var(--lux-ease);
 }
 
-.lux-marquee-item:hover img {
-  filter: none !important;
-  -webkit-filter: none !important;
-  opacity: 1;
-  transform: translate3d(0, -1px, 0);
+@media (hover: hover) and (pointer: fine) {
+  .lux-marquee-item:hover img {
+    filter: none !important;
+    -webkit-filter: none !important;
+    opacity: 1;
+    transform: translate3d(0, -1px, 0);
+  }
+}
+
+@media (max-width: 640px) {
+  .lux-marquee-track {
+    gap: 1.5rem;
+  }
+
+  .lux-marquee-item {
+    padding: 0.6rem 0.9rem;
+  }
+
+  .lux-marquee-item img {
+    height: 26px;
+    max-width: 140px;
+  }
 }
 
 .lux-reveal {

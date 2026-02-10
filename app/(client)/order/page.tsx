@@ -593,7 +593,7 @@ const PostalCodeFields = ({
           <label className="block text-xs font-semibold text-gray-700 mb-1">
             {postalCopy.city}
           </label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={orderData.city}
@@ -605,7 +605,7 @@ const PostalCodeFields = ({
               type="button"
               onClick={lookupPostalCodesByCity}
               disabled={cityLookupLoading}
-              className={`px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
+              className={`w-full sm:w-auto px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
                 cityLookupLoading
                   ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                   : 'bg-amber-600 text-white hover:bg-amber-700'
@@ -678,6 +678,8 @@ export default function OrderPage() {
   const [currentMenuSubStep, setCurrentMenuSubStep] = useState(0);
   const stepsBarRef = useRef<HTMLDivElement | null>(null);
   const [stepsBarHeight, setStepsBarHeight] = useState(140);
+  const orderSummaryDockRef = useRef<HTMLDivElement | null>(null);
+  const [orderSummaryDockHeight, setOrderSummaryDockHeight] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [quantities, setQuantities] = useState({});
   const [selectedAccessories, setSelectedAccessories] = useState<any[]>([]);
@@ -743,6 +745,7 @@ export default function OrderPage() {
   const [bankDetailsOpen, setBankDetailsOpen] = useState(false);
   const [productDetailsOpen, setProductDetailsOpen] = useState(false);
   const [productDetailsItem, setProductDetailsItem] = useState<any>(null);
+  const [orderSummaryModalOpen, setOrderSummaryModalOpen] = useState(false);
   const [extraNoticeOpen, setExtraNoticeOpen] = useState(false);
   const [extraNoticeData, setExtraNoticeData] = useState({ label: '', extra: 0 });
   const [minPeoplePromptOpen, setMinPeoplePromptOpen] = useState(false);
@@ -876,6 +879,15 @@ export default function OrderPage() {
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  useEffect(() => {
+    if (!orderSummaryModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [orderSummaryModalOpen]);
   
   useEffect(() => {
     const isAnyModalOpen = termsModalOpen || bankDetailsOpen || productDetailsOpen || extraNoticeOpen || minPeoplePromptOpen;
@@ -1340,6 +1352,8 @@ export default function OrderPage() {
     return {
       guestCount,
       pricingGuestCount,
+      serviceFee: flatServiceFee,
+      accessoriesSubtotal,
       subtotal,
       total,
       menuSubtotal,
@@ -1736,8 +1750,16 @@ export default function OrderPage() {
       return parsedQuantity;
     };
 
+    const toAccessoryId = (value: any) => {
+      const parsed = typeof value === 'number' ? value : Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
     const toggleAccessory = (accessory: any) => {
-      const wasSelected = selectedAccessories.some((item) => item.id === accessory.id);
+      const accessoryId = toAccessoryId(accessory?.id);
+      if (accessoryId == null) return;
+
+      const wasSelected = selectedAccessories.some((item) => Number(item?.id) === accessoryId);
       const getAccessoryTargetQuantity = (value: any) => {
         const guestTarget = getEffectiveGuestCount();
         const quantityMode =
@@ -1761,30 +1783,43 @@ export default function OrderPage() {
       };
       const targetQuantity = getAccessoryTargetQuantity(accessory);
       setSelectedAccessories(prev => {
-        if (prev.some(item => item.id === accessory.id)) {
-          return prev.filter(item => item.id !== accessory.id);
+        if (prev.some((item) => Number(item?.id) === accessoryId)) {
+          return prev.filter((item) => Number(item?.id) !== accessoryId);
       }
-      return [...prev, { ...accessory, quantity: targetQuantity }];
+      return [...prev, { ...accessory, id: accessoryId, quantity: targetQuantity }];
     });
 
       setAccessoryDraftQuantities((prev) => {
         if (wasSelected) {
-          const { [accessory.id]: _removed, ...rest } = prev;
+          const { [accessoryId]: _removed, ...rest } = prev;
           return rest;
         }
-        return { ...prev, [accessory.id]: sanitizeAccessoryQuantity(targetQuantity) };
+        return { ...prev, [accessoryId]: sanitizeAccessoryQuantity(targetQuantity) };
       });
   };
-  
-  const updateAccessoryQuantity = (id: number, quantity: number) => {
-    setAccessoryDraftQuantities((prev) => ({ ...prev, [id]: sanitizeAccessoryQuantity(quantity) }));
+   
+  const updateAccessoryQuantity = (id: any, quantity: number) => {
+    const accessoryId = toAccessoryId(id);
+    if (accessoryId == null) return;
+    setAccessoryDraftQuantities((prev) => ({ ...prev, [accessoryId]: sanitizeAccessoryQuantity(quantity) }));
   };
 
-  const confirmAccessoryQuantity = (id: number) => {
-    const draft = accessoryDraftQuantities[id];
+  const bumpAccessoryQuantity = (id: any, delta: number, fallback: number) => {
+    const accessoryId = toAccessoryId(id);
+    if (accessoryId == null) return;
+    setAccessoryDraftQuantities((prev) => {
+      const current = prev[accessoryId] ?? fallback;
+      return { ...prev, [accessoryId]: sanitizeAccessoryQuantity(current + delta) };
+    });
+  };
+
+  const confirmAccessoryQuantity = (id: any) => {
+    const accessoryId = toAccessoryId(id);
+    if (accessoryId == null) return;
+    const draft = accessoryDraftQuantities[accessoryId];
     if (draft == null) return;
     setSelectedAccessories((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: sanitizeAccessoryQuantity(draft) } : item))
+      prev.map((item) => (Number(item?.id) === accessoryId ? { ...item, quantity: sanitizeAccessoryQuantity(draft) } : item))
     );
   };
   
@@ -3524,8 +3559,11 @@ export default function OrderPage() {
             
             <div className="space-y-6">
               {realisticAccessories.map((accessory: any) => {
-                const isSelected = selectedAccessories.some((item: any) => item.id === accessory.id);
-                const selectedItem = selectedAccessories.find((item: any) => item.id === accessory.id);
+                const accessoryId = toAccessoryId(accessory?.id);
+                if (accessoryId == null) return null;
+
+                const isSelected = selectedAccessories.some((item: any) => Number(item?.id) === accessoryId);
+                const selectedItem = selectedAccessories.find((item: any) => Number(item?.id) === accessoryId);
                 const quantityMode = accessory.quantityMode === 'FIXED'
                   ? 'FIXED'
                   : accessory.quantityMode === 'CLIENT'
@@ -3540,10 +3578,12 @@ export default function OrderPage() {
                   ? sanitizeAccessoryQuantity(selectedItem?.quantity ?? baseQuantity)
                   : baseQuantity;
                 const draftQuantity = isSelected && quantityMode === 'CLIENT'
-                  ? sanitizeAccessoryQuantity(accessoryDraftQuantities[accessory.id] ?? confirmedQuantity)
+                  ? sanitizeAccessoryQuantity(accessoryDraftQuantities[accessoryId] ?? confirmedQuantity)
                   : confirmedQuantity;
                 const hasPendingDraft = isSelected && quantityMode === 'CLIENT' && draftQuantity !== confirmedQuantity;
-                const displayQuantity = isSelected ? confirmedQuantity : baseQuantity;
+                const displayQuantity = isSelected
+                  ? (quantityMode === 'CLIENT' ? draftQuantity : confirmedQuantity)
+                  : baseQuantity;
                 const quantityLabel = quantityMode === 'FIXED'
                   ? (language === 'DE' ? 'fest' : 'fixed')
                   : quantityMode === 'CLIENT'
@@ -3588,19 +3628,19 @@ export default function OrderPage() {
                             </div>
                             
                             {/* Selection Controls */}
-                            <div className="w-full flex flex-col sm:flex-row sm:flex-wrap sm:justify-end items-stretch sm:items-center gap-2">
+                            <div className="w-full flex flex-col sm:flex-row sm:flex-wrap sm:justify-end items-center gap-2">
                               {isSelected && (
                                 <div className="px-4 py-2 text-sm font-semibold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 self-start sm:self-auto">
-                                  {language === 'DE' ? 'Menge' : 'Qty'}: {confirmedQuantity}
+                                  {language === 'DE' ? 'Menge' : 'Qty'}: {displayQuantity}
                                 </div>
                               )}
                               {isSelected && quantityMode === 'CLIENT' ? (
-                                <div className="w-full sm:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                                  <div className="flex w-full sm:w-auto items-stretch border border-gray-300 rounded-lg overflow-hidden bg-white">
+                                <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-2">
+                                  <div className="mx-auto sm:mx-0 flex w-fit items-stretch border border-gray-300 rounded-lg overflow-hidden bg-white">
                                     <button
                                       type="button"
-                                      onClick={() => updateAccessoryQuantity(accessory.id, Math.max(1, draftQuantity - 1))}
-                                      className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
+                                      onClick={() => bumpAccessoryQuantity(accessoryId, -1, confirmedQuantity)}
+                                      className="w-10 h-10 inline-flex items-center justify-center hover:bg-gray-100 transition-colors text-black"
                                     >
                                       <Minus size={18} strokeWidth={2.5} className="text-black" />
                                     </button>
@@ -3610,21 +3650,21 @@ export default function OrderPage() {
                                       value={String(draftQuantity)}
                                       onChange={(e) => {
                                         const next = parseInt(e.target.value, 10);
-                                        updateAccessoryQuantity(accessory.id, Number.isFinite(next) ? Math.max(1, next) : 1);
+                                        updateAccessoryQuantity(accessoryId, Number.isFinite(next) ? Math.max(1, next) : 1);
                                       }}
-                                      className="w-16 sm:w-20 text-center py-2 text-base font-bold border-x border-gray-300 bg-white text-gray-900"
+                                      className="h-10 w-16 sm:w-20 text-center text-base font-bold border-x border-gray-300 bg-white text-gray-900"
                                     />
                                     <button
                                       type="button"
-                                      onClick={() => updateAccessoryQuantity(accessory.id, draftQuantity + 1)}
-                                      className="px-3 py-2 hover:bg-gray-100 transition-colors text-black"
+                                      onClick={() => bumpAccessoryQuantity(accessoryId, 1, confirmedQuantity)}
+                                      className="w-10 h-10 inline-flex items-center justify-center hover:bg-gray-100 transition-colors text-black"
                                     >
                                       <Plus size={18} strokeWidth={2.5} className="text-black" />
                                     </button>
                                   </div>
                                   <button
                                     type="button"
-                                    onClick={() => confirmAccessoryQuantity(accessory.id)}
+                                    onClick={() => confirmAccessoryQuantity(accessoryId)}
                                     disabled={!hasPendingDraft}
                                     className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap inline-flex items-center justify-center gap-2 ${
                                       hasPendingDraft
@@ -4690,7 +4730,7 @@ export default function OrderPage() {
     if (!minPeoplePromptOpen || !minPeoplePromptMenu) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
         <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-xl bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.20),0_10px_30px_rgba(166,146,86,0.12)] border border-[#A69256]/25 ring-1 ring-black/5 flex flex-col animate-fade-in-up">
           <div className="flex items-center justify-between px-6 py-4 border-b border-black/10">
             <h3 className="text-lg font-semibold text-[#404040] font-elegant tracking-wide">{t.menuMinPeoplePrompt.title}</h3>
@@ -4754,7 +4794,7 @@ export default function OrderPage() {
     if (!termsModalOpen) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg p-4 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-lg p-4 sm:p-6 overflow-y-auto">
         <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-gradient-to-b from-white/80 via-white/70 to-white/60 supports-[backdrop-filter]:bg-white/60 backdrop-blur-2xl shadow-[0_40px_120px_rgba(0,0,0,0.38)] border border-white/35 ring-1 ring-[#A69256]/15 flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-black/5">
             <h3 className="text-lg font-bold text-gray-900">
@@ -4833,7 +4873,7 @@ export default function OrderPage() {
     if (!bankDetailsOpen) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
         <div className="w-full max-w-xl max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-bold text-gray-900">{ui.bankTransferTitle}</h3>
@@ -4887,7 +4927,7 @@ export default function OrderPage() {
     if (!productDetailsOpen || !productDetailsItem) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
         <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.20),0_10px_30px_rgba(166,146,86,0.12)] border border-[#A69256]/25 ring-1 ring-black/5 flex flex-col animate-fade-in-up">
           <div className="flex items-center justify-between px-6 py-4 border-b border-black/10">
             <h3 className="text-lg font-semibold text-[#404040] font-elegant tracking-wide">{ui.productDetailsTitle}</h3>
@@ -5003,7 +5043,7 @@ export default function OrderPage() {
     if (!extraNoticeOpen) return null;
     
     return (
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
         <div className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-bold text-gray-900">
@@ -5053,6 +5093,234 @@ export default function OrderPage() {
       </div>
     );
   };
+
+  const renderOrderSummaryModal = () => {
+    if (!orderSummaryModalOpen) return null;
+
+    const totals = getOrderTotals();
+    const selectedMenuId = pendingMenuId ? Number(pendingMenuId) : orderData.selectedMenu ? Number(orderData.selectedMenu) : null;
+    const selectedMenuObj = selectedMenuId == null
+      ? null
+      : menusData.find((m: any) => Number(m?.id) === selectedMenuId) || null;
+
+    const vatRate = orderData.businessType === 'business'
+      ? 0.19
+      : orderData.businessType === 'private'
+      ? 0.07
+      : null;
+    const vatAmount = vatRate == null ? null : totals.total * vatRate;
+    const grandTotal = vatAmount == null ? null : totals.total + vatAmount;
+
+    const rows = getCategorySummaryRows();
+
+    return (
+      <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/45 supports-[backdrop-filter]:bg-black/35 backdrop-blur-md p-4 sm:p-6 overflow-y-auto lg:hidden">
+        <button
+          type="button"
+          className="absolute inset-0"
+          aria-label={ui.close}
+          onClick={() => setOrderSummaryModalOpen(false)}
+        />
+        <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-gradient-to-b from-white/85 via-white/80 to-white/75 supports-[backdrop-filter]:bg-white/70 backdrop-blur-2xl shadow-[0_40px_120px_rgba(0,0,0,0.38)] border border-white/35 ring-1 ring-[#A69256]/15 flex flex-col">
+          <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-black/10">
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/50">
+                {t.productSelection.orderSummary}
+              </div>
+              <div className="mt-1 text-base font-semibold text-[#0D0D0D] truncate">
+                {stepsConfig[currentStep - 1]?.label}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOrderSummaryModalOpen(false)}
+              className="shrink-0 p-2 rounded-lg text-[#404040]/70 bg-white/60 backdrop-blur-sm border border-black/10 hover:bg-white/80 hover:text-[#404040] hover:border-[#A69256]/25 transition-all duration-200"
+              aria-label={ui.close}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="px-5 sm:px-6 py-5 flex-1 overflow-y-auto space-y-6 text-sm text-[#404040]">
+            <div className="rounded-xl border border-black/10 bg-white/70 backdrop-blur-sm p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-black/50 mb-3">
+                {t.eventInfo.title}
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-black/70">{t.eventInfo.date}</span>
+                  <span className="font-semibold text-black text-right">{orderData.eventDate || ui.notSpecified}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-black/70">{t.eventInfo.time}</span>
+                  <span className="font-semibold text-black text-right">{orderData.eventTime || ui.notSpecified}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-black/70">{t.eventInfo.guests}</span>
+                  <span className="font-semibold text-black text-right">
+                    {totals.guestCount || 0}
+                    {totals.pricingGuestCount !== totals.guestCount ? ` (${totals.pricingGuestCount} min)` : ''}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-black/70">{t.eventInfo.location}</span>
+                  <span className="font-semibold text-black text-right truncate max-w-[65%]">
+                    {dockLocation}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-black/10 bg-white/70 backdrop-blur-sm p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-black/50 mb-3">
+                {language === 'DE' ? 'Menü' : 'Menu'}
+              </div>
+              {selectedMenuObj ? (
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-black truncate">{selectedMenuObj.name}</div>
+                      {selectedMenuObj.description ? (
+                        <div className="mt-1 text-xs text-black/60 line-clamp-2">{selectedMenuObj.description}</div>
+                      ) : null}
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-xs text-black/60">{language === 'DE' ? 'Basis' : 'Base'}</div>
+                      <div className="font-semibold text-black">€{totals.menuSubtotal.toFixed(2)}</div>
+                    </div>
+                  </div>
+
+                  {rows.length > 0 && (
+                    <div className="pt-3 border-t border-black/10 space-y-2">
+                      {rows.map((row) => (
+                        <div key={`row-${row.key}`} className="rounded-lg border border-black/5 bg-white/60 p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-semibold text-black truncate">{row.label}</div>
+                            <div className="text-xs text-black/60 whitespace-nowrap">
+                              {language === 'DE' ? 'Inkl.' : 'Incl.'} {row.included} · {language === 'DE' ? 'Gewählt' : 'Selected'} {row.selected}
+                            </div>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between gap-3 text-xs text-black/70">
+                            <span>
+                              {language === 'DE' ? 'Extras' : 'Extras'}: {row.extra}
+                            </span>
+                            <span className="font-semibold text-black">
+                              €{row.extraCost.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-black/60">{ui.notSpecified}</div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-black/10 bg-white/70 backdrop-blur-sm p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-black/50 mb-3">
+                {language === 'DE' ? 'Auswahl' : 'Selections'}
+              </div>
+              {activeCategoryKeys.every((k) => getItemsForStepCategory(k).length === 0) ? (
+                <div className="text-sm text-black/60">{ui.notSpecified}</div>
+              ) : (
+                <div className="space-y-4">
+                  {activeCategoryKeys.map((key) => {
+                    const items = getItemsForStepCategory(key);
+                    const title = stepLabelByKey[key] || categoryMeta[key]?.label || key;
+                    if (!items.length) return null;
+
+                    return (
+                      <div key={`sel-${key}`}>
+                        <div className="text-sm font-semibold text-black mb-2">{title}</div>
+                        <div className="space-y-2">
+                          {items.map((item: any) => {
+                            const charge = getChargeForItemInCategory(key, item);
+                            const isIncludedAndFree = charge.isIncluded && charge.chargedTotal <= 0;
+                            return (
+                              <div key={`${key}-${item?.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-black/5 bg-white/60 p-3">
+                                <div className="min-w-0">
+                                  <div className="font-semibold text-black break-words">{item?.name}</div>
+                                  <div className="mt-1 text-xs text-black/60">
+                                    x{Number(item?.quantity) || 0} · €{toPriceNumber(item?.price).toFixed(2)}
+                                    {charge.isIncluded ? ` · ${language === 'DE' ? 'inkl.' : 'included'}` : ''}
+                                  </div>
+                                </div>
+                                <div className="shrink-0 text-right">
+                                  {isIncludedAndFree ? (
+                                    <div className="text-xs font-semibold text-emerald-700">{language === 'DE' ? 'inklusive' : 'included'}</div>
+                                  ) : (
+                                    <div className="font-semibold text-black">€{charge.chargedTotal.toFixed(2)}</div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-black/10 bg-white/70 backdrop-blur-sm p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-black/50 mb-3">
+                {language === 'DE' ? 'Zubehör' : 'Accessories'}
+              </div>
+              {selectedAccessories.length === 0 ? (
+                <div className="text-sm text-black/60">{ui.notSpecified}</div>
+              ) : (
+                <div className="space-y-2">
+                  {selectedAccessories.map((item: any) => (
+                    <div key={`acc-${item?.id}`} className="flex items-start justify-between gap-3 rounded-lg border border-black/5 bg-white/60 p-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-black break-words">{item?.name}</div>
+                        <div className="mt-1 text-xs text-black/60">
+                          x{Number(item?.quantity) || 0} · €{toPriceNumber(item?.price).toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="shrink-0 font-semibold text-black">
+                        €{(toPriceNumber(item?.price) * (Number(item?.quantity) || 0)).toFixed(2)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="px-5 sm:px-6 py-4 border-t border-black/10 bg-white/40">
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-black/70">{language === 'DE' ? 'Menü + Extras' : 'Menu + extras'}</span>
+                <span className="font-semibold text-black">€{totals.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-black/70">{language === 'DE' ? 'Zubehör' : 'Accessories'}</span>
+                <span className="font-semibold text-black">€{totals.accessoriesSubtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-black/70">{language === 'DE' ? 'Servicegebühr' : 'Service fee'}</span>
+                <span className="font-semibold text-black">€{totals.serviceFee.toFixed(2)}</span>
+              </div>
+              {vatRate != null && vatAmount != null && grandTotal != null && (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-black/70">{language === 'DE' ? `MwSt. (${Math.round(vatRate * 100)}%)` : `VAT (${Math.round(vatRate * 100)}%)`}</span>
+                  <span className="font-semibold text-black">€{vatAmount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-black/10 text-base">
+                <span className="font-semibold text-black">{language === 'DE' ? 'Gesamt' : 'Total'}</span>
+                <span className="font-bold text-black">€{(grandTotal ?? totals.total).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
   
   // ============================================================================
   // MAIN RENDER
@@ -5079,14 +5347,43 @@ export default function OrderPage() {
     };
   }, [currentStep, dynamicMenuSteps.length]);
 
+  useEffect(() => {
+    const el = orderSummaryDockRef.current;
+    if (!el || currentStep === 1) {
+      setOrderSummaryDockHeight(0);
+      return;
+    }
+
+    const update = () => {
+      const next = Math.ceil(el.getBoundingClientRect().height);
+      setOrderSummaryDockHeight(next > 0 ? next : 0);
+    };
+
+    update();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => update());
+      ro.observe(el);
+    }
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('resize', update);
+      ro?.disconnect();
+    };
+  }, [currentStep]);
+
   const dockGuestCount = parseInt(orderData.guestCount) || 0;
   const dockPricingGuestCount = getEffectiveGuestCount();
   const dockLocation = `${orderData.postalCode || ui.notSpecified}${orderData.postalCode && orderData.city ? ` (${orderData.city})` : ''}`;
   
   return (
-    <div className="order-theme min-h-screen bg-[#F2F2F2] flex flex-col overflow-x-hidden">
+    <div
+      className="order-theme min-h-screen bg-[#F2F2F2] flex flex-col overflow-x-hidden"
+      style={{ ['--order-dock' as any]: `${currentStep === 1 ? 0 : orderSummaryDockHeight}px` }}
+    >
       {notification && (
-        <div className="fixed right-6 z-[70]" style={{ top: stepsBarHeight + 16 }}>
+        <div className="fixed left-4 right-4 sm:left-auto sm:right-6 z-[70]" style={{ top: stepsBarHeight + 16 }}>
           <div className={`px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
             {notification.message}
           </div>
@@ -5098,6 +5395,7 @@ export default function OrderPage() {
       {renderBankDetailsModal()}
       {renderProductDetailsModal()}
       {renderExtraNoticeModal()}
+      {renderOrderSummaryModal()}
       
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -5337,7 +5635,7 @@ export default function OrderPage() {
 
               {/* Steps Navigation - Only 4 main steps now */}
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-start sm:justify-center gap-2 px-2 flex-nowrap overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex items-center justify-start sm:justify-center gap-2 px-2 flex-nowrap overflow-x-auto overscroll-x-contain touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {stepsConfig.map((step, index) => {
                     const stepNumber = index + 1;
                     const isCurrent = stepNumber === currentStep;
@@ -5465,7 +5763,11 @@ export default function OrderPage() {
       {/* Main Content */}
       <main className="flex-1">
         <div
-          className={`pt-6 ${currentStep === 1 ? 'pb-28' : 'pb-32 lg:pb-16'} px-4 sm:px-6 lg:px-8`}
+          className={`pt-6 ${
+            currentStep === 1
+              ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]'
+              : 'pb-[calc(var(--order-dock,0px)+8.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(var(--order-dock,0px)+7.5rem)] lg:pb-16'
+          } px-4 sm:px-6 lg:px-8`}
           style={{ ['--order-top' as any]: `${stepsBarHeight}px` }}
         >
           <div className="max-w-6xl mx-auto">
@@ -5503,14 +5805,16 @@ export default function OrderPage() {
       {currentStep < stepsConfig.length && (
         <div
           data-order-next-fab
-          className={`fixed right-6 z-[60] ${
-            currentStep === 1 ? 'bottom-6' : 'bottom-24 lg:bottom-6'
+          className={`fixed right-4 sm:right-6 z-[60] ${
+            currentStep === 1
+              ? 'bottom-[calc(1.5rem+env(safe-area-inset-bottom))] lg:bottom-6'
+              : 'bottom-[calc(var(--order-dock,0px)+1.5rem+0.75rem+env(safe-area-inset-bottom))] lg:bottom-6'
           }`}
         >
           <button
             onClick={nextStep}
             disabled={isOrderingPaused || (isClosedDate && currentStep >= 1)}
-            className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition-all ${
+            className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 sm:px-5 sm:py-3 text-sm font-semibold shadow-lg transition-all ${
               isOrderingPaused || (isClosedDate && currentStep >= 1)
                 ? 'bg-black/10 text-black/30 cursor-not-allowed shadow-none'
                 : 'bg-[#A69256] text-white hover:bg-black hover:shadow-[0_16px_34px_rgba(0,0,0,0.22)] active:scale-[0.98]'
@@ -5527,12 +5831,12 @@ export default function OrderPage() {
       {currentStep > 1 && (
         <div
           data-order-back-fab
-          className="fixed left-6 bottom-24 lg:bottom-6 z-[60]"
+          className="fixed left-4 sm:left-6 bottom-[calc(var(--order-dock,0px)+1.5rem+0.75rem+env(safe-area-inset-bottom))] lg:bottom-6 z-[60]"
         >
           <button
             type="button"
             onClick={prevStepFloating}
-            className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-lg transition-all bg-white/90 supports-[backdrop-filter]:bg-white/75 backdrop-blur-xl text-[#0D0D0D] border border-black/10 hover:border-[#A69256]/50 hover:text-black hover:shadow-[0_16px_34px_rgba(0,0,0,0.18)] active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 sm:px-5 sm:py-3 text-sm font-semibold shadow-lg transition-all bg-white/90 supports-[backdrop-filter]:bg-white/75 backdrop-blur-xl text-[#0D0D0D] border border-black/10 hover:border-[#A69256]/50 hover:text-black hover:shadow-[0_16px_34px_rgba(0,0,0,0.18)] active:scale-[0.98]"
             aria-label={t.buttons.back}
           >
             <ChevronLeft size={18} />
@@ -5545,9 +5849,16 @@ export default function OrderPage() {
       {currentStep !== 1 && (
         <div
           data-order-summary-dock
-          className="fixed left-4 right-4 bottom-6 z-[55] lg:hidden"
+          className="fixed left-4 right-4 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-[55] lg:hidden"
+          ref={orderSummaryDockRef}
         >
-          <div className="rounded-2xl border border-black/10 bg-white/90 supports-[backdrop-filter]:bg-white/75 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.14)] px-4 py-3">
+          <button
+            type="button"
+            onClick={() => setOrderSummaryModalOpen(true)}
+            className="w-full rounded-2xl border border-black/10 bg-white/90 supports-[backdrop-filter]:bg-white/75 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.14)] px-4 py-3 text-left"
+            aria-haspopup="dialog"
+            aria-expanded={orderSummaryModalOpen}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/50">
@@ -5571,13 +5882,19 @@ export default function OrderPage() {
                   </div>
                 </div>
               </div>
+              <div className="shrink-0 mt-0.5 text-black/50">
+                <ChevronUp size={16} />
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       )}
       
       {/* Footer */}
-      <footer className="bg-black text-[#F2F2F2] py-12 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
+      <footer
+        className="bg-black text-[#F2F2F2] pt-12 pb-[calc(3rem+var(--order-dock,0px)+env(safe-area-inset-bottom))] px-4 sm:px-6 lg:px-8 lux-reveal"
+        data-lux-delay="80"
+      >
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-[#F2F2F2]/70 text-lg">&copy; 2025 La Cannelle Catering. All rights reserved.</p>
         </div>

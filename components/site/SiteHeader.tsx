@@ -42,6 +42,7 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
   const [mobileHomeOpen, setMobileHomeOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [mobileMenusOpen, setMobileMenusOpen] = useState(false);
+  const isHome = pathname === "/" || pathname === "/home";
 
   const common = commonTranslations[language];
   const phone = common.footer.contactPhone;
@@ -211,16 +212,22 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
       </div>
 
       <div className="bg-black border-b border-white/10">
-        <Container className="h-[88px]">
-          <div className="flex h-[88px] items-center justify-between gap-4">
+        <Container className="h-[96px] sm:h-[100px] md:h-[104px]">
+          <div className="flex h-[96px] sm:h-[100px] md:h-[104px] items-center justify-between gap-4">
             <Link href="/home" className="flex items-center gap-3 min-w-0">
               <Image
-                src="/images/logo-removebg-preview.png"
+                src={isHome ? "/images/logo.png" : "/images/logo-removebg-preview.png"}
                 alt="La Cannelle"
                 width={820}
                 height={240}
                 priority
-                className="h-[72px] sm:h-[78px] md:h-[82px] w-auto max-w-[360px] sm:max-w-[520px] md:max-w-[760px] object-contain invert brightness-200 contrast-125"
+                quality={100}
+                sizes="(max-width: 640px) 280px, (max-width: 1024px) 520px, 760px"
+                className={`w-auto object-contain invert ${
+                  isHome
+                    ? "h-[84px] sm:h-[92px] md:h-[96px] max-w-[460px] sm:max-w-[620px] md:max-w-[800px]"
+                    : "h-[80px] sm:h-[88px] md:h-[92px] max-w-[420px] sm:max-w-[580px] md:max-w-[800px] brightness-200 contrast-125"
+                }`}
               />
             </Link>
 
@@ -229,7 +236,7 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
                 <Link href="/home" className={desktopLinkClass("/home")}>
                   {nav.home}
                 </Link>
-                <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-4 w-[640px] -translate-x-1/2 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                <div className="pointer-events-none absolute left-1/2 top-full z-50 w-[640px] -translate-x-1/2 pt-4 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                   <div className="rounded-2xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
                     <div className="grid grid-cols-12 gap-8 p-8">
                       <div className="col-span-5">
@@ -267,7 +274,7 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
                 <Link href="/services" className={desktopLinkClass("/services")}>
                   {nav.services}
                 </Link>
-                <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-4 w-[640px] -translate-x-1/2 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                <div className="pointer-events-none absolute left-1/2 top-full z-50 w-[640px] -translate-x-1/2 pt-4 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                   <div className="rounded-2xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
                     <div className="grid grid-cols-12 gap-8 p-8">
                       <div className="col-span-5">
@@ -305,7 +312,7 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
                 <Link href="/menus" className={desktopLinkClass("/menus")}>
                   {nav.menus}
                 </Link>
-                <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-4 w-[640px] -translate-x-1/2 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                <div className="pointer-events-none absolute left-1/2 top-full z-50 w-[640px] -translate-x-1/2 pt-4 opacity-0 transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
                   <div className="rounded-2xl border border-white/10 bg-black/95 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
                     <div className="grid grid-cols-12 gap-8 p-8">
                       <div className="col-span-5">

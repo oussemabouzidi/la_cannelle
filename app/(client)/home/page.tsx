@@ -318,7 +318,7 @@ export default function CateringHomepage() {
       />
 
       {/* Hero Section - Premium Design */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ minHeight: '100svh' }}>
         <div
           className="absolute inset-0 bg-cover bg-center lux-hero-image"
           style={{ backgroundImage: "url('/images/home_image.jpeg')" }}
@@ -326,7 +326,7 @@ export default function CateringHomepage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-36 sm:pt-40 pb-28 sm:pb-24 w-full">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36 lg:pt-40 pb-20 sm:pb-28 w-full">
           <div className="grid lg:grid-cols-12 items-center gap-12">
             <div className="lg:col-span-7 text-center lg:text-left">
               <p className={`text-[11px] font-semibold uppercase tracking-[0.32em] text-white/75 mb-5 ${isVisible ? 'animate-fade-in-down lux-type lux-type-run lux-type-caret' : 'opacity-0'}`}>
@@ -334,15 +334,15 @@ export default function CateringHomepage() {
               </p>
 
               <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-light text-white mb-7 leading-tight font-display">
+                <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-light text-white mb-7 leading-tight font-display">
                   {t.hero.title}
                 </h1>
               </div>
 
               <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-                <p className="text-lg lg:text-xl text-gray-200 mb-10 font-light max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                  {t.hero.subtitle}
-                </p>
+                 <p className="text-base sm:text-lg lg:text-xl text-gray-200 mb-10 font-light max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                   {t.hero.subtitle}
+                 </p>
               </div>
 
               <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}>
@@ -392,9 +392,9 @@ export default function CateringHomepage() {
       </section>
 
       {/* Brand Banner (FoodExplorer-inspired marquee) */}
-      <section className="bg-black py-14 border-y border-white/10 lux-reveal" data-lux-delay="60">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-10">
+      <section className="bg-black py-10 sm:py-14 border-y border-white/10 lux-reveal" data-lux-delay="60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3 lux-reveal lux-type" data-lux-delay="40">
               {t.brandBanner.title}
             </p>
@@ -419,7 +419,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Quick Menu Categories - Premium Grid */}
-      <section id="collections" className="py-24 px-6 lg:px-8 bg-white border-t border-black/10 lux-reveal" data-lux-delay="40">
+      <section id="collections" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10 lux-reveal" data-lux-delay="40">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
@@ -441,7 +441,7 @@ export default function CateringHomepage() {
                 <button
                   key={index}
                   type="button"
-                  className={`group relative bg-white rounded-2xl p-8 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)] transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'} hover:bg-black`}
+                  className={`group relative bg-white rounded-2xl p-6 sm:p-8 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)] transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'} hover:bg-black`}
                   style={{ animationDelay: `${index * 100}ms` }}
                   onClick={() => setSelectedCategory(index)}
                 >
@@ -469,9 +469,9 @@ export default function CateringHomepage() {
         {/* Category Modals remain the same but with updated styling */}
         {selectedCategory === 0 && (
           <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-[#A69256]/15 rounded-2xl flex items-center justify-center">
                     {quickMenuIcons[selectedCategory] && 
@@ -489,7 +489,7 @@ export default function CateringHomepage() {
                 </button>
               </div>
 
-              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
                 <p className="text-gray-700 mb-8 leading-relaxed">
                   {t.quickMenu.categories[selectedCategory].description}
                 </p>
@@ -549,9 +549,9 @@ export default function CateringHomepage() {
         {/* Similar modal updates for categories 1, 2, and 3 */}
         {selectedCategory === 1 && (
           <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
                     {quickMenuIcons[selectedCategory] && 
@@ -569,7 +569,7 @@ export default function CateringHomepage() {
                 </button>
               </div>
 
-              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
                 <p className="text-gray-700 mb-8 leading-relaxed">
                   {t.quickMenu.categories[selectedCategory].description}
                 </p>
@@ -604,9 +604,9 @@ export default function CateringHomepage() {
 
         {selectedCategory === 2 && (
           <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
                     {quickMenuIcons[selectedCategory] && 
@@ -624,7 +624,7 @@ export default function CateringHomepage() {
                 </button>
               </div>
 
-              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
                 <p className="text-gray-700 mb-8 leading-relaxed">
                   {t.quickMenu.categories[selectedCategory].description}
                 </p>
@@ -659,9 +659,9 @@ export default function CateringHomepage() {
 
         {selectedCategory === 3 && (
           <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
-            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-8 border-b border-gray-200 flex justify-between items-center">
+            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
+              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center">
                     {quickMenuIcons[selectedCategory] && 
@@ -679,7 +679,7 @@ export default function CateringHomepage() {
                 </button>
               </div>
 
-              <div className="p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
+              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
                 <p className="text-gray-700 mb-8 leading-relaxed">
                   {t.quickMenu.categories[selectedCategory].description}
                 </p>
@@ -716,7 +716,7 @@ export default function CateringHomepage() {
       {/* Menu Item Modal */}
       {selectedMenuItem && (
         <BodyPortal>
-          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
+          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
             <button
               onClick={() => setSelectedMenuItem(null)}
@@ -746,7 +746,7 @@ export default function CateringHomepage() {
                 )}
               </div>
 
-              <div className="lg:w-1/2 p-10 overflow-y-auto max-h-[90vh] bg-white/35 backdrop-blur-sm lg:border-l border-black/5">
+              <div className="lg:w-1/2 p-6 sm:p-10 overflow-y-auto max-h-[90vh] bg-white/35 backdrop-blur-sm lg:border-l border-black/5">
                 <p className="text-[#A69256] font-medium text-sm mb-3 uppercase tracking-wider">
                   {selectedMenuItem.category || t.quickMenu.title}
                 </p>
@@ -795,7 +795,7 @@ export default function CateringHomepage() {
       />
 
       {/* Passion Section (FoodExplorer-inspired: black/white, airy, minimal) */}
-      <section className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-12 gap-14 items-center">
             <div className={`lg:col-span-5 transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
@@ -845,7 +845,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Company Values Section (black/white) */}
-      <section className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10">
         <div className="max-w-7xl mx-auto relative">
           <div className="text-center mb-16">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
@@ -862,7 +862,7 @@ export default function CateringHomepage() {
                 {t.company.text}
               </p>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {companyValues.map((value, index) => (
                   <div
                     key={index}
@@ -884,13 +884,13 @@ export default function CateringHomepage() {
                   <img
                     src="/images/restaurant-interior.jpg"
                     alt="Restaurant interior"
-                    className="w-full h-96 object-cover"
+                    className="w-full h-72 sm:h-96 object-cover"
                     loading="lazy"
                     decoding="async"
                   />
                 </div>
 
-                <div className="absolute -top-4 -right-4 bg-black text-white rounded-2xl p-6 shadow-2xl border border-white/10">
+                <div className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-black text-white rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/10">
                   <Award className="mx-auto mb-2 text-white/80" size={24} />
                   <p className="text-sm font-semibold">{t.company.badge.title}</p>
                   <p className="text-xs text-white/70">{t.company.badge.subtitle}</p>
@@ -900,7 +900,7 @@ export default function CateringHomepage() {
           </div>
 
           {/* Timeline */}
-          <div className="bg-white rounded-2xl p-10 border border-black/10">
+          <div className="bg-white rounded-2xl p-6 sm:p-10 border border-black/10">
             <h3 className="text-2xl font-semibold text-black text-center mb-12 font-display lux-reveal lux-type" data-lux-delay="40">{t.journey.title}</h3>
             <div className="grid md:grid-cols-4 gap-8">
               {journeyMilestones.map((milestone, index) => (
@@ -921,7 +921,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Services Section */}
-      <section id="service-formats" className="py-24 px-6 lg:px-8 bg-black text-white border-t border-white/10">
+      <section id="service-formats" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-black text-white border-t border-white/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3">{t.quickMenu.title}</p>
@@ -933,7 +933,7 @@ export default function CateringHomepage() {
             {t.services.items.map((service, index) => (
               <div
                 key={index}
-                className="group bg-white/5 p-8 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
+                className="group bg-white/5 p-6 sm:p-8 rounded-2xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
               >
                 <h3 className="text-xl font-semibold text-white font-display mb-3">{service.title}</h3>
                 <p className="text-white/70 leading-relaxed">{service.description}</p>
@@ -944,7 +944,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Featured Menus Section */}
-      <section className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
@@ -965,7 +965,7 @@ export default function CateringHomepage() {
             {featuredMenus.map((menu, index) => (
               <div
                 key={menu.id ?? index}
-                className="group bg-white p-8 rounded-2xl transition-all duration-300 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)]"
+                className="group bg-white p-6 sm:p-8 rounded-2xl transition-all duration-300 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)]"
               >
                 <div className="flex items-start justify-between mb-4">
                   <h3 className="text-xl font-semibold text-black font-display">{menu.name}</h3>
@@ -988,7 +988,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-24 px-6 lg:px-8 bg-white border-t border-black/10">
+      <section id="testimonials" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
@@ -1002,7 +1002,7 @@ export default function CateringHomepage() {
             {t.testimonials.items.map((testimonial, index) => (
               <div
                 key={index}
-                className="bg-white p-8 rounded-2xl border border-black/10 hover:border-black/20 transition-colors"
+                className="bg-white p-6 sm:p-8 rounded-2xl border border-black/10 hover:border-black/20 transition-colors"
               >
                 <p className="text-black/80 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
                 <p className="text-black font-semibold font-display">{testimonial.name}</p>
@@ -1014,7 +1014,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Lookbook + Reels */}
-      <section id="lookbook" className="py-24 px-6 lg:px-8 bg-[#F2F2F2] border-t border-black/10">
+      <section id="lookbook" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#F2F2F2] border-t border-black/10">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between mb-12">
             <div className="max-w-2xl">
@@ -1105,7 +1105,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Concierge CTA */}
-      <section className="py-24 px-6 lg:px-8 bg-black text-white border-t border-white/10">
+      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-black text-white border-t border-white/10">
         <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3">
@@ -1187,7 +1187,7 @@ export default function CateringHomepage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-[#F2F2F2] py-20 px-6 lg:px-8 lux-reveal" data-lux-delay="80">
+      <footer className="bg-black text-[#F2F2F2] py-16 sm:py-20 px-4 sm:px-6 lg:px-8 lux-reveal" data-lux-delay="80">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div>
