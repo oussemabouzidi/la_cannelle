@@ -42,7 +42,6 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
   const [mobileHomeOpen, setMobileHomeOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [mobileMenusOpen, setMobileMenusOpen] = useState(false);
-  const isHome = pathname === "/" || pathname === "/home";
 
   const common = commonTranslations[language];
   const phone = common.footer.contactPhone;
@@ -212,22 +211,18 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
       </div>
 
       <div className="bg-black border-b border-white/10">
-        <Container className="h-[96px] sm:h-[100px] md:h-[104px]">
-          <div className="flex h-[96px] sm:h-[100px] md:h-[104px] items-center justify-between gap-4">
+        <Container className="h-[92px] sm:h-[96px] md:h-[104px]">
+          <div className="flex h-[92px] sm:h-[96px] md:h-[104px] items-center justify-between gap-4">
             <Link href="/home" className="flex items-center gap-3 min-w-0">
               <Image
-                src={isHome ? "/images/logo.png" : "/images/logo-removebg-preview.png"}
+                src="/images/logo.png"
                 alt="La Cannelle"
                 width={820}
                 height={240}
                 priority
                 quality={100}
-                sizes="(max-width: 640px) 280px, (max-width: 1024px) 520px, 760px"
-                className={`w-auto object-contain invert ${
-                  isHome
-                    ? "h-[84px] sm:h-[92px] md:h-[96px] max-w-[460px] sm:max-w-[620px] md:max-w-[800px]"
-                    : "h-[80px] sm:h-[88px] md:h-[92px] max-w-[420px] sm:max-w-[580px] md:max-w-[800px] brightness-200 contrast-125"
-                }`}
+                sizes="(max-width: 640px) 78vw, (max-width: 1024px) 520px, 640px"
+                className="w-auto object-contain invert h-[clamp(70px,14vw,96px)] max-w-[min(78vw,640px)]"
               />
             </Link>
 
