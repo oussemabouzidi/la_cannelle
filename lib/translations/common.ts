@@ -86,7 +86,7 @@ export const commonTranslations: CommonTranslations = {
       home: 'Startseite',
       about: 'Über uns',
       services: 'Dienstleistungen',
-      menus: 'Menüs',
+      menus: 'Menus',
       contact: 'Kontakt',
       connect: 'Verbinden',
       order: 'Bestellen',

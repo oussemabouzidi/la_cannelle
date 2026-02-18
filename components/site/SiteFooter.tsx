@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Instagram, Music2, MapPin, Mail, Phone } from "lucide-react";
 import Container from "./Container";
+import { INSTAGRAM_PROFILE_URL } from "@/lib/config/social";
 
 type FooterLabels = {
   quickLinks: string;
@@ -80,7 +81,7 @@ export default function SiteFooter({ footer, nav }: SiteFooterProps) {
             <p className="text-sm font-semibold tracking-wide text-white/90">{footer.followUs}</p>
             <div className="mt-4 flex flex-col gap-3 text-sm">
               <a
-                href="https://www.instagram.com/lacannellecatering/"
+                href={INSTAGRAM_PROFILE_URL}
                 className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors"
                 target="_blank"
                 rel="noreferrer"

@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import type { Language } from "@/lib/hooks/useTranslation";
 import { commonTranslations } from "@/lib/translations/common";
 import Container from "./Container";
+import { INSTAGRAM_PROFILE_URL } from "@/lib/config/social";
 
 type NavLabels = {
   home: string;
@@ -126,7 +127,7 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
       items: [
         {
           href: "/menus",
-          title: language === "DE" ? "Menüs entdecken" : "Browse menus",
+          title: language === "DE" ? "Menus entdecken" : "Browse menus",
           description: language === "DE" ? "Alle Highlights ansehen" : "Explore all highlights",
         },
         {
@@ -188,7 +189,7 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
 
             <div className="flex items-center gap-3">
               <a
-                href="https://www.instagram.com/lacannellecatering/"
+                href={INSTAGRAM_PROFILE_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/0 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80 hover:bg-white/5 hover:text-white transition-colors"
@@ -215,14 +216,14 @@ export default function SiteHeader({ language, toggleLanguage, pathname, nav, a1
           <div className="flex h-[92px] sm:h-[96px] md:h-[104px] items-center justify-between gap-4">
             <Link href="/home" className="flex items-center gap-3 min-w-0">
               <Image
-                src="/images/logo.png"
+                src="/images/logo-header-dark.png"
                 alt="La Cannelle"
-                width={820}
-                height={240}
+                width={1438}
+                height={439}
                 priority
                 quality={100}
                 sizes="(max-width: 640px) 78vw, (max-width: 1024px) 520px, 640px"
-                className="w-auto object-contain invert h-[clamp(70px,14vw,96px)] max-w-[min(78vw,640px)]"
+                className="w-auto object-contain h-[clamp(70px,14vw,96px)] max-w-[min(78vw,640px)]"
               />
             </Link>
 

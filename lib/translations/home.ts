@@ -54,7 +54,7 @@ type HomeTranslations = {
     cta: string;
   };
   journey: { title: string; milestones: { title: string; date: string; description: string }[] };
-  services: { title: string; items: { title: string; description: string; icon?: string }[]; cta: string };
+  services: { title: string; subtitle: string; items: { title: string; description: string; icon?: string }[]; cta: string };
   menus: {
     priceLabel: string;
     includes: string;
@@ -173,6 +173,7 @@ const en: HomeTranslations = {
   },
   services: {
     title: 'Service formats',
+    subtitle: 'Tailored experiences for every occasion.',
     items: [
       { title: 'Full-service catering', description: 'Events with staff on site.' },
       { title: 'Drop-off', description: 'Beautifully packaged and ready to serve.' },
@@ -222,7 +223,7 @@ const de: HomeTranslations = {
     home: 'Startseite',
     about: 'Über uns',
     services: 'Dienstleistungen',
-    menus: 'Menüs',
+    menus: 'Menus',
     contact: 'Kontakt',
     connect: 'Verbinden',
     order: 'Bestellen',
@@ -233,7 +234,7 @@ const de: HomeTranslations = {
     cta: 'Event planen',
   },
   errors: {
-    menusLoadFailed: 'Menüs konnten gerade nicht geladen werden.',
+    menusLoadFailed: 'Menus konnten gerade nicht geladen werden.',
   },
   quickMenu: {
     title: 'Beliebte Auswahl',
@@ -248,7 +249,7 @@ const de: HomeTranslations = {
   exclusivity: {
     subtitle: 'Signature Ansatz',
     title: 'Catering ohne Kompromisse',
-    text: 'Von der Menügestaltung bis zur Umsetzung kümmern wir uns um jedes Detail, damit Sie den Moment genießen können.',
+    text: 'Von der Menugestaltung bis zur Umsetzung kümmern wir uns um jedes Detail, damit Sie den Moment genießen können.',
     stats: [
       { number: '500+', label: 'Betreute Events' },
       { number: '4,9/5', label: 'Kundenzufriedenheit' },
@@ -270,7 +271,7 @@ const de: HomeTranslations = {
     },
   },
   menuShowcase: {
-    title: 'Ausgewählte Menüs',
+    title: 'Ausgewählte Menus',
     description: 'Kuratiert und bei Gästen beliebt.',
     items: [
       {
@@ -297,14 +298,14 @@ const de: HomeTranslations = {
     ],
     badges: { popular: 'Beliebt', featured: 'Empfohlen' },
     viewDetails: 'Details ansehen',
-    exploreFull: 'Alle Menüs ansehen',
+    exploreFull: 'Alle Menus ansehen',
   },
   passion: {
     subtitle: 'Von Köchen gemacht',
     title: 'Moderne Technik, großzügige Gastlichkeit',
     text: 'Unser Küchenteam verbindet Innovation mit Wohlfühlmomenten - ästhetisch und köstlich zugleich.',
     skills: [
-      { title: 'Menügestaltung', description: 'Passend zu Thema und Gästen.' },
+      { title: 'Menugestaltung', description: 'Passend zu Thema und Gästen.' },
       { title: 'Ernährungswünsche', description: 'Sorgfältige Optionen für alle Bedürfnisse.' },
       { title: 'Logistik', description: 'Pünktliche Lieferung und koordinierter Service.' },
     ],
@@ -314,29 +315,30 @@ const de: HomeTranslations = {
     title: 'So arbeiten wir',
     milestones: [
       { title: 'Erkundung', date: 'Schritt 1', description: 'Wir verstehen Ziele und Gäste.' },
-      { title: 'Konzept', date: 'Schritt 2', description: 'Menüs und Erlebnisse abgestimmt auf Sie.' },
+      { title: 'Konzept', date: 'Schritt 2', description: 'Menus und Erlebnisse abgestimmt auf Sie.' },
       { title: 'Verkostung', date: 'Schritt 3', description: 'Optionales Tasting und Feinschliff.' },
       { title: 'Durchführung', date: 'Schritt 4', description: 'Perfekte Umsetzung am Eventtag.' },
     ],
   },
   services: {
     title: 'Service-Formate',
+    subtitle: 'Maßgeschneiderte Erlebnisse für jeden Anlass.',
     items: [
-      { title: 'Full-Service Catering', description: 'Events mit Team vor Ort.' },
-      { title: 'Drop-off', description: 'Schön verpackt und servierfertig.' },
+      { title: 'Catering mit Team', description: 'Events mit Team vor Ort.' },
+      { title: 'Lieferung', description: 'Schön verpackt und servierfertig.' },
       { title: 'Bar & Getränke', description: 'Wein, Cocktails und Pairings.' },
     ],
     cta: 'Alle Services ansehen',
   },
   menus: {
-    title: 'Menü-Einblicke',
+    title: 'Menu-Einblicke',
     description: 'Ein kurzer Einblick in unsere Küche: kompakt, kuratiert und bestellbereit.', // 新增的翻译
     items: [
       { name: 'Brunch Social', desc: 'Frühstücks-Spezialitäten und warme Gerichte.' },
       { name: 'Evening Soiree', desc: 'Fingerfood und elegante Hauptgänge.' },
       { name: 'Family Style', desc: 'Geteilte Platten für lebendige Tische.' },
     ],
-    cta: 'Menüpläne anzeigen',
+    cta: 'Menupläne anzeigen',
     priceLabel: '',
     includes: '',
     noItems: '',

@@ -1,6 +1,7 @@
 'use client'
 
 import { Suspense, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { useTranslation } from '@/lib/hooks/useTranslation'
 import { adminTranslations } from '@/lib/translations/admin'
@@ -53,6 +54,15 @@ function LoginInner() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white shadow-xl p-6">
+        <Image
+          src="/images/logo-header.png"
+          alt="La Cannelle"
+          width={1438}
+          height={439}
+          priority
+          quality={100}
+          className="mx-auto h-auto w-full max-w-[320px] object-contain"
+        />
         <h1 className="text-2xl font-bold text-gray-900">{t.auth.title}</h1>
         <p className="text-sm text-gray-600 mt-1">{t.auth.subtitle}</p>
 

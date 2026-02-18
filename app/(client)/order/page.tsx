@@ -779,7 +779,10 @@ export default function OrderPage() {
       updateOrder: isDE ? 'Bestellung aktualisieren' : 'Update Order',
       remove: isDE ? 'Entfernen' : 'Remove',
       dishesAvailable: isDE ? 'Gerichte verfügbar' : 'dishes available',
-      fromPerGuest: (price: any) => isDE ? `Ab €${price}/Gast` : `From €${price}/guest`,
+      fromPerGuest: (price: any) => {
+        // Keep legacy key name but remove "Ab/From" prefix.
+        return isDE ? `€${price}/Gast` : `€${price}/guest`;
+      },
       customPricing: isDE ? 'Preis auf Anfrage' : 'Custom Pricing',
       exclVat: isDE ? 'zzgl. MwSt.' : 'Excl. VAT',
       guestMinimum: (count: any) => isDE ? `${count} Gäste Minimum` : `${count} Guest Minimum`,
@@ -1173,7 +1176,7 @@ export default function OrderPage() {
   
   const stepsConfig = useMemo(() => ([
     { key: 'event', label: language === 'DE' ? 'Eventdetails' : 'Event Details' },
-    { key: 'menu', label: language === 'DE' ? 'Menüauswahl' : 'Menu Selection' },
+    { key: 'menu', label: language === 'DE' ? 'Menuauswahl' : 'Menu Selection' },
     { key: 'accessories', label: language === 'DE' ? 'Zubehör' : 'Accessories', icon: ShoppingBag, color: 'text-purple-600' },
     { key: 'checkout', label: language === 'DE' ? 'Lieferung & Zahlung' : 'Delivery & Payment' }
   ]), [language]);
@@ -1910,7 +1913,7 @@ export default function OrderPage() {
         return '';
       case 'menu':
         if (!orderData.selectedMenu && !pendingMenuId) {
-          return language === 'DE' ? 'Bitte ein Menü wählen.' : 'Please select a menu.';
+          return language === 'DE' ? 'Bitte ein Menu wählen.' : 'Please select a menu.';
         }
         {
           const invalidMenu = getFirstInvalidMenuSubStep(dynamicMenuSteps.length - 1);
@@ -2800,7 +2803,7 @@ export default function OrderPage() {
       return (
         <div className="text-center py-12">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
-            {language === 'DE' ? 'Menüauswahl abgeschlossen' : 'Menu Selection Complete'}
+                {language === 'DE' ? 'Menuauswahl abgeschlossen' : 'Menu Selection Complete'}
           </h3>
           <button
             onClick={() => setCurrentStep(3)}
@@ -2887,7 +2890,7 @@ export default function OrderPage() {
                 {pricingGuestCount !== guestCount && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-semibold text-gray-800">
-                      {language === 'DE' ? 'Menü-Portionen (Minimum):' : 'Menu portions (minimum):'}
+                      {language === 'DE' ? 'Menu-Portionen (Minimum):' : 'Menu portions (minimum):'}
                     </span>
                     <span className="font-semibold text-gray-900">{pricingGuestCount}</span>
                   </div>
@@ -2914,7 +2917,7 @@ export default function OrderPage() {
               {/* Category Sub-steps Navigation */}
               <div className="pt-4 border-t border-gray-200">
                 <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 mb-3">
-                  {language === 'DE' ? 'Menükategorien' : 'Menu Categories'}
+                  {language === 'DE' ? 'Menu-Kategorien' : 'Menu Categories'}
                 </h4>
                 <div className="space-y-2">
                   {dynamicMenuSteps.map((step, index) => {
@@ -3247,7 +3250,7 @@ export default function OrderPage() {
               <div className="text-center py-12 border border-gray-200 rounded-xl bg-gray-50">
                 <p className="text-gray-600">
                   {language === 'DE' 
-                    ? `Keine ${categoryTitle.toLowerCase()} verfügbar für dieses Menü.`
+                    ? `Keine ${categoryTitle.toLowerCase()} verfügbar für dieses Menu.`
                     : `No ${categoryTitle.toLowerCase()} available for this menu.`
                   }
                 </p>
@@ -3403,7 +3406,7 @@ export default function OrderPage() {
                 {pricingGuestCount !== guestCount && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-semibold text-gray-800">
-                      {language === 'DE' ? 'Menü-Portionen (Minimum):' : 'Menu portions (minimum):'}
+                      {language === 'DE' ? 'Menu-Portionen (Minimum):' : 'Menu portions (minimum):'}
                     </span>
                     <span className="font-semibold text-gray-900">{pricingGuestCount}</span>
                   </div>
@@ -3497,7 +3500,7 @@ export default function OrderPage() {
                 <div className="rounded-lg border border-amber-100 bg-amber-50/70 p-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-900 font-semibold">
-                      {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                      {language === 'DE' ? 'Menu + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
                     </span>
                     <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                   </div>
@@ -3790,7 +3793,7 @@ export default function OrderPage() {
                           <div className="flex items-center gap-2 text-sm text-black">
                             <Users size={16} className="text-gray-500" />
                             <span className="font-medium">
-                              {pricingGuestCount} {language === 'DE' ? 'Menü-Portionen (Minimum)' : 'menu portions (minimum)'}
+                              {pricingGuestCount} {language === 'DE' ? 'Menu-Portionen (Minimum)' : 'menu portions (minimum)'}
                             </span>
                           </div>
                         )}
@@ -3833,7 +3836,7 @@ export default function OrderPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-900 font-semibold">
-                            {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                            {language === 'DE' ? 'Menu + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
                           </span>
                           <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                         </div>
@@ -4124,7 +4127,7 @@ export default function OrderPage() {
                           <div className="flex items-center gap-2 text-sm text-black">
                             <Users size={16} className="text-gray-500" />
                             <span className="font-medium">
-                              {pricingGuestCount} {language === 'DE' ? 'Menü-Portionen (Minimum)' : 'menu portions (minimum)'}
+                              {pricingGuestCount} {language === 'DE' ? 'Menu-Portionen (Minimum)' : 'menu portions (minimum)'}
                             </span>
                           </div>
                         )}
@@ -4157,7 +4160,7 @@ export default function OrderPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-900 font-semibold">
-                            {language === 'DE' ? 'Menü + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
+                            {language === 'DE' ? 'Menu + Extras Zwischensumme:' : 'Menu + Extras Subtotal:'}
                           </span>
                           <span className="font-bold text-amber-700">€{subtotal.toFixed(2)}</span>
                         </div>
@@ -4673,7 +4676,7 @@ export default function OrderPage() {
                   <div className="flex items-center gap-2">
                     <Users size={16} className="text-gray-500" />
                     <span className="font-semibold">
-                      {language === 'DE' ? 'Menü-Portionen (Minimum):' : 'Menu portions (minimum):'}
+                      {language === 'DE' ? 'Menu-Portionen (Minimum):' : 'Menu portions (minimum):'}
                     </span>
                     <span>{pricingGuestCount}</span>
                   </div>
@@ -5173,7 +5176,7 @@ export default function OrderPage() {
 
             <div className="rounded-xl border border-black/10 bg-white/70 backdrop-blur-sm p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-black/50 mb-3">
-                {language === 'DE' ? 'Menü' : 'Menu'}
+                {language === 'DE' ? 'Menu' : 'Menu'}
               </div>
               {selectedMenuObj ? (
                 <div className="space-y-3">
@@ -5294,7 +5297,7 @@ export default function OrderPage() {
           <div className="px-5 sm:px-6 py-4 border-t border-black/10 bg-white/40">
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-black/70">{language === 'DE' ? 'Menü + Extras' : 'Menu + extras'}</span>
+                <span className="text-black/70">{language === 'DE' ? 'Menu + Extras' : 'Menu + extras'}</span>
                 <span className="font-semibold text-black">€{totals.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between gap-3">

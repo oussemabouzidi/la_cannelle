@@ -114,13 +114,13 @@ export const aboutTranslations: AboutTranslations = {
     body: { style: 'classic' },
   },
   DE: {
-    nav: { services: 'Dienstleistungen', menus: 'Menüs', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
+    nav: { services: 'Dienstleistungen', menus: 'Menus', contact: 'Kontakt', connect: 'Verbinden', order: 'Bestellen' },
     hero: { title: 'Über uns', subtitle: 'Kulinarische Exzellenz seit unserer Gründung' },
     story: {
       title: 'Unsere Geschichte',
       content: [
         'Wir arbeiten eng mit Kunden zusammen, um ihre Vision zu verstehen und maßgeschneiderte Erlebnisse zu liefern.',
-        'Unsere Küche erstellt saisonale Menüs, die Geschmack, Präsentation und Ernährungsbedürfnisse ausbalancieren.',
+        'Unsere Küche erstellt saisonale Menus, die Geschmack, Präsentation und Ernährungsbedürfnisse ausbalancieren.',
         'Von intimen Feiern bis zu großen Events kümmern wir uns um jedes Detail.',
       ],
     },
@@ -145,8 +145,8 @@ export const aboutTranslations: AboutTranslations = {
     services: {
       title: 'Was wir anbieten',
       items: [
-        { title: 'Personalisierter Service', description: 'Individuelle Menüs und aufmerksame Koordination.' },
-        { title: 'Kreative Menüs', description: 'Innovative Gerichte inspiriert von saisonalen Zutaten.' },
+        { title: 'Personalisierter Service', description: 'Individuelle Menus und aufmerksame Koordination.' },
+        { title: 'Kreative Menus', description: 'Innovative Gerichte inspiriert von saisonalen Zutaten.' },
         { title: 'Zuverlässige Lieferung', description: 'Professionelles Team sorgt für pünktlichen Service.' },
       ],
     },

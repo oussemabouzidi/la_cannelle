@@ -118,7 +118,7 @@ const de: typeof en = {
     home: 'Startseite',
     about: 'Über uns',
     services: 'Dienstleistungen',
-    menus: 'Menüs',
+    menus: 'Menus',
     contact: 'Kontakt',
     connect: 'Verbinden',
     order: 'Jetzt bestellen',
@@ -143,10 +143,10 @@ const de: typeof en = {
     subtitle: 'Maßgeschneiderte Catering-Lösungen für jeden Anlass',
   },
   officeCatering: {
-    title: 'Buro-Catering',
+    title: 'Office-Catering',
     subtitle: 'Energie für Ihr Team durch Exzellenz',
     description:
-      'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Buro-Catering-Dienstleistungen. Von täglichen Mittagslieferungen bis hin zu Frühstücksmeetings und Nachmittagserfrischungen bieten wir frische, köstliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
+      'Halten Sie Ihr Team energiegeladen und produktiv mit unseren professionellen Office-Catering-Dienstleistungen. Von täglichen Mittagslieferungen bis hin zu Frühstücksmeetings und Nachmittagserfrischungen bieten wir frische, köstliche Mahlzeiten, die nahtlos in Ihren Arbeitstag passen.',
     features: [
       'Tägliche Essenslieferprogramme',
       'Frühstücksmeetings und Kaffeeservice',
@@ -162,7 +162,7 @@ const de: typeof en = {
     description:
       'Machen Sie Ihr besonderes Ereignis unvergesslich mit unseren umfassenden Catering-Dienstleistungen. Ob Geburtstag, Jubiläum oder ein anderer Meilenstein - wir schaffen kulinarische Erlebnisse, die in Erinnerung bleiben.',
     features: [
-      'Individuelle Menüs für jeden Anlass',
+      'Individuelle Menus für jeden Anlass',
       'Umfassende Event-Koordination',
       'Professionelles Personal und Service',
       'Elegante Präsentation und Aufbau',
@@ -176,7 +176,7 @@ const de: typeof en = {
     description:
       'Ihr Hochzeitstag verdient Perfektion. Unser engagiertes Team arbeitet eng mit Ihnen zusammen, um ein massgeschneidertes kulinarisches Erlebnis zu gestalten, das Ihren Stil widerspiegelt und jeden Gast begeistert.',
     features: [
-      'Personalisierte Menüberatung',
+      'Personalisierte Menuberatung',
       'Verkostung für das Paar',
       'Voller Barservice verfügbar',
       'Elegantes Anrichten und Präsentation',
@@ -209,7 +209,7 @@ const de: typeof en = {
       description: "Halten Sie Ihr Team mit unserem Mitarbeiter-Catering energiegeladen und zufrieden. Wir liefern leckere und nahrhafte Mahlzeiten, die eine positive Arbeitsumgebung fördern.",
       features: [
         "Tägliche frische Mahlzeitenlieferungen",
-        "Abwechslungsreiche Menüoptionen für jeden Geschmack",
+        "Abwechslungsreiche Menuoptionen für jeden Geschmack",
         "Besondere Berücksichtigung von Ernährungsbedürfnissen",
         "Regelmäßige Snack- und Getränkeversorgung",
         "Team-Mittagessen-Pakete",

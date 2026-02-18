@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Users } from 'lucide-react';
 import { useBodyScrollLock } from './useBodyScrollLock';
@@ -92,11 +93,14 @@ export default function AdminLayout({
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="text-2xl font-bold text-gray-900 font-elegant italic">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/logo-removebg-preview.png"
-                alt=""
-                className="h-auto max-w-[240px]"
+              <Image
+                src="/images/logo-header.png"
+                alt="La Cannelle"
+                width={1438}
+                height={439}
+                priority
+                quality={100}
+                className="h-auto max-w-[240px] w-auto object-contain"
               />
             </div>
             <button

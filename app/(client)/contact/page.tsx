@@ -9,8 +9,7 @@ import { commonTranslations } from '@/lib/translations/common';
 import { contactTranslations } from '@/lib/translations/contact';
 import { LuxurySelect } from '@/components/site/LuxurySelect';
 import SiteHeader from '@/components/site/SiteHeader';
-
-const INSTAGRAM_PROFILE_URL = 'https://www.instagram.com/lacannellecatering/';
+import { INSTAGRAM_HANDLE_DISPLAY, INSTAGRAM_PROFILE_URL } from '@/lib/config/social';
 
 const normalizeInstagramPermalink = (url: string) => {
   const trimmed = (url || '').trim();
@@ -719,7 +718,7 @@ export default function ContactPage() {
                         <span className="text-white font-semibold text-base">LC</span>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">@lacannellecatering</h4>
+                        <h4 className="font-semibold text-gray-900">{INSTAGRAM_HANDLE_DISPLAY}</h4>
                         <p className="text-sm text-gray-600">Premium Catering & Events</p>
                       </div>
                     </div>
@@ -846,7 +845,7 @@ export default function ContactPage() {
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{commonFooter.followUs}</h4>
               <div className="flex flex-col gap-2 text-[#F2F2F2]/70">
-                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-[#A69256] transition-colors inline-flex items-center gap-2 text-sm">
+                <a href={INSTAGRAM_PROFILE_URL} className="hover:text-[#A69256] transition-colors inline-flex items-center gap-2 text-sm">
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current">
                     <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm10 2H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-5 3.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 0 1 12 7.5zm0 2A2.5 2.5 0 1 0 14.5 12 2.5 2.5 0 0 0 12 9.5zM17.75 6a1.25 1.25 0 1 1-1.25 1.25A1.25 1.25 0 0 1 17.75 6z" />
                   </svg>

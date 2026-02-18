@@ -23,6 +23,8 @@
   --lux-gold-cta: #a69256;
   --lux-gold-cta-hover: #0d0d0d;
   --lux-focus: #a69256;
+  --lux-marquee-logo-filter: grayscale(1) contrast(1.2);
+  --lux-marquee-logo-filter-hover: grayscale(0) contrast(1.1);
 }
 
 @theme inline {
@@ -58,6 +60,8 @@ html[data-theme="dark"] {
   --lux-gold-cta: #cda15b;
   --lux-gold-cta-hover: #d4a67e;
   --lux-focus: #8e6a3d;
+  --lux-marquee-logo-filter: grayscale(1) invert(1) contrast(1.2);
+  --lux-marquee-logo-filter-hover: grayscale(0) invert(1) contrast(1.2);
 }
 
 body {
@@ -391,40 +395,35 @@ html[data-theme="dark"] .bg-black\/60 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.1rem;
-  border-radius: 9999px;
-  border: 1px solid rgba(166, 146, 86, 0.18);
-  background: rgba(255, 255, 255, 0.92);
-  opacity: 0.92;
-  transition: opacity var(--lux-med) var(--lux-ease), background-color var(--lux-med) var(--lux-ease), border-color var(--lux-med) var(--lux-ease), box-shadow var(--lux-med) var(--lux-ease);
+  padding: 0.35rem 1.25rem;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0.72;
+  transition: opacity var(--lux-med) var(--lux-ease), transform var(--lux-med) var(--lux-ease);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .lux-marquee-item:hover {
     opacity: 1;
-    background: rgba(255, 255, 255, 0.96);
-    border-color: rgba(166, 146, 86, 0.28);
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22), 0 0 18px rgba(166, 146, 86, 0.16);
+    transform: translate3d(0, -1px, 0);
   }
 }
 
 .lux-marquee-item img {
-  height: 34px;
+  height: 28px;
   width: auto;
-  max-width: 180px;
+  max-width: 200px;
   object-fit: contain;
-  filter: none !important;
-  -webkit-filter: none !important;
-  opacity: 0.95;
-  transition: filter var(--lux-med) var(--lux-ease), opacity var(--lux-med) var(--lux-ease), transform var(--lux-med) var(--lux-ease);
+  opacity: 0.82;
+  filter: var(--lux-marquee-logo-filter, grayscale(1) contrast(1.2));
+  transition: opacity var(--lux-med) var(--lux-ease), filter var(--lux-med) var(--lux-ease);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .lux-marquee-item:hover img {
-    filter: none !important;
-    -webkit-filter: none !important;
     opacity: 1;
-    transform: translate3d(0, -1px, 0);
+    filter: var(--lux-marquee-logo-filter-hover, grayscale(0) contrast(1.1));
   }
 }
 
@@ -434,12 +433,12 @@ html[data-theme="dark"] .bg-black\/60 {
   }
 
   .lux-marquee-item {
-    padding: 0.6rem 0.9rem;
+    padding: 0.25rem 0.9rem;
   }
 
   .lux-marquee-item img {
-    height: 26px;
-    max-width: 140px;
+    height: 22px;
+    max-width: 160px;
   }
 }
 

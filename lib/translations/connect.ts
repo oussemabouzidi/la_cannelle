@@ -101,7 +101,7 @@ const en: ConnectTranslations = {
 const de: ConnectTranslations = {
   nav: {
     services: 'Dienstleistungen',
-    menus: 'Menüs',
+    menus: 'Menus',
     contact: 'Kontakt',
     connect: 'Verbinden',
     order: 'Bestellen',

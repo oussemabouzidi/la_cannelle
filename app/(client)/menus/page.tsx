@@ -11,6 +11,7 @@ import { menusTranslations } from '@/lib/translations/menus';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import SiteHeader from '@/components/site/SiteHeader';
+import { INSTAGRAM_PROFILE_URL } from '@/lib/config/social';
 
 function BodyPortal({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -769,7 +770,7 @@ export default function MenusPage() {
             <div className={`transition-all duration-1000 delay-300 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
               <h4 className="font-medium mb-4 text-sm uppercase tracking-wider">{commonFooter.followUs}</h4>
               <div className="flex flex-col gap-2 text-[#F2F2F2]/70">
-                <a href="https://www.instagram.com/lacannellecatering/" className="hover:text-[#A69256] transition-colors text-sm">{commonFooter.social.instagram}</a>
+                <a href={INSTAGRAM_PROFILE_URL} className="hover:text-[#A69256] transition-colors text-sm">{commonFooter.social.instagram}</a>
                 <a href="https://www.tiktok.com/@lacannellecatering" className="hover:text-[#A69256] transition-colors text-sm">{commonFooter.social.tiktok}</a>
               </div>
             </div>

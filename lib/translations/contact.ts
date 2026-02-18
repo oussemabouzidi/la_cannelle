@@ -80,7 +80,7 @@ export const contactTranslations: Record<Language, typeof base> = {
     nav: {
       about: 'Über uns',
       services: 'Dienstleistungen',
-      menus: 'Menüs',
+      menus: 'Menus',
       contact: 'Kontakt',
       connect: 'Verbinden',
       order: 'Jetzt bestellen',

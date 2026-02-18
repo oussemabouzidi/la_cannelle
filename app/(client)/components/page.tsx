@@ -420,7 +420,7 @@ export default function MenuShowcaseHorizontal({
                 closeMenuDetails();
               }}
               className="absolute top-4 right-4 z-10 bg-white/60 backdrop-blur-sm text-[#404040]/70 border border-black/10 hover:bg-white/80 hover:text-[#404040] hover:border-[#A69256]/25 rounded-full p-2 shadow-md transition-all duration-200 pointer-events-auto"
-              aria-label={language === 'DE' ? 'Menüdetails schließen' : 'Close menu details'}
+              aria-label={language === 'DE' ? 'Menudetails schließen' : 'Close menu details'}
             >
               <X size={18} />
             </button>
@@ -465,7 +465,7 @@ export default function MenuShowcaseHorizontal({
                 </div>
               ) : (
                 <p className="text-sm text-[#404040]/70">
-                  {menuT.menuHighlights?.noItems || homeT.menus?.noItems || (language === 'DE' ? 'Menüdetails auf Anfrage erhältlich.' : 'Menu details available upon request.')}
+                  {menuT.menuHighlights?.noItems || homeT.menus?.noItems || (language === 'DE' ? 'Menudetails auf Anfrage erhältlich.' : 'Menu details available upon request.')}
                 </p>
               )}
             </div>
@@ -483,10 +483,10 @@ export default function MenuShowcaseHorizontal({
             {language === 'DE' ? 'AUSWAHL' : 'CURATED'}
           </p>
           <h2 className="text-3xl lg:text-4xl font-semibold text-black mb-4 font-elegant lux-reveal lux-type" data-lux-delay="60">
-            {title || menuT.menuHighlights?.title || homeT.menus?.title || (language === 'DE' ? 'Unsere Menüs' : 'Our Menus')}
+            {title || menuT.menuHighlights?.title || homeT.menus?.title || (language === 'DE' ? 'Unsere Menus' : 'Our Menus')}
           </h2>
           <p className="text-black/70 max-w-2xl mx-auto">
-            {description || menuT.menuHighlights?.subtitle || homeT.menus?.description || (language === 'DE' ? 'Entdecken Sie unsere ausgewählten Menüs und sehen Sie die Details' : 'Explore our signature menus and view the details')}
+            {description || menuT.menuHighlights?.subtitle || homeT.menus?.description || (language === 'DE' ? 'Entdecken Sie unsere ausgewählten Menus und sehen Sie die Details' : 'Explore our signature menus and view the details')}
           </p>
         </div>
 
@@ -497,7 +497,7 @@ export default function MenuShowcaseHorizontal({
         {isLoadingData && menuHighlights.length === 0 && (
           <LoadingSpinner 
             className="mb-4" 
-            label={menuT.labels?.loadingMenus || homeT.menus?.loading || (language === 'DE' ? 'Menüs werden geladen...' : 'Loading menus...')} 
+            label={menuT.labels?.loadingMenus || homeT.menus?.loading || (language === 'DE' ? 'Menus werden geladen...' : 'Loading menus...')} 
           />
         )}
 
@@ -584,7 +584,7 @@ export default function MenuShowcaseHorizontal({
                       </h3>
                     </div>
                     <p className="text-[#A69256] text-xs font-semibold mb-2">
-                      {menu.category || menu.type || menuT.categories?.all || homeT.menus?.categoryAll || (language === 'DE' ? 'Menü' : 'Menu')}
+                      {menu.category || menu.type || menuT.categories?.all || homeT.menus?.categoryAll || (language === 'DE' ? 'Menu' : 'Menu')}
                     </p>
                     <p className="text-[#404040]/75 text-xs mb-3 line-clamp-2">
                       {menu.description}
@@ -611,7 +611,7 @@ export default function MenuShowcaseHorizontal({
               className="px-7 py-3 bg-black text-white rounded-full font-semibold hover:bg-black/90 transition-all duration-300 inline-flex items-center gap-2 shadow-lg text-xs uppercase tracking-[0.18em]"
               onClick={() => window.location.href = '/menus'}
             >
-              {menuT.menuShowcase?.exploreFull || homeT.menus?.exploreFull || (language === 'DE' ? 'Vollständige Menüsammlung erkunden' : 'Explore Full Menu Collection')}
+              {menuT.menuShowcase?.exploreFull || homeT.menus?.exploreFull || (language === 'DE' ? 'Vollständige Menusammlung erkunden' : 'Explore Full Menu Collection')}
               <ChevronRight size={16} />
             </button>
           </div>

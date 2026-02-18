@@ -106,7 +106,7 @@ export default function ServicesPage() {
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-4">Our Services</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#A69256] font-semibold mb-4">{t.hero.title}</p>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light text-gray-900 mb-6 font-display leading-tight">
               {t.hero.title}
             </h1>

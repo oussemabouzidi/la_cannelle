@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap, X, ArrowUpRight, PlayCircle } from 'lucide-react';
+import { ChevronRight, Phone, Mail, MapPin, Users, Award, Eye, Target, Building, Flag, Globe, Zap, ArrowUpRight, PlayCircle } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Star, Crown, Shield, Heart } from 'lucide-react';
 import { menusApi, type Menu as ApiMenu } from '@/lib/api/menus';
@@ -17,32 +17,18 @@ import { Check } from 'lucide-react';
 import MenuShowcaseHorizontal from '../components/page';
 import { homeTranslations } from '@/lib/translations/home';
 import SiteHeader from '@/components/site/SiteHeader';
-import { createPortal } from 'react-dom';
-
-function BodyPortal({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-  return createPortal(children, document.body);
-}
+import { INSTAGRAM_PROFILE_URL } from '@/lib/config/social';
 
 export default function CateringHomepage() {
   const scrollContainer = useRef<HTMLDivElement>(null);
   const { language, toggleLanguage } = useTranslation('home');
   const t = homeTranslations[language];
   
-  const [selectedMenu, setSelectedMenu] = useState<ApiMenu | null>(null);
-  const [selectedMenuItem, setSelectedMenuItem] = useState<any>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [menus, setMenus] = useState<ApiMenu[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
   const commonNav = commonTranslations[language].nav;
   const commonA11y = commonTranslations[language].accessibility;
@@ -64,38 +50,13 @@ export default function CateringHomepage() {
         setMenus(nextMenus);
       } catch (error) {
         console.error('Error loading menus:', error);
-        setFetchError('Failed to load menu items. Please try again later.');
+        setFetchError(t.errors.menusLoadFailed);
       } finally {
         setIsLoadingData(false);
       }
     };
     loadMenus();
   }, []);
-
-  useEffect(() => {
-    if (!selectedMenu) return;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedMenu]);
-
-  useEffect(() => {
-    if (!selectedMenuItem) return;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedMenuItem]);
-
-  useEffect(() => {
-    if (selectedCategory == null) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [selectedCategory]);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -135,23 +96,23 @@ export default function CateringHomepage() {
   }, []);
 
   const brandLogos = [
-    { name: 'Montblanc', src: '/images/logos/montblanc.png' },
-    { name: 'Omnicom Media Group', src: '/images/logos/omnicom-media-group.png' },
-    { name: 'OMG', src: '/images/logos/omg.png' },
-    { name: 'DoiT International', src: '/images/logos/doit.png' },
-    { name: 'BBDO', src: '/images/logos/bbdo.png' },
-    { name: 'IWC Schaffhausen', src: '/images/logos/iwc.png' },
+    { name: 'Montblanc', src: '/images/logos/banner/montblanc.png' },
+    { name: 'Omnicom Media Group', src: '/images/logos/banner/omnicom-media-group.png' },
+    { name: 'OMG', src: '/images/logos/banner/omg.png' },
+    { name: 'DoiT International', src: '/images/logos/banner/doit.png' },
+    { name: 'BBDO', src: '/images/logos/banner/bbdo.png' },
+    { name: 'IWC Schaffhausen', src: '/images/logos/banner/iwc.png' },
     { name: 'Ruby Hotels', src: '/images/logos/ruby-hotels.svg' },
-    { name: 'RIMOWA', src: '/images/logos/rimowa.png' },
-    { name: 'Ralph Lauren', src: '/images/logos/ralph-lauren.jpg' },
-    { name: 'Samsonite', src: '/images/logos/samsonite.png' },
-    { name: 'SABIC', src: '/images/logos/sabic.png' },
+    { name: 'RIMOWA', src: '/images/logos/banner/rimowa.png' },
+    { name: 'Ralph Lauren', src: '/images/logos/banner/ralph-lauren.png' },
+    { name: 'Samsonite', src: '/images/logos/banner/samsonite.png' },
+    { name: 'SABIC', src: '/images/logos/banner/sabic.png' },
   ];
 
   const quickMenuIcons = [Star, Heart, Shield, Crown];
   const quickMenuCategoryMeta = [
     { gradient: 'from-[#A69256]/25 via-white to-[#F2F2F2]', countEn: '12 dishes', countDe: '12 Gerichte' },
-    { gradient: 'from-[#404040]/15 via-white to-[#F2F2F2]', countEn: '8 menus', countDe: '8 MenÃƒÂ¼s' },
+    { gradient: 'from-[#404040]/15 via-white to-[#F2F2F2]', countEn: '8 menus', countDe: '8 Menus' },
     { gradient: 'from-[#A6A6A6]/18 via-white to-[#F2F2F2]', countEn: '15 options', countDe: '15 Optionen' },
     { gradient: 'from-[#A69256]/15 via-white to-[#F2F2F2]', countEn: '10 highlights', countDe: '10 Highlights' },
   ];
@@ -330,7 +291,7 @@ export default function CateringHomepage() {
           <div className="grid lg:grid-cols-12 items-center gap-12">
             <div className="lg:col-span-7 text-center lg:text-left">
               <p className={`text-[11px] font-semibold uppercase tracking-[0.32em] text-white/75 mb-5 ${isVisible ? 'animate-fade-in-down lux-type lux-type-run lux-type-caret' : 'opacity-0'}`}>
-                Beyond taste
+                {language === 'DE' ? 'Mehr als Geschmack' : 'Beyond taste'}
               </p>
 
               <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
@@ -367,15 +328,15 @@ export default function CateringHomepage() {
               <ul className="mt-10 flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-3 text-xs font-medium uppercase tracking-[0.22em] text-white/75">
                 <li className="inline-flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]"></span>
-                  Crafted menus
+                  {language === 'DE' ? 'Kuratierte Menus' : 'Crafted menus'}
                 </li>
                 <li className="inline-flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]"></span>
-                  Seamless delivery
+                  {language === 'DE' ? 'Nahtlose Lieferung' : 'Seamless delivery'}
                 </li>
                 <li className="inline-flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--accent)]"></span>
-                  Premium service
+                  {language === 'DE' ? 'Premium-Service' : 'Premium service'}
                 </li>
               </ul>
             </div>
@@ -392,13 +353,13 @@ export default function CateringHomepage() {
       </section>
 
       {/* Brand Banner (FoodExplorer-inspired marquee) */}
-      <section className="bg-black py-10 sm:py-14 border-y border-white/10 lux-reveal" data-lux-delay="60">
+      <section className="bg-white py-10 sm:py-14 border-y border-black/10 lux-reveal" data-lux-delay="60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-10">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3 lux-reveal lux-type" data-lux-delay="40">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3 lux-reveal lux-type" data-lux-delay="40">
               {t.brandBanner.title}
             </p>
-            <div className="w-12 h-px bg-white/20 mx-auto"></div>
+            <div className="w-12 h-px bg-black/20 mx-auto"></div>
           </div>
 
           <div className="lux-marquee" style={{ ['--lux-marquee-duration' as any]: '30s' }} aria-label={t.brandBanner.title}>
@@ -427,7 +388,7 @@ export default function CateringHomepage() {
                 {t.quickMenu.title}
               </p>
               <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display">
-                Curated Collections
+                {language === 'DE' ? 'Kuratierte Kollektionen' : 'Curated Collections'}
               </h2>
               <p className="text-black/70 max-w-xl mx-auto text-base">{t.quickMenu.description}</p>
             </div>
@@ -438,353 +399,28 @@ export default function CateringHomepage() {
               const Icon = quickMenuIcons[index];
               
               return (
-                <button
+                <div
                   key={index}
-                  type="button"
-                  className={`group relative bg-white rounded-2xl p-6 sm:p-8 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)] transition-all duration-500 cursor-pointer ${isVisible ? 'animate-scale-in' : 'opacity-0'} hover:bg-black`}
+                  className={`group relative bg-white rounded-2xl p-6 sm:p-8 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)] transition-all duration-500 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
                   style={{ animationDelay: `${index * 100}ms` }}
-                  onClick={() => setSelectedCategory(index)}
                 >
                   <div className="mb-6">
-                    {Icon && <Icon className="text-black/70 mb-4 group-hover:text-white/85 transition-colors" size={32} strokeWidth={1.5} />}
-                    <h3 className="text-xl font-semibold text-black mb-2 font-display group-hover:text-white transition-colors">
+                    {Icon && <Icon className="text-black/70 mb-4 transition-colors" size={32} strokeWidth={1.5} />}
+                    <h3 className="text-xl font-semibold text-black mb-2 font-display transition-colors">
                       {category.title}
                     </h3>
-                    <p className="text-black/70 text-sm leading-relaxed group-hover:text-white/70 transition-colors">
+                    <p className="text-black/70 text-sm leading-relaxed transition-colors">
                       {category.description}
                     </p>
                   </div>
 
-                  <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-                    <div className="w-10 h-10 rounded-full border border-white/15 bg-white/5 flex items-center justify-center">
-                      <ChevronRight size={18} className="text-white/85" />
-                    </div>
-                  </div>
-                </button>
+                </div>
               );
             })}
           </div>
         </div>
 
-        {/* Category Modals remain the same but with updated styling */}
-        {selectedCategory === 0 && (
-          <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#A69256]/15 rounded-2xl flex items-center justify-center">
-                    {quickMenuIcons[selectedCategory] && 
-                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-[#A69256]" })}
-                  </div>
-                  <h3 className="text-2xl font-medium text-gray-900 font-display">
-                    {t.quickMenu.categories[selectedCategory].title}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
-                <p className="text-gray-700 mb-8 leading-relaxed">
-                  {t.quickMenu.categories[selectedCategory].description}
-                </p>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                      <Star size={18} className="text-[#A69256]" />
-                      {language === 'EN' ? 'Signature Dishes' : 'Signature-Gerichte'}
-                    </h4>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-[#A69256] rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Truffle-infused Wild Mushroom Risotto' : 'TrÃƒÂ¼ffel-Wildpilz-Risotto'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-[#A69256] rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Herb-crusted Rack of Lamb' : 'KrÃƒÂ¤uterkruste Lammkarree'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-[#A69256] rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Seared Scallops with Citrus Beurre Blanc' : 'Gebratene Jakobsmuscheln mit Zitrus-Beurre Blanc'}</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-lg">
-                      <Award size={18} className="text-[#A69256]" />
-                      {language === 'EN' ? 'Awards & Recognition' : 'Auszeichnungen'}
-                    </h4>
-                    <p className="text-gray-600 leading-relaxed">
-                      {language === 'EN' 
-                        ? 'Our signature dishes have been awarded the "Culinary Excellence Award" three years in a row.'
-                        : 'Unsere Signature-Gerichte wurden drei Jahre in Folge mit dem "Culinary Excellence Award" ausgezeichnet.'}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2 text-lg">
-                      <Clock size={18} className="text-[#A69256]" />
-                      {language === 'EN' ? 'Preparation Time' : 'Zubereitungszeit'}
-                    </h4>
-                    <p className="text-gray-600 leading-relaxed">
-                      {language === 'EN' 
-                        ? 'Each signature dish requires 30-45 minutes of meticulous preparation by our master chefs.'
-                        : 'Jedes Signature-Gericht erfordert 30-45 Minuten sorgfÃƒÂ¤ltiger Zubereitung durch unsere MeisterkÃƒÂ¶che.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </BodyPortal>
-        )}
-
-        {/* Similar modal updates for categories 1, 2, and 3 */}
-        {selectedCategory === 1 && (
-          <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
-                    {quickMenuIcons[selectedCategory] && 
-                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-rose-600" })}
-                  </div>
-                  <h3 className="text-2xl font-medium text-gray-900 font-display">
-                    {t.quickMenu.categories[selectedCategory].title}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
-                <p className="text-gray-700 mb-8 leading-relaxed">
-                  {t.quickMenu.categories[selectedCategory].description}
-                </p>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                      <ChefHat size={18} className="text-rose-500" />
-                      {language === 'EN' ? 'Chef\'s Creations' : 'Kreationen des KÃƒÂ¼chenchefs'}
-                    </h4>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Seasonal Market Menu' : 'Saisonale Marktkarte'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Tasting Experience' : 'Degustationserlebnis'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Secret Family Recipes' : 'Geheime Familienrezepte'}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </BodyPortal>
-        )}
-
-        {selectedCategory === 2 && (
-          <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center">
-                    {quickMenuIcons[selectedCategory] && 
-                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-emerald-600" })}
-                  </div>
-                  <h3 className="text-2xl font-medium text-gray-900 font-display">
-                    {t.quickMenu.categories[selectedCategory].title}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
-                <p className="text-gray-700 mb-8 leading-relaxed">
-                  {t.quickMenu.categories[selectedCategory].description}
-                </p>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                      <Shield size={18} className="text-emerald-500" />
-                      {language === 'EN' ? 'Premium Guarantee' : 'Premium-Garantie'}
-                    </h4>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Wagyu Beef Selection' : 'Wagyu-Rindfleisch-Auswahl'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Caviar & Champagne Pairing' : 'Kaviar & Champagner-Paarung'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Aged Gourmet Cheeses' : 'Gereifte Gourmet-KÃƒÂ¤se'}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </BodyPortal>
-        )}
-
-        {selectedCategory === 3 && (
-          <BodyPortal>
-            <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-             <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-2xl w-full max-h-[85vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-              <div className="p-5 sm:p-8 border-b border-gray-200 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-sky-100 rounded-2xl flex items-center justify-center">
-                    {quickMenuIcons[selectedCategory] && 
-                      React.createElement(quickMenuIcons[selectedCategory], { size: 24, className: "text-sky-600" })}
-                  </div>
-                  <h3 className="text-2xl font-medium text-gray-900 font-display">
-                    {t.quickMenu.categories[selectedCategory].title}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="p-5 sm:p-8 overflow-y-auto max-h-[calc(85vh-120px)]">
-                <p className="text-gray-700 mb-8 leading-relaxed">
-                  {t.quickMenu.categories[selectedCategory].description}
-                </p>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                      <Crown size={18} className="text-sky-500" />
-                      {language === 'EN' ? 'Royal Offerings' : 'KÃƒÂ¶nigliche Angebote'}
-                    </h4>
-                    <ul className="space-y-3">
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Gold Leaf Desserts' : 'Goldblatt-Desserts'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Truffle & Foie Gras Menu' : 'TrÃƒÂ¼ffel & Foie Gras MenÃƒÂ¼'}</span>
-                      </li>
-                      <li className="flex items-start gap-3 p-4 bg-white/60 backdrop-blur-sm border border-black/5 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-sky-500 rounded-full mt-2"></div>
-                        <span className="text-gray-700">{language === 'EN' ? 'Vintage Wine Pairing' : 'Jahrgangswein-Paarung'}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </BodyPortal>
-        )}
       </section>
-
-      {/* Menu Item Modal */}
-      {selectedMenuItem && (
-        <BodyPortal>
-          <div className="fixed inset-0 bg-[#0D0D0D]/55 supports-[backdrop-filter]:bg-[#0D0D0D]/45 backdrop-blur-xl z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-            <div className="lux-modal bg-gradient-to-b from-white/80 via-white/75 to-white/70 backdrop-blur-2xl border border-white/35 ring-1 ring-[#A69256]/15 rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-[0_40px_120px_rgba(0,0,0,0.38)]">
-            <button
-              onClick={() => setSelectedMenuItem(null)}
-              className="absolute top-6 right-6 z-10 bg-white/75 backdrop-blur-md rounded-full p-3 hover:bg-white/90 transition-colors shadow-lg ring-1 ring-black/10 hover:ring-[#A69256]/20"
-            >
-              <X size={20} className="text-gray-600" />
-            </button>
-
-            <div className="flex flex-col lg:flex-row">
-              <div className="lg:w-1/2 relative">
-                <div className="h-80 lg:h-full">
-                  <img
-                    src={selectedMenuItem.image || '/images/home_image.jpeg'}
-                    alt={selectedMenuItem.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                </div>
-                
-                {selectedMenuItem.popular && (
-                  <div className="absolute top-6 left-6">
-                    <div className="bg-white text-[#A69256] px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2 shadow-lg">
-                      <Flame size={16} />
-                      {t.menuShowcase.badges.popular}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="lg:w-1/2 p-6 sm:p-10 overflow-y-auto max-h-[90vh] bg-white/35 backdrop-blur-sm lg:border-l border-black/5">
-                <p className="text-[#A69256] font-medium text-sm mb-3 uppercase tracking-wider">
-                  {selectedMenuItem.category || t.quickMenu.title}
-                </p>
-                <h2 className="text-3xl font-light text-gray-900 font-display mb-4">
-                  {selectedMenuItem.name}
-                </h2>
-                {selectedMenuItem.price && (
-                  <div className="text-2xl font-medium text-[#A69256] mb-6">
-                    {selectedMenuItem.price}
-                  </div>
-                )}
-                <p className="text-gray-600 mb-8 leading-relaxed">
-                  {selectedMenuItem.description}
-                </p>
-
-                {selectedMenuItem.ingredients && (
-                  <div className="mb-8">
-                    <h4 className="font-medium text-gray-900 mb-4 text-lg">
-                      {language === 'EN' ? 'Ingredients' : 'Zutaten'}
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedMenuItem.ingredients.map((ingredient: string, idx: number) => (
-                        <span
-                          key={idx}
-                          className="px-4 py-2 bg-white/55 backdrop-blur-sm border border-black/10 text-gray-800 rounded-full text-sm"
-                        >
-                          {ingredient}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            </div>
-          </div>
-        </BodyPortal>
-      )}
 
       <MenuShowcaseHorizontal 
         limit={6}
@@ -926,7 +562,7 @@ export default function CateringHomepage() {
           <div className="text-center mb-16">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60 mb-3">{t.quickMenu.title}</p>
             <h2 className="text-4xl lg:text-5xl font-semibold text-white mb-4 font-display">{t.services.title}</h2>
-            <p className="text-white/70 max-w-2xl mx-auto text-lg">Tailored experiences for every occasion</p>
+            <p className="text-white/70 max-w-2xl mx-auto text-lg">{t.services.subtitle}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -948,7 +584,7 @@ export default function CateringHomepage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
-              {language === 'DE' ? 'MENÜS' : 'MENUS'}
+              {language === 'DE' ? 'MENUS' : 'MENUS'}
             </p>
             <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display">{t.menus.title}</h2>
             <p className="text-black/70 text-lg">{t.menus.description}</p>
@@ -1032,7 +668,7 @@ export default function CateringHomepage() {
             </div>
 
             <a
-              href="https://www.instagram.com/lacannellecatering/"
+              href={INSTAGRAM_PROFILE_URL}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white hover:bg-black/90 transition-colors"
@@ -1044,7 +680,7 @@ export default function CateringHomepage() {
 
           <div className="grid lg:grid-cols-12 gap-6">
             <a
-              href="https://www.instagram.com/lacannellecatering/"
+              href={INSTAGRAM_PROFILE_URL}
               target="_blank"
               rel="noreferrer"
               className="group relative lg:col-span-7 overflow-hidden rounded-3xl border border-black/10 bg-black aspect-[16/10] shadow-[0_24px_70px_rgba(0,0,0,0.12)]"
@@ -1069,7 +705,7 @@ export default function CateringHomepage() {
             </a>
 
             <div className="lg:col-span-5 grid sm:grid-cols-2 lg:grid-cols-1 gap-6">
-              {[
+                {[
                 {
                   image: '/images/restaurant-interior.jpg',
                   label: language === 'DE' ? 'Brand Events' : 'Brand events',
@@ -1083,7 +719,7 @@ export default function CateringHomepage() {
               ].map((card) => (
                 <a
                   key={card.image}
-                  href="https://www.instagram.com/lacannellecatering/"
+                  href={INSTAGRAM_PROFILE_URL}
                   target="_blank"
                   rel="noreferrer"
                   className="group relative overflow-hidden rounded-3xl border border-black/10 bg-black aspect-[16/12] shadow-[0_18px_55px_rgba(0,0,0,0.10)]"
@@ -1116,7 +752,7 @@ export default function CateringHomepage() {
             </h2>
             <p className="text-white/75 text-lg leading-relaxed lux-reveal lux-type" data-lux-delay="120">
               {language === 'DE'
-                ? 'Von der Menükuration bis zum Service vor Ort: Wir führen Ihr Event mit ruhiger Präzision — elegant, zuverlässig, diskret.'
+                ? 'Von der Menukuration bis zum Service vor Ort: Wir führen Ihr Event mit ruhiger Präzision — elegant, zuverlässig, diskret.'
                 : 'From menu curation to on-site service, we guide your event with calm precision — elegant, reliable, discreet.'}
             </p>
 
@@ -1124,10 +760,10 @@ export default function CateringHomepage() {
               <button
                 type="button"
                 onClick={() => router.push('/order')}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-black hover:brightness-95 transition-all"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--accent)] px-7 py-4 text-xs font-semibold uppercase tracking-[0.18em] text-black transition-all duration-500 hover:-translate-y-1 hover:brightness-95 hover:shadow-2xl hover:scale-[1.02]"
               >
                 {language === 'DE' ? 'Jetzt bestellen' : 'Order now'}
-                <ChevronRight size={18} />
+                <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform duration-300" />
               </button>
               <button
                 type="button"
@@ -1142,16 +778,16 @@ export default function CateringHomepage() {
             <div className="mt-10 grid sm:grid-cols-2 gap-4">
               {[
                 {
-                  title: language === 'DE' ? 'Antwort in 48h' : '48h response',
-                  desc: language === 'DE' ? 'Schnell, verbindlich, persönlich.' : 'Fast, reliable, personal.',
+                  title: language === 'DE' ? 'Antwort in 24h' : '24h response',
+                  desc: language === 'DE' ? 'schnell, verbindlich, persönlich.' : 'Fast, reliable, personal.',
                 },
                 {
-                  title: language === 'DE' ? 'White-glove Service' : 'White-glove service',
+                  title: language === 'DE' ? 'White Glove Service' : 'White Glove Service',
                   desc: language === 'DE' ? 'Team, Setup, Ablauf — aus einer Hand.' : 'Team, setup, flow — end to end.',
                 },
                 {
-                  title: language === 'DE' ? 'Saisonale Menüs' : 'Seasonal menus',
-                  desc: language === 'DE' ? 'Modern, fein, mit Handschrift.' : 'Modern, refined, signature-led.',
+                  title: language === 'DE' ? 'Saisonale Menus' : 'Seasonal menus',
+                  desc: language === 'DE' ? 'modern, fein, mit Handschrift.' : 'Modern, refined, signature-led.',
                 },
                 {
                   title: language === 'DE' ? 'Transparente Angebote' : 'Clear proposals',
@@ -1171,14 +807,14 @@ export default function CateringHomepage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div
                 className="aspect-[4/5] bg-cover bg-center"
-                style={{ backgroundImage: "url('/images/restaurant-hero.jpg')" }}
+                style={{ backgroundImage: "url('/images/exclusive-dining.jpg')" }}
               />
               <div className="absolute left-8 bottom-8 right-8">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
                   {language === 'DE' ? 'Haute Catering' : 'Haute catering'}
                 </p>
                 <p className="mt-2 text-2xl font-semibold text-white font-display">
-                  {language === 'DE' ? 'Modern technique, generous hospitality.' : 'Modern technique, generous hospitality.'}
+                  {language === 'DE' ? 'Moderne Technik, großzügige hospitality.' : 'Modern technique, generous hospitality.'}
                 </p>
               </div>
             </div>
@@ -1191,7 +827,7 @@ export default function CateringHomepage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div>
-              <h3 className="text-2xl font-light mb-4 font-display">Gourmet Catering</h3>
+              <h3 className="text-2xl font-light mb-4 font-display">La Cannelle Catering</h3>
               <p className="text-[#F2F2F2]/70 text-sm">{t.footer.tagline}</p>
             </div>
             
@@ -1240,3 +876,4 @@ export default function CateringHomepage() {
     </div>
   );
 }
+

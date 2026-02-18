@@ -235,12 +235,12 @@ const de: OrderTranslations = {
   serviceType: {
     title: 'Service wählen',
     subtitle: 'Wählen Sie das passende Format',
-    options: {
-      business: [
-        { key: 'buffet', title: 'Buffet', description: 'Flexibles Self-Service Konzept.', image: '/images/mediterranean-buffet.jpg' },
-        { key: 'plated', title: 'Gedecktes Menü', description: 'Service wie im Restaurant.', image: '/images/beef-wellington.jpg' },
-        { key: 'fingerfood', title: 'Fingerfood', description: 'Snacks für Networking.', image: '/images/truffle-arancini.jpg' },
-      ],
+      options: {
+        business: [
+          { key: 'buffet', title: 'Buffet', description: 'Flexibles Self-Service Konzept.', image: '/images/mediterranean-buffet.jpg' },
+          { key: 'plated', title: 'Gedecktes Menu', description: 'Service wie im Restaurant.', image: '/images/beef-wellington.jpg' },
+          { key: 'fingerfood', title: 'Fingerfood', description: 'Snacks für Networking.', image: '/images/truffle-arancini.jpg' },
+        ],
       private: [
         { key: 'family', title: 'Family Style', description: 'Geteilte Gerichte für große Tafeln.', image: '/images/community-feast.jpg' },
         { key: 'cocktail', title: 'Cocktail', description: 'Elegante Häppchen und Drinks.', image: '/images/chocolate-sphere.jpg' },
@@ -259,12 +259,12 @@ const de: OrderTranslations = {
     dateConstraint: 'Erstes auswählbares Datum ist {date} (48h Vorlaufzeit).',
     dateConstraintLarge: 'Erstes auswählbares Datum ist {date} (72h Vorlaufzeit für Gruppen ab 100 Gästen).',
   },
-  menuSelection: { title: 'Menüauswahl', subtitle: 'Wählen Sie ein kuratiertes Menü' },
+  menuSelection: { title: 'Menuauswahl', subtitle: 'Wählen Sie ein kuratiertes Menu' },
   menuMinPeoplePrompt: {
-    title: 'Gästeanzahl für dieses Menü',
+    title: 'Gästeanzahl für dieses Menu',
     description: (menuMinGuests, selectedGuests) =>
-      `Dieses Menü empfiehlt mindestens ${menuMinGuests} Gäste. Möchten Sie Ihre Gästeanzahl auf ${menuMinGuests} aktualisieren oder bei Ihrer Auswahl (${selectedGuests}) bleiben?`,
-    useMenuMin: (menuMinGuests) => `Mit ${menuMinGuests} Gästen fortfahren (Menü-Minimum)`,
+      `Dieses Menu empfiehlt mindestens ${menuMinGuests} Gäste. Möchten Sie Ihre Gästeanzahl auf ${menuMinGuests} aktualisieren oder bei Ihrer Auswahl (${selectedGuests}) bleiben?`,
+    useMenuMin: (menuMinGuests) => `Mit ${menuMinGuests} Gästen fortfahren (Menu-Minimum)`,
     keepSelected: (selectedGuests) => `Bei ${selectedGuests} Gästen bleiben`,
     cancel: 'Abbrechen',
   },
@@ -328,7 +328,7 @@ const de: OrderTranslations = {
         id: 'serving-utensils',
         name: 'Servierbesteck',
         description: 'Servierlöffel und Zangen für Buffets.',
-        details: 'Im Menü enthalten.',
+        details: 'Im Menu enthalten.',
         price: 0,
         unit: '',
       },

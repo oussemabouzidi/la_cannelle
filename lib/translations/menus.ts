@@ -77,13 +77,13 @@ export const menusTranslations: Record<Language, MenusTranslations> = {
       home: 'Startseite',
       about: 'Über uns',
       services: 'Dienstleistungen',
-      menus: 'Menüs',
+      menus: 'Menus',
       contact: 'Kontakt',
       connect: 'Verbinden',
       order: 'Jetzt bestellen',
     },
     hero: {
-      title: 'Unsere Menüs',
+      title: 'Unsere Menus',
       subtitle: 'Sorgfältig gestaltete kulinarische Erlebnisse für jeden Anlass',
     },
     categories: {
@@ -95,11 +95,11 @@ export const menusTranslations: Record<Language, MenusTranslations> = {
       drinks: 'Getränke',
     },
     menuHighlights: {
-      title: 'Menü Highlights',
-      subtitle: 'Entdecken Sie unsere Menüs und sehen Sie die Details',
+      title: 'Menu Highlights',
+      subtitle: 'Entdecken Sie unsere Menus und sehen Sie die Details',
       viewDetails: 'Details ansehen',
       includes: 'Enthält',
-      noItems: 'Menü-Details sind auf Anfrage verfügbar.',
+      noItems: 'Menu-Details sind auf Anfrage verfügbar.',
       priceLabel: 'Ab',
     },
     labels: {
@@ -108,9 +108,9 @@ export const menusTranslations: Record<Language, MenusTranslations> = {
       minPeople: (count) => `${count} Personen Minimum`,
       fromPerPerson: (price) => `Ab EUR ${price}/Person`,
       selectFood: 'Details ansehen',
-      loadingMenus: 'Menüs werden geladen...',
-      noMenusAvailable: 'Aktuell sind keine Menüs verfügbar.',
-      menusLoadFailed: 'Menüs konnten gerade nicht geladen werden.',
+      loadingMenus: 'Menus werden geladen...',
+      noMenusAvailable: 'Aktuell sind keine Menus verfügbar.',
+      menusLoadFailed: 'Menus konnten gerade nicht geladen werden.',
     },
     menuShowcase: undefined
   },
