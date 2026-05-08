@@ -22,6 +22,9 @@ export interface CreateOrderData {
   serviceType?: string;
   serviceId?: number;
   postalCode?: string;
+  street?: string;
+  houseNumber?: string;
+  city?: string;
   captchaToken?: string;
   items: OrderItem[];
   subtotal: number;
@@ -50,6 +53,9 @@ export interface Order {
   businessType?: string;
   serviceType?: string;
   postalCode?: string;
+  street?: string;
+  houseNumber?: string;
+  city?: string;
   service?: Service | null;
   items: Array<{
     id: number;

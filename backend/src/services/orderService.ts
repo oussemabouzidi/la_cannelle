@@ -18,6 +18,9 @@ export const orderService = {
     businessType?: string;
     serviceType?: string;
     postalCode?: string;
+    street?: string;
+    houseNumber?: string;
+    city?: string;
     items: Array<{ productId: number; quantity: number; price: number; name: string }>;
     subtotal: number;
     serviceFee: number;
@@ -73,6 +76,9 @@ export const orderService = {
         businessType: data.businessType,
         serviceType: data.serviceType,
         postalCode: data.postalCode,
+        street: data.street,
+        houseNumber: data.houseNumber,
+        city: data.city,
         subtotal: data.subtotal,
         serviceFee: data.serviceFee,
         total: data.total,
