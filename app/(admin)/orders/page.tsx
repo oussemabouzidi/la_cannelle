@@ -183,7 +183,8 @@ export default function AdminOrders() {
       },
       status: {
         pending: 'Pending',
-        confirmed: 'Confirmed',
+        confirmed_paid: 'Confirmed (Paid)',
+        confirmed_unpaid: 'Confirmed (Unpaid)',
         preparation: 'In Preparation',
         delivery: 'Out for Delivery',
         completed: 'Completed',
@@ -272,7 +273,8 @@ export default function AdminOrders() {
       },
       status: {
         pending: 'Ausstehend',
-        confirmed: 'Bestätigt',
+        confirmed_paid: 'Bestätigt (Bezahlt)',
+        confirmed_unpaid: 'Bestätigt (Ausstehend)',
         preparation: 'In Vorbereitung',
         delivery: 'In Lieferung',
         completed: 'Abgeschlossen',
@@ -398,7 +400,8 @@ export default function AdminOrders() {
 
   const statusOptions = [
     { value: 'pending', label: t.status.pending, color: 'bg-amber-100 text-amber-800' },
-    { value: 'confirmed', label: t.status.confirmed, color: 'bg-blue-100 text-blue-800' },
+    { value: 'confirmed_unpaid', label: t.status.confirmed_unpaid, color: 'bg-sky-100 text-sky-800' },
+    { value: 'confirmed_paid', label: t.status.confirmed_paid, color: 'bg-blue-100 text-blue-800' },
     { value: 'preparation', label: t.status.preparation, color: 'bg-purple-100 text-purple-800' },
     { value: 'delivery', label: t.status.delivery, color: 'bg-indigo-100 text-indigo-800' },
     { value: 'completed', label: t.status.completed, color: 'bg-green-100 text-green-800' },

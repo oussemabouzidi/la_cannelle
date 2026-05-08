@@ -199,6 +199,10 @@ export const orderService = {
               cancellationReason: trimmedReason || null,
               paymentStatus: 'REFUNDED' as PaymentStatus
             }
+          : safeStatus === 'CONFIRMED_PAID'
+          ? { cancellationReason: null, paymentStatus: 'PAID' as PaymentStatus }
+          : safeStatus === 'CONFIRMED_UNPAID'
+          ? { cancellationReason: null, paymentStatus: 'PENDING' as PaymentStatus }
           : { cancellationReason: null })
       },
       include: {

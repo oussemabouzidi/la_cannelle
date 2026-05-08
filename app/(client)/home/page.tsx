@@ -379,48 +379,6 @@ export default function CateringHomepage() {
         </div>
       </section>
 
-      {/* Quick Menu Categories - Premium Grid */}
-      <section id="collections" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10 lux-reveal" data-lux-delay="40">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <div className={`transition-all duration-1000 ${isVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
-                {t.quickMenu.title}
-              </p>
-              <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display">
-                {language === 'DE' ? 'Kuratierte Kollektionen' : 'Curated Collections'}
-              </h2>
-              <p className="text-black/70 max-w-xl mx-auto text-base">{t.quickMenu.description}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {t.quickMenu.categories.map((category, index) => {
-              const Icon = quickMenuIcons[index];
-              
-              return (
-                <div
-                  key={index}
-                  className={`group relative bg-white rounded-2xl p-6 sm:p-8 border border-black/10 hover:border-black/20 hover:shadow-[0_24px_70px_rgba(0,0,0,0.12)] transition-all duration-500 ${isVisible ? 'animate-scale-in' : 'opacity-0'}`}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className="mb-6">
-                    {Icon && <Icon className="text-black/70 mb-4 transition-colors" size={32} strokeWidth={1.5} />}
-                    <h3 className="text-xl font-semibold text-black mb-2 font-display transition-colors">
-                      {category.title}
-                    </h3>
-                    <p className="text-black/70 text-sm leading-relaxed transition-colors">
-                      {category.description}
-                    </p>
-                  </div>
-
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-      </section>
 
       <MenuShowcaseHorizontal 
         limit={6}
@@ -430,55 +388,6 @@ export default function CateringHomepage() {
         language={language}
       />
 
-      {/* Passion Section (FoodExplorer-inspired: black/white, airy, minimal) */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-12 gap-14 items-center">
-            <div className={`lg:col-span-5 transition-all duration-1000 ${isVisible ? 'animate-fade-in-left' : 'opacity-0'}`}>
-              <div className="rounded-2xl overflow-hidden ring-1 ring-black/10 shadow-[0_24px_70px_rgba(0,0,0,0.14)]">
-                <div className="relative aspect-[3/4]">
-                  <img
-                    src="/images/chef-passion.jpg"
-                    alt="Chef's passion"
-                    className="absolute inset-0 h-full w-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-black/5 to-transparent" />
-                  <div className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/45 backdrop-blur-sm px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-white">
-                    <Award size={16} className="text-white/80" />
-                    {language === 'DE' ? 'CHEF-LED' : 'CHEF-LED'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={`lg:col-span-7 transition-all duration-1000 delay-200 ${isVisible ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-5">
-                {t.passion.subtitle}
-              </p>
-              <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-6 font-display leading-tight lux-reveal lux-type" data-lux-delay="80">
-                {t.passion.title}
-              </h2>
-              <p className="text-black/70 leading-relaxed mb-10 text-lg">
-                {t.passion.text}
-              </p>
-
-              <div className="grid sm:grid-cols-2 gap-6">
-                {t.passion.skills.map((item, index) => (
-                  <div key={index} className="rounded-2xl border border-black/10 p-6 hover:border-black/20 transition-colors">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-black/60">
-                      {language === 'DE' ? 'DETAIL' : 'DETAIL'}
-                    </p>
-                    <p className="mt-3 text-base font-semibold text-black">{item.title}</p>
-                    <p className="mt-2 text-sm text-black/70 leading-relaxed">{item.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Company Values Section (black/white) */}
       <section className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10">
@@ -623,31 +532,6 @@ export default function CateringHomepage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-t border-black/10">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-black/60 mb-3">
-              {language === 'DE' ? 'FEEDBACK' : 'FEEDBACK'}
-            </p>
-            <h2 className="text-4xl lg:text-5xl font-semibold text-black mb-4 font-display lux-reveal lux-type" data-lux-delay="60">{t.testimonials.title}</h2>
-            <p className="text-black/70 text-lg lux-reveal lux-type" data-lux-delay="120">What our clients say</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {t.testimonials.items.map((testimonial, index) => (
-              <div
-                key={index}
-                className="bg-white p-6 sm:p-8 rounded-2xl border border-black/10 hover:border-black/20 transition-colors"
-              >
-                <p className="text-black/80 mb-6 leading-relaxed italic">"{testimonial.quote}"</p>
-                <p className="text-black font-semibold font-display">{testimonial.name}</p>
-                <p className="text-sm text-black/60">{testimonial.role}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Lookbook + Reels */}
       <section id="lookbook" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-[#F2F2F2] border-t border-black/10">

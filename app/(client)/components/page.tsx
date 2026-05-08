@@ -560,7 +560,7 @@ export default function MenuShowcaseHorizontal({
                     
                     <div className="absolute inset-x-0 bottom-0 p-6">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/70">
-                        {menu.category || menu.type || menuT.categories?.all || homeT.menus?.categoryAll || (language === 'DE' ? 'MenÃ¼' : 'Menu')}
+                        {menu.category || menu.type || menuT.categories?.all || homeT.menus?.categoryAll || (language === 'DE' ? 'Menü' : 'Menu')}
                       </p>
                       <h3 className="mt-2 text-2xl font-semibold text-white font-elegant leading-tight">
                         {menu.name}

@@ -137,7 +137,7 @@ export default function AdminAccessories() {
         quantityMode: isDE ? 'Mengenregel' : 'Quantity rule',
         quantityModeGuest: isDE ? 'Wie Gästeanzahl (Bestellung)' : 'Same as guest count (order)',
         quantityModeFixed: isDE ? 'Feste Menge' : 'Fixed quantity',
-        quantityModeClient: isDE ? 'Vom Kunden wÃ¤hlbar' : 'Client adjustable',
+        quantityModeClient: isDE ? 'Vom Kunden wählbar' : 'Client adjustable',
         fixedQuantity: isDE ? 'Feste Menge' : 'Fixed quantity',
         image: isDE ? 'Bild (URL oder Upload)' : 'Image (URL or upload)',
         imageUrl: isDE ? 'Bild URL' : 'Image URL',

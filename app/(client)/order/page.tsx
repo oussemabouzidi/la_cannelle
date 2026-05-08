@@ -8,6 +8,8 @@ import { productsApi } from '@/lib/api/products';
 import { accessoriesApi } from '@/lib/api/accessories';
 import { systemApi, type ClosedDate } from '@/lib/api/system';
 import { servicesApi, type Service } from '@/lib/api/services';
+import { PhoneNumberInput, type PhoneNumberInputMeta } from '@/components/site/PhoneNumberInput';
+import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js';
 import { useTranslation } from '@/lib/hooks/useTranslation';
 import { commonTranslations } from '@/lib/translations/common';
 import { 
@@ -539,123 +541,42 @@ const TimePicker = ({
 const PostalCodeFields = ({
   label,
   required,
-  isDE,
   orderData,
   postalCopy,
-  cityLookupOptions,
-  cityLookupError,
-  cityLookupLoading,
   postalLookupError,
   postalLookupLoading,
-  handleStateChange,
-  handleCityChange,
-  handlePostalCodeSelect,
   handlePostalCodeChange,
-  lookupPostalCodesByCity,
   lookupPostalCode
 }: any) => {
-  const stateOptions: LuxurySelectOption[] = [
-    { value: '', label: postalCopy.statePlaceholder },
-    ...GERMAN_STATES.map((state) => ({
-      value: state.code,
-      label: `${state.code} - ${isDE ? state.nameDe : state.nameEn}`,
-    })),
-  ];
-
-  const postalOptions: LuxurySelectOption[] = [
-    { value: '', label: postalCopy.selectPostal },
-    ...cityLookupOptions.map((option: any) => ({
-      value: option.code,
-      label: `${option.code}${option.city ? ` - ${option.city}` : ''}`,
-    })),
-  ];
+  const locationHint = postalLookupError
+    ? ''
+    : (orderData.city || orderData.state)
+    ? `${orderData.city}${orderData.state ? `, ${orderData.state}` : ''}`
+    : postalCopy.germanyOnly;
 
   return (
-    <div className="space-y-4">
+    <div>
       {label && (
         <label className="block text-sm font-semibold text-gray-900 mb-2">
           {label}{required ? ' *' : ''}
         </label>
       )}
-      <div className="grid md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            {postalCopy.state}
-          </label>
-          <LuxurySelect
-            value={orderData.state || ''}
-            placeholder={postalCopy.statePlaceholder}
-            options={stateOptions}
-            onChange={(next) => handleStateChange(next)}
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            {postalCopy.city}
-          </label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="text"
-              value={orderData.city}
-              onChange={(e) => handleCityChange(e.target.value)}
-              className="flex-1 px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-              placeholder={postalCopy.cityPlaceholder}
-            />
-            <button
-              type="button"
-              onClick={lookupPostalCodesByCity}
-              disabled={cityLookupLoading}
-              className={`w-full sm:w-auto px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
-                cityLookupLoading
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-amber-600 text-white hover:bg-amber-700'
-              }`}
-            >
-              {cityLookupLoading ? postalCopy.searching : postalCopy.findPostal}
-            </button>
-          </div>
-          {cityLookupError && (
-            <p className="mt-1 text-sm text-red-600">{cityLookupError}</p>
-          )}
-        </div>
-      </div>
-      {cityLookupOptions.length > 0 && (
-        <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            {postalCopy.selectPostal}
-          </label>
-          <LuxurySelect
-            value={orderData.postalCode || ''}
-            placeholder={postalCopy.selectPostal}
-            options={postalOptions}
-            onChange={(next) => handlePostalCodeSelect(next)}
-          />
-        </div>
-      )}
-      <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">
-          {postalCopy.postalCode}
-        </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={orderData.postalCode}
-            onChange={(e) => handlePostalCodeChange(e.target.value)}
-            onBlur={lookupPostalCode}
-            inputMode="numeric"
-            pattern="[0-9]{5}"
-            maxLength={5}
-            autoComplete="postal-code"
-            required={required}
-            className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-            placeholder={postalCopy.postalPlaceholder}
-          />
-          <MapPinIcon className="absolute right-3 top-3.5 text-gray-400" size={20} />
-        </div>
-        <p className={`mt-1 text-xs ${postalLookupError ? 'text-red-600' : 'text-gray-500'}`}>
-          {postalLookupLoading ? postalCopy.checking : (postalLookupError || postalCopy.germanyOnly)}
-        </p>
-      </div>
+      <input
+        type="text"
+        value={orderData.postalCode}
+        onChange={(e) => handlePostalCodeChange(e.target.value)}
+        onBlur={lookupPostalCode}
+        inputMode="numeric"
+        pattern="[0-9]{5}"
+        maxLength={5}
+        autoComplete="postal-code"
+        required={required}
+        className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+        placeholder={postalCopy.postalPlaceholder}
+      />
+      <p className={`mt-1 text-xs ${postalLookupError ? 'text-red-600' : 'text-gray-500'}`}>
+        {postalLookupLoading ? postalCopy.checking : (postalLookupError || locationHint)}
+      </p>
     </div>
   );
 };
@@ -716,6 +637,8 @@ export default function OrderPage() {
     },
     specialRequests: '',
     deliveryOption: 'standard',
+    street: '',
+    houseNumber: '',
     city: '',
     state: '',
     postalCode: '',
@@ -734,6 +657,13 @@ export default function OrderPage() {
   const [closedDates, setClosedDates] = useState<ClosedDate[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [contactErrors, setContactErrors] = useState({ email: '', phone: '' });
+  const [phoneMeta, setPhoneMeta] = useState<PhoneNumberInputMeta>({
+    country: 'DE',
+    countryName: 'Germany',
+    callingCode: '49',
+    flagEmoji: '🇩🇪',
+    flagPng: 'https://flagcdn.com/w40/de.png',
+  });
   const [companyErrors, setCompanyErrors] = useState({ name: '', info: '' });
   const [guestCountError, setGuestCountError] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -1379,12 +1309,19 @@ export default function OrderPage() {
   };
   
   const validatePhoneValue = (value: string) => {
-    if (!value) {
+    const trimmed = (value || '').trim();
+    if (!trimmed) {
       return language === 'DE' ? 'Telefonnummer ist erforderlich.' : 'Phone number is required.';
     }
-    if (!/^\+?[0-9\s-]{7,15}$/.test(value)) {
+
+    const country = ((phoneMeta.country as CountryCode | undefined) || 'DE') as CountryCode;
+    const parsed = trimmed.startsWith('+')
+      ? parsePhoneNumberFromString(trimmed)
+      : parsePhoneNumberFromString(trimmed, country);
+    if (!parsed || !parsed.isValid()) {
       return language === 'DE' ? 'Bitte eine gültige Telefonnummer eingeben.' : 'Please enter a valid phone number.';
     }
+
     return '';
   };
   
@@ -1403,9 +1340,6 @@ export default function OrderPage() {
     if (field === 'email') {
       setContactErrors((prev) => ({ ...prev, email: validateEmailValue(value.trim()) }));
     }
-    if (field === 'phone') {
-      setContactErrors((prev) => ({ ...prev, phone: validatePhoneValue(value.trim()) }));
-    }
   };
   
   const updateCompanyName = (value: string) => {
@@ -1421,8 +1355,8 @@ export default function OrderPage() {
     setCompanyErrors((prev) => ({ ...prev, info: '' }));
   };
   
-  const handleContactBlur = (field: 'email' | 'phone') => {
-    const value = (orderData.contactInfo[field] || '').trim();
+  const handleContactBlur = (field: 'email' | 'phone', rawValue?: string) => {
+    const value = (typeof rawValue === 'string' ? rawValue : orderData.contactInfo[field] || '').trim();
     if (field === 'email') {
       setContactErrors((prev) => ({ ...prev, email: validateEmailValue(value) }));
     }
@@ -1523,9 +1457,14 @@ export default function OrderPage() {
   const handlePostalCodeChange = (value: string) => {
     const digitsOnly = value.replace(/[^0-9]/g, '').slice(0, 5);
     updateOrderData('postalCode', digitsOnly);
+    updateOrderData('city', '');
+    updateOrderData('state', '');
     setPostalLookupError('');
     setCityLookupError('');
     setCityLookupOptions([]);
+    if (digitsOnly.length === 5) {
+      lookupPostalCode(digitsOnly);
+    }
   };
   
   const handlePostalCodeSelect = (value: string) => {
@@ -1546,8 +1485,8 @@ export default function OrderPage() {
     setCityLookupOptions([]);
   };
   
-  const lookupPostalCode = async () => {
-    const postalCode = (orderData.postalCode || '').trim();
+  const lookupPostalCode = async (codeOverride?: string) => {
+    const postalCode = codeOverride ?? (orderData.postalCode || '').trim();
     if (!postalCode) {
       setPostalLookupError('');
       return;
@@ -1569,10 +1508,10 @@ export default function OrderPage() {
       }
       const data = await response.json();
       const places = normalizePlaces(data);
-      if (!orderData.city && places[0]?.city) {
+      if (places[0]?.city) {
         updateOrderData('city', places[0].city);
       }
-      if (!orderData.state && places[0]?.stateCode) {
+      if (places[0]?.stateCode) {
         updateOrderData('state', places[0].stateCode);
       }
     } catch (error) {
@@ -2437,19 +2376,11 @@ export default function OrderPage() {
     };
 
     const postalFieldProps = {
-      isDE: language === 'DE',
       orderData,
       postalCopy,
-      cityLookupOptions,
-      cityLookupError,
-      cityLookupLoading,
       postalLookupError,
       postalLookupLoading,
-      handleStateChange,
-      handleCityChange,
-      handlePostalCodeSelect,
       handlePostalCodeChange,
-      lookupPostalCodesByCity,
       lookupPostalCode
     };
 
@@ -2678,17 +2609,58 @@ export default function OrderPage() {
               )}
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               {t.eventInfo.location} *
             </label>
             <PostalCodeFields {...postalFieldProps} label="" required />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  {language === 'DE' ? 'Straße' : 'Street'} *
+                </label>
+                <input
+                  type="text"
+                  value={orderData.street || ''}
+                  onChange={(e) => updateOrderData('street', e.target.value)}
+                  autoComplete="street-address"
+                  placeholder={language === 'DE' ? 'z.B. Hauptstraße' : 'e.g. Main Street'}
+                  className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                  {language === 'DE' ? 'Hausnr.' : 'House no.'} *
+                </label>
+                <input
+                  type="text"
+                  value={orderData.houseNumber || ''}
+                  onChange={(e) => updateOrderData('houseNumber', e.target.value)}
+                  autoComplete="address-line2"
+                  placeholder={language === 'DE' ? 'z.B. 12' : 'e.g. 12'}
+                  className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                {language === 'DE' ? 'Stadt' : 'City'} *
+              </label>
+              <input
+                type="text"
+                value={orderData.city || ''}
+                onChange={(e) => updateOrderData('city', e.target.value)}
+                autoComplete="address-level2"
+                placeholder={language === 'DE' ? 'z.B. Berlin' : 'e.g. Berlin'}
+                className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
+              />
+            </div>
           </div>
         </div>
       </div>
     );
   };
-  
+
   const renderStep2MenuSelection = () => {
     return (
         <div className="space-y-8">
@@ -3814,7 +3786,22 @@ export default function OrderPage() {
                       <div className="space-y-2">
                         <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
                         <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
-                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
+                        <p className="text-sm text-gray-900 font-semibold inline-flex items-center gap-2">
+                          {phoneMeta.flagPng ? (
+                            <img
+                              src={phoneMeta.flagPng}
+                              alt=""
+                              width={18}
+                              height={12}
+                              className="rounded-[2px]"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : phoneMeta.flagEmoji ? (
+                            <span aria-hidden="true">{phoneMeta.flagEmoji}</span>
+                          ) : null}
+                          <span>{orderData.contactInfo.phone}</span>
+                        </p>
                         {orderData.businessType === 'business' && orderData.contactInfo.company && (
                           <p className="text-sm text-gray-900 font-semibold">
                             {language === 'DE' ? 'Firma:' : 'Company:'} {orderData.contactInfo.company}
@@ -3965,7 +3952,22 @@ export default function OrderPage() {
                           </div>
                           <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                             <span className="text-gray-600">{language === 'DE' ? 'Telefon' : 'Phone'}</span>
-                            <span className="font-semibold text-gray-900">{orderData.contactInfo.phone}</span>
+                            <span className="font-semibold text-gray-900 inline-flex items-center gap-2">
+                              {phoneMeta.flagPng ? (
+                                <img
+                                  src={phoneMeta.flagPng}
+                                  alt=""
+                                  width={18}
+                                  height={12}
+                                  className="rounded-[2px]"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : phoneMeta.flagEmoji ? (
+                                <span aria-hidden="true">{phoneMeta.flagEmoji}</span>
+                              ) : null}
+                              <span>{orderData.contactInfo.phone}</span>
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -4148,7 +4150,22 @@ export default function OrderPage() {
                       <div className="space-y-2">
                         <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.firstName} {orderData.contactInfo.lastName}</p>
                         <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.email}</p>
-                        <p className="text-sm text-gray-900 font-semibold">{orderData.contactInfo.phone}</p>
+                        <p className="text-sm text-gray-900 font-semibold inline-flex items-center gap-2">
+                          {phoneMeta.flagPng ? (
+                            <img
+                              src={phoneMeta.flagPng}
+                              alt=""
+                              width={18}
+                              height={12}
+                              className="rounded-[2px]"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : phoneMeta.flagEmoji ? (
+                            <span aria-hidden="true">{phoneMeta.flagEmoji}</span>
+                          ) : null}
+                          <span>{orderData.contactInfo.phone}</span>
+                        </p>
                       </div>
                     </div>
                     
@@ -4575,20 +4592,18 @@ export default function OrderPage() {
                     <label className="block text-sm font-semibold text-gray-900 mb-2">
                       {t.delivery.contact.phone} *
                     </label>
-                    <input
-                      type="tel"
+                    <PhoneNumberInput
                       value={orderData.contactInfo.phone}
-                      onChange={(e) => updateContactInfoField('phone', e.target.value)}
-                      onBlur={() => handleContactBlur('phone')}
-                      inputMode="tel"
-                      pattern="^\\+?[0-9\\s-]{7,15}$"
-                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900 placeholder:text-gray-500"
-                      placeholder="+49 123 456 789"
+                      onChange={(nextValue) => updateContactInfoField('phone', nextValue)}
+                      onBlur={() => handleContactBlur('phone', orderData.contactInfo.phone)}
                       required
+                      language={language as 'DE' | 'EN'}
+                      defaultCountry="DE"
+                      onMetaChange={(meta) => {
+                        setPhoneMeta(meta);
+                        setContactErrors((prev) => ({ ...prev, phone: meta.error || '' }));
+                      }}
                     />
-                    {contactErrors.phone && (
-                      <p className="mt-2 text-sm text-red-600">{contactErrors.phone}</p>
-                    )}
                   </div>
                 </div>
                 {orderData.businessType === 'business' && (
